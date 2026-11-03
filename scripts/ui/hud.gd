@@ -45,7 +45,7 @@ func _ready() -> void:
 	debug_label.anchor_top = 1.0
 	debug_label.anchor_bottom = 1.0
 	debug_label.offset_left = 14
-	debug_label.offset_top = -190
+	debug_label.offset_top = -215
 	debug_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	debug_label.add_theme_constant_override("outline_size", 4)
 	debug_label.visible = false
