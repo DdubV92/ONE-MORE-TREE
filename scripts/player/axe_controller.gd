@@ -65,14 +65,32 @@ func _physics_process_step(delta: float) -> void:
 	if not swinging and (want_hold or _buffered):
 		_buffered = false
 		try_swing()
-	if swinging:
-		_u += delta / _cycle
-		if not _contact_done and _u >= config.contact_fraction:
-			_contact_done = true
-			_contact()
-		if _u >= 1.0:
-			swinging = false
-			_u = 0.0
+	if advance_swing(delta):
+		_contact()
+
+
+## Advances the swing clock; returns true exactly once per swing, at the
+## contact moment. Pure timing (no input/physics), shared with tests.
+func advance_swing(delta: float) -> bool:
+	if not swinging:
+		return false
+	var hit := false
+	_u += delta / _cycle
+	if not _contact_done and _u >= config.contact_fraction:
+		_contact_done = true
+		hit = true
+	if _u >= 1.0:
+		swinging = false
+		_u = 0.0
+	return hit
+
+
+## Test hook: start a swing without input (same cadence rules).
+func begin_swing_for_test() -> void:
+	if not swinging:
+		swinging = true
+		_u = 0.0
+		_contact_done = false
 
 
 func _process_visual(delta: float, speed: float) -> void:

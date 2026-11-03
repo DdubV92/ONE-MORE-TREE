@@ -12,7 +12,7 @@ func _ready() -> void:
 	for n in get_tree().get_nodes_in_group("post_fx"):
 		n.visible = false
 	await get_tree().process_frame
-	var case_name := OS.get_environment("FELL_CASE") if OS.has_environment("FELL_CASE") else "neighbour"
+	var case_name := OS.get_environment("FELL_CASE") if OS.has_environment("FELL_CASE") else "flat"
 	var i := LoggingTest.find(case_name)
 	var id: int = World.trees.id[i]
 	var base := World.tree_position(i)
@@ -39,7 +39,7 @@ func _ready() -> void:
 	world.add_child(cam)
 	var side := (stand - base).normalized()
 	var perp := side.cross(Vector3.UP)
-	cam.global_position = base + side * 1.4 + perp * 1.3 + Vector3(0, 1.2, 0)
+	cam.global_position = base + side * 1.6 + perp * 0.7 + Vector3(0, 1.0, 0)
 	cam.look_at(base + Vector3(0, 0.75, 0))
 	cam.make_current()
 	for k in 6:

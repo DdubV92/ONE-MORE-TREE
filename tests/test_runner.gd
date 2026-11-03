@@ -28,12 +28,17 @@ func _ready() -> void:
 	_run("settings sanitize and audio buses exist", _t_settings)
 	_run("diagnostics strip user paths", _t_diag)
 	_run("footstep cadence and loudness are natural", _t_footsteps)
+	_run("axe tier rates and trait composition", _t_axe_rates)
+	_run("chopping work is frame-rate independent", _t_frame_independence)
+	_run("grounding audit: no floating trees or rocks", _t_grounding)
+	_run("corrupt save falls back to backup without deleting", _t_save_backup)
 	await _run_async("diagnostics logger captures engine errors", _t_logger)
 	await _run_async("camp built: interiors, anchors, safety rules", _t_camp)
 	await _run_async("human walk keeps stance foot planted", _t_human_walk)
 	await _run_async("dog walk keeps stance paws planted", _t_dog_walk)
 	await _run_async("tree removal by ID updates render and collision", _t_tree_removal)
 	await _run_async("water and terrain surfaces face upward", _t_winding)
+	await _run_async("tree lifecycle: legal states, one TreeFelled, no ghosts, save/restore", _t_tree_lifecycle)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -469,4 +474,166 @@ func _t_winding() -> String:
 				break
 	w.queue_free()
 	await get_tree().process_frame
+	return err
+
+
+func _t_axe_rates() -> String:
+	var cfg: TreeWorkConfig = load("res://config/tree_work.tres")
+	var small := cfg.work_per_second("small")
+	for t in [["medium", 1.4], ["large", 1.96]]:
+		var r := cfg.work_per_second(t[0]) / small
+		if absf(r - float(t[1])) > 0.001:
+			return "%s rate %.3f, expected %.2f" % [t[0], r, t[1]]
+	# A fixed target takes baseline / 1.40 and baseline / 1.96.
+	var target := 40.0
+	for t in [["medium", 1.4], ["large", 1.96]]:
+		var ratio := (target / cfg.work_per_second("small")) / (target / cfg.work_per_second(t[0]))
+		if absf(ratio - float(t[1])) > 0.001:
+			return "duration ratio wrong for %s" % t[0]
+	var hw := [CampaignRules.cut_rate("small", true), CampaignRules.cut_rate("medium", true), CampaignRules.cut_rate("large", true)]
+	if absf(hw[0] - 1.25) > 0.001 or absf(hw[1] - 1.75) > 0.001 or absf(hw[2] - 2.45) > 0.001:
+		return "hard-working rates %s, expected 1.25/1.75/2.45" % str(hw)
+	if absf(cfg.work_per_second("large", true) / small - 2.45) > 0.001:
+		return "config hard-working composition is not multiplicative-once"
+	if absf(CampaignRules.cut_rate("medium", false) - 1.8) < 0.01:
+		return "additive stacking detected"
+	return ""
+
+
+func _t_frame_independence() -> String:
+	var counts := []
+	for dt in [1.0 / 30.0, 1.0 / 60.0, 1.0 / 144.0, 1.0 / 23.0]:
+		var ax := AxeController.new()
+		ax.config = load("res://config/tree_work.tres")
+		ax.set("_cycle", float(ax.config.tier_cycle["small"]))
+		var contacts := 0
+		var t := 0.0
+		while t < 30.0:
+			if not ax.swinging:
+				ax.begin_swing_for_test()
+			if ax.advance_swing(dt):
+				contacts += 1
+			t += dt
+		counts.append(contacts)
+		ax.free()
+	if counts.max() - counts.min() > 1:
+		return "contacts over 30 s differ by frame step: %s" % str(counts)
+	return ""
+
+
+func _t_grounding() -> String:
+	var r := PlacementValidator.audit_trees()
+	var rr := PlacementValidator.audit_rocks()
+	PlacementValidator.write_report("user://reports/placement_report.json", {"trees": r, "rocks": rr})
+	var bad := r.floating.size() + r.in_water.size() + r.on_rock.size() + rr.floating.size()
+	if bad > 0:
+		return "floating/invalid: trees %d, water %d, rock overlap %d, rocks %d (first: %s)" % [r.floating.size(), r.in_water.size(), r.on_rock.size(), rr.floating.size(), JSON.stringify((r.floating + rr.floating).slice(0, 2))]
+	if r.no_cut_stand.size() > 0:
+		return "%d trees have no reachable cutting stand (first id %s)" % [r.no_cut_stand.size(), str(r.no_cut_stand[0].id)]
+	return ""
+
+
+func _t_save_backup() -> String:
+	var path := "user://test_reports/backup_test.json"
+	SaveService.write_file(path, {"schema": SaveService.SCHEMA_VERSION, "trees": {}, "marker": "good"})
+	SaveService.write_file(path, {"schema": SaveService.SCHEMA_VERSION, "trees": {}, "marker": "newer"})
+	if str(SaveService.read_file(path + ".bak").get("marker")) != "good":
+		return "previous good save was not kept as .bak"
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string("{ this is not json")
+	f.close()
+	SaveService.path_override = path
+	var loaded := SaveService.load_campaign()
+	SaveService.path_override = ""
+	if str(loaded.get("marker")) != "good":
+		return "corrupt main save did not fall back to the backup"
+	if not FileAccess.file_exists(path):
+		return "corrupt main save was deleted"
+	if not SaveService.migrate({"schema": 99}).is_empty():
+		return "unknown future schema accepted"
+	var legacy := SaveService.migrate({"schema": 1, "felled_trees": [5], "player": {"position": [0, 0, 0]}})
+	if not legacy.campaign.legacy or int(legacy.trees["5"].state) != TreeService.State.FALLEN:
+		return "Phase 0 save not migrated to a labeled legacy campaign"
+	return ""
+
+
+func _t_tree_lifecycle() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	await get_tree().process_frame
+	var err := ""
+	var svc: TreeService = world.trees
+	var i := LoggingTest.find("flat")
+	var id: int = World.trees.id[i]
+	var base := World.tree_position(i)
+	var stand := PlacementValidator.cut_stands(i)[0]
+	world.vegetation.update_collision_around(base)
+	await get_tree().physics_frame
+	var felled_signals := [0]
+	svc.tree_felled.connect(func(_id: int) -> void: felled_signals[0] += 1)
+	if svc._transition(id, TreeService.State.FALLEN):
+		err = "illegal STANDING -> FALLEN accepted"
+	svc.records.erase(id)
+	svc.apply_contact(id, stand, 1.0)
+	await get_tree().process_frame
+	# Exactly one representation: no instance left at the base, one actor.
+	var inst := 0
+	for mmi in world.vegetation.chunk_nodes[int(World.trees.chunk[i])].get_children():
+		var mm: MultiMesh = mmi.multimesh
+		for k in mm.instance_count:
+			if (mmi.global_transform * mm.get_instance_transform(k).origin).distance_to(base) < 0.05:
+				inst += 1
+	if err == "" and (inst != 0 or svc.actors.size() != 1):
+		err = "after notch: %d instances at base, %d actors" % [inst, svc.actors.size()]
+	if err == "" and svc.state_of(id) != TreeService.State.NOTCHED:
+		err = "first contact did not notch"
+	# Save mid-notch and restore into a fresh service.
+	var notch_snapshot := svc.capture()
+	while svc.state_of(id) == TreeService.State.NOTCHED:
+		svc.apply_contact(id, stand, 3.0)
+	var extra := svc.apply_contact(id, stand, 3.0)
+	if err == "" and bool(extra.accepted):
+		err = "contact accepted after felling"
+	var t := 0.0
+	while svc.state_of(id) == TreeService.State.FALLING and t < 25.0:
+		await get_tree().physics_frame
+		t += 1.0 / 60.0
+	if err == "" and svc.state_of(id) != TreeService.State.FALLEN:
+		err = "tree did not settle (state %d)" % svc.state_of(id)
+	if err == "" and (felled_signals[0] != 1 or svc.felled_log.count(id) != 1):
+		err = "TreeFelled emitted %d times" % felled_signals[0]
+	if err == "" and get_tree().get_nodes_in_group("stumps").size() != 1:
+		err = "expected exactly one stump"
+	# Settled pose must lie down and not sit inside the terrain.
+	var pose := TreeService.array_to_xf(svc.records[id].pose)
+	if err == "" and rad_to_deg(pose.basis.y.angle_to(Vector3.UP)) < 45.0:
+		err = "fallen trunk still upright"
+	# Restore round trip into a new service.
+	var fallen_snapshot := svc.capture()
+	svc.clear_all()
+	await get_tree().process_frame
+	if err == "" and (svc.actors.size() != 0 or World.removed_trees.has(id)):
+		err = "clear_all left actors or a removed instance"
+	svc.restore(notch_snapshot)
+	await get_tree().process_frame
+	if err == "" and (svc.state_of(id) != TreeService.State.NOTCHED or svc.actors.size() != 1 or not World.removed_trees.has(id)):
+		err = "notched state not restored"
+	svc.clear_all()
+	await get_tree().process_frame
+	svc.restore(fallen_snapshot)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	if err == "" and (svc.state_of(id) != TreeService.State.FALLEN or get_tree().get_nodes_in_group("stumps").size() != 1):
+		err = "fallen state/stump not restored exactly once (%d stumps)" % get_tree().get_nodes_in_group("stumps").size()
+	if err == "" and felled_signals[0] != 1:
+		err = "restore re-emitted TreeFelled"
+	var restored_pose := TreeService.array_to_xf(svc.records[id].pose)
+	if err == "" and restored_pose.origin.distance_to(pose.origin) > 0.01:
+		err = "restored pose moved"
+	svc.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
 	return err

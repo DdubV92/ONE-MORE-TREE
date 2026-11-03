@@ -16,7 +16,8 @@ static func all() -> Dictionary:
 	vp["camp"] = _v(c + Vector3(-3, 0, 14), c + Vector3(2, 0, -8), eye, "Camp: clearing, fire pit, fence and entrance")
 	vp["camp_sunset"] = _v(c + Vector3(-20, 0, 15), c + Vector3(4, 0, -6), eye, "Camp at sunset", "sunset")
 	var camper := c + CampLayout.CAMPER_POS
-	vp["camper"] = _v(camper + Vector3(0.2, CampLayout.CAMPER_FLOOR, 2.6), camper + Vector3(0.0, CampLayout.CAMPER_FLOOR, -3.0), eye, "Camper interior (kitchen toward bedroom)")
+	vp["camper"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, 2.0), camper + Vector3(-0.4, CampLayout.CAMPER_FLOOR, -3.0), eye, "Camper interior (kitchen toward bedroom)")
+	vp["camper_lounge"] = _v(camper + Vector3(-0.9, CampLayout.CAMPER_FLOOR, 1.6), camper + Vector3(0.4, CampLayout.CAMPER_FLOOR + 0.3, 4.6), eye, "Camper lounge: couch and TV (camera wall arrives in Prompt 5)")
 	vp["camper_night"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, -2.0), camper + Vector3(-1.5, CampLayout.CAMPER_FLOOR + 0.1, -3.2), eye, "Camper bedroom at night: window to the woods", "night")
 	var cabin := c + CampLayout.CABIN_POS
 	vp["cabin"] = _v(cabin + Vector3(-2.6, CampLayout.CABIN_FLOOR, 3.8), cabin + Vector3(1.0, CampLayout.CABIN_FLOOR, -3.0), eye, "Worker cabin: four beds and arcade corner")

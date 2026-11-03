@@ -10,7 +10,7 @@ extends RefCounted
 
 const SUPPORT_TOLERANCE := 0.03     # max gap between base and lowest ground under it (m)
 const MAX_EMBED := 1.4              # deepest acceptable burial of the uphill side (m)
-const STAND_DISTANCE := 1.05        # where a person stands to chop (m from trunk surface)
+const STAND_DISTANCE := 0.85        # where a person stands to chop (m from trunk surface)
 
 static var exceptions := {
 	"bridge": "intentional span over water",

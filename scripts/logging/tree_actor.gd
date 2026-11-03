@@ -91,7 +91,10 @@ func _build_whole() -> void:
 	add_child(whole)
 	notch_mesh = MeshInstance3D.new()
 	notch_mesh.name = "NotchWood"
-	notch_mesh.material_override = _wood_material()
+	var nm := ShaderMaterial.new()
+	nm.shader = load("res://shaders/cut_face.gdshader")
+	nm.set_shader_parameter("radius", TreeBuilder.trunk_radius_local(species, variant, cut_y_local))
+	notch_mesh.material_override = nm
 	whole.add_child(notch_mesh)
 
 

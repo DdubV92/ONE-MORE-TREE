@@ -27,6 +27,10 @@ func build() -> void:
 	_build_tool_area()
 	_build_yard()
 	_build_anchors()
+	var res := CampReservations.new()
+	res.name = "Reservations"
+	add_child(res)
+	res.build(self)
 	var merged := BuildKit.batch_static(self)
 	print("Camp: batched %d static meshes" % merged)
 
@@ -143,7 +147,7 @@ func _build_camper() -> void:
 	BuildKit.wall(c, east_o, PI * 0.5, Lz * 2 + t * 2, H, t, east, "camper_paint")
 	BuildKit.wall(c, west_o, -PI * 0.5, Lz * 2 + t * 2, H, t, west, "camper_paint")
 	var north := [[0.88, 2.28, 1.2, 1.85]]
-	var south := [[0.78, 2.38, 1.0, 1.8]]
+	var south: Array = []   # front wall holds the TV (Prompt 5 camera wall)
 	BuildKit.wall(c, Vector3(-W - t, F, -Lz - t * 0.5), 0.0, W * 2 + t * 2, H, t, north, "camper_paint")
 	BuildKit.wall(c, Vector3(W + t, F, Lz + t * 0.5), PI, W * 2 + t * 2, H, t, south, "camper_paint")
 	for o in east:
@@ -152,7 +156,7 @@ func _build_camper() -> void:
 	for o in west:
 		BuildKit.window_glass(c, west_o, -PI * 0.5, o, t)
 	BuildKit.window_glass(c, Vector3(-W - t, F, -Lz - t * 0.5), 0.0, north[0], t)
-	BuildKit.window_glass(c, Vector3(W + t, F, Lz + t * 0.5), PI, south[0], t)
+
 	# Teal stripe below the windows (split around the door)
 	BuildKit.box(c, Vector3(0.012, 0.16, 2.3), Vector3(W + t + 0.006, F + 0.62, 3.55), "camper_stripe", false)
 	BuildKit.box(c, Vector3(0.012, 0.16, 6.0), Vector3(W + t + 0.006, F + 0.62, -1.75), "camper_stripe", false)
@@ -204,13 +208,39 @@ func _build_camper() -> void:
 	BuildKit.prop(k, "russian_food_cans_01", Vector3(-W + 0.2, F + 2.13, 2.5), 0.0, 1.0)
 	BuildKit.box(k, Vector3(0.6, 1.6, 0.62), Vector3(-W + 0.3, F + 0.8, 3.28), "white", true, 0.0, "Fridge")
 	BuildKit.box(k, Vector3(0.02, 0.5, 0.03), Vector3(-W + 0.61, F + 1.1, 3.05), "steel", false)
-	# --- Dinette (front)
-	BuildKit.box(c, Vector3(W * 2 - 0.1, 0.42, 0.5), Vector3(0, F + 0.21, Lz - 0.3), "panel", true, 0.0, "Bench")
-	BuildKit.box(c, Vector3(W * 2 - 0.2, 0.1, 0.48), Vector3(0, F + 0.47, Lz - 0.3), "denim", false)
-	BuildKit.box(c, Vector3(W * 2 - 0.2, 0.45, 0.1), Vector3(0, F + 0.75, Lz - 0.05), "denim", false)
-	BuildKit.box(c, Vector3(1.2, 0.05, 0.6), Vector3(0, F + 0.72, Lz - 0.9), "dark_wood", true, 0.0, "Table")
-	BuildKit.cylinder(c, 0.04, 0.7, Vector3(0, F + 0.35, Lz - 0.9), "steel", false, 8)
-	BuildKit.prop(c, "carved_wooden_plate", Vector3(0.25, F + 0.75, Lz - 0.9), 0.0, 1.0)
+	# --- Lounge (front): couch facing a large wall TV (Prompt 5 drives the
+	# live 2x2 camera wall; Phase 1 reserves the physical screen and seats).
+	var couch := Node3D.new()
+	couch.name = "Couch"
+	couch.position = Vector3(0.3, F, Lz - 1.75)
+	c.add_child(couch)
+	BuildKit.box(couch, Vector3(2.2, 0.42, 0.78), Vector3(0, 0.21, 0), "dark_wood", true, 0.0, "CouchBase")
+	BuildKit.box(couch, Vector3(2.1, 0.14, 0.7), Vector3(0, 0.49, 0.02), "denim", false, 0.0, "SeatCushion")
+	BuildKit.box(couch, Vector3(2.2, 0.5, 0.18), Vector3(0, 0.72, -0.33), "denim", false, 0.0, "Backrest")
+	for sx in [-1.0, 1.0]:
+		BuildKit.box(couch, Vector3(0.16, 0.3, 0.74), Vector3(sx * 1.05, 0.6, 0.0), "denim", false, 0.0, "Arm")
+	BuildKit.marker(couch, "CouchSeat_1", Vector3(-0.5, 0.55, 0.05), PI, "couch_seat")
+	BuildKit.marker(couch, "CouchSeat_2", Vector3(0.5, 0.55, 0.05), PI, "couch_seat")
+	BuildKit.prop(c, "throw_pillows_01", Vector3(0.9, F + 0.55, Lz - 1.85), PI, 0.7)
+	var tv := Node3D.new()
+	tv.name = "CamperTV"
+	tv.position = Vector3(0.3, F + 1.32, Lz - 0.06)
+	tv.rotation.y = PI
+	c.add_child(tv)
+	BuildKit.box(tv, Vector3(1.24, 0.72, 0.06), Vector3.ZERO, "black", false, 0.0, "Bezel")
+	var screen := MeshInstance3D.new()
+	screen.name = "Screen"
+	var sq := QuadMesh.new()
+	sq.size = Vector2(1.16, 0.65)
+	screen.mesh = sq
+	screen.material_override = BuildKit.mat("screen")
+	screen.position = Vector3(0, 0, 0.032)
+	tv.add_child(screen)
+	tv.add_to_group("camper_tv")
+	BuildKit.box(c, Vector3(0.6, 0.06, 0.42), Vector3(0.3, F + 0.42, Lz - 0.75), "dark_wood", true, 0.0, "CoffeeTable")
+	for lx in [0.05, 0.55]:
+		BuildKit.box(c, Vector3(0.05, 0.4, 0.38), Vector3(lx, F + 0.2, Lz - 0.75), "dark_wood", false)
+	BuildKit.prop(c, "carved_wooden_plate", Vector3(0.2, F + 0.46, Lz - 0.75), 0.0, 1.0)
 	# --- Dog bed by the door
 	var dog_bed := Node3D.new()
 	dog_bed.name = "DogBed"
@@ -262,8 +292,10 @@ func _build_camper() -> void:
 	BuildKit.box(bed, Vector3(1.45, 0.75, 0.08), Vector3(0, 0.5, -1.0), "dark_wood", false)
 	BuildKit.prop(bed, "throw_pillows_01", Vector3(0, 0.55, -0.72), 0.0, 1.0)
 	BuildKit.marker(bed, "PlayerSleepPoint", Vector3(0, 0.75, 0.1), PI, "player_bed")
+	_hide_spot(bed, "UnderCamperBed", Vector3(0, 0.12, 0.2), "under_bed")
 	BuildKit.prop(c, "painted_wooden_nightstand", Vector3(1.15, F, -Lz + 0.35), PI, 0.85)
 	BuildKit.box(c, Vector3(0.6, 2.0, 0.85), Vector3(W - 0.3, F + 1.0, -1.95), "panel", true, 0.0, "Wardrobe")
+	_hide_spot(c, "CamperWardrobe", Vector3(W - 0.3, F + 0.05, -1.95), "closet")
 	# --- Interior lights (warm, no shadows: cheap and stable)
 	for lz in [2.0, -3.0, -0.6]:
 		var li := OmniLight3D.new()
@@ -366,6 +398,7 @@ func _build_cabin() -> void:
 		BuildKit.box(bed, Vector3(0.9, 0.05, 1.3), Vector3(0, 0.61, 0.3), spec[1], false)
 		BuildKit.box(bed, Vector3(0.6, 0.12, 0.35), Vector3(0, 0.65, -0.72), "white", false)
 		BuildKit.marker(bed, "SleepPoint", Vector3(0, 0.8, 0.1), 0.0, "worker_bed")
+		_hide_spot(bed, "UnderWorkerBed_%d" % (i + 1), Vector3(0, 0.08, 0.1), "under_bed")
 		var side := -1.0 if spec[0].z < 0.0 else 1.0
 		var crate := BuildKit.prop(c, "wooden_crate_02", Vector3(spec[0].x + 1.35, F, spec[0].z - side * 0.05), PI * 0.5, 0.8, Vector3(0.45, 0.4, 0.95), "Footlocker_%d" % (i + 1))
 		crate.add_to_group("worker_storage")
@@ -585,6 +618,13 @@ func _build_anchors() -> void:
 	BuildKit.marker(self, "SafeResetPoint", _ground(Vector3(-2, 0, 4)), PI, "safe_reset")
 	BuildKit.marker(self, "ForestEntrance", _ground(Vector3(0, 0, -L.FENCE_HALF.y)), 0.0, "camp_entrance")
 	_interior_zone(self, "camp_yard", Vector3(0, 2.0, 0), Vector3(L.FENCE_HALF.x * 2, 6.0, L.FENCE_HALF.y * 2), false)
+
+
+## Reserved hiding position for the failure-state hunt (Prompt 6). Never a
+## safety zone during the contract.
+func _hide_spot(parent: Node3D, name: String, pos: Vector3, kind: String) -> void:
+	var m := BuildKit.marker(parent, name, pos, 0.0, "hiding_spot")
+	m.set_meta("hide_kind", kind)
 
 
 func _interior_zone(parent: Node3D, zone_name: String, center: Vector3, size: Vector3, always_safe: bool) -> void:

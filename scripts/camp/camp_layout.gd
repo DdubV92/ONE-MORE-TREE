@@ -22,10 +22,19 @@ const TOOL_AREA_POS := Vector3(13.5, 0.0, -14.0)
 const PICNIC_POS := Vector3(-4.0, 0.0, 7.5)
 const PAYROLL_BOARD_POS := Vector3(9.8, 0.0, 6.5)
 
+## Reserved footprints (camp-local, x/z rectangle centre + size). Built in
+## later prompts; Phase 1 keeps them physically clear and validated.
+const CABIN_EXTENSION := {"center": Vector3(14.0, 0.0, -9.0), "size": Vector3(7.4, 0.0, 5.0), "note": "attached 2-bed room + shared bathroom + kitchen nook (Prompt 4/5)"}
+const TRUCK_BAYS := [
+	{"center": Vector3(-11.5, 0.0, -13.5), "size": Vector3(3.0, 0.0, 6.0)},
+	{"center": Vector3(-8.0, 0.0, -13.5), "size": Vector3(3.0, 0.0, 6.0)},
+]
+const TRUCK_TURNING := {"center": Vector3(-3.0, 0.0, -12.0), "radius": 5.5}
+
 ## Exterior camp lamps (pole lights). Each defines an authoritative safe
 ## radius used by the SafetyService.
 const LAMPS := [
-	{"pos": Vector3(-7.0, 0.0, -14.5), "radius": 9.0},
+	{"pos": Vector3(-4.6, 0.0, -16.6), "radius": 9.0},
 	{"pos": Vector3(7.5, 0.0, -14.5), "radius": 9.0},
 	{"pos": Vector3(-8.0, 0.0, 9.5), "radius": 9.0},
 	{"pos": Vector3(6.0, 0.0, 12.0), "radius": 9.0},
