@@ -1,0 +1,611 @@
+class_name Worker
+extends Node3D
+## One visible crew member (Phase 4). Walks real routes (CrewNav), works
+## through the same authoritative APIs as the player (TreeService contacts,
+## TimberService bucking / pickup / acceptance), carries a visible load,
+## returns to an assigned bed before night, and never teleports.
+##
+## Activities: idle -> move -> fell / retreat / buck / pick / deliver /
+## follow / home / sit / sleep / depart. Claims are released whenever an
+## activity ends for any reason.
+
+signal said(worker: Worker, text: String, important: bool)
+
+const WALK := 1.45
+const CARRY_WALK := 1.15
+const TURN := 6.0
+const ARRIVE := 0.35
+const STUCK_WINDOW := 2.5
+const SEARCH_RADIUS := 140.0
+
+var crew: CrewService
+var emp: Dictionary                 # payroll/roster record (shared dict)
+var mind: WorkerMind
+var body_char: HumanCharacter
+var col: AnimatableBody3D
+var id := ""
+
+# movement
+var path: Array[Vector3] = []
+var _pi := 0
+var _speed := 0.0
+var _stuck_t := 0.0
+var _stuck_from := Vector3.ZERO
+var stuck_events := 0
+var _repaths := 0
+var travel_seconds := 0.0
+var work_seconds := 0.0
+
+# activity
+var activity := "idle"
+var target := {}                   # activity data
+var _after_move := ""
+var _swing_t := -1.0
+var _contacted := false
+var _decide_cd := 0.0
+var _warned := {}
+var _last_lines := {}
+var _carry_nodes: Array[Node3D] = []
+var talking_until := 0.0
+var _far := false
+var _time_check := 0.0
+
+
+func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
+	crew = c
+	emp = record
+	mind = m
+	id = str(record.id)
+	name = "Worker_" + id
+	body_char = HumanCharacter.new()
+	body_char.appearance = HumanAppearance.from_seed(int(record.get("look_seed", 1)))
+	add_child(body_char)
+	body_char.set_axe_tier(axe_tier())
+	col = AnimatableBody3D.new()
+	col.sync_to_physics = false
+	col.collision_layer = 1
+	col.collision_mask = 0
+	col.set_meta("worker_id", id)
+	var cs := CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.3
+	cap.height = 1.75
+	cs.shape = cap
+	cs.position = Vector3(0, 0.88, 0)
+	col.add_child(cs)
+	add_child(col)
+	add_to_group("crew_workers")
+
+
+func axe_tier() -> String:
+	var a := crew.equipment_axe_of(id)
+	return str(a.get("tier", "")) if not a.is_empty() else ""
+
+
+func trait_list() -> Array:
+	return mind.traits
+
+
+# ------------------------------------------------------------- interaction
+
+func get_interact_text() -> String:
+	return "Talk to %s (%s)" % [emp.name, activity_words()]
+
+
+func interact(_by: Node) -> void:
+	if Game.campaign_ui:
+		Game.campaign_ui.open_talk(self)
+
+
+func activity_words() -> String:
+	match activity:
+		"fell": return "felling"
+		"retreat": return "stepping clear of a fall"
+		"buck": return "bucking a trunk"
+		"pick", "deliver": return "hauling"
+		"follow": return "following you"
+		"home": return "heading home"
+		"sit": return "resting"
+		"sleep": return "asleep"
+		"depart": return "leaving on the next boat"
+		"arrive": return "arriving"
+		"move":
+			return "walking to " + str(target.get("label", "a job"))
+	return "between jobs"
+
+
+func say(topic: String, important := false, vars := {}) -> String:
+	var t := CrewDialogue.line(topic, mind.traits, _last_lines, vars)
+	said.emit(self, t, important)
+	return t
+
+
+# ---------------------------------------------------------------- movement
+
+func go_to(dest: Vector3, then: String, label := "") -> bool:
+	var p := crew.nav.find_path(global_position, dest)
+	if p.is_empty():
+		return false
+	path = p
+	_pi = 1 if p.size() > 1 else 0
+	_after_move = then
+	target["dest"] = dest
+	target["label"] = label
+	activity = "move"
+	_stuck_t = 0.0
+	_stuck_from = global_position
+	return true
+
+
+func _move(delta: float) -> void:
+	if _pi >= path.size():
+		_arrived()
+		return
+	var wp := path[_pi]
+	var to := Vector3(wp.x - global_position.x, 0, wp.z - global_position.z)
+	var dist := to.length()
+	if dist < ARRIVE or (_pi < path.size() - 1 and dist < 0.9):
+		_pi += 1
+		return
+	var dir := to / maxf(dist, 0.001)
+	dir = _avoid(dir)
+	var want := (CARRY_WALK if is_carrying() else WALK)
+	if mind.state >= WorkerMind.Fear.DISTRESSED and activity == "move" and _after_move == "home":
+		want *= 1.12       # hurrying home
+	_speed = move_toward(_speed, want, delta * 3.0)
+	var step := dir * _speed * delta
+	var np := global_position + step
+	np.y = crew.nav.surface_at(np)
+	if absf(np.y - global_position.y) > 0.6:
+		np.y = lerpf(global_position.y, np.y, 0.5)
+	global_position = np
+	_face(dir, delta)
+	travel_seconds += delta
+	crew.open_doors_near(global_position)
+	body_char.set_locomotion(_speed)
+	# Stuck detection: real displacement vs expected over a window.
+	_stuck_t += delta
+	if _stuck_t >= STUCK_WINDOW:
+		var moved := Vector2(global_position.x - _stuck_from.x, global_position.z - _stuck_from.z).length()
+		if moved < want * STUCK_WINDOW * 0.25:
+			_on_stuck()
+		_stuck_t = 0.0
+		_stuck_from = global_position
+
+
+func _face(dir: Vector3, delta: float) -> void:
+	if dir.length() < 0.01:
+		return
+	var want := atan2(-dir.x, -dir.z)
+	rotation.y = lerp_angle(rotation.y, want, clampf(delta * TURN, 0.0, 1.0))
+
+
+## Local steering: step around trunks and other people instead of through.
+func _avoid(dir: Vector3) -> Vector3:
+	var p := global_position
+	var push := Vector3.ZERO
+	var dest: Vector3 = target.get("dest", Vector3.INF)
+	for t in crew.nav.trunks_near(p, 2.2):
+		var d := Vector3(p.x - t.x, 0, p.z - t.z)
+		var r := t.y + 0.45
+		var L := d.length()
+		# The trunk we are walking up to (felling/standing beside) is the goal,
+		# not an obstacle.
+		if dest != Vector3.INF and Vector2(dest.x - t.x, dest.z - t.z).length() < t.y + 1.6:
+			continue
+		if L < r + 0.6 and dir.dot(-d.normalized()) > 0.2:
+			var side := Vector3(-dir.z, 0, dir.x)
+			if side.dot(d) < 0:
+				side = -side
+			push += side * (r + 0.6 - L) * 1.5
+	for w in crew.workers.values():
+		if w == self:
+			continue
+		var d := Vector3(p.x - w.global_position.x, 0, p.z - w.global_position.z)
+		if d.length() < 0.8 and d.length() > 0.01:
+			push += d.normalized() * (0.8 - d.length()) * 2.0
+	if Game.player:
+		var d := Vector3(p.x - Game.player.global_position.x, 0, p.z - Game.player.global_position.z)
+		if d.length() < 0.9 and d.length() > 0.01:
+			push += d.normalized() * (0.9 - d.length()) * 2.0
+	return (dir + push).normalized() if push.length() > 0.001 else dir
+
+
+func _on_stuck() -> void:
+	stuck_events += 1
+	_repaths += 1
+	crew.log_stuck(self)
+	if _repaths > 3:
+		crew.mark_unreachable(self)
+	if _repaths <= 3:
+		var dest: Vector3 = target.get("dest", global_position)
+		# Small local escape, then a fresh path.
+		var side := global_basis.x * (1.0 if _repaths % 2 == 0 else -1.0)
+		var esc := global_position + side * 1.2
+		if crew.nav.walkable(esc):
+			esc.y = crew.nav.surface_at(esc)
+			global_position = global_position.lerp(esc, 0.25)
+		var p := crew.nav.find_path(global_position, dest)
+		if not p.is_empty():
+			path = p
+			_pi = 1 if p.size() > 1 else 0
+			return
+	# Give up on this job: release claims, think again. (Never teleport.)
+	_repaths = 0
+	abandon("stuck")
+
+
+func _arrived() -> void:
+	_speed = 0.0
+	_repaths = 0
+	body_char.set_locomotion(0.0)
+	var next := _after_move
+	_after_move = ""
+	activity = next if next != "" else "idle"
+	_swing_t = -1.0
+
+
+func is_carrying() -> bool:
+	return not crew.timber.load_of(id).is_empty()
+
+
+# -------------------------------------------------------------- the brain
+
+func _physics_process(delta: float) -> void:
+	if crew == null or get_tree().paused:
+		return
+	var now := crew.now()
+	mind.tick(delta, now, crew.mind_context(self))
+	if talking_until > now and activity in ["idle", "fell", "buck", "pick", "move"]:
+		body_char.set_locomotion(0.0)
+		if Game.player:
+			_face(Vector3(Game.player.global_position.x - global_position.x, 0, Game.player.global_position.z - global_position.z).normalized(), delta)
+		return
+	_update_lod()
+	# Long jobs re-check the clock: a far worker turns back in time, even in
+	# the middle of a task (claims released, load handled by the crew).
+	_time_check -= delta
+	if _time_check <= 0.0:
+		_time_check = 3.0
+		if activity in ["fell", "buck", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver"]):
+			crew.check_time(self)
+	match activity:
+		"move":
+			_move(delta)
+		"fell":
+			_do_fell(delta)
+		"retreat_wait":
+			_do_retreat_wait(delta)
+		"buck":
+			_do_buck(delta)
+		"pick":
+			_do_pick()
+		"deliver":
+			_do_deliver()
+		"follow":
+			_do_follow(delta)
+		"sleep", "sit", "departed", "aboard":
+			pass
+		"depart_wait":
+			body_char.set_locomotion(0.0)
+		"home_arrived":
+			crew.on_home(self)
+		_:
+			_decide_cd -= delta
+			if _decide_cd <= 0.0:
+				_decide_cd = 0.7
+				crew.decide(self)
+	_update_carry_visual()
+
+
+func _update_lod() -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	var far := cam.global_position.distance_to(global_position) > 160.0
+	if far != _far:
+		_far = far
+		body_char.visible = not far
+		body_char.process_mode = Node.PROCESS_MODE_DISABLED if far else Node.PROCESS_MODE_INHERIT
+
+
+## Ends the current activity safely: claims released, load kept (the crew
+## service decides whether to stage it), swing stopped.
+func abandon(reason: String) -> void:
+	crew.release_claims(self)
+	path.clear()
+	_after_move = ""
+	activity = "idle"
+	target = {"why": reason}
+	_swing_t = -1.0
+	body_char.set_locomotion(0.0)
+
+
+# ---------------------------------------------------------- felling action
+
+func start_fell(tree_id: int, stand: Vector3, retreat: Vector3) -> bool:
+	target = {"tree": tree_id, "stand": stand, "retreat": retreat, "label": "a tree"}
+	if global_position.distance_to(stand) > 0.6:
+		if not go_to(stand, "fell", "a tree"):
+			return false
+		target["tree"] = tree_id
+		target["stand"] = stand
+		target["retreat"] = retreat
+	else:
+		activity = "fell"
+	return true
+
+
+func _swing_cycle() -> float:
+	return float(crew.work_config.tier_cycle.get(axe_tier() if axe_tier() != "" else "small", 1.0))
+
+
+## Advances one swing; returns true exactly once per swing at contact.
+func _swing(delta: float) -> bool:
+	var cyc := _swing_cycle()
+	if _swing_t < 0.0:
+		_swing_t = 0.0
+		_contacted = false
+		body_char.play("swing", 0.1)
+		body_char.playback_scale = 1.7 / cyc
+		body_char.anim.seek(0.0, true)
+	_swing_t += delta
+	work_seconds += delta
+	var hit := false
+	if not _contacted and _swing_t >= cyc * crew.work_config.contact_fraction:
+		_contacted = true
+		hit = true
+	if _swing_t >= cyc:
+		_swing_t = 0.0
+		_contacted = false
+		body_char.anim.seek(0.0, true)
+	return hit
+
+
+func _do_fell(delta: float) -> void:
+	var tid: int = target.get("tree", -1)
+	var st := Game.trees.state_of(tid)
+	if st != TreeService.State.STANDING and st != TreeService.State.NOTCHED:
+		# Someone (maybe the boss) already felled it: step clear, stop.
+		_begin_retreat()
+		return
+	var base := World.tree_position(Game.vegetation.tree_index_by_id.get(tid, tid))
+	_face(Vector3(base.x - global_position.x, 0, base.z - global_position.z).normalized(), delta * 3.0)
+	if _swing(delta):
+		var res := Game.trees.apply_contact(tid, global_position, crew.work_per_contact(self))
+		LoggingFX.play(LoggingFX.Sound.CHOP, base + Vector3(0, 0.8, 0), -6.0)
+		if bool(res.get("felled", false)):
+			crew.on_felled(self, tid)
+			_begin_retreat()
+
+
+func _begin_retreat() -> void:
+	body_char.play("idle")
+	_swing_t = -1.0
+	var r: Vector3 = target.get("retreat", global_position)
+	var tid: int = target.get("tree", -1)
+	crew.release_claims(self)
+	target = {"tree": tid, "since": crew.now()}
+	if go_to(r, "retreat_wait", "a safe spot"):
+		target["tree"] = tid
+		target["since"] = crew.now()
+	else:
+		activity = "retreat_wait"
+
+
+func _do_retreat_wait(_delta: float) -> void:
+	# Watch the fall; resume once it has come to rest (or after a while).
+	var tid: int = target.get("tree", -1)
+	var st := Game.trees.state_of(tid)
+	if st >= TreeService.State.SECTIONED or crew.now() - float(target.get("since", 0.0)) > 20.0:
+		activity = "idle"
+
+
+# ---------------------------------------------------------- bucking action
+
+func start_buck(body: TimberBody, y: float, stand: Vector3) -> bool:
+	var tree_id := body.tree_id
+	if global_position.distance_to(stand) > 0.6:
+		if not go_to(stand, "buck", "a fallen trunk"):
+			return false
+	else:
+		activity = "buck"
+	target["tree"] = tree_id
+	target["y"] = y
+	target["stand"] = stand
+	return true
+
+
+func _do_buck(delta: float) -> void:
+	var tid: int = target.get("tree", -1)
+	var y: float = target.get("y", 0.0)
+	var body := crew.body_for_cut(tid, y)
+	if body == null:
+		abandon("trunk changed")
+		return
+	var at := body.global_transform * Vector3(0, y, 0)
+	_face(Vector3(at.x - global_position.x, 0, at.z - global_position.z).normalized(), delta * 3.0)
+	if global_position.distance_to(at) > 2.6:
+		abandon("moved away")
+		return
+	if _swing(delta):
+		var res := crew.timber.apply_cut(body, y, crew.work_per_contact(self))
+		if str(res.get("reason", "")) == "wait":
+			return
+		if not bool(res.get("accepted", false)):
+			abandon("no cut there")
+			return
+		LoggingFX.play(LoggingFX.Sound.CHOP, at, -6.0)
+		if bool(res.get("separated", false)):
+			crew.on_bucked(self)
+			abandon("cut done")
+
+
+# --------------------------------------------------------- hauling actions
+
+func start_pick(sids: Array) -> bool:
+	target = {"pick": sids.duplicate(), "label": "logs"}
+	return _next_pick()
+
+
+func _next_pick() -> bool:
+	var list: Array = target.get("pick", [])
+	while not list.is_empty():
+		var sid: String = list[0]
+		var b := crew.timber.body_of(sid)
+		if b == null or not b.is_single_piece():
+			list.pop_front()
+			crew.timber.release(sid, id)
+			continue
+		var at := b.piece_world_center(b.ks[0])
+		var stand := crew.stand_beside(at, b.axis_samples(2), global_position)
+		if global_position.distance_to(stand) < 0.8:
+			activity = "pick"
+			target["pick"] = list
+			return true
+		if go_to(stand, "pick", "logs"):
+			target["pick"] = list
+			return true
+		list.pop_front()
+		crew.timber.release(sid, id)
+	# Nothing (left) to pick: deliver what we hold.
+	if is_carrying():
+		return crew.send_to_rack(self)
+	activity = "idle"
+	return false
+
+
+func _do_pick() -> void:
+	var list: Array = target.get("pick", [])
+	if list.is_empty():
+		_next_pick()
+		return
+	var sid: String = list.pop_front()
+	var b := crew.timber.body_of(sid)
+	if b != null:
+		var res := crew.timber.pick_up_for(id, b, crew.carry_budget(self))
+		if bool(res.ok):
+			body_char.play("idle")
+	else:
+		crew.timber.release(sid, id)
+	target["pick"] = list
+	if list.is_empty():
+		if is_carrying():
+			crew.send_to_rack(self)
+		else:
+			activity = "idle"
+	else:
+		_next_pick()
+
+
+func _do_deliver() -> void:
+	var held: Array = crew.timber.load_of(id).duplicate()
+	if not held.is_empty():
+		var rs := crew.timber.accept(held, "rack:" + id)
+		crew.on_delivered(self, rs)
+	crew.release_rack_slot(self)
+	activity = "idle"
+
+
+func _update_carry_visual() -> void:
+	var held: Array = crew.timber.load_of(id)
+	if held.size() == _carry_nodes.size():
+		if held.is_empty():
+			body_char.carry_grips = []
+		return
+	for n in _carry_nodes:
+		n.queue_free()
+	_carry_nodes.clear()
+	if held.is_empty():
+		body_char.carry_grips = []
+		return
+	var mount := body_char.attachment("log")
+	var i := 0
+	for sid in held:
+		var s := crew.timber.segment(sid)
+		var rec: Dictionary = crew.timber.records[int(str(sid).trim_prefix("T").split("_S")[0])]
+		var mi := MeshInstance3D.new()
+		mi.mesh = TimberMesh.piece_mesh(rec, int(s.k))
+		var r := TimberMesh.piece_radius(rec, int(s.k))
+		# Across the shoulders, stacked; axis along the body's left-right.
+		mi.basis = TimberMesh.frame_for(Vector3.RIGHT)
+		mi.position = Vector3(0, r + float(i) * r * 1.8, 0.0)
+		mount.add_child(mi)
+		_carry_nodes.append(mi)
+		i += 1
+	var gl := Marker3D.new()
+	var gr := Marker3D.new()
+	gl.position = Vector3(-0.28, -0.02, 0.02)
+	gr.position = Vector3(0.28, -0.02, 0.02)
+	mount.add_child(gl)
+	mount.add_child(gr)
+	_carry_nodes.append(gl)
+	_carry_nodes.append(gr)
+	body_char.carry_grips = [gl, gr]
+
+
+# ----------------------------------------------------------------- follow
+
+func _do_follow(delta: float) -> void:
+	var p := Game.player
+	if p == null:
+		activity = "idle"
+		return
+	var d := Vector3(p.global_position.x - global_position.x, 0, p.global_position.z - global_position.z)
+	var L := d.length()
+	if L > 30.0:
+		# Too far for direct steering: path to a spot near the boss.
+		var spot := p.global_position - d.normalized() * 3.0
+		if go_to(spot, "follow", "you"):
+			return
+	if L > 3.5:
+		var dir := _avoid(d / L)
+		_speed = move_toward(_speed, WALK * (1.25 if L > 8.0 else 1.0), delta * 3.0)
+		var np := global_position + dir * _speed * delta
+		if crew.nav.walkable(np):
+			np.y = crew.nav.surface_at(np)
+			global_position = np
+		_face(dir, delta)
+		body_char.set_locomotion(_speed)
+		crew.open_doors_near(global_position)
+	else:
+		_speed = 0.0
+		body_char.set_locomotion(0.0)
+		_face(d / maxf(L, 0.01), delta)
+
+
+# ----------------------------------------------------------- home & sleep
+
+func lie_down(bed: Node3D) -> void:
+	path.clear()
+	activity = "sleep"
+	var bb := bed.get_parent() as Node3D
+	var up_world := (bb.global_basis * Vector3(0, 0, -1)).normalized()   # toward the pillow
+	# Lying on the back: body up-axis toward the pillow, face to the ceiling
+	# (the character faces -Z, so Z points down). Right-handed: X = Y x Z.
+	var z := Vector3.DOWN
+	var x := up_world.cross(z).normalized()
+	var foot := bb.global_transform * Vector3(0, 0.64, 0.92)
+	global_transform = Transform3D(Basis(x, up_world, z).orthonormalized(), foot + Vector3(0, 0.12, 0))
+	body_char.play("lie", 0.3)
+	col.collision_layer = 0
+
+
+func get_up(at: Vector3) -> void:
+	rotation = Vector3(0, rotation.y, 0)
+	global_basis = Basis(Vector3.UP, global_rotation.y)
+	global_position = at
+	body_char.play("idle", 0.3)
+	col.collision_layer = 1
+	activity = "idle"
+
+
+func sit_at(seat: Node3D) -> void:
+	path.clear()
+	activity = "sit"
+	global_transform = Transform3D(Basis(Vector3.UP, seat.global_rotation.y + PI), seat.global_position)
+	body_char.play("sit", 0.3)
+
+
+func capture() -> Dictionary:
+	return {"pos": [global_position.x, global_position.y, global_position.z], "yaw": rotation.y, "activity": activity if activity in ["sleep", "depart_wait", "aboard"] else "idle"}

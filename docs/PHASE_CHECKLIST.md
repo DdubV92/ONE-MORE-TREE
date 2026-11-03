@@ -1,5 +1,41 @@
 # Phase checklist
 
+## Phase 4: The living crew
+
+Status key: ✅ implemented and observed (test or headless sim) · 🟡 implemented, needs live review · ⬜ later phase.
+
+| Item | Status | Notes |
+|---|---|---|
+| Cabin extension: two-bed bedroom, kitchen, bathroom (toilet, sink, shower), grounded foundation, doorway; six beds with unique indices | ✅ / 🟡 | Rendered and checked; circulation needs live review |
+| Two starting employees (same Phase 3 identities, activated once), seeded original looks, traits, small axes, beds | ✅ | Migration is idempotent (tested) |
+| Roster states pending_arrival → active → departing → departed; five maximum counting arrivals and departures | ✅ | Tested |
+| Hiring from a seeded candidate pool (fee once, new ids only), arrival by daylight skiff at a minimal service dock | ✅ / 🟡 | Boat and dock are simple originals, tagged for Phase 5 polish |
+| Firing with a confirmation (wages owed, gear returned, jobs cancelled, logs set down, real walk to the boat) | ✅ / 🟡 | Worked-day wage kept (tested) |
+| Quitting from unpaid wages (Payroll) or fear (after a warning) through the same departure | ✅ | |
+| Navigation: 3 m island A* (water, slope, rocks, trees, logs, fence gates, dock) and 0.5 m camp grid rasterised from collision (doors, floors, private camper) | ✅ | Built in about 0.8 s |
+| Physical jobs through the shared APIs: felling with retreat, bucking, hauling with visible loads, rack queue, automatic bottleneck priority, follow, return home | ✅ / 🟡 | Headless shifts below; animation needs live review |
+| Exclusive claims (trees, trunks, pieces, rack places, seats); worker, worker and player contest | ✅ | Tested through `pick_up_for` / claims |
+| Hard-working ×1.25 once; Stronger 500 mTE hand budget; four-piece visible cap for workers | ✅ | Tested |
+| Return before night: route time, load, doors, margin (timid earlier); warn → return → refuse late orders; mid-task re-checks | ✅ | All five in bed at nightfall in the 5-worker shift |
+| Stuck detection with bounded escape and repath, then job release; unreachable targets skipped until morning; stuck log | ✅ | 9–11 recovered events per shift, logged for repair |
+| Minds: traits change behaviour (fear sensitivity, margins, carry, rate, belief gain, reassurance, perception range) | ✅ | Tested |
+| Local perception (distance, occlusion, facing, sleep, observant) and firsthand vs rumour evidence; story sharing between colleagues | ✅ / 🟡 | Development stimuli only |
+| Fear with hysteresis, diminishing repeats, reassurance cooldown, warning before quitting | ✅ | Tested |
+| Dialogue: 60+ original captioned lines with trait variants, no back-to-back repeats; branching talk panel | ✅ / 🟡 | |
+| Crew tab (roster, jobs, work-near-me, hire, fire) and Crew Demonstration route | 🟡 | |
+| Occupied worker cabin counts as protected at night | ✅ | `SafetyService` |
+| Save v5 (crew block, worker loads); reload without duplicates | ✅ | Tested |
+| Trucks, drivers, TV and cameras (Phase 5); Terrors and Foreman hunt (Phase 6) | ⬜ | Hooks only |
+
+### Crew shift measurements (headless, `tools/crew_sim.tscn`, one full 20-minute day, small axes)
+
+| Crew | Trees felled | Bucking cuts | Delivered (tree-eq) | Paid | Walking time | Axe-swinging time | Stuck events (recovered) | In bed at nightfall | Ownership ledger |
+|---|---|---|---|---|---|---|---|---|---|
+| 2 | 5 | 38 | 3.00 | $300.00 | 1915 s | 154 s | 9 | 2 / 2 | consistent |
+| 5 | 9 | 61 | 4.65 | $464.32 | 4751 s | 252 s | 11 | 5 / 5 | consistent |
+
+These are honest numbers. Hand hauling dominates the day: workers spend about 90 % of their time walking (logs to the rack and back), so a five-person crew delivers roughly 4.6 tree-equivalents (about $460) a day against $1,500 of wages. The 30-day contract (about 400 trees a day) is not feasible with hand crews. Phase 5 trucks (three tree-equivalents per load) are the designed answer, and the workload will only be judged once trucks are measured.
+
 ## Graphics pass 3 and nights (user request after Phase 3)
 
 | Item | Status | Notes |

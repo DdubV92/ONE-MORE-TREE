@@ -35,6 +35,8 @@ var config: TreeWorkConfig
 var records := {}          # tree id -> record
 var bodies := {}           # body key -> TimberBody
 var carried: Array[String] = []        # sids in the player's hands (bundle)
+## Phase 4: worker hand loads, carrier id -> Array of sids (same rules).
+var loads := {}
 var queue: Array[String] = []          # accepted, waiting to burn (FIFO)
 var burning: Array[String] = []        # in the pit (max BURN_SLOTS)
 var receipts: Array[Dictionary] = []
@@ -45,6 +47,9 @@ var _body_counter := 0
 var persistent := true
 ## Phase 3: the contract closes acceptance after its outcome commits.
 var accept_gate: Callable
+## Phase 4: navigation marks resting logs (callable(body, +1/-1)).
+var body_settled_hook: Callable
+var _nav_marked := {}
 var body_parent: Node3D
 
 const BURN_SLOTS := 3                   # detailed logs in the pit at once
@@ -226,6 +231,8 @@ func _make_body(tree_id: int, ks: Array[int], crown: bool, pose: Transform3D, dy
 	body_parent.add_child(b)
 	b.setup(self, key, tree_id, ks, crown, pose, dynamic)
 	bodies[key] = b
+	if not dynamic:
+		_nav_mark(b, true)
 	for k in ks:
 		var s: Dictionary = records[tree_id].segments[k]
 		var st := Seg.WORLD if ks.size() == 1 and not crown else Seg.ATTACHED
@@ -356,6 +363,7 @@ func _clear_crown(body: TimberBody) -> void:
 
 
 func _remove_body(body: TimberBody, wake_neighbours := true) -> void:
+	_nav_mark(body, false)
 	bodies.erase(body.key)
 	var at := body.global_position
 	var reach := body.span().y + 2.0
@@ -375,7 +383,19 @@ func _wake_unsupported_near(at: Vector3, reach: float) -> void:
 
 
 ## A dynamic piece came to rest: repair it only if it is truly inaccessible.
+func _nav_mark(b: TimberBody, on: bool) -> void:
+	if not body_settled_hook.is_valid():
+		return
+	if on and not _nav_marked.has(b.key):
+		_nav_marked[b.key] = true
+		body_settled_hook.call(b, 1)
+	elif not on and _nav_marked.has(b.key):
+		_nav_marked.erase(b.key)
+		body_settled_hook.call(b, -1)
+
+
 func on_body_settled(b: TimberBody) -> void:
+	_nav_mark(b, true)
 	var reason := TimberRecovery.diagnose(b)
 	if reason != "":
 		_recover_body(b, reason)
@@ -398,26 +418,49 @@ func body_of(sid: String) -> TimberBody:
 # ------------------------------------------------------------------ carrying
 
 func carried_mte() -> int:
+	return carrier_mte("player")
+
+
+## The list a carrier holds ("player" is the boss's bundle).
+func load_of(carrier: String) -> Array:
+	if carrier == "player":
+		return carried
+	if not loads.has(carrier):
+		loads[carrier] = []
+	return loads[carrier]
+
+
+func carrier_mte(carrier: String) -> int:
 	var total := 0
-	for sid in carried:
+	for sid in load_of(carrier):
 		total += int(segment(sid).mte)
 	return total
 
 
 ## Picks up a single free piece into the player's bundle. Budget check uses
-## integer mTE; `budget` lets future Stronger workers carry more.
+## integer mTE; Stronger carriers pass a larger budget.
 func pick_up(body: TimberBody, budget := HAND_BUDGET_MTE) -> Dictionary:
+	return pick_up_for("player", body, budget)
+
+
+## Shared pickup for the boss and workers: one authoritative transaction, so
+## two hands can never take the same piece.
+func pick_up_for(carrier: String, body: TimberBody, budget := HAND_BUDGET_MTE) -> Dictionary:
+	if body == null or not is_instance_valid(body) or not bodies.has(body.key):
+		return {"ok": false, "reason": "That piece is gone."}
 	if body.ks.size() != 1 or body.crown:
 		return {"ok": false, "reason": "Cut this section free first."}
 	var sid: String = records[body.tree_id].segments[body.ks[0]].sid
-	if claims.has(sid) and claims[sid] != "player":
+	if claims.has(sid) and claims[sid] != carrier:
 		return {"ok": false, "reason": "Someone else is handling this piece."}
 	var s := segment(sid)
-	if carried_mte() + int(s.mte) > budget + 2:
-		return {"ok": false, "reason": "Too heavy to add to your load (%d%% of a hand load)." % int(100.0 * (carried_mte() + int(s.mte)) / budget)}
+	var held := load_of(carrier)
+	# Workers carry at most four pieces (what fits on a shoulder visibly).
+	if (carrier != "player" and held.size() >= 4) or carrier_mte(carrier) + int(s.mte) > budget + 2:
+		return {"ok": false, "reason": "Too heavy to add to your load (%d%% of a hand load)." % int(100.0 * (carrier_mte(carrier) + int(s.mte)) / budget)}
 	# Record first, then visuals: the piece is CARRIED before the body goes.
-	carried.append(sid)
-	claims[sid] = "player"
+	held.append(sid)
+	claims[sid] = carrier
 	_set_state(sid, Seg.CARRIED)
 	_remove_body(body)
 	carried_changed.emit()
@@ -427,14 +470,19 @@ func pick_up(body: TimberBody, budget := HAND_BUDGET_MTE) -> Dictionary:
 ## Sets a carried piece down (caller validated the spot): `centre` is where
 ## the middle of the piece goes, `dir` its lengthwise direction.
 func put_down(sid: String, centre: Vector3, dir: Vector3, dynamic: bool) -> TimberBody:
-	if not sid in carried:
+	return put_down_for("player", sid, centre, dir, dynamic)
+
+
+func put_down_for(carrier: String, sid: String, centre: Vector3, dir: Vector3, dynamic: bool) -> TimberBody:
+	var held := load_of(carrier)
+	if not sid in held:
 		return null
 	var s := segment(sid)
 	var tid := int(sid.trim_prefix("T").split("_S")[0])
 	var k: int = s.k
 	var basis := TimberMesh.frame_for(dir)
 	var mid := (float(s.a) + float(s.b)) * 0.5
-	carried.erase(sid)
+	held.erase(sid)
 	claims.erase(sid)
 	var ks: Array[int] = [k]
 	var b := _make_body(tid, ks, false, Transform3D(basis, centre - basis.y * mid), dynamic)
@@ -461,6 +509,8 @@ func accept(sids: Array, source: String) -> Array[Dictionary]:
 		s.receipt = r.id
 		receipts.append(r)
 		carried.erase(sid)
+		for c in loads:
+			(loads[c] as Array).erase(sid)
 		var b := body_of(sid)
 		if b:
 			_remove_body(b)
@@ -656,7 +706,7 @@ func capture() -> Dictionary:
 	for key in bodies:
 		var b: TimberBody = bodies[key]
 		body_list.append({"tree": b.tree_id, "ks": b.ks.duplicate(), "crown": b.crown, "pose": TreeService._xf_to_array(b.global_transform)})
-	return {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50)}
+	return {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "loads": loads.duplicate(true), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50)}
 
 
 ## Rebuilds the ledger from a save. Ownership is re-derived and validated:
@@ -701,6 +751,13 @@ func restore(data: Dictionary) -> void:
 			carried.append(str(sid))
 			sg.state = Seg.CARRIED
 			claims[str(sid)] = "player"
+	for c in data.get("loads", {}):
+		for sid in data.loads[c]:
+			var sg := segment(str(sid))
+			if not sg.is_empty() and not accepted.has(str(sid)) and not str(sid) in carried and not _in_any_load(str(sid)):
+				load_of(str(c)).append(str(sid))
+				sg.state = Seg.CARRIED
+				claims[str(sid)] = str(c)
 	var placed := {}
 	for bd in data.get("bodies", []):
 		var tid := int(bd.tree)
@@ -709,7 +766,7 @@ func restore(data: Dictionary) -> void:
 		var ks: Array[int] = []
 		for k in bd.ks:
 			var sg: Dictionary = records[tid].segments[int(k)] if int(k) < records[tid].segments.size() else {}
-			if sg.is_empty() or accepted.has(str(sg.sid)) or str(sg.sid) in carried or placed.has(str(sg.sid)):
+			if sg.is_empty() or accepted.has(str(sg.sid)) or str(sg.sid) in carried or _in_any_load(str(sg.sid)) or placed.has(str(sg.sid)):
 				continue
 			ks.append(int(k))
 			placed[str(sg.sid)] = true
@@ -722,7 +779,7 @@ func restore(data: Dictionary) -> void:
 	for id in records:
 		for sg in records[id].segments:
 			var sid: String = sg.sid
-			if accepted.has(sid) or sid in carried or placed.has(sid):
+			if accepted.has(sid) or sid in carried or _in_any_load(sid) or placed.has(sid):
 				continue
 			var stump := World.tree_position(int(records[id].idx))
 			var ks2: Array[int] = [int(sg.k)]
@@ -735,12 +792,22 @@ func restore(data: Dictionary) -> void:
 	queue_changed.emit()
 
 
+func _in_any_load(sid: String) -> bool:
+	for c in loads:
+		if sid in (loads[c] as Array):
+			return true
+	return false
+
+
 func clear_all() -> void:
+	for key in bodies:
+		_nav_mark(bodies[key], false)
 	for key in bodies:
 		(bodies[key] as Node).queue_free()
 	bodies.clear()
 	records.clear()
 	carried.clear()
+	loads.clear()
 	queue.clear()
 	burning.clear()
 	receipts.clear()

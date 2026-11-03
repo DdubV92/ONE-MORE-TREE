@@ -22,6 +22,10 @@ static func all() -> Dictionary:
 	var rack := c + CampLayout.DELIVERY_RACK_POS
 	vp["delivery"] = _v(rack + Vector3(1.5, 0, 5.5), c + CampLayout.BURN_PIT_POS + Vector3(1.5, 0, 0), eye, "Delivery rack and burn pit")
 	var cabin := c + CampLayout.CABIN_POS
+	var bedroom := cabin + Vector3(-2.2, CampLayout.CABIN_FLOOR, -6.6)
+	vp["cabin_bedroom"] = _v(bedroom, bedroom + Vector3(-0.6, -0.8, -3.0), eye, "Extension bedroom: beds 5 and 6")
+	vp["cabin_ext"] = _v(cabin + Vector3(9.0, 0, -15.0), cabin + Vector3(0, 0.5, -6.0), eye, "Cabin extension from outside")
+	vp["cabin_ext_in"] = _v(cabin + Vector3(1.6, CampLayout.CABIN_FLOOR, -6.0), cabin + Vector3(-2.2, CampLayout.CABIN_FLOOR - 0.6, -9.6), eye, "Extension: kitchen, bedroom doorway, bathroom door")
 	vp["cabin"] = _v(cabin + Vector3(-2.6, CampLayout.CABIN_FLOOR, 3.8), cabin + Vector3(1.0, CampLayout.CABIN_FLOOR, -3.0), eye, "Worker cabin: four beds and arcade corner")
 	# Beach: walk south from camp until the sand is ~0.25 m above sea.
 	var bx := c.x - 30.0

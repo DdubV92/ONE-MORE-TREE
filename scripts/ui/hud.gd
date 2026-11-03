@@ -96,6 +96,8 @@ func _ready() -> void:
 		campaign_ui.setup(self, Game.campaign)
 		Game.campaign_ui = campaign_ui
 		Game.campaign.notice.connect(func(t: String, secs: float) -> void: show_message(t, secs))
+		if Game.crew:
+			Game.crew.notice.connect(func(t: String, secs: float) -> void: show_message(t, secs))
 		Game.campaign.request_pause.connect(func() -> void:
 			if not get_tree().paused:
 				_toggle_pause())
@@ -323,6 +325,10 @@ func _build_tour() -> void:
 		var dt := DayTestPanel.new()
 		v.add_child(dt)
 		dt.setup(self)
+	if Game.crew:
+		var cd := CrewDemoPanel.new()
+		v.add_child(cd)
+		cd.setup(self)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))

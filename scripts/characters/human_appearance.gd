@@ -70,3 +70,29 @@ static func presets() -> Array[HumanAppearance]:
 	d.posture = -0.5
 	out.append(d)
 	return out
+
+
+## Deterministic original look from a seed (crew members and candidates).
+## Appearance is independent of personality and competence.
+static func from_seed(seed_v: int) -> HumanAppearance:
+	var r := RandomNumberGenerator.new()
+	r.seed = seed_v
+	var a := HumanAppearance.new()
+	a.label = "seed %d" % seed_v
+	a.height = r.randf_range(1.6, 1.9)
+	a.build = r.randf_range(0.88, 1.24)
+	const SKINS := [Color(0.95, 0.78, 0.66), Color(0.88, 0.68, 0.55), Color(0.76, 0.55, 0.42), Color(0.55, 0.38, 0.27), Color(0.42, 0.29, 0.2), Color(0.32, 0.22, 0.15)]
+	const HAIRS := [Color(0.08, 0.06, 0.05), Color(0.25, 0.16, 0.1), Color(0.45, 0.28, 0.14), Color(0.7, 0.45, 0.2), Color(0.55, 0.52, 0.5), Color(0.82, 0.7, 0.45)]
+	const JACKETS := [Color(0.62, 0.2, 0.15), Color(0.35, 0.4, 0.22), Color(0.78, 0.58, 0.18), Color(0.18, 0.24, 0.4), Color(0.3, 0.3, 0.32), Color(0.55, 0.32, 0.2), Color(0.2, 0.38, 0.36), Color(0.5, 0.15, 0.3)]
+	const PANTS := [Color(0.24, 0.27, 0.32), Color(0.3, 0.25, 0.2), Color(0.18, 0.2, 0.26), Color(0.32, 0.3, 0.26), Color(0.2, 0.22, 0.18)]
+	a.skin = SKINS[r.randi() % SKINS.size()]
+	a.hair = HAIRS[r.randi() % HAIRS.size()]
+	a.hair_style = r.randi() % 4
+	a.beard = r.randi() % 3 if r.randf() < 0.55 else 0
+	a.jacket = JACKETS[r.randi() % JACKETS.size()]
+	a.pants = PANTS[r.randi() % PANTS.size()]
+	a.boots = Color(0.28, 0.18, 0.11).lerp(Color(0.12, 0.1, 0.09), r.randf())
+	a.gloves = Color(0.55, 0.42, 0.25).lerp(Color(0.6, 0.55, 0.2), r.randf() * 0.6)
+	a.brow_tilt = r.randf_range(-0.2, 0.25)
+	a.posture = r.randf_range(-0.5, 0.45)
+	return a

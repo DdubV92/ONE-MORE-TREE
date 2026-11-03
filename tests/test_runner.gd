@@ -49,6 +49,11 @@ func _ready() -> void:
 	_run("save v3 -> v4: pre-contract saves flagged, wallet credits once, slots separate", _t_save_v4)
 	await _run_async("contract: pay once on delivery, final-frame delivery wins, late cannot reopen, reload", _t_campaign_world)
 	await _run_async("sleep: one settlement, reconciled report, morning, day 30 closes", _t_sleep_report)
+	_run("crew minds: firsthand vs rumour, fear/belief separate, hysteresis, cooldowns, warning before quitting", _t_mind)
+	_run("crew dialogue: 48+ original lines, no back-to-back repeats", _t_dialogue)
+	_run("crew return planning: distance, load, doors, timid margin", _t_return_plan)
+	await _run_async("crew: two starters once, six beds, rates, hire to five, firing keeps wages and slot until departure, reload", _t_crew_world)
+	await _run_async("crew claims: worker/worker/player contest, delivery pays once, loads persist", _t_crew_claims)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -330,7 +335,7 @@ func _t_camp() -> String:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	var err := ""
-	var needs := {"worker_bed": 4, "worker_seat": 4, "worker_spawn": 4, "arcade_spot": 2, "player_bed": 1, "dog_bed": 1, "shop_counter": 1, "payroll_anchor": 1, "burn_pit_load_point": 1, "safe_reset": 1}
+	var needs := {"worker_bed": 6, "worker_seat": 4, "worker_spawn": 4, "arcade_spot": 2, "player_bed": 1, "dog_bed": 1, "shop_counter": 1, "payroll_anchor": 1, "burn_pit_load_point": 1, "safe_reset": 1}
 	for g in needs:
 		var n := get_tree().get_nodes_in_group(g).size()
 		if n != needs[g]:
@@ -719,6 +724,9 @@ func _owners_ok(t: TimberService) -> String:
 			held[sid] = int(held.get(sid, 0)) + 1
 	for sid in t.carried:
 		held[sid] = int(held.get(sid, 0)) + 1
+	for c in t.loads:
+		for sid in t.loads[c]:
+			held[sid] = int(held.get(sid, 0)) + 1
 	for sid in t.queue:
 		held[sid] = int(held.get(sid, 0)) + 1
 	for sid in t.burning:
@@ -1082,7 +1090,7 @@ func _t_campaign_world() -> String:
 	var seed0 = World.manifest.get("world_seed")
 	var count0 := World.tree_count()
 	var cs: CampaignService = world.campaign
-	cs.start_test_route(true)
+	cs.start_test_route(true, false)
 	cs.contract.scope_override = 1       # development fixture: one-tree contract
 	var t: TimberService = world.timber
 	var i := LoggingTest.find("small")
@@ -1192,7 +1200,7 @@ func _t_sleep_report() -> String:
 	await get_tree().process_frame
 	var err := ""
 	var cs: CampaignService = world.campaign
-	cs.start_test_route(true)
+	cs.start_test_route(true, false)
 	cs.wallet.grant(10000, "test", "T", "extra")
 	cs.clock.restore({"day": 4, "t": 1000.0, "running": true})
 	cs._begin_day_stats()
@@ -1252,3 +1260,301 @@ func _t_save_v4() -> String:
 	if a == b or not a.begins_with("user://saves/"):
 		return "slot paths not separate"
 	return ""
+
+
+# ------------------------------------------------------------------ Phase 4
+
+func _t_mind() -> String:
+	# Firsthand vs rumour; fear and belief separate; hysteresis; cooldowns.
+	var sk := WorkerMind.with_traits(["skeptical"])
+	if sk.hear_boss_report(10.0, false) != "rumor" or sk.belief > 0.15 or sk.firsthand_count() != 0:
+		return "skeptic believed an unsupported report"
+	var stim := {"id": "S1", "kind": "figure", "modality": "sight", "pos": Vector3.ZERO, "severity": 0.6, "ambiguous": false}
+	var mem := sk.perceive(stim, 20.0, {"confidence": 0.9})
+	if mem.is_empty() or not bool(mem.firsthand) or str(mem.status) != "confirmed" or sk.belief < 0.25:
+		return "firsthand sight did not change belief (%s, %.2f)" % [str(mem), sk.belief]
+	if not sk.perceive(stim, 21.0, {"confidence": 0.9}).is_empty():
+		return "same event stored twice"
+	# Ordinary sounds never become evidence.
+	if not sk.perceive({"id": "S2", "kind": "axe", "modality": "sound", "pos": Vector3.ZERO, "severity": 0.5, "ordinary": true}, 22.0, {"confidence": 0.7}).is_empty():
+		return "ordinary work sound became evidence"
+	# Diminishing repeats: the same kind of event hits less each time.
+	var t := WorkerMind.with_traits(["timid"])
+	var gains := []
+	for i in 4:
+		var f0 := t.fear
+		t.perceive({"id": "H%d" % i, "kind": "howl", "modality": "sound", "pos": Vector3.ZERO, "severity": 0.2, "ambiguous": true}, 100.0 + i, {"confidence": 0.6})
+		gains.append(t.fear - f0)
+	if not (gains[1] < gains[0] and gains[2] < gains[1]):
+		return "repeats not diminishing: %s" % str(gains)
+	# Timid reacts more than level-headed to the same thing.
+	var a := WorkerMind.with_traits(["timid"])
+	var b := WorkerMind.with_traits(["level_headed"])
+	a.perceive(stim, 5.0, {"confidence": 0.9})
+	b.perceive(stim, 5.0, {"confidence": 0.9})
+	if a.fear <= b.fear * 2.0:
+		return "timid (%.2f) vs level-headed (%.2f) not distinct" % [a.fear, b.fear]
+	# Hysteresis: hovering just under the enter threshold does not flip states.
+	var h := WorkerMind.with_traits([])
+	h.fear = 0.26
+	h._update_state(0.0)
+	h.fear = 0.2
+	h._update_state(0.0)
+	if h.state != WorkerMind.Fear.UNEASY:
+		return "no hysteresis (state %d)" % h.state
+	h.fear = 0.1
+	h._update_state(0.0)
+	if h.state != WorkerMind.Fear.COMFORTABLE:
+		return "did not recover"
+	# Reassurance: cooldown and diminishing returns.
+	var r := WorkerMind.with_traits([])
+	r.fear = 0.6
+	r.reassure(1000.0, true)
+	var after1 := r.fear
+	if r.reassure(1010.0, true) != "cooldown" or r.fear != after1:
+		return "reassurance spam not blocked"
+	r.reassure(1200.0, true)
+	if (0.6 - after1) <= (after1 - r.fear):
+		return "reassurance not diminishing"
+	# Belief and fear are separate: high belief can sit with low fear.
+	var calm := WorkerMind.with_traits(["level_headed"])
+	calm.perceive(stim, 1.0, {"confidence": 0.9})
+	calm.fear = 0.0
+	calm._update_state(2.0)
+	if calm.belief < 0.25 or calm.state != WorkerMind.Fear.COMFORTABLE:
+		return "belief and fear coupled"
+	# Warning first, quitting only after it persists past a night.
+	var q := WorkerMind.with_traits(["timid"])
+	q.fear = 0.9
+	q._update_state(0.0)
+	if q.state != WorkerMind.Fear.DEPARTURE_WARNING or q.end_of_day(5):
+		return "quit without a warning period"
+	if not q.end_of_day(6) or q.state != WorkerMind.Fear.QUITTING:
+		return "persistent warning did not lead to quitting"
+	# Save round trip.
+	var rt := WorkerMind.from_dict(JSON.parse_string(JSON.stringify(sk.capture())))
+	if absf(rt.belief - sk.belief) > 0.001 or rt.memories.size() != sk.memories.size():
+		return "mind did not round-trip"
+	return ""
+
+
+func _t_dialogue() -> String:
+	if CrewDialogue.line_count() < 48:
+		return "only %d lines" % CrewDialogue.line_count()
+	var last := {}
+	var a := CrewDialogue.line("dusk_return", [], last)
+	var b := CrewDialogue.line("dusk_return", [], last)
+	if a == b:
+		return "repeated the same line twice in a row"
+	var v := CrewDialogue.line("wages_owed", [], {}, {"owed": "300.00", "due": 8})
+	if not "300.00" in v or not "8" in v:
+		return "variables not filled: " + v
+	return ""
+
+
+func _t_return_plan() -> String:
+	var near := CrewService.return_estimate(40.0, false)
+	var far := CrewService.return_estimate(400.0, false)
+	var loaded := CrewService.return_estimate(400.0, true)
+	if not (far > near and loaded > far):
+		return "estimate ignores distance or load (%.0f %.0f %.0f)" % [near, far, loaded]
+	if near < 12.0:
+		return "estimate ignores doors"
+	var timid := WorkerMind.with_traits(["timid"])
+	var steady := WorkerMind.with_traits([])
+	if timid.return_margin() <= steady.return_margin():
+		return "timid workers do not leave earlier"
+	return ""
+
+
+func _t_crew_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	for i in 4:
+		await get_tree().physics_frame
+	var err := ""
+	var cs: CampaignService = world.campaign
+	var crew: CrewService = world.crew
+	if not crew.world_ready:
+		err = "crew navigation not built"
+	cs.start_test_route(false)
+	await get_tree().physics_frame
+	# Exactly two starters, activated once; re-running migration adds nobody.
+	if err == "" and (crew.workers.size() != 2 or cs.payroll.employees.size() != 2):
+		err = "expected 2 starting workers, got %d" % crew.workers.size()
+	if err == "" and crew.migrate_pending() != 0:
+		err = "migration re-activated starters"
+	# Six beds, unique assignments, never the boss's or dog's bed.
+	var idx := {}
+	for m in get_tree().get_nodes_in_group("worker_bed"):
+		idx[int(m.get_meta("bed_index", 0))] = true
+	if err == "" and idx.keys().size() != 6:
+		err = "worker beds: %s" % str(idx.keys())
+	var beds := {}
+	for e in cs.payroll.employees:
+		if beds.has(int(e.bed)) or int(e.bed) <= 0:
+			err = "bed assignment not unique: %s" % str(e.bed)
+		beds[int(e.bed)] = true
+	# Workers spawned on walkable ground with their own small axes.
+	for w in crew.workers.values():
+		var wk := w as Worker
+		if err == "" and (not crew.nav.walkable(wk.global_position) and not crew.nav.in_camp(wk.global_position)):
+			err = "worker spawned off the walkable map"
+		if err == "" and wk.axe_tier() != "small":
+			err = "worker without their small axe"
+	# Axe ownership: every axe has exactly one owner, nobody shares the boss's.
+	var owners := {}
+	for a in cs.equipment.axes:
+		if owners.has(a.id):
+			err = "axe owned twice"
+		owners[a.id] = a.owner
+	# Rates: Hard-working applied once; Stronger carries 1.5x.
+	var hw: Worker = crew.workers["EMP-01"]
+	var st: Worker = crew.workers["EMP-02"]
+	var cfg: TreeWorkConfig = load("res://config/tree_work.tres")
+	if err == "" and absf(crew.work_per_contact(hw) - cfg.work_per_contact("small", true)) > 0.0001:
+		err = "hard-working rate wrong"
+	if err == "" and absf(crew.work_per_contact(st) - cfg.work_per_contact("small", false)) > 0.0001:
+		err = "plain rate wrong"
+	if err == "" and (crew.carry_budget(st) != 500 or crew.carry_budget(hw) != 333):
+		err = "carry budgets %d / %d" % [crew.carry_budget(st), crew.carry_budget(hw)]
+	# Hiring: fee once, five maximum (pending arrivals count), no id reuse.
+	cs.wallet.grant(10000000, "test", "T", "cash")
+	crew.refresh_candidates()
+	var cash0 := cs.wallet.cash
+	for i in 3:
+		var r := crew.hire(crew.candidates[0].cid)
+		if err == "" and not bool(r.ok):
+			err = "hire %d refused: %s" % [i, r.reason]
+	if err == "" and cash0 - cs.wallet.cash != 3 * crew.econ.hire_fee_cents:
+		err = "hire fees wrong"
+	if err == "" and bool(crew.can_hire().ok):
+		err = "a sixth employee could be hired"
+	# Firing keeps the slot until the person has actually left.
+	var e1 := cs.payroll.employee("EMP-01")
+	(e1.worked_days as Array).append(cs.clock.day)
+	crew.fire("EMP-01")
+	if err == "" and (str(e1.status) != "departing" or bool(crew.can_hire().ok)):
+		err = "fired worker freed the slot before leaving"
+	var hw_axe := 0
+	for a in cs.equipment.owned_by("EMP-01"):
+		hw_axe += 1
+	if err == "" and hw_axe != 0:
+		err = "fired worker kept the company axe"
+	crew._finish_departure(e1)
+	if err == "" and (not bool(crew.can_hire().ok) or crew.workers.has("EMP-01")):
+		err = "slot not freed after departure"
+	var r6 := crew.hire(crew.candidates[0].cid)
+	if err == "" and (not bool(r6.ok) or str(r6.id) == "EMP-01"):
+		err = "replacement reused an old identity"
+	# Wages for the day the fired worker worked are still owed tonight.
+	var s := cs.payroll.settle_day(cs.clock.day)
+	if err == "" and cs.payroll.liabilities.filter(func(l: Dictionary) -> bool: return str(l.emp) == "EMP-01").is_empty():
+		err = "fired worker's worked day was erased"
+	# Exclusive task claims.
+	var other: Worker = crew.workers["EMP-02"]
+	if err == "" and (not crew.claim("tree:1", other) or crew.claims.get("tree:1") != "EMP-02"):
+		err = "task claim failed"
+	crew.claims["tree:2"] = "EMP-09"
+	if err == "" and crew.claim("tree:2", other):
+		err = "claimed a tree someone else holds"
+	# Save/load: no duplicate people.
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(crew.capture()))
+	var n0 := crew.workers.size()
+	crew.restore(snap)
+	await get_tree().physics_frame
+	if err == "" and crew.workers.size() != n0:
+		err = "reload changed the crew size (%d -> %d)" % [n0, crew.workers.size()]
+	# Navigation: from the rack out through a gate to the forest and back to a bed.
+	var rack := CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 2))
+	var forest := World.camp_origin() + Vector3(10, 0, -60)
+	var p := crew.nav.find_path(rack, forest)
+	if err == "" and p.is_empty():
+		err = "no path from the rack to the forest"
+	var bed := crew.bed_approach(crew.workers.values()[0])
+	if err == "" and crew.nav.find_path(forest, bed).is_empty():
+		err = "no path from the forest to a cabin bed"
+	for q in p:
+		if err == "" and crew.nav.in_camp(q):
+			var f := crew.nav._fine(Vector2(q.x, q.z))
+			if crew.nav.camp_grid.is_point_solid(f) and q != p[0]:
+				err = "path crosses a solid camp cell"
+	world.timber.clear_all()
+	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+func _t_crew_claims() -> String:
+	# Worker vs worker vs player contest on one log, through the real API.
+	Game.mode = Game.Mode.PREVIEW
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	for i in 4:
+		await get_tree().physics_frame
+	var err := ""
+	var t: TimberService = world.timber
+	var i := LoggingTest.find("small")
+	var id: int = World.trees.id[i]
+	var stand := PlacementValidator.cut_stands(i)[0]
+	world.trees.apply_contact(id, stand, float(world.trees.record(id).required) + 1.0)
+	var w := 0.0
+	while world.trees.state_of(id) < TreeService.State.SECTIONED and w < 30.0:
+		await get_tree().physics_frame
+		w += 1.0 / 60.0
+	var guard := 0
+	while guard < 100:
+		guard += 1
+		var tb: TimberBody = null
+		for key in t.bodies:
+			if not (t.bodies[key] as TimberBody).is_single_piece():
+				tb = t.bodies[key]
+		if tb == null:
+			break
+		var y := float(t.records[id].merch_top) if tb.crown else float(t.records[id].segments[tb.ks.max() - 1].b)
+		t.apply_cut(tb, y, 100.0)
+		for f in 20:
+			await get_tree().physics_frame
+	for f in 120:
+		await get_tree().physics_frame
+	var b: TimberBody = t.bodies.values()[0]
+	var sid: String = b.sid_list()[0]
+	if not t.claim(sid, "EMP-01"):
+		err = "first claim failed"
+	if err == "" and bool(t.pick_up(b).ok):
+		err = "player took a piece a worker claimed"
+	if err == "" and bool(t.pick_up_for("EMP-02", b, 500).ok):
+		err = "second worker took a claimed piece"
+	var r := t.pick_up_for("EMP-01", b, 333)
+	if err == "" and not bool(r.ok):
+		err = "claimant could not pick up: %s" % str(r)
+	if err == "" and (t.load_of("EMP-01").size() != 1 or t.body_of(sid) != null):
+		err = "worker load not exclusive"
+	# Worker delivery pays the existing share once.
+	var c0 := world.campaign.wallet.cash
+	world.campaign.wallet.enabled = true
+	var rs := t.accept(t.load_of("EMP-01").duplicate(), "rack:EMP-01")
+	t.accept([sid], "rack:EMP-01")
+	if err == "" and (rs.size() != 1 or world.campaign.wallet.cash - c0 != int(t.segment(sid).cents)):
+		err = "worker delivery paid %d (expected %d once)" % [world.campaign.wallet.cash - c0, int(t.segment(sid).cents)]
+	# Worker loads survive a save/load exactly once.
+	var b2: TimberBody = null
+	for key in t.bodies:
+		b2 = t.bodies[key]
+	if b2:
+		t.pick_up_for("EMP-02", b2, 500)
+		var data: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+		t.restore(data)
+		if err == "" and t.load_of("EMP-02").size() != 1:
+			err = "worker load lost or duplicated on reload"
+	t.clear_all()
+	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err

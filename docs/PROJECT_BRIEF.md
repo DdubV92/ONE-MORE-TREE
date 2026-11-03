@@ -22,7 +22,7 @@
 - Dirt clearing with a chain-link perimeter and a wide forest entrance.
 - Reliable exterior lights and a tool area.
 - Slow-burning outdoor timber pit.
-- Four-bed worker cabin with an arcade corner.
+- Worker cabin with an arcade corner: four beds plus an attached two-bed bedroom, kitchen and bathroom (six beds).
 - The player's camper: mini kitchen, bathroom, bedroom, player bed and dog bed.
 
 **The dog** lives with the player. It wanders camp by day and comes inside at dusk. It cannot be harmed or lost.
@@ -45,7 +45,7 @@ Combat, hunger meters, weapon shops, chainsaws, vehicles, crafting trees, multip
 
 ## Current phase
 
-Phases 0–3 are implemented: the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
+Phases 0–4 are implemented (Phase 4: the living crew): the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
 
 ## Phase 0 scope (this pack)
 

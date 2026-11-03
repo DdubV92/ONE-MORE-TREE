@@ -53,6 +53,7 @@ func setup(h: Node, s: CampaignService) -> void:
 func _process(_delta: float) -> void:
 	if svc == null:
 		return
+	_process_talk()
 	clock_label.visible = svc.active
 	cash_label.visible = svc.active
 	if not svc.active:
@@ -95,6 +96,9 @@ func close_panel() -> void:
 		panel = null
 		get_tree().paused = false
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if _talk_worker and is_instance_valid(_talk_worker):
+		_talk_worker.talking_until = 0.0
+	_talk_worker = null
 
 
 func is_open() -> bool:
@@ -139,6 +143,8 @@ func toggle_journal(tab := 0) -> void:
 	var tabs := TabContainer.new()
 	tabs.custom_minimum_size = Vector2(660, 430)
 	v.add_child(tabs)
+	if Game.crew and Game.crew.enabled:
+		tabs.add_child(_journal_crew())
 	tabs.add_child(_journal_contract())
 	tabs.add_child(_journal_payroll())
 	tabs.add_child(_journal_ledger())
@@ -342,3 +348,231 @@ func show_outcome(state: String, outcome_id: String) -> void:
 		Game.return_to_menu(), 300))
 	v.add_child(UITheme.button("Keep looking around (no more workdays)", close_panel, 300))
 	_open(p)
+
+
+
+# ------------------------------------------------------------------ crew
+
+func _journal_crew() -> Control:
+	var s := _scroll("Crew")
+	var v: VBoxContainer = s[1]
+	var crew: CrewService = Game.crew
+	_text(v, "Crew %d / %d  ·  beds in use %d / %d  ·  wages $300 per person per day worked." % [crew.slots_used(), CrewService.MAX_EMPLOYEES, CrewService.BEDS - _free_beds(crew), CrewService.BEDS], 15, UITheme.MUTED)
+	for e in svc.payroll.employees:
+		var eid := str(e.id)
+		var st := str(e.status)
+		if st == "departed":
+			continue
+		var w: Worker = crew.workers.get(eid)
+		var m: WorkerMind = crew.minds.get(eid)
+		var axe := crew.equipment_axe_of(eid)
+		var owed := svc.payroll.owed_for(eid)
+		var lines := "%s  ·  %s\n%s · %s · bed %d · %s axe%s" % [e.name, ", ".join(PackedStringArray(e.traits)).replace("_", " "), {"active": "working", "pending_arrival": "arriving on the next daylight boat", "departing": "leaving (%s)" % e.get("departure_reason", ""), "pending_integration": "arriving"}.get(st, st), (w.activity_words() if w else "-"), int(e.get("bed", 0)), str(axe.get("tier", "no")), ("  ·  owed $%s by day %d" % [Money.format_cents(owed), svc.payroll.due_day_for(eid)]) if owed > 0 else ""]
+		if m:
+			lines += "\nMood: %s  ·  %s" % [m.state_word(), m.belief_word()]
+		_text(v, lines, 15)
+		if st == Payroll.ACTIVE and w:
+			var row := HBoxContainer.new()
+			for j in [["Auto", "automatic"], ["Fell", "felling"], ["Buck", "processing"], ["Haul", "hauling"], ["Follow", "follow"], ["Home", "home"]]:
+				var job: String = j[1]
+				var b := UITheme.button(j[0] + (" *" if str(e.get("job", "automatic")) == job else ""), func() -> void:
+					order_job(w, job)
+					close_panel()
+					toggle_journal(0), 74)
+				row.add_child(b)
+			v.add_child(row)
+			var row2 := HBoxContainer.new()
+			row2.add_child(UITheme.button("Work near me", func() -> void:
+				order_focus(w)
+				close_panel(), 150))
+			row2.add_child(UITheme.button("Fire...", func() -> void: confirm_fire(eid), 100))
+			v.add_child(row2)
+	# Hiring
+	_text(v, "")
+	_text(v, "Hire (fee $%s, wage $300/day; arrives by the daylight boat)" % Money.format_cents(crew.econ.hire_fee_cents), 17, UITheme.ACCENT)
+	var ok := crew.can_hire()
+	if not bool(ok.ok):
+		_text(v, str(ok.reason), 15, UITheme.MUTED)
+	crew.refresh_candidates()
+	for c in crew.candidates:
+		var row := HBoxContainer.new()
+		var l := UITheme.label("%s  ·  %s" % [c.name, ", ".join(PackedStringArray(c.traits)).replace("_", " ")], 15)
+		l.custom_minimum_size = Vector2(430, 0)
+		row.add_child(l)
+		var cid := str(c.cid)
+		if bool(ok.ok):
+			row.add_child(UITheme.button("Hire ($%s)" % Money.format_cents(int(c.fee)), func() -> void:
+				var r := crew.hire(cid)
+				hud.show_message(str(r.get("reason", "Hired.")) if not bool(r.ok) else "Hired. They arrive on the next daylight boat.")
+				close_panel()
+				toggle_journal(0), 150))
+		v.add_child(row)
+	var gone := svc.payroll.employees.filter(func(e: Dictionary) -> bool: return str(e.status) == "departed")
+	if not gone.is_empty():
+		_text(v, "Former crew: " + ", ".join(PackedStringArray(gone.map(func(e: Dictionary) -> String: return "%s (%s)" % [e.name, e.get("departure_reason", "left")]))), 14, UITheme.MUTED)
+	return s[0]
+
+
+func _free_beds(crew: CrewService) -> int:
+	var used := 0
+	for e in svc.payroll.employees:
+		if str(e.status) != "departed" and int(e.get("bed", 0)) > 0:
+			used += 1
+	return CrewService.BEDS - used
+
+
+func order_job(w: Worker, job: String) -> void:
+	var crew: CrewService = Game.crew
+	var outward := job in ["felling", "processing", "hauling", "automatic", "follow"]
+	if outward and crew.real_time_left() < crew.return_seconds(w) + w.mind.return_margin() + 30.0:
+		hud.show_message("%s: \"%s\"" % [w.emp.name, w.say("dusk_refuse")], 4.0)
+		return
+	if outward and w.mind.refuses_risk() and job in ["felling", "follow"]:
+		hud.show_message("%s: \"%s\"" % [w.emp.name, w.say("refuse_risk")], 4.0)
+		w.emp["job"] = "automatic"
+		return
+	w.emp["job"] = job
+	w.abandon("new orders")
+	hud.show_message("%s: \"%s\"" % [w.emp.name, w.say("follow_ack" if job == "follow" else "job_ack")], 3.0)
+
+
+func order_focus(w: Worker) -> void:
+	var p := Game.player.global_position
+	w.emp["focus"] = [p.x, p.y, p.z]
+	w.emp["job"] = "automatic"
+	w.abandon("new area")
+	hud.show_message("%s will work around here." % w.emp.name, 3.0)
+
+
+func confirm_fire(eid: String) -> void:
+	var crew: CrewService = Game.crew
+	var pv := crew.fire_preview(eid)
+	var f := _frame("Fire %s?" % pv.name, 560)
+	var p: PanelContainer = f[0]
+	var v: VBoxContainer = f[1]
+	_text(v, "• Wages already earned stay owed: $%s%s.\n• %s\n• Their %s axe goes back to the company rack.\n• Logs they carry (%d) are set down; their jobs are cancelled.\n• They walk to the dock and leave on %s. Their bed frees when they have left.\n• A replacement costs $%s to hire." % [Money.format_cents(int(pv.owed)), (" (due end of day %d)" % int(pv.due)) if int(pv.owed) > 0 else "", "Today counts as a day worked: tonight's $300 is still earned." if bool(pv.worked_today) else "They have not worked today, so no wage for today.", pv.axe, int(pv.carrying), pv.boat, Money.format_cents(int(pv.fee))], 15)
+	var row := HBoxContainer.new()
+	row.add_child(UITheme.button("Fire them", func() -> void:
+		crew.fire(eid)
+		close_panel(), 200))
+	row.add_child(UITheme.button("Cancel", close_panel, 140))
+	v.add_child(row)
+	_open(p)
+
+
+# ------------------------------------------------------------- talking
+
+var _talk_worker: Worker
+
+## Conversation with a worker. Live (the world keeps running, briefly); the
+## worker stops to face you. Walking away or Esc ends it.
+func open_talk(w: Worker) -> void:
+	_talk_worker = w
+	w.talking_until = Game.crew.now() + 30.0
+	var f := _frame(w.emp.name, 600)
+	var p: PanelContainer = f[0]
+	p.process_mode = Node.PROCESS_MODE_ALWAYS
+	var v: VBoxContainer = f[1]
+	var reply := _text(v, "\"%s\"" % w.say("greet"), 17)
+	var m := w.mind
+	_text(v, "%s · %s · %s" % [w.activity_words(), m.state_word(), ", ".join(PackedStringArray(m.traits)).replace("_", " ")], 14, UITheme.MUTED)
+	var opts := GridContainer.new()
+	opts.columns = 2
+	v.add_child(opts)
+	var answer := func(t: String) -> void:
+		reply.text = "\"%s\"" % t
+		w.talking_until = Game.crew.now() + 20.0
+	var add := func(label: String, cb: Callable) -> void:
+		opts.add_child(UITheme.button(label, cb, 270))
+	add.call("What are you working on?", func() -> void:
+		var topic: String = {"fell": "work_felling", "buck": "work_processing", "pick": "work_hauling", "deliver": "work_hauling", "home": "work_home", "follow": "work_follow"}.get(w.activity, "work_idle")
+		answer.call(w.say(topic, false, {"target": "this one"})))
+	add.call("How's your axe?", func() -> void:
+		var tier := w.axe_tier()
+		answer.call(w.say("equipment_small" if tier == "small" else "equipment", false, {"axe": tier if tier != "" else "no"})))
+	add.call("About your wages", func() -> void:
+		var owed := svc.payroll.owed_for(w.id)
+		answer.call(w.say("wages_owed" if owed > 0 else "wages_ok", false, {"owed": Money.format_cents(owed), "due": svc.payroll.due_day_for(w.id)})))
+	add.call("Noticed anything strange?", func() -> void:
+		var mem := m.strongest_memory()
+		var where := "the trees"
+		if not mem.is_empty() and (mem.pos as Array).size() == 2:
+			where = _where(Vector3(mem.pos[0], 0, mem.pos[1]))
+		if mem.is_empty():
+			answer.call(w.say("strange_none"))
+		elif str(mem.modality) == "voice":
+			answer.call(w.say("strange_voice", false, {"name": str(mem.get("imitated_name", "someone"))}))
+		elif str(mem.status) == "confirmed":
+			answer.call(w.say("strange_confirmed", false, {"where": where}))
+		else:
+			answer.call(w.say("strange_uncertain", false, {"where": where})))
+	add.call("I saw something out there.", func() -> void:
+		var r := Game.crew.boss_report(w)
+		if r == "corroborated":
+			answer.call(w.say("report_corroborated"))
+		elif m.has("skeptical"):
+			answer.call(w.say("report_skeptic_rumor"))
+		else:
+			answer.call(w.say("report_rumor")))
+	add.call("It's alright. We're safe here.", func() -> void:
+		var credible := Game.crew.nav.in_camp(w.global_position) or svc.clock.phase() == WorkdayClock.Phase.DAYLIGHT
+		var r := m.reassure(Game.crew.now(), credible)
+		answer.call(w.say("reassure_" + r)))
+	add.call("Forget it. It was nothing.", func() -> void:
+		m.dismissed(Game.crew.now())
+		answer.call(w.say("dismiss_hurt" if m.firsthand_count() > 0 else "strange_none")))
+	add.call("Stick with me.", func() -> void:
+		order_job(w, "follow")
+		answer.call(w.say("follow_ack")))
+	add.call("Back to work (automatic).", func() -> void:
+		order_job(w, "automatic"))
+	add.call("Work around here.", func() -> void:
+		order_focus(w))
+	add.call("Head back to camp.", func() -> void:
+		order_job(w, "home"))
+	var spare := _spare_axe_for(w)
+	if not spare.is_empty():
+		add.call("Take my %s axe." % spare.tier, func() -> void:
+			spare.owner = w.id
+			svc.equipment.changed.emit()
+			w.body_char.set_axe_tier(w.axe_tier())
+			answer.call(w.say("job_ack")))
+	if svc.payroll.owed_for(w.id) > 0:
+		add.call("Here are your wages.", func() -> void:
+			var paid := svc.payroll.pay_employee(w.id)
+			answer.call("Thanks, boss." if paid > 0 else "...You don't have it, do you."))
+	add.call("You're fired.", func() -> void:
+		close_panel()
+		confirm_fire(w.id))
+	add.call("That's all.", close_panel)
+	panel = p
+	add_child(p)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _spare_axe_for(w: Worker) -> Dictionary:
+	# A company axe the boss owns but is not holding, better than the
+	# worker's; handing it over is an explicit equipment transaction.
+	var mine := w.axe_tier()
+	for a in svc.equipment.owned_by("rack") + svc.equipment.owned_by("boss"):
+		if str(a.id) == svc.equipment.equipped:
+			continue
+		if Equipment.TIERS.find(str(a.tier)) > Equipment.TIERS.find(mine):
+			return a
+	return {}
+
+
+func _where(p: Vector3) -> String:
+	var o := World.camp_origin()
+	var d := Vector2(p.x - o.x, p.z - o.z)
+	if d.length() < 30.0:
+		return "the camp"
+	var ang := rad_to_deg(atan2(d.x, -d.y))
+	const DIRS := ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
+	return "the %s trees" % DIRS[int(round(fposmod(ang, 360.0) / 45.0)) % 8]
+
+
+func _process_talk() -> void:
+	if _talk_worker and panel and is_instance_valid(_talk_worker) and Game.player:
+		if Game.player.global_position.distance_to(_talk_worker.global_position) > 6.0:
+			close_panel()

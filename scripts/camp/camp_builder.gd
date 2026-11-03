@@ -357,7 +357,9 @@ func _build_cabin() -> void:
 	var door_o := [4.84 + 0.07, 5.84 + 0.07, 0.0, 2.05]
 	var west := [door_o, [1.94, 3.14, 1.0, 1.8], [7.54, 8.74, 1.0, 1.8]]
 	var east := [[7.34, 8.34, 1.1, 1.8], [2.34, 3.34, 1.1, 1.8]]
-	var north := [[0.94, 1.94, 1.2, 1.8], [4.64, 5.64, 1.2, 1.8]]
+	# Phase 4: the centre of the north wall opens into the extension.
+	var north_door := [3.31, 4.17, 0.0, 2.08]
+	var north := [[0.94, 1.94, 1.2, 1.8], north_door]
 	var south := [[5.54, 6.54, 1.2, 1.8], [1.84, 2.84, 1.2, 1.8]]
 	var wo := Vector3(-hx - t * 0.5, F, -hz - t)
 	var eo := Vector3(hx + t * 0.5, F, hz + t)
@@ -373,7 +375,8 @@ func _build_cabin() -> void:
 	for o in east:
 		BuildKit.window_glass(c, eo, PI * 0.5, o, t)
 	for o in north:
-		BuildKit.window_glass(c, no, 0.0, o, t)
+		if o != north_door:
+			BuildKit.window_glass(c, no, 0.0, o, t)
 	for o in south:
 		BuildKit.window_glass(c, so, PI, o, t)
 	# Ceiling and gabled roof (ridge along z)
@@ -429,7 +432,8 @@ func _build_cabin() -> void:
 		BuildKit.box(bed, Vector3(0.86, 0.18, 1.9), Vector3(0, 0.5, 0.02), "mattress", true)
 		BuildKit.box(bed, Vector3(0.9, 0.05, 1.3), Vector3(0, 0.61, 0.3), spec[1], false)
 		BuildKit.box(bed, Vector3(0.6, 0.12, 0.35), Vector3(0, 0.65, -0.72), "white", false)
-		BuildKit.marker(bed, "SleepPoint", Vector3(0, 0.8, 0.1), 0.0, "worker_bed")
+		var sp := BuildKit.marker(bed, "SleepPoint", Vector3(0, 0.8, 0.1), 0.0, "worker_bed")
+		sp.set_meta("bed_index", i + 1)
 		_hide_spot(bed, "UnderWorkerBed_%d" % (i + 1), Vector3(0, 0.08, 0.1), "under_bed")
 		var side := -1.0 if spec[0].z < 0.0 else 1.0
 		var crate := BuildKit.prop(c, "wooden_crate_02", Vector3(spec[0].x + 1.35, F, spec[0].z - side * 0.05), PI * 0.5, 0.8, Vector3(0.45, 0.4, 0.95), "Footlocker_%d" % (i + 1))
@@ -474,6 +478,138 @@ func _build_cabin() -> void:
 	for i in 4:
 		BuildKit.marker(c, "WorkerSpawn_%d" % (i + 1), Vector3(-hx - t - 1.2, F, -1.2 + i * 0.8), -PI * 0.5, "worker_spawn")
 	_interior_zone(c, "cabin", Vector3(0, F + H * 0.5, 0), Vector3(hx * 2, H, hz * 2), false)
+	_build_cabin_extension(c, F, hx, hz, t)
+
+
+## Phase 4: attached two-bed bedroom, shared kitchen and one bathroom on the
+## cabin's north side (the reserved CABIN_EXTENSION footprint). Floor level
+## matches the cabin; the foundation reaches the lowest ground under it so
+## nothing floats. Open doorway from the cabin, open bedroom doorway, a real
+## door on the bathroom. Beds 5 and 6 join the four originals (group
+## worker_bed, ordered by `bed_index`).
+func _build_cabin_extension(c: Node3D, F: float, hx: float, hz: float, t: float) -> void:
+	var e := Node3D.new()
+	e.name = "CabinExtension"
+	c.add_child(e)
+	var H := 2.55
+	var z0 := -hz - t            # shared wall outer face (-5.34)
+	var z1 := -10.5              # north outer face
+	var x0 := -hx - t
+	var x1 := hx + t
+	var inner_z1 := z1 + t
+	var depth := z0 - z1
+	# Foundation down to the lowest ground under the footprint.
+	var lowest := 0.0
+	for gx in [x0, 0.0, x1]:
+		for gz in [z0, (z0 + z1) * 0.5, z1]:
+			var w := c.global_position + Vector3(gx, 0, gz)
+			lowest = minf(lowest, World.height_at(w.x, w.z) - c.global_position.y)
+	var fh := F - lowest + 0.1
+	BuildKit.box(e, Vector3(x1 - x0, fh, depth), Vector3(0, F - fh * 0.5 - 0.05, (z0 + z1) * 0.5), "dark_wood", true, 0.0, "ExtFoundation")
+	BuildKit.box(e, Vector3(x1 - x0 - t * 2, 0.06, depth - t), Vector3(0, F - 0.03, (z0 + z1) * 0.5 - t * 0.25), "floor", true, 0.0, "ExtFloor")
+	# Outer walls: west (bedroom window), north (two windows), east (kitchen window).
+	var west_o := [[1.2, 2.2, 1.0, 1.8]]
+	var east_o := [[1.0, 1.9, 1.05, 1.75], [3.2, 3.8, 1.5, 1.9]]
+	var north_o := [[0.9, 2.0, 1.0, 1.8], [5.55, 6.15, 1.5, 1.9]]
+	# Wall helper runs along local +X: west wall (rot -90°) heads +Z from the
+	# north end; east wall (rot +90°) heads -Z from the cabin side.
+	var wo := Vector3(x0 + t * 0.5, F, z1)
+	var eo := Vector3(x1 - t * 0.5, F, z0)
+	var no := Vector3(x0, F, z1 + t * 0.5)
+	BuildKit.wall(e, wo, -PI * 0.5, depth, H, t, west_o, "siding")
+	BuildKit.wall(e, eo, PI * 0.5, depth, H, t, east_o, "siding")
+	BuildKit.wall(e, no, 0.0, x1 - x0, H, t, north_o, "siding")
+	for o in west_o:
+		BuildKit.window_glass(e, wo, -PI * 0.5, o, t)
+	for o in east_o:
+		BuildKit.window_glass(e, eo, PI * 0.5, o, t)
+	for o in north_o:
+		BuildKit.window_glass(e, no, 0.0, o, t)
+	# Interior partitions: bedroom (west) | kitchen/hall | bathroom (NE).
+	var ti := 0.1
+	# Bedroom partition along x = -0.6, doorway near the cabin side.
+	var pw := Node3D.new()
+	pw.name = "BedroomPartition"
+	e.add_child(pw)
+	var bed_door := [-6.95, -6.05]
+	for seg in [[inner_z1, bed_door[0]], [bed_door[1], z0]]:
+		var a: float = seg[0]
+		var b: float = seg[1]
+		BuildKit.box(pw, Vector3(ti, H, b - a), Vector3(-0.6, F + H * 0.5, (a + b) * 0.5), "wall_white", true)
+	BuildKit.box(pw, Vector3(ti, H - 2.08, bed_door[1] - bed_door[0]), Vector3(-0.6, F + 2.08 + (H - 2.08) * 0.5, (bed_door[0] + bed_door[1]) * 0.5), "wall_white", true)
+	# Bathroom: walls x = 1.2 (z inner_z1..-7.6) and z = -7.6 (x 1.2..x1-t), door at x 1.5..2.35.
+	BuildKit.box(e, Vector3(ti, H, -7.6 - inner_z1), Vector3(1.2, F + H * 0.5, (inner_z1 - 7.6) * 0.5), "wall_white", true, 0.0, "BathWallW")
+	var bx1 := x1 - t
+	for seg in [[1.2, 1.5], [2.35, bx1]]:
+		BuildKit.box(e, Vector3(seg[1] - seg[0], H, ti), Vector3((seg[0] + seg[1]) * 0.5, F + H * 0.5, -7.6), "wall_white", true)
+	BuildKit.box(e, Vector3(0.85, H - 2.05, ti), Vector3(1.925, F + 2.05 + (H - 2.05) * 0.5, -7.6), "wall_white", true)
+	var bath_door := Door.new()
+	bath_door.name = "BathroomDoor"
+	bath_door.width = 0.82
+	bath_door.height = 2.02
+	bath_door.open_angle = 100.0
+	bath_door.position = Vector3(1.52, F, -7.6)
+	e.add_child(bath_door)
+	# Bathroom fixtures: toilet, sink, shower compartment.
+	var toilet := Node3D.new()
+	toilet.name = "ExtToilet"
+	toilet.position = Vector3(1.6, F, -9.9)
+	e.add_child(toilet)
+	BuildKit.cylinder(toilet, 0.17, 0.4, Vector3(0, 0.2, 0), "ceramic", true, 14, 0.2)
+	BuildKit.box(toilet, Vector3(0.36, 0.35, 0.18), Vector3(0, 0.55, -0.18), "ceramic", false)
+	BuildKit.cylinder(toilet, 0.2, 0.04, Vector3(0, 0.42, 0), "white", false, 14)
+	BuildKit.box(e, Vector3(0.45, 0.85, 0.4), Vector3(1.55, F + 0.42, -8.15), "panel", true, 0.0, "ExtVanity")
+	BuildKit.box(e, Vector3(0.38, 0.1, 0.3), Vector3(1.55, F + 0.9, -8.15), "ceramic", false, 0.0, "ExtBathSink")
+	BuildKit.box(e, Vector3(0.4, 0.5, 0.03), Vector3(1.55, F + 1.55, -8.33), "glass", false, 0.0, "Mirror")
+	BuildKit.box(e, Vector3(1.0, 0.08, 1.0), Vector3(bx1 - 0.55, F + 0.04, -9.8), "ceramic", true, 0.0, "ShowerTray")
+	BuildKit.box(e, Vector3(0.04, 1.9, 1.0), Vector3(bx1 - 1.07, F + 1.03, -9.8), "glass", true, 0.0, "ShowerScreen")
+	BuildKit.cylinder(e, 0.08, 0.02, Vector3(bx1 - 0.4, F + 2.0, -10.0), "steel", false, 10)
+	# Kitchen along the east wall (counter, sink, stove, fridge, shelves).
+	var k := Node3D.new()
+	k.name = "ExtKitchen"
+	e.add_child(k)
+	BuildKit.box(k, Vector3(0.6, 0.86, 1.9), Vector3(bx1 - 0.3, F + 0.43, -6.5), "panel", true)
+	BuildKit.box(k, Vector3(0.64, 0.05, 1.94), Vector3(bx1 - 0.32, F + 0.885, -6.5), "counter", false)
+	BuildKit.box(k, Vector3(0.38, 0.06, 0.45), Vector3(bx1 - 0.32, F + 0.89, -6.1), "steel", false, 0.0, "ExtSink")
+	BuildKit.box(k, Vector3(0.5, 0.04, 0.55), Vector3(bx1 - 0.32, F + 0.92, -7.05), "black", false, 0.0, "ExtStove")
+	BuildKit.prop(k, "pot_enamel_01", Vector3(bx1 - 0.32, F + 0.95, -7.1), 0.3, 1.0)
+	BuildKit.box(k, Vector3(0.6, 1.6, 0.62), Vector3(0.3, F + 0.8, -10.0), "white", true, 0.0, "ExtFridge")
+	BuildKit.box(k, Vector3(1.4, 0.04, 0.3), Vector3(bx1 - 0.2, F + 1.6, -6.5), "dark_wood", false, 0.0, "ExtShelf")
+	BuildKit.prop(k, "russian_food_cans_01", Vector3(bx1 - 0.2, F + 1.62, -6.2), 0.0, 1.0)
+	BuildKit.marker(e, "KitchenSpot", Vector3(bx1 - 1.0, F, -6.5), PI * 0.5, "worker_kitchen")
+	BuildKit.marker(e, "BathroomDoorSpot", Vector3(1.925, F, -7.1), PI, "worker_bathroom_door")
+	# Two beds along the west part of the bedroom (heads to the north wall).
+	var specs := [[Vector3(-3.0, F, -9.25), "blanket_green"], [Vector3(-1.35, F, -9.25), "blanket_red"]]
+	for i in 2:
+		var spec: Array = specs[i]
+		var bed := Node3D.new()
+		bed.name = "WorkerBed_%d" % (5 + i)
+		bed.position = spec[0]
+		e.add_child(bed)
+		BuildKit.prop(bed, "old_bed_frame", Vector3.ZERO, 0.0, 1.0)
+		BuildKit.box(bed, Vector3(0.86, 0.18, 1.9), Vector3(0, 0.5, 0.02), "mattress", true)
+		BuildKit.box(bed, Vector3(0.9, 0.05, 1.3), Vector3(0, 0.61, 0.3), spec[1], false)
+		BuildKit.box(bed, Vector3(0.6, 0.12, 0.35), Vector3(0, 0.65, -0.72), "white", false)
+		var m := BuildKit.marker(bed, "SleepPoint", Vector3(0, 0.8, 0.1), 0.0, "worker_bed")
+		m.set_meta("bed_index", 5 + i)
+		_hide_spot(bed, "UnderWorkerBed_%d" % (5 + i), Vector3(0, 0.08, 0.1), "under_bed")
+		var crate := BuildKit.prop(e, "wooden_crate_02", spec[0] + Vector3(0, 0, 1.35), 0.0, 0.8, Vector3(0.95, 0.4, 0.45), "Footlocker_%d" % (5 + i))
+		crate.add_to_group("worker_storage")
+		BuildKit.box(e, Vector3(0.9, 0.04, 0.25), Vector3((spec[0] as Vector3).x, F + 1.45, inner_z1 + 0.13), "dark_wood", false, 0.0, "Shelf_%d" % (5 + i))
+		BuildKit.marker(e, "ClutterZone_%d" % (5 + i), Vector3((spec[0] as Vector3).x, F + 1.47, inner_z1 + 0.13), 0.0, "clutter_zone")
+	# Ceiling, shed roof sloping north (drains away from the cabin).
+	BuildKit.box(e, Vector3(x1 - x0 - t * 2, 0.06, depth - t), Vector3(0, F + H + 0.03, (z0 + z1) * 0.5 - t * 0.25), "panel", false, 0.0, "ExtCeiling")
+	var roof := BuildKit.box(e, Vector3(x1 - x0 + 0.6, 0.12, depth + 0.7), Vector3(0, F + H + 0.32, (z0 + z1) * 0.5 - 0.2), "roof", true)
+	roof.rotation.x = deg_to_rad(-6.0)
+	for lz in [-8.6, -6.4]:
+		var li := OmniLight3D.new()
+		li.position = Vector3(-1.9 if lz < -7.0 else 1.6, F + H - 0.3, lz)
+		li.omni_range = 4.5
+		li.light_energy = 0.9
+		li.light_color = Color(1.0, 0.78, 0.52)
+		e.add_child(li)
+		BuildKit.cylinder(e, 0.07, 0.12, li.position, "lamp_bulb", false, 10)
+	_interior_zone(e, "cabin_extension", Vector3(0, F + H * 0.5, (z0 + z1) * 0.5), Vector3(x1 - x0 - t * 2, H, depth - t), false)
 
 
 func _gable(parent: Node3D, base_center: Vector3, half_w: float, rise: float, thickness: float) -> void:

@@ -15,6 +15,7 @@ var vegetation: VegetationSystem
 var trees: TreeService
 var timber: TimberService
 var campaign: CampaignService
+var crew: CrewService
 var ground_cover: Node3D
 var environment: EnvironmentController
 var camp: Node3D
@@ -66,6 +67,11 @@ func _ready() -> void:
 	campaign.name = "Campaign"
 	add_child(campaign)
 	Game.campaign = campaign
+	crew = CrewService.new()
+	crew.name = "Crew"
+	add_child(crew)
+	campaign.crew = crew
+	Game.crew = crew
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()
@@ -106,10 +112,23 @@ func _ready() -> void:
 	Settings.changed.connect(_apply_quality)
 	_apply_quality()
 	campaign.setup()
+	crew.setup(campaign)
 	_place_player()
+	_build_crew_world.call_deferred()
 	build_ms["total"] = Time.get_ticks_msec() - t0
 	print("World built: ", build_ms)
 	ready_to_play.emit()
+
+
+## Crew navigation needs the camp's collision in the physics space: build
+## it after the first physics frame.
+func _build_crew_world() -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var t := Time.get_ticks_msec()
+	crew.build_world()
+	build_ms["crew_nav"] = Time.get_ticks_msec() - t
+	print("Crew navigation built: %d ms (island %dx%d cells, camp %dx%d)" % [build_ms.crew_nav, crew.nav.dims.x, crew.nav.dims.y, crew.nav.camp_dims.x, crew.nav.camp_dims.y])
 
 
 func _timed(label: String, f: Callable) -> Node:

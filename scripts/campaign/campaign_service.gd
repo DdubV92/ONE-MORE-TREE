@@ -32,6 +32,8 @@ var active := false                # a timed campaign or the test route
 var test_route := false
 var phase2_migrated := false
 var _sleeping := false
+var crew: CrewService          # Phase 4 (set by the world)
+var spawn_crew := true         # tests of the bare economy turn this off
 
 
 func _ready() -> void:
@@ -93,10 +95,13 @@ func new_campaign() -> void:
 	_begin_day_stats()
 	active = true
 	_sync_axe()
+	if crew and spawn_crew:
+		crew.when_ready(crew.start_new_campaign)
 
 
 ## Development: isolated in-memory Day & Economy Test session (Preview).
-func start_test_route(with_fixtures := true) -> void:
+func start_test_route(with_fixtures := true, with_crew := true) -> void:
+	spawn_crew = with_crew
 	new_campaign()
 	test_route = true
 	wallet.enabled = true
@@ -276,14 +281,33 @@ func choose_legacy(continue_untimed: bool) -> void:
 	clock.running = true
 	active = true
 	_begin_day_stats()
+	_restore_crew({})
 	if Game.world_root and Game.world_root.has_method("save_campaign"):
 		Game.world_root.save_campaign()
 
 
 # ------------------------------------------------------------ persistence
 
+## Phase 4: bring the crew back exactly once. Saves with crew data restore
+## it; Phase 3 saves activate their pending starting crew once (marker on
+## the economy block), without back-charging wages.
+func _restore_crew(data: Dictionary) -> void:
+	if crew == null or not spawn_crew:
+		return
+	crew.when_ready(func() -> void:
+		if not data.is_empty():
+			crew.restore(data)
+		else:
+			crew.enabled = true
+			var n := crew.migrate_pending()
+			if n > 0:
+				notice.emit("Your two starting crew members have arrived at camp (Phase 4 crew).", 6.0)
+			crew.refresh_candidates()
+			crew.roster_changed.emit())
+
+
 func capture_campaign() -> Dictionary:
-	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day}
+	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}}
 
 
 func capture_economy() -> Dictionary:
@@ -337,6 +361,7 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 		_begin_day_stats()
 	active = true
 	_sync_axe()
+	_restore_crew(campaign.get("crew", {}))
 	if contract.is_closed():
 		outcome_ready.emit.call_deferred(contract.state, contract.outcome_id)
 	return false

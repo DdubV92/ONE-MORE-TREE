@@ -91,7 +91,7 @@ Meters. **+Y up, +X east, +Z south (toward the landing beach), −Z north (fores
 2. Otherwise, inside the camp fence **and** within `safe_radius` of a `CampLamp` whose `working == true` → **safe** (`CAMP_LAMP`).
 3. Everything else → **unsafe**.
 
-The fire, flashlights, moonlight, emissive objects and screen brightness are never consulted. The cabin is not an automatic refuge, but a lamp covers its porch and most of its interior. Lamp positions and radii live in `CampLayout.LAMPS`. Tests cover the camper with every lamp broken, the yard with lamps broken and working, the forest and the beach.
+The fire, flashlights, moonlight, emissive objects and screen brightness are never consulted. Phase 4: the worker cabin and its extension count as protected while a crew member is inside (occupied); otherwise a lamp covers the porch and most of the interior. Lamp positions and radii live in `CampLayout.LAMPS`. Tests cover the camper with every lamp broken, the yard with lamps broken and working, the forest and the beach.
 
 ## Anchors for later prompts
 
@@ -150,9 +150,37 @@ Marker3D nodes in these groups:
 - `SleepSpot.blocked_reason` is the state guard for the once-only dog rescue.
 - `ContractService.ABANDONMENT` hands off to the Phase 6 hunt; until then an honest handoff screen keeps the save.
 
+## The crew (Phase 4)
+
+| Module | Owns |
+|---|---|
+| `crew/crew_service.gd` (CrewService) | The roster and employment states: `pending_arrival → active → departing → departed`. Records live in `Payroll.employees`, the single ledger, and identities are never deleted. Also: hiring (five maximum, counting arrivals and departures until they have left), beds 1–6, axes issued and returned, firing and quitting, the service dock and skiff, job selection with exclusive task claims, return-before-night planning, local perception of stimuli, story sharing between colleagues, doors, and save/restore. |
+| `crew/worker.gd` (Worker) | One visible person: kinematic movement along navigation paths on the real walking surface, local steering around trunks and people, stuck detection (real versus expected displacement) with bounded escape and repath, then job release. Physical actions: felling through `TreeService.apply_contact` with retreat and fall-watching, bucking through `TimberService.apply_cut`, hauling through `pick_up_for` / `accept`, following, sitting, sleeping in their bed, and departing by boat. |
+| `crew/worker_mind.gd` (WorkerMind) | Traits, fear (five states with hysteresis), belief, trust, a capped memory of what they perceived, reassurance with cooldown and diminishing returns, and warning before quitting. |
+| `crew/crew_nav.gd` (CrewNav) | A 3 m island A* grid (water, slope, rocks, trees, logs, fence, gates, dock deck) and a 0.5 m camp grid rasterised from collision (walls, furniture, doors walkable, floor heights; the camper is private). |
+| `crew/crew_dialogue.gd` | Original captioned lines with trait variants and no back-to-back repeats. |
+| `ui/campaign_ui.gd` (Crew tab, talk, fire confirmation), `ui/crew_demo_panel.gd` | Roster, orders, hiring, conversations, the review route. |
+
+**Rules in code.**
+- **Wages.** A person earns $300 for each day they were employed during daylight (`worked_days`). A firing or quit before the night still pays that day. Arrears and grace stay in Payroll, and a fired or departed person remains owed what they earned.
+- **Starting crew.** The same two Phase 3 identities (EMP-01 Marta Kell: hard-working, sociable; EMP-02 Dale Ostrow: stronger, skeptical) are activated exactly once, each with their reserved small axe and a bed. Phase 3 saves activate them on load with no back-charged wages.
+- **Work rate and carrying.** Work per contact uses `TreeWorkConfig.work_per_contact(tier, hard_working)`, so Hard-working applies once. Carry budget is 333 mTE, or 500 for Stronger. Truck capacity is unchanged.
+- **Automatic job priority.** Carry loose logs (when there are three or more), then buck waiting trunks, then carry any remaining logs. Fell only when nothing is waiting.
+- **Return before night.** A worker heads home when the time left is less than return time plus margin. Return time is path length divided by walking speed (slower when carrying), plus 12 s for doors and 8 s to set a load down. The margin is 45 s, plus 60 s if timid and more if frightened. Workers warn once, then return, then refuse late orders. The Day & Economy clock acceleration is accounted for.
+- **Perception.** Stimuli are events with a position, modality, loudness and severity. Each worker checks distance, occlusion, facing (for sight), sleep and the observant bonus. Ordinary sounds are never evidence, and each worker stores one memory per event. Boss reports are rumour unless a nearby colleague witnessed something firsthand.
+- **Safety.** The worker cabin and extension are protected while a crew member is inside (`SafetyService`, `CABIN_OCCUPIED`).
+
+**Hooks for Phase 5/6.**
+- `CrewService.emit_stimulus()` is the director's entry point.
+- `WorkerMind` states drive refusal, warning and quitting.
+- `SleepSpot.blocked_reason` guards the dog-rescue exception.
+- Trucks will use `TimberService.reserve_for_vehicle` / `accept(sids, "truck:<id>")`. The reliable-driver trait is data only, not a tested driving skill.
+- Departed identities keep appearance seed, name and memories so later phases can imitate them, never revive them.
+
 ## Modes and saves
 
 - `Game.Mode`: `MENU`, `CAMPAIGN`, `PREVIEW`. Preview Tour, the Character Preview and the benchmark run in PREVIEW, and `SaveService.save_campaign` refuses to write in any mode except CAMPAIGN (tested).
+- **Save schema v5** (Phase 4) adds `campaign.crew`: worker positions and sleep/departure state, minds (traits, fear, belief, trust, memories, cooldowns), candidates and counters, skiff state, per-worker stats and the stuck log. Worker hand loads live in `timber.loads` (one owner per piece). Employee records (status, bed, look seed, job, focus, worked days, departure reason) stay in `economy.payroll.employees`. Loading never duplicates a person: one Worker per active or departing record, and an invalid saved position is repaired to the porch. v4 saves activate their pending starting crew exactly once.
 - **Save schema v4** (Phase 3) uses three slots, `user://saves/slot_N.json`. Settings stay separate, and the old single `campaign.json` becomes slot 1 while the original file is kept. v4 fills the `campaign` block: rule set, `phase3` flag, clock (day, t, night exposure, fired warnings, deadline flag), contract state and outcome id, day stats and the last 35 reports. It also fills the `economy` block: wallet cash, full transaction ledger, receipt→transaction map, payroll employees, liabilities, settlements and quit requests, owned axes and the equipped axe. On load the wallet re-checks every receipt: a genuine receipt without a credit is credited once, and a credited one is never paid again. v3 (Phase 2) saves migrate as *pre-contract*. Their tracked receipts are credited once (`migrated_phase2_delivery`), an untouched `.pre_contract.json` copy is kept, and the player chooses either legacy continuation (days pass, no deadline) or the 30-day contract from day 1 with the island kept. Phase 0–2 never paid whole-tree bounties, so there is no historical payment to protect.
 - **Save schema v3** (Phase 2) adds the `timber` block. It holds per-tree segment state, receipt id and burn progress, boundary/crown cut work, world bodies (tree, segments, crown flag, pose), carried bundle, queue order, pit contents, all receipts, the receipt counter and the recent recovery log. Geometry and shares are always rebuilt from the frozen tree record, so a save can never change quantities. On load the ledger is restored before trees: an accepted segment can never reappear as world timber, and a carried bundle returns to the hands exactly once. v2 saves migrate by adopting their fallen trunks into fresh timber records.
 - **Save schema v2** (Phase 1) adds `trees` (modified trees by ID: state, work, cut side, fall direction, felled guard, trunk pose/velocity), `equipment`, and reserved `campaign` / `economy` / `timber` blocks. v1 saves migrate to a labeled **legacy** campaign. Saving keeps the previous good file as `.bak`; an unreadable main save falls back to the backup and is left on disk.

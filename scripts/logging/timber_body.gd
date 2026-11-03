@@ -64,6 +64,8 @@ func setup(svc: TimberService, body_key: String, tid: int, segs: Array[int], wit
 
 
 func set_dynamic(on: bool) -> void:
+	if on and service:
+		service._nav_mark(self, false)
 	_dynamic = on
 	freeze = not on
 	_still = 0.0

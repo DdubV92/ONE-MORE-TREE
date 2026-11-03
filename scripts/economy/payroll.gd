@@ -66,7 +66,11 @@ func wage() -> int:
 
 ## Today's estimated payroll (what settlement will add tonight).
 func todays_estimate() -> int:
-	return active_employees().size() * wage()
+	var n := 0
+	for e in employees:
+		if str(e.status) in [ACTIVE, "departing"]:
+			n += 1
+	return n * wage()
 
 
 func owed_total() -> int:
@@ -111,7 +115,13 @@ func settle_day(day: int) -> Dictionary:
 		if int(l.paid) < int(l.amount) and int(l.day) < day:
 			in_grace[str(l.emp)] = true
 	var new_l := 0
-	for e in active_employees():
+	for e in employees:
+		# Phase 4: a person earns the day if they were employed during that
+		# day's daylight (recorded in worked_days) - even if fired or quitting
+		# before the night. Development fixtures count as working.
+		var worked: bool = day in (e.get("worked_days", []) as Array) or (str(e.status) == ACTIVE and bool(e.get("fixture", false))) or (str(e.status) == ACTIVE and not e.has("worked_days"))
+		if not worked:
+			continue
 		var lid := "WAGE-D%02d-%s" % [day, e.id]
 		if _liability(lid).is_empty():
 			var due := day if in_grace.has(str(e.id)) else day + 1
@@ -128,7 +138,8 @@ func settle_day(day: int) -> Dictionary:
 		for l in liabilities:
 			if str(l.emp) == eid and int(l.paid) < int(l.amount) and int(l.due_day) <= day:
 				quit_requests[eid] = day
-				e.status = QUIT_REQUESTED
+				if str(e.status) != "departed" and str(e.status) != "departing":
+					e.status = QUIT_REQUESTED
 				quits.append(eid)
 				quit_due_to_arrears.emit(eid)
 				break

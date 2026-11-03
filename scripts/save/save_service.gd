@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 4
+const SCHEMA_VERSION := 5
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -168,6 +168,12 @@ static func migrate(data: Dictionary) -> Dictionary:
 		data["campaign"] = {"rule_set": str(old_c.get("rule_set", "pre_contract")), "state": "CONTRACT_ACTIVE", "day": 1, "phase3": false, "legacy": bool(old_c.get("legacy", false))}
 		data["economy"] = {"wallet": {"cash": 0, "transactions": [], "credited": {}}, "payroll": {}, "equipment": {"axes": [], "equipped": ""}, "phase2_migrated": false, "legacy_axe_tier": str(data.get("equipment", {}).get("axe_tier", "small"))}
 		data["schema"] = 4
+		v = 4
+	if v == 4:
+		# Phase 3 saves: the crew block is added on load. Pending starting
+		# employees are activated once by CrewService.migrate_pending (same
+		# identities; wages only from days they actually work).
+		data["schema"] = 5
 	return data
 
 

@@ -39,6 +39,10 @@ var axe_rig: Node3D
 var arm_ik := false
 var playback_scale := 1.0
 var current := ""
+## Phase 4: world-space grip targets for a carried load (left, right); when
+## set, the arms are solved onto them instead of the clip's arm pose.
+var carry_grips: Array = []
+var axe_tier := "large"
 
 
 func _ready() -> void:
@@ -237,6 +241,8 @@ func _build_animations() -> void:
 	lib.add_animation("idle", _make_idle())
 	lib.add_animation("walk", _make_walk())
 	lib.add_animation("swing", _make_swing())
+	lib.add_animation("sit", _make_static_pose("sit"))
+	lib.add_animation("lie", _make_static_pose("lie"))
 	anim.add_animation_library("", lib)
 
 
@@ -393,6 +399,66 @@ func _make_swing() -> Animation:
 	return an
 
 
+## Sitting (chairs/bench) and lying (bed, on the back) poses with slow
+## breathing. The mover places/rotates the character; these only pose limbs.
+func _make_static_pose(kind: String) -> Animation:
+	var an := Animation.new()
+	var T := 4.0
+	an.length = T
+	an.loop_mode = Animation.LOOP_LINEAR
+	var tr := {}
+	for b in ["Hips", "Spine", "Chest", "Head", "ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR", "UpperArmL", "ForearmL", "UpperArmR", "ForearmR"]:
+		tr[b] = _track_rot(an, b)
+	var hips_pos := _track_pos(an, "Hips")
+	for k in 9:
+		var t := T * k / 8.0
+		var br := 0.015 * sin(TAU * t / T)
+		if kind == "sit":
+			an.position_track_insert_key(hips_pos, t, rest["Hips"].origin + Vector3(0, -(thigh_len + ankle_h) * 0.98 + 0.46 - 0.02, 0.06))
+			an.rotation_track_insert_key(tr["Hips"], t, _q(0))
+			an.rotation_track_insert_key(tr["Spine"], t, _q(0.05 + br))
+			an.rotation_track_insert_key(tr["Chest"], t, _q(0.04 + br))
+			an.rotation_track_insert_key(tr["Head"], t, _q(0.05, 0.15 * sin(TAU * t / T), 0))
+			for sn in ["L", "R"]:
+				an.rotation_track_insert_key(tr["Thigh" + sn], t, _q(PI * 0.5))
+				an.rotation_track_insert_key(tr["Shin" + sn], t, _q(-PI * 0.5))
+				an.rotation_track_insert_key(tr["Foot" + sn], t, _q(0))
+				an.rotation_track_insert_key(tr["UpperArm" + sn], t, _q(0.35, 0, (0.1 if sn == "R" else -0.1)))
+				an.rotation_track_insert_key(tr["Forearm" + sn], t, _q(0.9))
+		else:
+			an.position_track_insert_key(hips_pos, t, rest["Hips"].origin)
+			an.rotation_track_insert_key(tr["Hips"], t, _q(0))
+			an.rotation_track_insert_key(tr["Spine"], t, _q(br * 0.5))
+			an.rotation_track_insert_key(tr["Chest"], t, _q(-br))
+			an.rotation_track_insert_key(tr["Head"], t, _q(-0.1, 0.25, 0))
+			for sn in ["L", "R"]:
+				var s := -1.0 if sn == "L" else 1.0
+				an.rotation_track_insert_key(tr["Thigh" + sn], t, _q(0.05, 0, s * 0.05))
+				an.rotation_track_insert_key(tr["Shin" + sn], t, _q(-0.08))
+				an.rotation_track_insert_key(tr["Foot" + sn], t, _q(-0.6))
+				an.rotation_track_insert_key(tr["UpperArm" + sn], t, _q(0.0, 0, s * 0.18))
+				an.rotation_track_insert_key(tr["Forearm" + sn], t, _q(0.35))
+	return an
+
+
+## Shows the assigned axe tier (same models as the first-person axes).
+func set_axe_tier(tier: String) -> void:
+	if tier == axe_tier and axe_rig.get_node_or_null("Axe"):
+		return
+	axe_tier = tier
+	var old := axe_rig.get_node_or_null("Axe")
+	if old:
+		old.free()
+	var spec: Dictionary = ViewModel.AXES.get(tier, ViewModel.AXES["small"])
+	var scene: PackedScene = load("res://assets/polyhaven/models/%s/%s_1k.gltf" % [spec.asset, spec.asset])
+	if scene:
+		var axe: Node3D = scene.instantiate()
+		axe.name = "Axe"
+		axe.scale = Vector3.ONE * float(spec.scale) * 0.82
+		axe.position = Vector3(0, 0.2 if tier != "small" else 0.1, 0)
+		axe_rig.add_child(axe)
+
+
 # ---------------------------------------------------------------- runtime
 
 func play(name: String, blend := 0.25) -> void:
@@ -424,6 +490,21 @@ func _process(delta: float) -> void:
 		anim.advance(delta * playback_scale)
 	if arm_ik and axe_rig.visible:
 		_solve_arms()
+	elif carry_grips.size() == 2:
+		_solve_carry()
+
+
+## Both gloves onto the carried load (shoulder carry), elbows down and out.
+func _solve_carry() -> void:
+	var back := global_basis.z
+	var right := global_basis.x
+	var hand_len := 0.035 * H
+	var ur: Node3D = bones["UpperArmR"]
+	var ul: Node3D = bones["UpperArmL"]
+	var tl: Vector3 = (carry_grips[0] as Node3D).global_position if carry_grips[0] is Node3D else carry_grips[0]
+	var tr: Vector3 = (carry_grips[1] as Node3D).global_position if carry_grips[1] is Node3D else carry_grips[1]
+	LimbIK.solve_nodes(ur, bones["ForearmR"], forearm_len + hand_len, tr, ur.global_position + right * 0.5 - global_basis.y * 0.5 + back * 0.1)
+	LimbIK.solve_nodes(ul, bones["ForearmL"], forearm_len + hand_len, tl, ul.global_position - right * 0.5 - global_basis.y * 0.5 + back * 0.1)
 
 
 func _solve_arms() -> void:
