@@ -157,7 +157,28 @@ func pose_at(u: float, walk_bob := 0.0) -> void:
 	_solve_arms()
 
 
+## Carrying: axe stowed, both gloves on the log at the given world grips.
+func pose_carry(grips: Array) -> void:
+	axe_pivot.visible = false
+	if grips.size() < 2:
+		return
+	var cam_basis := global_basis
+	var right := cam_basis.x
+	var down := -cam_basis.y
+	var back := cam_basis.z
+	var ur: Node3D = bones["UpperArmR"]
+	LimbIK.solve_nodes(ur, bones["ForearmR"], fore_len + 0.04, grips[1], ur.global_position + right * 0.5 + down * 0.6 + back * 0.1)
+	var ul: Node3D = bones["UpperArmL"]
+	LimbIK.solve_nodes(ul, bones["ForearmL"], fore_len + 0.04, grips[0], ul.global_position - right * 0.3 + down * 0.6 + back * 0.1)
+	for side in ["L", "R"]:
+		var hand: Node3D = bones["Hand" + side]
+		var x := -cam_basis.z
+		var y := cam_basis.y
+		hand.global_basis = Basis(x.cross(y).normalized(), y, -x)
+
+
 func _solve_arms() -> void:
+	axe_pivot.visible = true
 	var cam_basis := global_basis
 	var right := cam_basis.x
 	var down := -cam_basis.y

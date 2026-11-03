@@ -31,6 +31,10 @@ Meters. **+Y up, +X east, +Z south (toward the landing beach), −Z north (fores
 | Placement | `systems/placement_validator.gd` | Grounding audit, cutting stands |
 | Campaign data | `systems/campaign_rules.gd`, `crew/*`, `config/traits/*.tres` | Fixed contract numbers, trait/employee data (no behaviour yet) |
 | Reservations | `camp/camp_reservations.gd` | Camera mounts, footprints, dock |
+| Timber (Phase 2) | `logging/timber_service.gd` (ledger), `logging/timber_body.gd`, `logging/timber_mesh.gd`, `logging/timber_recovery.gd` | Partition, exact shares, segment states/ownership, bucking, receipts, burn queue, recovery, reconciliation |
+| Carrying (Phase 2) | `player/carry_controller.gd` | Hand load presentation, pick up / set down / drop / deliver, put-down validation |
+| Delivery and fire (Phase 2) | `camp/delivery_rack.gd`, `camp/fire_pit.gd`, `shaders/burning_log.gdshader`, `shaders/end_grain.gdshader` | Acceptance at camp, staged queue display, fuel-driven fire |
+| Surf | `water/surf_system.gd`, `shaders/surf.gdshader` | Breaking-wave ribbons along the breaking-depth contour (runtime-derived) |
 
 `world/world.gd` (IslandWorld) builds everything in order and registers services on `Game`.
 
@@ -99,9 +103,23 @@ Marker3D nodes in these groups:
 - `safe_reset`, `player_spawn`, `camp_entrance`
 - Axes on the rack are in group `rack_axes`.
 
+## Timber model (Phase 2)
+
+- **Units.** Every original tree owns exactly **1000 mTE** (milli tree-equivalents) and **10,000 cents** of delivery entitlement. Integers only. `TimberService.allocate()` floors each share and gives the remainder to the last share, so three equal shares are 3333/3333/3334 and every tree sums exactly.
+- **Partition** (`TimberService.partition(idx)`) is a pure function of the frozen tree record. The merchantable trunk runs from the cut (0.75 m) to where the diameter drops below 12 cm (and at most 82 % of the height). It is split into 3–12 equal-length segments, adding segments until no share exceeds one hand load (333 mTE). Shares are weighted by frustum volume, so the butt log is worth more than the top log. The crown/branch top is **non-payable brush**, as are chips and the stump. They are tracked as residue, never as a missing share.
+- **IDs.** `T<tree id>_S<k>`, stable across loads. Never array positions.
+- **States.** `ATTACHED` (part of a multi-segment run), `WORLD`, `CARRIED`, `VEHICLE_RESERVED` (Prompt 5), `ACCEPTED_QUEUED`, `BURNING`, `CONSUMED`. Partial cuts are boundary work values on the record (the prompt's "cut pending").
+- **One owner per segment.** A segment is in exactly one place: one TimberBody, the player's hands, the queue or the pit. Consumed segments are nowhere. Transitions update the record before visuals change, and retries are idempotent. Tests check this invariant after every step.
+- **Bucking.** Axe contacts on a resting body near an orange mark (within 0.75 m) add work to that boundary. The same work per contact as felling is used, so hold-to-chop cadence is identical. Separation is one synchronous transaction. The crown part (or the longer part) keeps its pose, the other part simulates briefly then freezes. Any part without support is woken.
+- **Physics.** Resting bodies are frozen (static). Only freshly cut, dropped or recovered pieces simulate, for at most 9 s. Removing a piece wakes unsupported neighbours, so nothing hangs in the air.
+- **Recovery** (`TimberRecovery`). Reason codes are `invalid_pose`, `out_of_bounds`, `below_terrain` and `deep_water`. A piece moves to the nearest dry, gentle, clear ground (spiral search ≤ 60 m), else to the camp recovery point. Identity, share and receipts are preserved. Each recovery is logged with from/to. It never pays and never moves the player or vehicles.
+- **Acceptance.** `TimberService.accept(sids, source)` is the only place a receipt (`RCPT-000001`…) is created. It is idempotent per segment. The rack, future workers and future trucks all call it, and no camera ray or held mesh is required.
+- **Burning.** The pit holds three pieces. A one-third piece burns in 240 s, faster when a backlog is waiting (up to ×4). Pause stops burning. The overnight advance is a bounded `OVERNIGHT_BURN_SECONDS` (3600 s of game time), never OS time. The contract counts *accepted* timber (`tree_delivered`); ash cleanup (`ash_clean`) is separate.
+
 ## Modes and saves
 
 - `Game.Mode`: `MENU`, `CAMPAIGN`, `PREVIEW`. Preview Tour, the Character Preview and the benchmark run in PREVIEW, and `SaveService.save_campaign` refuses to write in any mode except CAMPAIGN (tested).
+- **Save schema v3** (Phase 2) adds the `timber` block. It holds per-tree segment state, receipt id and burn progress, boundary/crown cut work, world bodies (tree, segments, crown flag, pose), carried bundle, queue order, pit contents, all receipts, the receipt counter and the recent recovery log. Geometry and shares are always rebuilt from the frozen tree record, so a save can never change quantities. On load the ledger is restored before trees: an accepted segment can never reappear as world timber, and a carried bundle returns to the hands exactly once. v2 saves migrate by adopting their fallen trunks into fresh timber records.
 - **Save schema v2** (Phase 1) adds `trees` (modified trees by ID: state, work, cut side, fall direction, felled guard, trunk pose/velocity), `equipment`, and reserved `campaign` / `economy` / `timber` blocks. v1 saves migrate to a labeled **legacy** campaign. Saving keeps the previous good file as `.bak`; an unreadable main save falls back to the backup and is left on disk.
 - **Save schema v1** (Phase 0) (`user://saves/campaign.json`, written atomically through a `.tmp` + rename):
 

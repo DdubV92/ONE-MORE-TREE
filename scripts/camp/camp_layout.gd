@@ -21,6 +21,16 @@ const BURN_PIT_RADIUS := 1.7
 const TOOL_AREA_POS := Vector3(13.5, 0.0, -14.0)
 const PICNIC_POS := Vector3(-4.0, 0.0, 7.5)
 const PAYROLL_BOARD_POS := Vector3(9.8, 0.0, 6.5)
+## Phase 2 timber delivery: accepted-delivery rack beside the burn pit (its
+## long axis runs along X), the hot-zone exclusion around the pit, standpoints
+## for future workers and the truck drop-off point, and the camp recovery
+## point for inaccessible timber.
+const DELIVERY_RACK_POS := Vector3(5.6, 0.0, -7.3)
+const DELIVERY_RACK_SIZE := Vector3(3.2, 1.2, 1.6)
+const FIRE_HOT_RADIUS := 2.6
+const DELIVERY_STANDPOINTS := [Vector3(5.6, 0.0, -5.6), Vector3(4.0, 0.0, -5.8), Vector3(7.2, 0.0, -5.8)]
+const TRUCK_DROPOFF := Vector3(-2.0, 0.0, -9.5)
+const RECOVERY_POINT := Vector3(8.6, 0.0, -9.6)
 
 ## Reserved footprints (camp-local, x/z rectangle centre + size). Built in
 ## later prompts; Phase 1 keeps them physically clear and validated.

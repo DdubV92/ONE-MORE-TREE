@@ -41,6 +41,7 @@ var too_deep := false
 var surface_name := "grass"
 var _last_safe := Vector3.ZERO
 var axe: AxeController
+var carry: CarryController
 var _shake := 0.0
 
 
@@ -77,6 +78,10 @@ func _ready() -> void:
 	axe.name = "Axe"
 	add_child(axe)
 	axe.setup(self)
+	carry = CarryController.new()
+	carry.name = "Carry"
+	add_child(carry)
+	carry.setup(self)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -129,6 +134,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_yaw -= event.relative.x * s
 		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-88.0), deg_to_rad(88.0))
 		_apply_look()
+	elif event.is_action_pressed("set_down") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		carry.set_down_one()
+	elif event.is_action_pressed("drop_load") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		carry.drop_all()
 	elif event.is_action_pressed("attack") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		# Only unhandled clicks reach here: a click consumed by a UI button
 		# can never also strike wood.
@@ -142,7 +151,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("tool_large"):
 		axe.equip("large")
 		show_message("Large axe (1.96x) - debug equip until the shop arrives")
-	elif event.is_action_pressed("interact"):
+	elif event.is_action_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if _interact_target and _interact_target.has_method("interact"):
 			_interact_target.interact(self)
 	elif event.is_action_pressed("reset_safe"):
@@ -150,6 +159,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("toggle_fly") and Game.is_preview():
 		fly_mode = not fly_mode
 		show_message("Fly mode %s (preview only)" % ("ON" if fly_mode else "OFF"))
+
+
+func try_pick_up(body: TimberBody) -> void:
+	carry.try_pick_up(body)
 
 
 func reset_to_safe() -> void:
@@ -174,6 +187,7 @@ func _physics_process(delta: float) -> void:
 		speed = CROUCH_SPEED
 	elif Input.is_action_pressed("sprint") and input.y < 0.0:
 		speed = SPRINT_SPEED
+	speed *= carry.speed_factor()
 	# Water: slower with depth, gently pushed back beyond the wading limit.
 	var feet := global_position
 	# Depth of water above the player's feet (not above the bed), so bridges,
@@ -199,7 +213,7 @@ func _physics_process(delta: float) -> void:
 	velocity.x = lerpf(velocity.x, target.x, clampf(accel * delta, 0.0, 1.0))
 	velocity.z = lerpf(velocity.z, target.z, clampf(accel * delta, 0.0, 1.0))
 	if is_on_floor():
-		if Input.is_action_just_pressed("jump") and not _crouching and wading_depth < 0.5:
+		if Input.is_action_just_pressed("jump") and not _crouching and wading_depth < 0.5 and carry.can_jump():
 			velocity.y = JUMP_VELOCITY
 	else:
 		velocity.y -= GRAVITY * delta
@@ -280,6 +294,7 @@ func _head_bob(delta: float, speed: float) -> void:
 	# Subtle, decaying hit shake (comfort-toggleable).
 	_shake = move_toward(_shake, 0.0, delta * 0.12)
 	camera.position = Vector3(randf_range(-1, 1), randf_range(-1, 1), 0.0) * _shake
+	carry.process_visual(delta)
 	axe._process_visual(delta, speed)
 
 

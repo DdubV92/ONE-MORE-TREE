@@ -1,5 +1,64 @@
 # Phase checklist
 
+## Phase 2: Fallen timber, bucking, carrying, delivery and the burn pit
+
+Status key: ✅ implemented and observed (headless test or sim) · 🟡 implemented, needs live/visual review on a real GPU · ⬜ absent.
+
+| Item | Status | Notes |
+|---|---|---|
+| Timber record per felled tree (same tree ID; species, dimensions, partition, cut progress, poses) | ✅ | `TimberService`; built when the trunk settles (tree state SECTIONED) |
+| Exact units: 1000 mTE and 10,000 cents per tree, deterministic remainder | ✅ | `allocate()`: 3333/3333/3334, nine-piece and unequal shares tested; every 37th island tree checked |
+| Stable segment IDs `T<tree>_S<k>`, legal states, one owner per segment | ✅ | Ownership invariant asserted after every step of the ledger test |
+| 3–12 segments sized so no piece exceeds one hand load (1/3 tree-eq) | ✅ | Large trunks get more, shorter pieces |
+| Visible bucking marks, V-groove progress, end-grain caps both sides | 🟡 | Paint rings at uncut boundaries; caps wound to face outward (checked analytically); judge close-up on a real GPU |
+| Cut only when resting ("Settling..." cue); same work per contact as felling | ✅ | Hold-to-chop cadence unchanged (shared swing clock) |
+| Crown/branches = non-payable brush that sinks away; chips/stump non-payable | ✅ | Explicit in the reconciliation report |
+| Partial cuts persist; separation is one synchronous transaction | ✅ | Tested through save/restore |
+| Carry: shoulder load, gloves on the log, axe stowed, bounded speed (−25 % max), no jump above half load | 🟡 | Comfort needs live review |
+| Pick up (E) / add to bundle / set down (G, validated) / drop all (X) / deliver (E at rack) | ✅ / 🟡 | Logic tested; feel needs review |
+| Put-down validation: reachable, line of sight, slope, water depth, fire hot zone, clearance | ✅ | Keeps ownership with a reason if no spot is valid |
+| Load pulls back from walls (no deep clipping); no physics body carried | ✅ | |
+| Frozen resting bodies; brief bounded simulation after cuts/drops; unsupported pieces woken | ✅ | 0 floating pieces in all sims |
+| TimberRecovery with reason codes; preserves identity/receipts; never pays | ✅ | Buried-piece case tested |
+| Delivery rack beside the pit; acceptance is the only receipt source; idempotent | ✅ | Retried acceptance: 0 new receipts (tested) |
+| Staged queue: 12 visible pieces, honest meter and sign for the full backlog | ✅ | |
+| Fire driven by actual fuel: flames, light, embers, smoke, haze, crackle; 3 charring logs; coals relight automatically | 🟡 | Logic observed; look/sound need review |
+| Pause stops burning; bounded overnight advance (3600 s game time) | ✅ | Tested |
+| Contract delivery (`tree_delivered`) separate from ash cleanup (`ash_clean`) | ✅ | Tested |
+| Save v3: timber block; carried bundle restores once; accepted never respawns; consumed stays consumed | ✅ | Tested |
+| Reconciliation report per tree (F2 ledger) | ✅ | |
+| Logging Loop preview stop + reset + in-memory snapshot/restore | ✅ | Preview never writes files |
+| 50-tree stress fixture | ✅ | `tools/timber_stress.tscn`, see below |
+| Hooks: claim/release, reserve_for_vehicle, accept(source), standpoints, truck drop-off, recovery point | ✅ | Behaviour arrives with workers (Phase 4) and trucks (Phase 5) |
+| Dock dog-refuge anchors (refuge, shelter footprint, water-edge bounds, ship boarding) | ✅ | Anchors only (Phase 5/6) |
+| Surf: curling breakers + bigger swell (user request) | 🟡 | Software-rendered screenshots; review on a GPU |
+
+### Logging loop measurements (headless physics, real island trees, `tools/timber_sim.tscn`)
+
+| Case | Species | Trunk Ø | Pieces | Bucking contacts (small axe) | Bucking time | Hand trips | Floating | Reload identical | Retry receipts | Reconciles to $100.00 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| camp edge | pine | 0.65 m | 10 | 26 | 24.7 s | 4 | 0 | yes | 0 | yes |
+| slope | pine | 0.61 m | 10 | 24 | 22.8 s | 4 | 0 | yes | 0 | yes |
+| rock | pine | 0.56 m | 10 | 24 | 22.8 s | 4 | 0 | yes | 0 | yes |
+| small | birch | 0.29 m | 5 | 9 | 8.5 s | 4 | 0 | yes | 0 | yes |
+| large | pine | 1.05 m | 12 | 57 | 54.2 s | 4 | 0 | yes | 0 | yes |
+
+### 50-tree stress fixture (`tools/timber_stress.tscn`, headless)
+
+| Measure | Result |
+|---|---|
+| Trees felled and handed to the ledger | 50 / 50 |
+| Timber pieces in the world | 557 (all frozen: 557; physics-active objects: 0) |
+| Floating pieces | 0 |
+| Recoveries (genuinely inaccessible pieces) | 9 |
+| Physics / process time with the full pile (headless CPU) | 9.37 ms / 1.75 ms per frame |
+| Extra nodes / static memory | +2102 nodes / +22.7 MB |
+| Queue after delivering every loose piece | 556 pieces = 49.674 tree-eq (rack shows 12, meter/sign report all) |
+| Conservation | every tree reconciles: True; entitlement $4,967 |
+| Cleanup | 0 bodies left; +196 nodes are brush residue that sinks away after about a minute |
+
+Honest notes: 0.33 tree-equivalent of one trunk was still being bucked or settling when delivery was measured, so the total queued is 49.67 rather than 50 (conservation still holds). The headless timings are on a CPU-only container and say nothing about a real desktop.
+
 ## Phase 1: The axe, a grounded island, and convincing falling trees
 
 | Item | Status | Notes |

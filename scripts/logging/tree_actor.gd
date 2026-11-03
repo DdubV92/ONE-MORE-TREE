@@ -482,5 +482,56 @@ func _restore_body(pose: Transform3D, lin: Vector3, ang: Vector3) -> void:
 	body.angular_velocity = ang
 
 
+## Phase 2 handoff: the settled trunk now belongs to the TimberService,
+## which built an identical TimberBody at the same pose. Only the stump
+## stays with this actor.
+func release_fallen_body() -> void:
+	if body:
+		body.queue_free()
+		body = null
+	whole = null
+	_phase = "timber"
+	set_physics_process(false)
+
+
+## Restore path for a tree whose trunk is owned by the timber ledger.
+func restore_stump_only() -> void:
+	_build_stump()
+	if standing_body:
+		standing_body.queue_free()
+		standing_body = null
+	if whole:
+		whole.queue_free()
+		whole = null
+	_phase = "timber"
+	set_physics_process(false)
+
+
+## Stump chopping feedback: the stump sinks as it is cut out.
+func set_stump_progress(p: float) -> void:
+	if stump:
+		stump.position.y = base_xf.origin.y - p * (cut_h * 0.8)
+
+
+func remove_stump() -> void:
+	if stump:
+		LoggingFX.dust(stump.global_position + Vector3(0, 0.3, 0))
+		LoggingFX.play(LoggingFX.Sound.CRACK, stump.global_position, -6.0)
+		stump.queue_free()
+		stump = null
+	_phase = "disposed"
+
+
+func restore_disposed() -> void:
+	if standing_body:
+		standing_body.queue_free()
+		standing_body = null
+	if whole:
+		whole.queue_free()
+		whole = null
+	_phase = "disposed"
+	set_physics_process(false)
+
+
 func phase() -> String:
 	return _phase

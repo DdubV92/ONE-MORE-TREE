@@ -78,3 +78,51 @@ static func find(case_name: String) -> int:
 	if best >= 0:
 		_cache[case_name] = best
 	return best
+
+
+# ------------------------------------------------- Phase 2: Logging Loop stop
+
+static var _snapshot := {}
+
+
+## Logging Loop: the original tree closest to camp (a real tree, not a
+## spawned prop) with a short carry route to the delivery rack.
+static func loop(world: Node) -> String:
+	_case_i = CASES.find("camp_edge") - 1
+	var msg := next(world, false)
+	return msg.replace("Logging test", "Logging Loop") + ". Fell it, buck it at the orange marks, carry logs to the rack by the fire (E)."
+
+
+## Preview-only reset of everything the logging loop changed (trees,
+## stumps, timber, rack, pit). Never touches a campaign save.
+static func reset_state() -> String:
+	if not Game.is_preview():
+		return "Reset is only available in the Preview Tour."
+	if Game.timber:
+		Game.timber.clear_all()
+		Game.timber.carried_changed.emit()
+		Game.timber.queue_changed.emit()
+	if Game.trees:
+		Game.trees.clear_all()
+	for n in Game.world_root.get_tree().get_nodes_in_group("timber_brush"):
+		n.queue_free()
+	_snapshot = {}
+	return "Logging test state reset: all trees restored, timber cleared."
+
+
+## In-memory development snapshot (Preview never writes save files).
+static func snapshot() -> String:
+	if not Game.is_preview() or Game.world_root == null:
+		return "Snapshots are a Preview Tour tool."
+	_snapshot = SaveService.capture_state(Game.world_root)
+	return "Snapshot taken (in memory only): %d modified trees, %d timber records." % [_snapshot.trees.size(), _snapshot.timber.get("records", {}).size()]
+
+
+static func restore_snapshot() -> String:
+	if _snapshot.is_empty():
+		return "No snapshot yet."
+	var snap := _snapshot.duplicate(true)
+	reset_state()
+	_snapshot = snap
+	SaveService.apply_state(Game.world_root, snap)
+	return "Snapshot restored through the save/load path."

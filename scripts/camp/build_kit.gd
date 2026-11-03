@@ -270,7 +270,7 @@ static func batch_static(root: Node3D) -> int:
 	var stack: Array[Node] = [root]
 	while not stack.is_empty():
 		var n: Node = stack.pop_back()
-		if n is Door or n is AnimatableBody3D or n is GPUParticles3D:
+		if n is Door or n is AnimatableBody3D or n is GPUParticles3D or n.has_meta("no_batch"):
 			continue
 		if n is MeshInstance3D:
 			var mi := n as MeshInstance3D

@@ -1,0 +1,750 @@
+class_name TimberService
+extends Node
+## Authoritative timber ledger for felled original trees (Phase 2).
+##
+## Every original tree owns exactly 1000 milli tree-equivalents (mTE) of
+## merchantable timber and exactly 10,000 cents of potential delivery
+## entitlement. A fallen trunk is partitioned (stable, deterministic) into
+## 3-9 segments; shares are integers that always sum to the tree total.
+## Segment IDs are "T<tree>_S<k>" - never array positions or random IDs.
+##
+## One owner per segment at all times. States:
+##   ATTACHED -> WORLD <-> CARRIED -> ACCEPTED_QUEUED -> BURNING -> CONSUMED
+##   (VEHICLE_RESERVED reserved for Prompt 5 trucks)
+## Acceptance at the camp rack is the ONLY event that creates an
+## entitlement receipt. Phase 3's PaymentService turns receipts into cash
+## exactly once.
+
+enum Seg { ATTACHED, WORLD, CARRIED, VEHICLE_RESERVED, ACCEPTED_QUEUED, BURNING, CONSUMED }
+
+const TREE_MTE := 1000
+const TREE_CENTS := 10000
+const MIN_SEGMENTS := 3
+const MAX_SEGMENTS := 12
+const HAND_BUDGET_MTE := 333          # one-third tree-equivalent
+const MIN_MERCH_DIAMETER := 0.12      # m; above this the trunk is merchantable
+
+signal delivery_accepted(receipt: Dictionary)
+signal segment_state_changed(sid: String, state: int)
+signal piece_consumed(sid: String)
+signal recovered(sid: String, reason: String)
+signal carried_changed()
+signal queue_changed()
+
+var config: TreeWorkConfig
+var records := {}          # tree id -> record
+var bodies := {}           # body key -> TimberBody
+var carried: Array[String] = []        # sids in the player's hands (bundle)
+var queue: Array[String] = []          # accepted, waiting to burn (FIFO)
+var burning: Array[String] = []        # in the pit (max BURN_SLOTS)
+var receipts: Array[Dictionary] = []
+var recovery_log: Array[Dictionary] = []
+var claims := {}           # sid -> claimant id (future workers)
+var _receipt_counter := 0
+var _body_counter := 0
+var persistent := true
+## Phase 3: the contract closes acceptance after its outcome commits.
+var accept_gate: Callable
+var body_parent: Node3D
+
+const BURN_SLOTS := 3                   # detailed logs in the pit at once
+const BURN_SECONDS_PER_THIRD := 240.0   # a 1/3 tree-equivalent piece burns 4 min
+const BURN_BACKLOG_BOOST := 3.0         # bigger fire for a big backlog (max x4)
+const OVERNIGHT_BURN_SECONDS := 3600.0  # bounded game-time burn applied at sleep
+
+
+func _ready() -> void:
+	config = load("res://config/tree_work.tres")
+
+
+func setup(parent: Node3D, is_persistent: bool) -> void:
+	body_parent = parent
+	persistent = is_persistent
+
+
+# --------------------------------------------------------------- partition
+
+## Deterministic segment partition for a felled tree. Pure function of the
+## frozen tree record, so it is identical on every load.
+static func partition(idx: int) -> Dictionary:
+	var sp: int = World.trees.species[idx]
+	var v: int = World.trees.variant[idx]
+	var height: float = World.trees.height[idx]
+	var dims := tree_scale(idx)
+	var xs: float = dims.x
+	var ys: float = dims.y
+	var cfg: TreeWorkConfig = load("res://config/tree_work.tres")
+	var cut_h := cfg.cut_height
+	var radius := func(len_from_base: float) -> float:
+		return TreeBuilder.trunk_radius_local(sp, v, len_from_base / ys) * xs
+	# Merchantable top: diameter >= 12 cm and below 82 % of the height.
+	var top := cut_h + 1.0
+	var y := cut_h
+	while y < height * 0.82:
+		if float(radius.call(y)) * 2.0 < MIN_MERCH_DIAMETER:
+			break
+		top = y
+		y += 0.25
+	var merch_len: float = maxf(top - cut_h, 1.0)
+	var d0: float = float(radius.call(cut_h)) * 2.0
+	var max_piece := clampf(2.2 - d0 * 1.4, 0.9, 2.0)
+	var n := clampi(int(ceil(merch_len / max_piece)), MIN_SEGMENTS, MAX_SEGMENTS)
+	var parts: Dictionary
+	while true:
+		parts = _shares(n, cut_h, merch_len, radius)
+		var max_q := 0
+		for q in parts.mte:
+			max_q = maxi(max_q, q)
+		if max_q <= HAND_BUDGET_MTE or n >= MAX_SEGMENTS:
+			break
+		n += 1
+	parts["cut_h"] = cut_h
+	parts["merch_top"] = cut_h + merch_len
+	parts["n"] = n
+	parts["species"] = sp
+	parts["d0"] = d0
+	return parts
+
+
+## (x, y) scale of the grounded tree instance (mesh units -> meters).
+static func tree_scale(idx: int) -> Vector2:
+	if Game.vegetation:
+		var t: Transform3D = Game.vegetation.tree_transform(idx)
+		return Vector2(t.basis.x.length(), t.basis.y.length())
+	var sp: int = World.trees.species[idx]
+	var h: float = World.trees.height[idx]
+	var s := h / TreeBuilder.mesh_height(sp, World.trees.variant[idx])
+	return Vector2(s, s)
+
+
+static func _shares(n: int, cut_h: float, merch_len: float, radius: Callable) -> Dictionary:
+	var starts := PackedFloat32Array()
+	var ends := PackedFloat32Array()
+	var vols := PackedFloat64Array()
+	for k in n:
+		var a := cut_h + merch_len * k / n
+		var b := cut_h + merch_len * (k + 1) / n
+		var ra: float = radius.call(a)
+		var rb: float = radius.call(b)
+		starts.append(a)
+		ends.append(b)
+		vols.append(PI * (b - a) * (ra * ra + ra * rb + rb * rb) / 3.0)
+	return {"starts": starts, "ends": ends, "mte": allocate(vols, TREE_MTE), "cents": allocate(vols, TREE_CENTS)}
+
+
+## Exact integer allocation of `total` by weights: floor shares, remainder to
+## the final share (deterministic). The result always sums to `total`; for
+## equal thirds of 10,000 cents: 3333, 3333, 3334.
+static func allocate(weights: PackedFloat64Array, total: int) -> PackedInt32Array:
+	var sum := 0.0
+	for w in weights:
+		sum += w
+	var out := PackedInt32Array()
+	var acc := 0
+	for k in weights.size():
+		if k < weights.size() - 1:
+			var q := int(floor(float(total) * weights[k] / sum + 1e-9))
+			out.append(q)
+			acc += q
+		else:
+			out.append(total - acc)
+	return out
+
+
+# ----------------------------------------------------------------- records
+
+func has_record(tree_id: int) -> bool:
+	return records.has(tree_id)
+
+
+## Builds (or rebuilds on load) the authoritative record for a tree. Saved
+## data only overrides progress/state fields; geometry and shares always
+## come from the frozen tree record, so a save cannot change quantities.
+func _build_record(id: int, idx: int, saved: Dictionary) -> Dictionary:
+	var p := partition(idx)
+	var sp: int = World.trees.species[idx]
+	var v: int = World.trees.variant[idx]
+	var dims := tree_scale(idx)
+	var base_basis := Basis()
+	if Game.vegetation:
+		base_basis = (Game.vegetation.tree_transform(idx) as Transform3D).basis
+	var axis := base_basis.y.normalized() if base_basis.y.length() > 0.001 else Vector3.UP
+	var segs := []
+	var saved_segs: Array = saved.get("segments", [])
+	for k in int(p.n):
+		var ss: Dictionary = saved_segs[k] if k < saved_segs.size() else {}
+		segs.append({"sid": "T%d_S%d" % [id, k], "k": k, "a": p.starts[k], "b": p.ends[k], "mte": p.mte[k], "cents": p.cents[k], "state": clampi(int(ss.get("state", Seg.ATTACHED)), Seg.ATTACHED, Seg.CONSUMED), "receipt": str(ss.get("receipt", "")), "burn": clampf(float(ss.get("burn", 0.0)), 0.0, 1.0)})
+	var rec := {
+		"tree": id, "idx": idx, "species": sp, "variant": v,
+		"xs": dims.x, "ys": dims.y, "base_basis": base_basis, "frame": TimberMesh.frame_for(axis),
+		"cut_h": float(p.cut_h), "merch_top": float(p.merch_top),
+		"segments": segs, "bounds": [], "crown": {},
+	}
+	var saved_bounds: Array = saved.get("bounds", [])
+	for k in int(p.n) - 1:
+		var sb: Dictionary = saved_bounds[k] if k < saved_bounds.size() else {}
+		var r := TimberMesh.radius_at(rec, float(p.ends[k]))
+		rec.bounds.append({"k": k, "work": maxf(float(sb.get("work", 0.0)), 0.0), "required": section_units(r * 2.0), "cut": bool(sb.get("cut", false))})
+	var sc: Dictionary = saved.get("crown", {})
+	var crown_r := TimberMesh.radius_at(rec, float(p.merch_top))
+	rec.crown = {"attached": bool(sc.get("attached", true)), "work": maxf(float(sc.get("work", 0.0)), 0.0), "required": section_units(crown_r * 2.0) * 0.6}
+	return rec
+
+
+## Called when a felled trunk has settled: builds the timber record and
+## hands the trunk from the TreeActor to one TimberBody (same pose, so the
+## swap is invisible). The tree's ID is kept throughout.
+func adopt_fallen(actor: TreeActor) -> void:
+	var id := actor.tree_id
+	if records.has(id) or actor.body == null:
+		return
+	var rec := _build_record(id, actor.idx, {})
+	records[id] = rec
+	# Actor body frame: +Y = world up of the standing tree's mesh frame;
+	# timber frame: +Y = the tree's own (leaning) trunk axis.
+	var pose := actor.body.global_transform * Transform3D(rec.frame as Basis, Vector3.ZERO)
+	actor.release_fallen_body()
+	var all: Array[int] = []
+	for k in rec.segments.size():
+		all.append(k)
+	var b := _make_body(id, all, true, pose, false)
+	if not b.has_support():
+		b.set_dynamic(true)
+
+
+func section_units(diameter: float) -> float:
+	# Bucking cuts are cheaper than felling the standing tree.
+	# At least two small-axe contacts even for a thin top log.
+	return maxf(config.reference_units * 0.35 * pow(maxf(diameter, 0.05) / config.reference_diameter, config.diameter_exponent), 1.6)
+
+
+func _make_body(tree_id: int, ks: Array[int], crown: bool, pose: Transform3D, dynamic: bool) -> TimberBody:
+	_body_counter += 1
+	var key := "B%d_%d" % [tree_id, _body_counter]
+	var b := TimberBody.new()
+	b.name = key
+	body_parent.add_child(b)
+	b.setup(self, key, tree_id, ks, crown, pose, dynamic)
+	bodies[key] = b
+	for k in ks:
+		var s: Dictionary = records[tree_id].segments[k]
+		var st := Seg.WORLD if ks.size() == 1 and not crown else Seg.ATTACHED
+		if int(s.state) != st:
+			s.state = st
+			segment_state_changed.emit(str(s.sid), st)
+	return b
+
+
+func segment(sid: String) -> Dictionary:
+	var parts := sid.trim_prefix("T").split("_S")
+	var tid := int(parts[0])
+	if not records.has(tid):
+		return {}
+	var k := int(parts[1])
+	var segs: Array = records[tid].segments
+	return segs[k] if k >= 0 and k < segs.size() else {}
+
+
+func _set_state(sid: String, st: int) -> void:
+	var s := segment(sid)
+	if s.is_empty():
+		return
+	s.state = st
+	segment_state_changed.emit(sid, st)
+
+
+# --------------------------------------------------------------- sectioning
+
+## Axe contact on a timber body near local length `y` (m from the base along
+## the trunk axis). Returns {"accepted", "progress", "separated", "reason"}.
+func apply_cut(body: TimberBody, y: float, work: float) -> Dictionary:
+	if not body.is_resting():
+		return {"accepted": false, "reason": "wait"}
+	var rec: Dictionary = records[body.tree_id]
+	var target := _nearest_boundary(body, y)
+	if target.is_empty():
+		return {"accepted": false, "reason": "no_boundary"}
+	if target.kind == "crown":
+		var c: Dictionary = rec.crown
+		c.work = float(c.work) + work
+		var pr := clampf(float(c.work) / float(c.required), 0.0, 1.0)
+		body.refresh_cut(-1)
+		if pr >= 1.0:
+			_clear_crown(body)
+			return {"accepted": true, "progress": 1.0, "separated": true}
+		return {"accepted": true, "progress": pr, "separated": false}
+	var bd: Dictionary = rec.bounds[target.k]
+	bd.work = float(bd.work) + work
+	var p := clampf(float(bd.work) / float(bd.required), 0.0, 1.0)
+	body.refresh_cut(int(target.k))
+	if p >= 1.0 and not bool(bd.cut):
+		bd.cut = true
+		_split(body, int(target.k))
+		return {"accepted": true, "progress": 1.0, "separated": true}
+	return {"accepted": true, "progress": p, "separated": false}
+
+
+func _nearest_boundary(body: TimberBody, y: float) -> Dictionary:
+	var rec: Dictionary = records[body.tree_id]
+	var best := {}
+	var best_d := 0.75
+	for k in body.ks:
+		if k < body.ks.max():
+			var bd: Dictionary = rec.bounds[k]
+			if bool(bd.cut):
+				continue
+			var by: float = rec.segments[k].b
+			var d := absf(y - by)
+			if d < best_d:
+				best_d = d
+				best = {"kind": "bound", "k": k}
+	if body.crown and bool(rec.crown.attached):
+		var d := absf(y - float(rec.merch_top))
+		if d < best_d + 0.35:
+			best = {"kind": "crown"}
+	return best
+
+
+func boundary_progress(body: TimberBody, y: float) -> float:
+	var t := _nearest_boundary(body, y)
+	if t.is_empty():
+		return -1.0
+	var rec: Dictionary = records[body.tree_id]
+	if t.kind == "crown":
+		return clampf(float(rec.crown.work) / float(rec.crown.required), 0.0, 1.0)
+	var bd: Dictionary = rec.bounds[t.k]
+	return clampf(float(bd.work) / float(bd.required), 0.0, 1.0)
+
+
+## Separation is one synchronous transaction (no frame where both the old
+## run and the new pieces exist logically). The part with the crown, or the
+## longer part, keeps its resting pose; the other part is released to a
+## short local simulation. Either part without support is woken.
+func _split(body: TimberBody, k: int) -> void:
+	var low: Array[int] = []
+	var high: Array[int] = []
+	for s in body.ks:
+		if s <= k:
+			low.append(s)
+		else:
+			high.append(s)
+	var pose := body.global_transform
+	var crown := body.crown
+	var tid := body.tree_id
+	var keep_high := crown or high.size() >= low.size()
+	_remove_body(body, false)
+	var bl := _make_body(tid, low, false, pose, not keep_high)
+	var bh := _make_body(tid, high, crown, pose, keep_high == false)
+	for b in [bl, bh]:
+		if b.is_resting() and not b.has_support():
+			b.set_dynamic(true)
+	var at := pose * Vector3(0, float(records[tid].segments[k].b), 0)
+	LoggingFX.play(LoggingFX.Sound.CRACK, at, -8.0)
+	LoggingFX.chips(at, Vector3.UP, Color(0.85, 0.72, 0.5))
+
+
+func _clear_crown(body: TimberBody) -> void:
+	# The crown/branch top is non-payable brush (explicitly tracked, not a
+	# missing share). It collapses into residue that fades over a minute.
+	var rec: Dictionary = records[body.tree_id]
+	rec.crown.attached = false
+	body.drop_crown()
+	if body.ks.size() == 1:
+		_set_state(rec.segments[body.ks[0]].sid, Seg.WORLD)
+	if not body.has_support():
+		body.set_dynamic(true)
+
+
+func _remove_body(body: TimberBody, wake_neighbours := true) -> void:
+	bodies.erase(body.key)
+	var at := body.global_position
+	var reach := body.span().y + 2.0
+	body.collision_layer = 0
+	body.queue_free()
+	if wake_neighbours and is_inside_tree():
+		_wake_unsupported_near.call_deferred(at, reach)
+
+
+## Pieces that were resting on a removed piece must not hang in the air.
+func _wake_unsupported_near(at: Vector3, reach: float) -> void:
+	await get_tree().physics_frame
+	for key in bodies:
+		var b: TimberBody = bodies[key]
+		if b.is_resting() and b.global_position.distance_to(at) < reach + b.span().y and not b.has_support():
+			b.set_dynamic(true)
+
+
+## A dynamic piece came to rest: repair it only if it is truly inaccessible.
+func on_body_settled(b: TimberBody) -> void:
+	var reason := TimberRecovery.diagnose(b)
+	if reason != "":
+		_recover_body(b, reason)
+	elif not b.has_support():
+		b.set_dynamic(true)
+
+
+func body_of(sid: String) -> TimberBody:
+	var s := segment(sid)
+	if s.is_empty():
+		return null
+	var tid := int(sid.trim_prefix("T").split("_S")[0])
+	for key in bodies:
+		var b: TimberBody = bodies[key]
+		if b.tree_id == tid and int(s.k) in b.ks:
+			return b
+	return null
+
+
+# ------------------------------------------------------------------ carrying
+
+func carried_mte() -> int:
+	var total := 0
+	for sid in carried:
+		total += int(segment(sid).mte)
+	return total
+
+
+## Picks up a single free piece into the player's bundle. Budget check uses
+## integer mTE; `budget` lets future Stronger workers carry more.
+func pick_up(body: TimberBody, budget := HAND_BUDGET_MTE) -> Dictionary:
+	if body.ks.size() != 1 or body.crown:
+		return {"ok": false, "reason": "Cut this section free first."}
+	var sid: String = records[body.tree_id].segments[body.ks[0]].sid
+	if claims.has(sid) and claims[sid] != "player":
+		return {"ok": false, "reason": "Someone else is handling this piece."}
+	var s := segment(sid)
+	if carried_mte() + int(s.mte) > budget + 2:
+		return {"ok": false, "reason": "Too heavy to add to your load (%d%% of a hand load)." % int(100.0 * (carried_mte() + int(s.mte)) / budget)}
+	# Record first, then visuals: the piece is CARRIED before the body goes.
+	carried.append(sid)
+	claims[sid] = "player"
+	_set_state(sid, Seg.CARRIED)
+	_remove_body(body)
+	carried_changed.emit()
+	return {"ok": true, "sid": sid}
+
+
+## Sets a carried piece down (caller validated the spot): `centre` is where
+## the middle of the piece goes, `dir` its lengthwise direction.
+func put_down(sid: String, centre: Vector3, dir: Vector3, dynamic: bool) -> TimberBody:
+	if not sid in carried:
+		return null
+	var s := segment(sid)
+	var tid := int(sid.trim_prefix("T").split("_S")[0])
+	var k: int = s.k
+	var basis := TimberMesh.frame_for(dir)
+	var mid := (float(s.a) + float(s.b)) * 0.5
+	carried.erase(sid)
+	claims.erase(sid)
+	var ks: Array[int] = [k]
+	var b := _make_body(tid, ks, false, Transform3D(basis, centre - basis.y * mid), dynamic)
+	carried_changed.emit()
+	return b
+
+
+# ------------------------------------------------------- delivery and burning
+
+## Accepts pieces into the camp delivery queue. The ONLY place entitlement
+## receipts are created. Idempotent per segment.
+func accept(sids: Array, source: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if accept_gate.is_valid() and not bool(accept_gate.call()):
+		return out
+	for sid in sids:
+		var s := segment(sid)
+		if s.is_empty() or int(s.state) >= Seg.ACCEPTED_QUEUED or str(s.receipt) != "":
+			continue
+		if int(s.state) not in [Seg.CARRIED, Seg.WORLD, Seg.VEHICLE_RESERVED]:
+			continue
+		_receipt_counter += 1
+		var r := {"id": "RCPT-%06d" % _receipt_counter, "sid": sid, "tree": int(sid.trim_prefix("T").split("_S")[0]), "mte": int(s.mte), "cents": int(s.cents), "source": source, "time": Game.world_time, "settled": false}
+		s.receipt = r.id
+		receipts.append(r)
+		carried.erase(sid)
+		var b := body_of(sid)
+		if b:
+			_remove_body(b)
+		queue.append(sid)
+		_set_state(sid, Seg.ACCEPTED_QUEUED)
+		claims.erase(sid)
+		delivery_accepted.emit(r)
+		out.append(r)
+	if not out.is_empty():
+		carried_changed.emit()
+		queue_changed.emit()
+	return out
+
+
+func queue_mte() -> int:
+	var t := 0
+	for sid in queue:
+		t += int(segment(sid).mte)
+	return t
+
+
+func burning_mte() -> float:
+	var t := 0.0
+	for sid in burning:
+		var s := segment(sid)
+		t += float(s.mte) * (1.0 - float(s.burn))
+	return t
+
+
+## Advances combustion by `seconds` of simulated time (also used for the
+## bounded overnight advance). Pause stops it because the world is paused.
+func advance_burn(seconds: float) -> void:
+	var remaining := seconds
+	var guard := 0
+	while remaining > 0.0 and guard < 10000:
+		guard += 1
+		while burning.size() < BURN_SLOTS and not queue.is_empty():
+			var sid: String = queue.pop_front()
+			burning.append(sid)
+			_set_state(sid, Seg.BURNING)
+		if burning.is_empty():
+			return
+		var step := minf(remaining, 5.0)
+		var done: Array[String] = []
+		var boost := 1.0 + clampf(float(queue_mte()) / TREE_MTE, 0.0, 1.0) * BURN_BACKLOG_BOOST
+		for sid in burning:
+			var s := segment(sid)
+			var dur := BURN_SECONDS_PER_THIRD * maxf(float(s.mte), 20.0) / float(HAND_BUDGET_MTE) / boost
+			s.burn = minf(float(s.burn) + step / dur, 1.0)
+			if float(s.burn) >= 1.0:
+				done.append(sid)
+		for sid in done:
+			burning.erase(sid)
+			_set_state(sid, Seg.CONSUMED)
+			piece_consumed.emit(sid)
+		if not done.is_empty():
+			queue_changed.emit()
+		remaining -= step
+
+
+func _process(delta: float) -> void:
+	# Pause stops burning (this node pauses with the tree); time scale
+	# follows the shared world clock.
+	if not get_tree().paused:
+		advance_burn(delta * Game.time_scale)
+
+
+## Fire intensity 0..1.5 from the actual fuel in the pit (FirePit reads it).
+func fire_level() -> float:
+	if burning.is_empty():
+		return 0.0
+	var f := burning_mte() / float(HAND_BUDGET_MTE * BURN_SLOTS)
+	return clampf(0.35 + f * 0.9 + clampf(float(queue_mte()) / TREE_MTE, 0.0, 1.0) * 0.25, 0.0, 1.5)
+
+
+# ----------------------------------------------------------------- recovery
+
+## Inspects free timber and repairs only genuinely inaccessible pieces.
+## Recovery keeps ID, quantity, share and acceptance flags; never pays.
+func run_recovery() -> int:
+	var fixed := 0
+	for key in bodies.keys():
+		var b: TimberBody = bodies[key]
+		var reason := TimberRecovery.diagnose(b)
+		if reason != "":
+			_recover_body(b, reason)
+			fixed += 1
+	return fixed
+
+
+func _recover_body(b: TimberBody, reason: String) -> void:
+	var from := b.global_position
+	var target := TimberRecovery.recover(b)
+	for sid in b.sid_list():
+		recovery_log.append({"sid": sid, "reason": reason, "from": [snappedf(from.x, 0.1), snappedf(from.y, 0.1), snappedf(from.z, 0.1)], "to": target, "time": Game.world_time})
+		recovered.emit(sid, reason)
+	push_warning("TimberRecovery: %s %s -> %s" % [str(b.sid_list()), reason, target])
+
+
+# -------------------------------------------------------------- reconciliation
+
+## Per-tree conservation check: quantities and cents by state always sum to
+## the tree totals; accepted+consumed never double-counted.
+func reconcile(tree_id: int) -> Dictionary:
+	var rec: Dictionary = records[tree_id]
+	var by_state := {}
+	var mte := 0
+	var cents := 0
+	var receipt_cents := 0
+	for s in rec.segments:
+		var st: String = Seg.keys()[int(s.state)]
+		by_state[st] = int(by_state.get(st, 0)) + int(s.mte)
+		mte += int(s.mte)
+		cents += int(s.cents)
+	for r in receipts:
+		if int(r.tree) == tree_id:
+			receipt_cents += int(r.cents)
+	return {"tree": tree_id, "mte_total": mte, "cents_total": cents, "receipt_cents": receipt_cents, "by_state": by_state, "ok": mte == TREE_MTE and cents == TREE_CENTS and receipt_cents <= TREE_CENTS, "nonpayable": "crown/branch brush, chips, stump residue"}
+
+
+## Contract view: every share of this tree has been accepted at camp
+## (queued, burning or consumed). Burning to ash is NOT required.
+func tree_delivered(tree_id: int) -> bool:
+	if not records.has(tree_id):
+		return false
+	for s in records[tree_id].segments:
+		if int(s.state) < Seg.ACCEPTED_QUEUED:
+			return false
+	return true
+
+
+## Optional final-ash cleanup view (separate from contract delivery).
+func ash_clean() -> bool:
+	return queue.is_empty() and burning.is_empty()
+
+
+func totals() -> Dictionary:
+	var accepted_mte := 0
+	var entitlement := 0
+	for r in receipts:
+		accepted_mte += int(r.mte)
+		entitlement += int(r.cents)
+	return {"accepted_mte": accepted_mte, "entitlement_cents": entitlement, "queue_mte": queue_mte(), "burning": burning.size(), "queued": queue.size(), "receipts": receipts.size(), "bodies": bodies.size(), "trees": records.size()}
+
+
+func reconcile_all() -> Array:
+	var out := []
+	for id in records:
+		out.append(reconcile(id))
+	return out
+
+
+# ------------------------------------------------------------- future hooks
+
+## Workers (Prompt 4) claim a piece before acting on it; offscreen work still
+## goes through accept()/put_down() so conservation holds.
+func claim(sid: String, claimant: String) -> bool:
+	if claims.has(sid) and claims[sid] != claimant:
+		return false
+	claims[sid] = claimant
+	return true
+
+
+func release(sid: String, claimant: String) -> void:
+	if claims.get(sid, "") == claimant:
+		claims.erase(sid)
+
+
+## Trucks (Prompt 5): reserve pieces as cargo; acceptance later uses accept()
+## with the bay as source. Implemented as a reservation only in Phase 2.
+func reserve_for_vehicle(sids: Array, vehicle_id: String) -> void:
+	for sid in sids:
+		var s := segment(sid)
+		if int(s.get("state", -1)) == Seg.WORLD:
+			claims[sid] = vehicle_id
+			_set_state(sid, Seg.VEHICLE_RESERVED)
+
+
+# ---------------------------------------------------------------- persistence
+
+func capture() -> Dictionary:
+	var recs := {}
+	for id in records:
+		var r: Dictionary = records[id]
+		var segs := []
+		for sg in r.segments:
+			segs.append({"k": sg.k, "state": sg.state, "receipt": sg.receipt, "burn": sg.burn})
+		var bds := []
+		for bd in r.bounds:
+			bds.append({"work": bd.work, "cut": bd.cut})
+		recs[str(id)] = {"segments": segs, "bounds": bds, "crown": {"attached": r.crown.attached, "work": r.crown.work}}
+	var body_list := []
+	for key in bodies:
+		var b: TimberBody = bodies[key]
+		body_list.append({"tree": b.tree_id, "ks": b.ks.duplicate(), "crown": b.crown, "pose": TreeService._xf_to_array(b.global_transform)})
+	return {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50)}
+
+
+## Rebuilds the ledger from a save. Ownership is re-derived and validated:
+## each segment ends up in exactly one place (body, hands, queue, pit or
+## consumed); a segment claimed twice keeps its most-advanced legal owner.
+func restore(data: Dictionary) -> void:
+	clear_all()
+	for key in data.get("records", {}):
+		var id := int(key)
+		var idx: int = Game.vegetation.tree_index_by_id.get(id, -1) if Game.vegetation else id
+		if idx < 0:
+			push_warning("TimberService: save references unknown tree %d (ignored)" % id)
+			continue
+		records[id] = _build_record(id, idx, data.records[key])
+	receipts.clear()
+	for r in data.get("receipts", []):
+		receipts.append(r)
+	_receipt_counter = maxi(int(data.get("receipt_counter", 0)), receipts.size())
+	# Accepted shares are defined by receipts; their segments are never world timber.
+	var accepted := {}
+	for r in receipts:
+		accepted[str(r.sid)] = true
+	for sid in data.get("burning", []):
+		if accepted.has(str(sid)) and not str(sid) in burning:
+			burning.append(str(sid))
+	for sid in data.get("queue", []):
+		if accepted.has(str(sid)) and not str(sid) in burning and not str(sid) in queue:
+			queue.append(str(sid))
+	for sid in accepted:
+		var sg := segment(sid)
+		if sg.is_empty():
+			continue
+		if sid in burning:
+			sg.state = Seg.BURNING
+		elif sid in queue:
+			sg.state = Seg.ACCEPTED_QUEUED
+		else:
+			sg.state = Seg.CONSUMED
+	for sid in data.get("carried", []):
+		var sg := segment(str(sid))
+		if not sg.is_empty() and not accepted.has(str(sid)) and not str(sid) in carried:
+			carried.append(str(sid))
+			sg.state = Seg.CARRIED
+			claims[str(sid)] = "player"
+	var placed := {}
+	for bd in data.get("bodies", []):
+		var tid := int(bd.tree)
+		if not records.has(tid):
+			continue
+		var ks: Array[int] = []
+		for k in bd.ks:
+			var sg: Dictionary = records[tid].segments[int(k)] if int(k) < records[tid].segments.size() else {}
+			if sg.is_empty() or accepted.has(str(sg.sid)) or str(sg.sid) in carried or placed.has(str(sg.sid)):
+				continue
+			ks.append(int(k))
+			placed[str(sg.sid)] = true
+		if ks.is_empty():
+			continue
+		var crown: bool = bool(bd.crown) and bool(records[tid].crown.attached) and ks.max() == records[tid].segments.size() - 1
+		_make_body(tid, ks, crown, TreeService.array_to_xf(bd.pose), false)
+	# Any segment still unowned (e.g. a save taken from an older build) gets
+	# a body at its tree's stump so it can never vanish from the contract.
+	for id in records:
+		for sg in records[id].segments:
+			var sid: String = sg.sid
+			if accepted.has(sid) or sid in carried or placed.has(sid):
+				continue
+			var stump := World.tree_position(int(records[id].idx))
+			var ks2: Array[int] = [int(sg.k)]
+			var b := _make_body(id, ks2, false, Transform3D(TimberMesh.frame_for(Vector3.RIGHT), stump + Vector3(1.5, 0.4, 0) - TimberMesh.frame_for(Vector3.RIGHT).y * float(sg.a)), true)
+			b.name += "_orphan"
+			recovery_log.append({"sid": sid, "reason": "invalid_pose", "to": "stump", "time": Game.world_time})
+	for r in data.get("recovery_log", []):
+		recovery_log.append(r)
+	carried_changed.emit()
+	queue_changed.emit()
+
+
+func clear_all() -> void:
+	for key in bodies:
+		(bodies[key] as Node).queue_free()
+	bodies.clear()
+	records.clear()
+	carried.clear()
+	queue.clear()
+	burning.clear()
+	receipts.clear()
+	claims.clear()
+	recovery_log.clear()
+	_receipt_counter = 0
+	_body_counter = 0

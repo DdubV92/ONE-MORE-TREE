@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
 const DEFAULT_PATH := "user://saves/campaign.json"
 
 static var path_override := ""
@@ -18,6 +18,7 @@ static func capture_state(world: Node) -> Dictionary:
 	var p: Node3D = world.get("player")
 	var env: Node = world.get("environment")
 	var tree_service: TreeService = world.get("trees")
+	var timber: TimberService = world.get("timber")
 	return {
 		"schema": SCHEMA_VERSION,
 		"world": {
@@ -36,7 +37,9 @@ static func capture_state(world: Node) -> Dictionary:
 		# Reserved for later prompts (kept explicit so loaders know the shape):
 		"campaign": {"rule_set": CampaignRules.RULE_SET_ID, "state": "CONTRACT_ACTIVE", "day": 1, "clock_running": false, "legacy": false},
 		"economy": {"funds_cents": 0, "ledger": [], "workers": [], "trucks": []},
-		"timber": {"segments": [], "accepted_shares": []},
+		# Phase 2 timber ledger: per-tree segment states/receipts/burn, cut
+		# progress, world bodies (poses), carried bundle, queue, pit, receipts.
+		"timber": timber.capture() if timber else {},
 		"horror": {"exposure": 0.0},
 		"build": Diag.version_string(),
 	}
@@ -118,13 +121,28 @@ static func migrate(data: Dictionary) -> Dictionary:
 		data["economy"] = {"funds_cents": 0, "ledger": [], "workers": [], "trucks": []}
 		data["timber"] = {"segments": [], "accepted_shares": []}
 		data["schema"] = 2
+		v = 2
+	if v == 2:
+		# Phase 1 saves: fallen trunks exist only as tree poses. They are
+		# adopted into timber records on load (TreeService FALLEN path); the
+		# placeholder timber block carries no data.
+		data["timber"] = {}
+		data["schema"] = 3
 	return data
 
 
 static func apply_state(world: Node, data: Dictionary) -> void:
+	# Timber records first (they only need the frozen world), then trees: a
+	# SECTIONED tree then restores just its stump; a FALLEN (older) trunk is
+	# adopted into a fresh record.
+	var timber: TimberService = world.get("timber")
+	if timber:
+		timber.restore(data.get("timber", {}))
 	var tree_service: TreeService = world.get("trees")
 	if tree_service:
 		tree_service.restore(data.get("trees", {}))
+	if timber:
+		timber.run_recovery()
 	var p0: Node3D = world.get("player")
 	if p0 and p0.get("axe"):
 		p0.axe.equip(str(data.get("equipment", {}).get("axe_tier", "small")))

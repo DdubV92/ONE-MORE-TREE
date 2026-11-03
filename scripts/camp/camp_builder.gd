@@ -21,7 +21,12 @@ func build() -> void:
 	fire = FirePit.new()
 	fire.name = "BurnPit"
 	fire.position = _ground(L.BURN_PIT_POS)
+	fire.set_meta("no_batch", true)      # demo logs toggle with the fuel state
 	add_child(fire)
+	var rack := DeliveryRack.new()
+	rack.name = "DeliveryRack"
+	rack.position = _ground(L.DELIVERY_RACK_POS)
+	add_child(rack)
 	_build_camper()
 	_build_cabin()
 	_build_tool_area()

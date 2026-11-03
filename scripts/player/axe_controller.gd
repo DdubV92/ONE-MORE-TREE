@@ -44,6 +44,9 @@ func equip(t: String) -> void:
 
 
 func input_allowed() -> bool:
+	# Hands full: the axe is stowed while carrying timber.
+	if player.carry and player.carry.is_carrying():
+		return false
 	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not player.get_tree().paused and not player.fly_mode
 
 
@@ -96,6 +99,9 @@ func begin_swing_for_test() -> void:
 func _process_visual(delta: float, speed: float) -> void:
 	if speed > 0.5 and not swinging:
 		_walk_bob += delta * speed * 1.6
+	if player.carry and player.carry.is_carrying():
+		view.pose_carry(player.carry.grips())
+		return
 	view.pose_at(_u if swinging else 0.0, _walk_bob)
 
 
@@ -118,13 +124,35 @@ func probe() -> Dictionary:
 		if st == TreeService.State.STANDING or st == TreeService.State.NOTCHED:
 			return {"kind": "tree", "id": id, "point": hit.position, "normal": hit.normal}
 		return {"kind": "hard", "point": hit.position, "normal": hit.normal}
-	if hit.collider and (hit.collider as Node).has_meta("fallen_tree"):
-		return {"kind": "timber", "point": hit.position, "normal": hit.normal}
+	if hit.collider and (hit.collider as Node).has_meta("stump_of"):
+		return {"kind": "stump", "id": int((hit.collider as Node).get_meta("stump_of")), "point": hit.position, "normal": hit.normal}
+	if hit.collider is TimberBody:
+		var tb: TimberBody = hit.collider
+		return {"kind": "timber", "body": tb, "y": tb.length_at_point(hit.position), "point": hit.position, "normal": hit.normal}
 	return {"kind": "hard", "point": hit.position, "normal": hit.normal}
 
 
 func _update_target() -> void:
 	var p := probe()
+	if p.kind == "timber" and Game.timber:
+		var tb: TimberBody = p.body
+		var pr := Game.timber.boundary_progress(tb, float(p.y))
+		var info := {"timber": true, "progress": pr, "resting": tb.is_resting(), "tier": tier, "single": tb.is_single_piece()}
+		if target_tree != -2 or absf(pr - float(_target_info.get("progress", -9.0))) > 0.001 or bool(_target_info.get("resting", true)) != tb.is_resting():
+			target_tree = -2
+			_target_info = info
+			target_changed.emit(info)
+		return
+	if p.kind == "stump" and Game.trees:
+		var sid: int = p.id
+		var st := Game.trees.state_of(sid)
+		var sp := clampf(float(Game.trees.record(sid).get("stump_work", 0.0)) / maxf(Game.trees.stump_required(sid), 0.001), 0.0, 1.0)
+		var sinfo := {"stump": true, "progress": sp, "ready": st == TreeService.State.SECTIONED}
+		if target_tree != -4 or absf(sp - float(_target_info.get("progress", -1.0))) > 0.001:
+			target_tree = -4
+			_target_info = sinfo
+			target_changed.emit(sinfo)
+		return
 	var id: int = p.get("id", -1) if p.kind == "tree" else -1
 	if id != target_tree:
 		target_tree = id
@@ -169,7 +197,28 @@ func _contact() -> void:
 			hit_result.emit("tree", res)
 			_target_info = _describe(p.id)
 			target_changed.emit(_target_info)
-		"timber", "hard":
+		"timber":
+			var tb: TimberBody = p.body
+			var res: Dictionary = Game.timber.apply_cut(tb, float(p.y), config.work_per_contact(tier)) if Game.timber else {"accepted": false}
+			if bool(res.get("accepted", false)):
+				LoggingFX.chips(p.point, p.normal, Color(0.86, 0.74, 0.52))
+				LoggingFX.play(LoggingFX.Sound.CHOP, p.point)
+				if Settings.get_v("camera_shake"):
+					player.add_shake(0.01)
+			else:
+				LoggingFX.play(LoggingFX.Sound.CLUNK, p.point, -4.0)
+			hit_result.emit("timber", res)
+			target_tree = -3
+		"stump":
+			var sres: Dictionary = Game.trees.apply_stump_work(int(p.id), config.work_per_contact(tier))
+			if bool(sres.accepted):
+				LoggingFX.chips(p.point, p.normal, Color(0.8, 0.66, 0.45))
+				LoggingFX.play(LoggingFX.Sound.CHOP, p.point)
+			else:
+				LoggingFX.play(LoggingFX.Sound.CLUNK, p.point, -4.0)
+			hit_result.emit("stump", sres)
+			target_tree = -3
+		"hard":
 			LoggingFX.play(LoggingFX.Sound.CLUNK, p.point)
 			if Settings.get_v("camera_shake"):
 				player.add_shake(0.02)

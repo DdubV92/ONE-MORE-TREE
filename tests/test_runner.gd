@@ -39,6 +39,9 @@ func _ready() -> void:
 	await _run_async("tree removal by ID updates render and collision", _t_tree_removal)
 	await _run_async("water and terrain surfaces face upward", _t_winding)
 	await _run_async("tree lifecycle: legal states, one TreeFelled, no ghosts, save/restore", _t_tree_lifecycle)
+	_run("timber shares: exact cents and quantities for every tree", _t_timber_shares)
+	_run("save v2 -> v3 migration keeps trees, adds timber", _t_save_v3)
+	await _run_async("timber ledger: buck, carry limits, one owner, receipts once, burn, recovery, reload", _t_timber_ledger)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -603,8 +606,9 @@ func _t_tree_lifecycle() -> String:
 	while svc.state_of(id) == TreeService.State.FALLING and t < 25.0:
 		await get_tree().physics_frame
 		t += 1.0 / 60.0
-	if err == "" and svc.state_of(id) != TreeService.State.FALLEN:
-		err = "tree did not settle (state %d)" % svc.state_of(id)
+	# Phase 2: a settled trunk is handed to the timber ledger at once.
+	if err == "" and (svc.state_of(id) != TreeService.State.SECTIONED or not world.timber.has_record(id)):
+		err = "tree did not settle into the timber ledger (state %d)" % svc.state_of(id)
 	if err == "" and (felled_signals[0] != 1 or svc.felled_log.count(id) != 1):
 		err = "TreeFelled emitted %d times" % felled_signals[0]
 	if err == "" and get_tree().get_nodes_in_group("stumps").size() != 1:
@@ -628,14 +632,246 @@ func _t_tree_lifecycle() -> String:
 	svc.restore(fallen_snapshot)
 	await get_tree().process_frame
 	await get_tree().physics_frame
-	if err == "" and (svc.state_of(id) != TreeService.State.FALLEN or get_tree().get_nodes_in_group("stumps").size() != 1):
-		err = "fallen state/stump not restored exactly once (%d stumps)" % get_tree().get_nodes_in_group("stumps").size()
+	if err == "" and (svc.state_of(id) != TreeService.State.SECTIONED or get_tree().get_nodes_in_group("stumps").size() != 1):
+		err = "sectioned state/stump not restored exactly once (%d stumps)" % get_tree().get_nodes_in_group("stumps").size()
 	if err == "" and felled_signals[0] != 1:
 		err = "restore re-emitted TreeFelled"
 	var restored_pose := TreeService.array_to_xf(svc.records[id].pose)
 	if err == "" and restored_pose.origin.distance_to(pose.origin) > 0.01:
 		err = "restored pose moved"
 	svc.clear_all()
+	world.timber.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+# ------------------------------------------------------------------ Phase 2
+
+func _t_timber_shares() -> String:
+	var eq3 := TimberService.allocate(PackedFloat64Array([1.0, 1.0, 1.0]), 10000)
+	if Array(eq3) != [3333, 3333, 3334]:
+		return "three equal shares gave %s" % str(eq3)
+	var eq9 := TimberService.allocate(PackedFloat64Array([1, 1, 1, 1, 1, 1, 1, 1, 1]), 10000)
+	var sum9 := 0
+	for q in eq9:
+		sum9 += q
+	if sum9 != 10000 or eq9[0] != 1111 or eq9[8] != 1112:
+		return "nine equal shares gave %s" % str(eq9)
+	var uneq := TimberService.allocate(PackedFloat64Array([0.7, 0.2, 0.1]), 10000)
+	if uneq[0] + uneq[1] + uneq[2] != 10000:
+		return "unequal shares do not sum"
+	# Every 37th tree on the island (covers species, sizes, variants).
+	var over := 0
+	for i in range(0, World.tree_count(), 37):
+		var p := TimberService.partition(i)
+		var m := 0
+		var c := 0
+		var mx := 0
+		for q in p.mte:
+			m += q
+			mx = maxi(mx, q)
+		for q in p.cents:
+			c += q
+		if m != TimberService.TREE_MTE or c != TimberService.TREE_CENTS:
+			return "tree %d: %d mTE / %d cents" % [i, m, c]
+		if int(p.n) < TimberService.MIN_SEGMENTS or int(p.n) > TimberService.MAX_SEGMENTS:
+			return "tree %d: %d segments" % [i, int(p.n)]
+		if mx > TimberService.HAND_BUDGET_MTE:
+			over += 1
+		# Deterministic: same tree, same partition.
+		if JSON.stringify(TimberService.partition(i).cents) != JSON.stringify(p.cents):
+			return "partition not deterministic for tree %d" % i
+	if over > 0:
+		return "%d sampled trees have a piece over one hand load" % over
+	return ""
+
+
+func _t_save_v3() -> String:
+	var v2 := {"schema": 2, "trees": {"5": {"id": 5, "state": 3, "felled_committed": true, "pose": []}}, "timber": {"segments": [], "accepted_shares": []}, "campaign": {"legacy": false}}
+	var m := SaveService.migrate(v2)
+	if int(m.get("schema", 0)) != 3:
+		return "v2 save not upgraded"
+	if not m.trees.has("5") or int(m.trees["5"].state) != 3:
+		return "tree states lost in migration"
+	if not (m.timber as Dictionary).is_empty():
+		return "placeholder timber block kept"
+	var v1 := SaveService.migrate({"schema": 1, "felled_trees": [9], "player": {"position": [0, 0, 0]}})
+	if int(v1.schema) != 3 or not bool(v1.campaign.legacy):
+		return "v1 chain migration failed"
+	return ""
+
+
+## Ownership invariant: each unconsumed segment has exactly one container.
+func _owners_ok(t: TimberService) -> String:
+	var held := {}
+	for key in t.bodies:
+		var b: TimberBody = t.bodies[key]
+		for sid in b.sid_list():
+			held[sid] = int(held.get(sid, 0)) + 1
+	for sid in t.carried:
+		held[sid] = int(held.get(sid, 0)) + 1
+	for sid in t.queue:
+		held[sid] = int(held.get(sid, 0)) + 1
+	for sid in t.burning:
+		held[sid] = int(held.get(sid, 0)) + 1
+	for id in t.records:
+		for s in t.records[id].segments:
+			var n := int(held.get(str(s.sid), 0))
+			var want := 0 if int(s.state) == TimberService.Seg.CONSUMED else 1
+			if n != want:
+				return "%s (state %s) has %d owners" % [s.sid, TimberService.Seg.keys()[int(s.state)], n]
+	return ""
+
+
+func _t_timber_ledger() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	await get_tree().process_frame
+	var t: TimberService = world.timber
+	var i := LoggingTest.find("camp_edge")
+	var id: int = World.trees.id[i]
+	var stand := PlacementValidator.cut_stands(i)[0]
+	world.vegetation.update_collision_around(stand)
+	await get_tree().physics_frame
+	var req := float(world.trees.record(id).required)
+	world.trees.apply_contact(id, stand, req + 1.0)
+	var w := 0.0
+	while world.trees.state_of(id) < TreeService.State.SECTIONED and w < 30.0:
+		await get_tree().physics_frame
+		w += 1.0 / 60.0
+	var err := ""
+	if not t.has_record(id):
+		err = "no timber record after felling"
+	var rec: Dictionary = t.records.get(id, {})
+	var cfg: TreeWorkConfig = load("res://config/tree_work.tres")
+	var work := cfg.work_per_contact("small")
+	if err == "":
+		err = _owners_ok(t)
+	# Partial cut persists through save/load; no reset, no duplicate.
+	if err == "":
+		var b: TimberBody = t.bodies.values()[0]
+		var k := 0   # thick butt boundary: one contact is a partial cut
+		t.apply_cut(b, float(rec.segments[k].b), work)
+		var partial := float(rec.bounds[k].work)
+		var snap: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+		t.restore(snap)
+		await get_tree().physics_frame
+		rec = t.records[id]
+		if absf(float(rec.bounds[k].work) - partial) > 0.001 or partial <= 0.0:
+			err = "partial cut not restored (%.2f vs %.2f)" % [float(rec.bounds[k].work), partial]
+		elif t.bodies.size() != 1:
+			err = "restore duplicated the trunk (%d bodies)" % t.bodies.size()
+	# Buck everything (crown first, then top down), waiting for settling.
+	var guard := 0
+	while err == "" and guard < 600:
+		guard += 1
+		var tb: TimberBody = null
+		for key in t.bodies:
+			if not (t.bodies[key] as TimberBody).is_single_piece():
+				tb = t.bodies[key]
+				break
+		if tb == null:
+			break
+		var y := float(rec.merch_top) if tb.crown else float(rec.segments[tb.ks.max() - 1].b)
+		var res := t.apply_cut(tb, y, work)
+		if str(res.get("reason", "")) == "wait" or bool(res.get("separated", false)):
+			for f in 30:
+				await get_tree().physics_frame
+	if err == "" and t.bodies.size() != rec.segments.size():
+		err = "bucking left %d bodies for %d segments" % [t.bodies.size(), rec.segments.size()]
+	for f in 240:
+		await get_tree().physics_frame
+	if err == "":
+		err = _owners_ok(t)
+	# Carry limit: baseline one-third; Stronger budget is larger; trucks unchanged.
+	if err == "":
+		var picked := 0
+		var refused := false
+		for key in t.bodies.keys():
+			var res := t.pick_up(t.bodies[key], TimberService.HAND_BUDGET_MTE)
+			if bool(res.ok):
+				picked += 1
+			else:
+				refused = true
+		if t.carried_mte() > TimberService.HAND_BUDGET_MTE + 2 or not refused:
+			err = "hand budget not enforced (%d mTE, refused %s)" % [t.carried_mte(), str(refused)]
+		var stronger := int(round(TimberService.HAND_BUDGET_MTE * CampaignRules.STRONGER_CARRY_MULTIPLIER))
+		var extra := 0
+		for key in t.bodies.keys():
+			if bool(t.pick_up(t.bodies[key], stronger).ok):
+				extra += 1
+		if err == "" and (extra == 0 or t.carried_mte() > stronger + 2):
+			err = "Stronger budget not applied (%d mTE)" % t.carried_mte()
+		if err == "" and absf(CampaignRules.TRUCK_CAPACITY_TREE_EQUIVALENTS - 3.0) > 0.001:
+			err = "truck capacity changed"
+	if err == "":
+		err = _owners_ok(t)
+	# Save with a bundle in hand: restores once, in the hands.
+	if err == "":
+		var held := t.carried.duplicate()
+		var data: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+		t.restore(data)
+		await get_tree().physics_frame
+		if t.carried != held:
+			err = "carried bundle not restored exactly"
+		elif _owners_ok(t) != "":
+			err = "after reload: " + _owners_ok(t)
+	# Acceptance creates receipts once; retries and reloads never repeat.
+	if err == "":
+		var rs := t.accept(t.carried.duplicate(), "rack:test")
+		var n := t.receipts.size()
+		t.accept(rs.map(func(r: Dictionary) -> String: return str(r.sid)), "rack:retry")
+		if t.receipts.size() != n or n == 0:
+			err = "retry created receipts (%d -> %d)" % [n, t.receipts.size()]
+		if err == "" and (t.tree_delivered(id) or t.ash_clean()):
+			err = "partial delivery reported complete"
+	# Recovery: a buried piece is moved, keeps identity, never pays.
+	if err == "" and not t.bodies.is_empty():
+		var b: TimberBody = t.bodies.values()[0]
+		var sid: String = b.sid_list()[0]
+		var cents_before := int(t.totals().entitlement_cents)
+		b.global_position.y -= 6.0
+		if TimberRecovery.diagnose(b) != "below_terrain":
+			err = "buried piece diagnosed as '%s'" % TimberRecovery.diagnose(b)
+		else:
+			t.run_recovery()
+			await get_tree().physics_frame
+			var nb := t.body_of(sid)
+			if nb == null or TimberRecovery.diagnose(nb) != "" or int(t.totals().entitlement_cents) != cents_before or str(t.segment(sid).receipt) != "":
+				err = "recovery changed identity or money"
+	# Deliver the rest; then burning: pause stops it, overnight advance is bounded.
+	if err == "":
+		for key in t.bodies.keys():
+			t.pick_up(t.bodies[key], 100000)
+		t.accept(t.carried.duplicate(), "rack:test")
+		if not t.tree_delivered(id):
+			err = "full delivery not recognised"
+		elif t.ash_clean():
+			err = "ash reported clean before burning"
+		var before := JSON.stringify(t.capture().records)
+		get_tree().paused = true
+		for f in 30:
+			await get_tree().process_frame
+		get_tree().paused = false
+		if err == "" and JSON.stringify(t.capture().records) != before:
+			err = "fuel burned while paused"
+		t.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS * 4.0)
+		var r := t.reconcile(id)
+		if err == "" and (not r.ok or int(r.receipt_cents) != TimberService.TREE_CENTS or int(r.by_state.get("CONSUMED", 0)) != TimberService.TREE_MTE or not t.ash_clean()):
+			err = "after burning: %s" % JSON.stringify(r)
+		# A consumed piece stays consumed after reload.
+		var data2: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+		t.restore(data2)
+		if err == "" and (t.bodies.size() != 0 or int(t.reconcile(id).by_state.get("CONSUMED", 0)) != TimberService.TREE_MTE):
+			err = "consumed wood came back after reload"
+	if err == "":
+		err = _owners_ok(t)
+	t.clear_all()
+	world.trees.clear_all()
 	world.queue_free()
 	await get_tree().process_frame
 	Game.mode = Game.Mode.MENU

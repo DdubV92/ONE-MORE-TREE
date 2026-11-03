@@ -151,6 +151,31 @@ func _reserve_dock(camp: Node3D) -> void:
 	hide.set_meta("hide_kind", "utility_closet_reserved")
 	add_child(hide)
 	hide.global_position = ub + Vector3(1.5, 0.05, 1.0)
+	# Dock dog refuge (Phases 5/6): after abandonment the dog waits here,
+	# dry and protected, never follows humans into the hunt, and boards the
+	# rescue ship at the dock end. Anchors only; ordinary dog routines are
+	# unchanged. The water-edge bounds keep the dog off the wet sand/dock edge.
+	var refuge := _anchor("DogRefuge", ub + Vector3(-1.4, 0.05, -0.8), "dog_refuge")
+	refuge.set_meta("note", "dry floor inside the utility building, small protected shelter")
+	_footprint_abs("DogShelter", ub + Vector3(-1.4, 0.0, -0.8), Vector3(1.6, 0.0, 1.4), "small protected dog shelter inside the utility building (Phase 5/6)")
+	var avoid := Marker3D.new()
+	avoid.name = "DogWaterEdgeBounds"
+	avoid.add_to_group("dog_avoid_bounds")
+	avoid.set_meta("note", "dog stays on ground at least 0.4 m above sea level and off the dock deck except for boarding")
+	avoid.set_meta("min_ground", World.sea_level + 0.4)
+	avoid.set_meta("dock_rect", [dock_center.x, dock_center.z, 3.0, dock_len])
+	add_child(avoid)
+	avoid.global_position = Vector3(x, World.sea_level, z)
+	_anchor("ShipBoardingHandoff", Vector3(x, World.sea_level + 0.6, end_z - 0.5), "ship_boarding")
+
+
+func _anchor(name: String, at: Vector3, group: String) -> Marker3D:
+	var m := Marker3D.new()
+	m.name = name
+	m.add_to_group(group)
+	add_child(m)
+	m.global_position = at
+	return m
 
 
 func _footprint_abs(name: String, center: Vector3, size: Vector3, note: String) -> void:

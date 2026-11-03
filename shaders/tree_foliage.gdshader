@@ -18,11 +18,15 @@ uniform float actor_height = 0.0;
 uniform float actor_phase = 0.0;
 uniform float actor_tint = 0.5;
 uniform float sway_scale = 1.0;
+uniform int clip_mode = 0;            // 0 none, 1 keep above clip_y (timber crowns)
+uniform float clip_y = 0.0;
+varying float v_rest_y;
 
 varying float v_tint;
 varying float v_ao;
 
 void vertex() {
+	v_rest_y = VERTEX.y;
 	vec3 origin = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	float sy = max(length(MODEL_MATRIX[1].xyz), 0.01);
 	bool actor = actor_height > 0.0;
@@ -37,6 +41,7 @@ void vertex() {
 }
 
 void fragment() {
+	if (clip_mode == 1 && v_rest_y < clip_y) discard;
 	vec4 c = texture(card_albedo, UV);
 	if (c.a < alpha_cut) discard;
 	vec3 col = c.rgb * tint * mix(tint_variation, vec3(1.0), v_tint);

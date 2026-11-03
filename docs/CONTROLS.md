@@ -7,10 +7,12 @@
 | Space | Jump |
 | Shift | Sprint (forward) |
 | Ctrl | Crouch (stays crouched under low ceilings) |
-| Left mouse | Swing the axe (hold to keep chopping at the same pace) |
+| Left mouse | Swing the axe (hold to keep chopping at the same pace). On a fallen trunk, aim at an orange mark to buck it into logs. Does nothing while carrying. |
 | 1 / 2 / 3 | Small / medium / large axe (debug equip until the Phase 3 shop) |
 | F9 / F10 | Quick save / quick load (campaign only; a backup of the previous save is kept) |
-| E | Interact: doors, fire, axe rack, notice board, arcade |
+| E | Interact: doors, fire, axe rack, notice board, arcade. Logs: pick up / add to your bundle; at the delivery rack: deliver everything you carry |
+| G | Set down one log at a checked spot in front of you (at the rack: deliver) |
+| X | Drop the whole load (each log still needs a clear spot; otherwise you keep it) |
 | Esc | Pause menu: resume, settings, diagnostics, save (campaign), title, quit. Releases the mouse. |
 | Click | Recapture the mouse after using a panel |
 
@@ -19,6 +21,7 @@
 | Key | Action |
 |---|---|
 | F1 | Controls overlay |
+| F2 | Timber ledger: carried / queued / burning, accepted tree-equivalents, delivery entitlement, per-tree reconciliation, last recovery |
 | F3 | Debug stats: FPS and frame-time percentiles, draw calls, physics, VRAM, position, surface, water depth, night-safety status, lighting |
 | F4 | Time-of-day slider, Dawn/Day/Sunset/Night/Overcast presets, overcast amount |
 | F6 | Inspect the harvestable tree under the crosshair (stable ID, species, size, log budget) |

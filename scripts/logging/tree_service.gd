@@ -5,8 +5,10 @@ extends Node
 ## work/notch model, the single TreeFelled emission, and the handoff between
 ## the instanced forest and one active TreeActor per modified tree.
 ##
-## States: STANDING -> NOTCHED -> FALLING -> FALLEN -> (SECTIONED -> DISPOSED,
-## reserved for Phase 2/3; never set here).
+## States: STANDING -> NOTCHED -> FALLING -> FALLEN -> SECTIONED -> DISPOSED.
+## SECTIONED (Phase 2): the settled trunk was handed to the TimberService
+## (timber record + bodies); the actor keeps only the stump. DISPOSED is
+## reserved for stump removal (later phase).
 
 enum State { STANDING, NOTCHED, FALLING, FALLEN, SECTIONED, DISPOSED }
 
@@ -17,6 +19,9 @@ signal tree_notched(tree_id: int)
 signal tree_felled(tree_id: int)
 signal tree_settled(tree_id: int, reason: String)
 signal tree_warning(tree_id: int)
+## Any committed state change (contract evaluation listens to this).
+signal tree_state_changed(tree_id: int, state: int)
+signal stump_removed(tree_id: int)
 
 const LEGAL := {
 	State.STANDING: [State.NOTCHED],
@@ -33,6 +38,7 @@ var actors := {}           # tree id -> TreeActor
 var felled_log: Array[int] = []    # ids in the order TreeFelled fired (this session)
 var persistent := true     # false in Preview: nothing is saved
 var actor_parent: Node3D
+var timber: TimberService     # Phase 2 ledger (null in isolated tests)
 
 
 func _ready() -> void:
@@ -59,6 +65,7 @@ static func _new_record(id: int) -> Dictionary:
 		"ang_vel": [0.0, 0.0, 0.0],
 		"settle_reason": "",
 		"hits": 0,
+		"stump_work": 0.0,           # Phase 3: stump removal progress
 	}
 
 
@@ -94,6 +101,7 @@ func _transition(id: int, to: int) -> bool:
 		push_warning("TreeService: illegal transition %d -> %d for tree %d" % [from, to, id])
 		return false
 	r.state = to
+	tree_state_changed.emit(id, to)
 	return true
 
 
@@ -135,6 +143,30 @@ func apply_contact(id: int, from_pos: Vector3, work: float) -> Dictionary:
 	return {"accepted": true, "progress": p, "felled": false}
 
 
+## Phase 3: chopping out a stump (only after its trunk went to the timber
+## ledger). The stump is non-payable residue; removing it is a contract
+## requirement. Returns {"accepted", "progress", "removed"}.
+func stump_required(id: int) -> float:
+	return float(record(id).required) * 0.45
+
+
+func apply_stump_work(id: int, work: float) -> Dictionary:
+	var r := record(id)
+	if int(r.state) != State.SECTIONED:
+		return {"accepted": false, "progress": 0.0, "removed": false, "reason": "trunk_first" if int(r.state) < State.SECTIONED else "gone"}
+	r.stump_work = float(r.get("stump_work", 0.0)) + work
+	var p := clampf(float(r.stump_work) / maxf(stump_required(id), 0.001), 0.0, 1.0)
+	if actors.has(id):
+		(actors[id] as TreeActor).set_stump_progress(p)
+	if p >= 1.0:
+		_transition(id, State.DISPOSED)
+		if actors.has(id):
+			(actors[id] as TreeActor).remove_stump()
+		stump_removed.emit(id)
+		return {"accepted": true, "progress": 1.0, "removed": true}
+	return {"accepted": true, "progress": p, "removed": false}
+
+
 func _commit_fell(id: int) -> void:
 	var r := record(id)
 	if not _transition(id, State.FALLING):
@@ -156,6 +188,15 @@ func on_actor_settled(id: int, pose: Transform3D, reason: String) -> void:
 	if int(r.state) == State.FALLING:
 		_transition(id, State.FALLEN)
 	tree_settled.emit(id, reason)
+	_hand_to_timber(id)
+
+
+func _hand_to_timber(id: int) -> void:
+	if timber == null or not actors.has(id) or state_of(id) != State.FALLEN:
+		return
+	timber.adopt_fallen(actors[id])
+	if timber.has_record(id):
+		_transition(id, State.SECTIONED)
 
 
 func on_actor_motion(id: int, pose: Transform3D, lin: Vector3, ang: Vector3) -> void:
@@ -229,8 +270,22 @@ func restore(data: Dictionary) -> void:
 				a.set_notch(progress(id))
 			State.FALLING:
 				a.restore_falling(array_to_xf(r.pose), _v(r.lin_vel), _v(r.ang_vel))
-			_:
+			State.FALLEN:
+				# Older (v2) saves: trunk at rest but not yet a timber record.
 				a.restore_fallen(array_to_xf(r.pose))
+				_hand_to_timber(id)
+			_:
+				if timber and not timber.has_record(id):
+					# Ledger missing for a sectioned tree (damaged save): rebuild
+					# the trunk from its fallen pose rather than losing it.
+					r.state = State.FALLEN
+					a.restore_fallen(array_to_xf(r.pose))
+					_hand_to_timber(id)
+				elif int(r.state) == State.DISPOSED:
+					a.restore_disposed()
+				else:
+					a.restore_stump_only()
+					a.set_stump_progress(clampf(float(r.get("stump_work", 0.0)) / maxf(stump_required(id), 0.001), 0.0, 1.0))
 
 
 static func _v(a: Array) -> Vector3:

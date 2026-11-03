@@ -2,13 +2,24 @@ class_name FirePit
 extends Node3D
 ## The camp burn pit: CC0 stone fire pit model, ash bed, a few burning logs,
 ## layered particle fire (flames, embers, smoke), flickering warm light and
-## bounded heat haze. Phase 0: always burning, placeholder interaction.
-## Prompt 2 adds real fuel via `add_fuel()` (interface reserved below).
+## bounded heat haze. Phase 2: the fire burns ACTUAL accepted timber from
+## the TimberService. Flames, light, embers, smoke, haze and crackle follow
+## the logical fuel; up to three detailed logs char and glow as their fuel is
+## consumed. With no fuel the coals keep glowing and relight automatically
+## when the next delivery is accepted (no crafting or ignition chores).
+## Preview mode shows a display-only demo fire (no fuel, no accounting).
 
 signal fuel_changed(amount: float)
 
 @export var radius := 1.7
-var fuel := 1.0                 # 0..1 visual intensity (Prompt 2 drives this)
+var fuel := 1.0                 # legacy alias of `level` (kept for old callers)
+var level := 0.0                # current smoothed intensity 0..1.5
+var demo := false               # preview: display-only fire
+var _demo_logs: Array[Node3D] = []
+var _burn_nodes: Array[MeshInstance3D] = []
+var _burn_sids: Array[String] = []
+var _glow: GPUParticles3D
+var _fire_body: StaticBody3D
 var _light: OmniLight3D
 var _flames: GPUParticles3D
 var _embers: GPUParticles3D
@@ -34,6 +45,7 @@ func _ready() -> void:
 		var y_axis := (top - base).normalized()
 		var x_axis := y_axis.cross(Vector3(-sin(a), 0, cos(a))).normalized()
 		log.basis = Basis(x_axis, y_axis, x_axis.cross(y_axis))
+		_demo_logs.append(log)
 	# Glowing coal bed between the logs.
 	var coal := StandardMaterial3D.new()
 	coal.albedo_color = Color(0.08, 0.05, 0.04)
@@ -64,8 +76,9 @@ func _ready() -> void:
 	body.add_child(cs)
 	body.set_script(load("res://scripts/interaction/interactable.gd"))
 	body.set("prompt", "Warm your hands")
-	body.set("message", "The fire crackles. (Burning timber arrives in Prompt 2.)")
+	body.set("message", "Coals glowing. Deliver logs at the rack beside the pit; they relight the fire automatically.")
 	add_child(body)
+	_fire_body = body
 	BuildKit.marker(self, "LoadPoint", Vector3(0, 0, radius + 1.4), 0.0, "burn_pit_load_point")
 	_light = OmniLight3D.new()
 	_light.position = Vector3(0, 0.9, 0)
@@ -90,15 +103,40 @@ func _apply_settings() -> void:
 	_light.shadow_enabled = Settings.get_v("quality") != "low"
 
 
+## Kept for API compatibility: fuel now comes only from accepted timber.
 func add_fuel(_amount: float) -> void:
-	## Reserved for Prompt 2 (timber disposal). Intentionally inert now.
 	pass
+
+
+func _target_level() -> float:
+	var t: TimberService = Game.timber
+	var real := t.fire_level() if t else 0.0
+	demo = Game.is_preview() and real <= 0.0
+	return 0.9 if demo else real
+
+
+func _apply_level(l: float) -> void:
+	var x := clampf(l, 0.0, 1.5)
+	# Coals only: a few low licks, warm glow, faint smoke.
+	_flames.amount_ratio = clampf(0.12 + 0.6 * x, 0.12, 1.0)
+	_flames.scale = Vector3.ONE * lerpf(0.45, 1.25, clampf(x / 1.5, 0.0, 1.0))
+	_embers.amount_ratio = clampf(0.25 + 0.55 * x, 0.2, 1.0)
+	_smoke.amount_ratio = clampf(0.25 + 0.6 * x, 0.25, 1.0)
+	if _glow:
+		_glow.scale = Vector3.ONE * lerpf(0.6, 1.2, clampf(x, 0.0, 1.0))
+	_haze.visible = Settings.get_v("heat_haze") and x > 0.25
+	for d in _demo_logs:
+		d.visible = demo
+	fuel = x
 
 
 func _process(delta: float) -> void:
 	_t += delta
+	level = move_toward(level, _target_level(), delta * 0.25)
+	_apply_level(level)
+	_update_burning_logs()
 	var flicker := 0.82 + 0.1 * sin(_t * 13.0) + 0.06 * sin(_t * 23.7 + 1.3) + 0.05 * sin(_t * 5.1)
-	_light.light_energy = _base_energy * flicker * fuel
+	_light.light_energy = _base_energy * flicker * lerpf(0.22, 1.15, clampf(level, 0.0, 1.5) / 1.5 * 1.3)
 	_light.position = Vector3(0.05 * sin(_t * 7.0), 0.9 + 0.05 * sin(_t * 11.0), 0.05 * cos(_t * 6.0))
 
 
@@ -239,6 +277,7 @@ func _make_flames() -> GPUParticles3D:
 	glow.draw_pass_1 = gq
 	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(glow)
+	_glow = glow
 	return p
 
 
@@ -355,3 +394,61 @@ func _make_haze() -> MeshInstance3D:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	return mi
+
+
+# ---------------------------------------------------- detailed burning logs
+
+## Up to BURN_SLOTS pieces lie across the coals, charring and shrinking with
+## their logical burn progress. The backlog stays on the delivery rack.
+func _update_burning_logs() -> void:
+	var t: TimberService = Game.timber
+	var sids: Array[String] = []
+	if t:
+		for sid in t.burning:
+			sids.append(sid)
+	if sids != _burn_sids:
+		for n in _burn_nodes:
+			n.queue_free()
+		_burn_nodes.clear()
+		_burn_sids = sids
+		for i in sids.size():
+			var s := t.segment(sids[i])
+			var rec: Dictionary = t.records[int(sids[i].trim_prefix("T").split("_S")[0])]
+			var mi := MeshInstance3D.new()
+			mi.name = "Burning_%s" % sids[i]
+			mi.mesh = TimberMesh.piece_mesh(rec, int(s.k))
+			var bark := ShaderMaterial.new()
+			bark.shader = load("res://shaders/burning_log.gdshader")
+			bark.set_shader_parameter("bark_tex", TimberMesh.bark_texture(int(rec.species)))
+			bark.set_shader_parameter("time_offset", float(i) * 2.1)
+			mi.set_surface_override_material(0, bark)
+			if mi.mesh.get_surface_count() > 1:
+				var wood := (TimberMesh.wood_material().duplicate()) as ShaderMaterial
+				mi.set_surface_override_material(1, wood)
+			# Crossed over the coals, slightly raised toward the centre.
+			var ang := float(i) * TAU / 3.0 + 0.3
+			var dir := Vector3(cos(ang), 0.0, sin(ang))
+			var len := minf(TimberMesh.piece_length(rec, int(s.k)), radius * 1.7)
+			var r := TimberMesh.piece_radius(rec, int(s.k))
+			mi.basis = TimberMesh.frame_for((dir + Vector3(0, 0.12, 0)).normalized())
+			mi.position = Vector3(0, 0.12 + r + float(i) * 0.06, 0) + dir.cross(Vector3.UP) * 0.12 * float(i - 1)
+			mi.set_meta("len_scale", len / TimberMesh.piece_length(rec, int(s.k)))
+			add_child(mi)
+			_burn_nodes.append(mi)
+	for i in _burn_nodes.size():
+		var s := t.segment(_burn_sids[i])
+		var b := float(s.get("burn", 0.0))
+		var mi := _burn_nodes[i]
+		var shrink := 1.0 - 0.55 * b
+		var ls: float = mi.get_meta("len_scale")
+		mi.scale = Vector3(shrink, ls * (1.0 - 0.3 * b), shrink)
+		var bark := mi.get_surface_override_material(0) as ShaderMaterial
+		bark.set_shader_parameter("char_amount", clampf(b * 1.6, 0.0, 1.0))
+		bark.set_shader_parameter("glow", clampf(b * 2.5, 0.0, 1.0) * (1.0 - smoothstep(0.85, 1.0, b) * 0.6))
+		if mi.get_surface_override_material(1):
+			var w := mi.get_surface_override_material(1) as ShaderMaterial
+			w.set_shader_parameter("char_amount", clampf(b * 1.3, 0.0, 1.0))
+			w.set_shader_parameter("glow", clampf(b * 2.0, 0.0, 1.0))
+	if _fire_body and t:
+		var tot := t.totals()
+		_fire_body.set("message", "Burning %d log%s, %d waiting on the rack. New deliveries relight the coals automatically." % [t.burning.size(), "" if t.burning.size() == 1 else "s", t.queue.size()] if not t.burning.is_empty() else "Coals glowing. Deliver logs at the rack beside the pit; they relight the fire automatically.")

@@ -28,6 +28,12 @@ var _aid: MeshInstance3D
 var _aid_info := {}
 
 
+var carry_label: Label
+var timber_panel: PanelContainer
+var timber_label: Label
+var _timber_t := 0.0
+
+
 func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -75,9 +81,15 @@ func _ready() -> void:
 		p.message.connect(show_message)
 		if p.get("axe"):
 			p.axe.target_changed.connect(_on_chop_target)
+			p.axe.hit_result.connect(_on_hit_result)
 	if Game.trees:
 		Game.trees.tree_warning.connect(func(_id: int) -> void: show_message("The trunk is groaning - it's about to go. Stand clear of its fall line.", 3.5))
 		Game.trees.tree_felled.connect(func(_id: int) -> void: show_message("Timber!", 2.0))
+	carry_label = _anchored_label(Vector2(0.5, 0.92), 17)
+	carry_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.75))
+	_build_timber_panel()
+	if Game.timber:
+		Game.timber.recovered.connect(func(sid: String, reason: String) -> void: show_message("Recovered log %s (%s) to safe ground." % [sid, reason.replace("_", " ")], 3.0))
 	_build_aid()
 	if Game.is_preview():
 		tour_panel.visible = true
@@ -194,6 +206,39 @@ func _update_time_label() -> void:
 		_time_label.text = "Time %s" % Game.environment.describe()
 
 
+func _build_timber_panel() -> void:
+	timber_panel = _panel(Vector2(1, 0), Vector2(-470, 60))
+	timber_label = UITheme.label("", 15)
+	timber_panel.add_child(timber_label)
+	timber_panel.visible = false
+
+
+## F2: the timber ledger (exact units; entitlement in cents).
+func _timber_text() -> String:
+	var t: TimberService = Game.timber
+	if t == null:
+		return "No timber service"
+	var tot := t.totals()
+	var lines: PackedStringArray = ["Timber ledger (F2)",
+		"Trees with timber: %d   bodies in world: %d" % [tot.trees, tot.bodies],
+		"Carried: %d (%d mTE)   queued: %d (%d mTE)   burning: %d" % [t.carried.size(), t.carried_mte(), tot.queued, tot.queue_mte, tot.burning],
+		"Accepted: %d mTE = %.3f trees   receipts: %d" % [tot.accepted_mte, tot.accepted_mte / 1000.0, tot.receipts],
+		"Delivery entitlement: $%s" % Money.format_cents(int(tot.entitlement_cents)),
+		"Ash clean: %s" % ("yes" if t.ash_clean() else "no (burning continues; not needed for the contract)"), ""]
+	var ids := t.records.keys()
+	ids.sort()
+	for id in ids.slice(-6):
+		var r := t.reconcile(int(id))
+		var parts: PackedStringArray = []
+		for st in r.by_state:
+			parts.append("%s %d" % [str(st).to_lower(), int(r.by_state[st])])
+		lines.append("Tree %d: %s  | receipts $%s  %s" % [id, ", ".join(parts), Money.format_cents(int(r.receipt_cents)), "OK" if r.ok else "MISMATCH"])
+	if not t.recovery_log.is_empty():
+		var last: Dictionary = t.recovery_log[t.recovery_log.size() - 1]
+		lines.append("Last recovery: %s %s -> %s" % [last.sid, last.reason, last.to])
+	return "\n".join(lines)
+
+
 func _build_tree_panel() -> void:
 	tree_panel = _panel(Vector2(1, 1), Vector2(-430, -320))
 	tree_label = UITheme.label("", 16)
@@ -239,7 +284,7 @@ func _build_tour() -> void:
 	v.add_child(UITheme.label("Locations", 16, UITheme.MUTED))
 	var grid := GridContainer.new()
 	grid.columns = 2
-	var spots := [["Logging Test", "logging_test"], ["Next test tree", "__next_tree"], ["Camp", "camp"], ["Camper", "camper"], ["Cabin", "cabin"], ["Beach", "beach"], ["Shallows", "shallows"], ["Forest", "forest"], ["River", "river"], ["Rapids", "rapids"], ["Pond", "pond"], ["Pond 2", "pond2"], ["Ridge", "ridge"], ["Coast", "coast_day"]]
+	var spots := [["Logging Loop", "__loop"], ["Reset logging", "__reset"], ["Snapshot", "__snap"], ["Restore snap", "__restore"], ["Logging Test", "logging_test"], ["Next test tree", "__next_tree"], ["Camp", "camp"], ["Camper", "camper"], ["Cabin", "cabin"], ["Beach", "beach"], ["Shallows", "shallows"], ["Forest", "forest"], ["River", "river"], ["Rapids", "rapids"], ["Pond", "pond"], ["Pond 2", "pond2"], ["Ridge", "ridge"], ["Coast", "coast_day"]]
 	for s in spots:
 		grid.add_child(UITheme.button(s[0], func() -> void: _goto(s[1]), 130))
 	v.add_child(grid)
@@ -255,6 +300,21 @@ func _build_tour() -> void:
 
 
 func _goto(spot: String) -> void:
+	match spot:
+		"__loop":
+			show_message(LoggingTest.loop(Game.world_root), 6.0)
+			_capture_mouse()
+			return
+		"__reset":
+			show_message(LoggingTest.reset_state())
+			return
+		"__snap":
+			show_message(LoggingTest.snapshot())
+			return
+		"__restore":
+			show_message(LoggingTest.restore_snapshot())
+			_capture_mouse()
+			return
 	if spot == "__next_tree" or spot == "logging_test":
 		var info := LoggingTest.next(Game.world_root, spot == "logging_test")
 		show_message(info)
@@ -281,7 +341,38 @@ func _start_benchmark() -> void:
 	_capture_mouse()
 
 
+func _on_hit_result(kind: String, res: Dictionary) -> void:
+	if kind == "stump":
+		if bool(res.get("removed", false)):
+			show_message("Stump removed.", 1.5)
+		elif str(res.get("reason", "")) == "trunk_first":
+			show_message("Deal with the fallen trunk first.", 1.5)
+		return
+	if kind != "timber":
+		return
+	match str(res.get("reason", "")):
+		"wait":
+			show_message("Let it settle before cutting.", 1.5)
+		"no_boundary":
+			show_message("Aim at an orange mark to buck the trunk.", 1.5)
+	if bool(res.get("separated", false)):
+		show_message("Log cut free.", 1.2)
+
+
 func _on_chop_target(info: Dictionary) -> void:
+	if info.has("stump"):
+		_aid_info = {}
+		chop_label.text = ("[LMB] Chop out stump   %d%%" % int(float(info.progress) * 100.0)) if bool(info.ready) else "Buck and clear the trunk before removing the stump"
+		return
+	if info.has("timber"):
+		_aid_info = {}
+		if not bool(info.resting):
+			chop_label.text = "Settling..."
+		elif float(info.progress) < 0.0:
+			chop_label.text = "" if bool(info.single) else "Aim at an orange mark to buck"
+		else:
+			chop_label.text = "[LMB] Buck here   cut %d%%" % int(float(info.progress) * 100.0)
+		return
 	_aid_info = info
 	if info.is_empty():
 		chop_label.text = ""
@@ -374,6 +465,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("preview_panel") and Game.is_preview():
 		tour_panel.visible = not tour_panel.visible
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if tour_panel.visible else Input.MOUSE_MODE_CAPTURED
+	elif event.is_action_pressed("toggle_timber"):
+		timber_panel.visible = not timber_panel.visible
 	elif event.is_action_pressed("inspect_tree"):
 		_inspect_tree()
 	elif event.is_action_pressed("ripple_test"):
@@ -433,6 +526,13 @@ func _process(delta: float) -> void:
 			hint_label.text = ""
 	if debug_label.visible:
 		debug_label.text = _debug_text()
+	if p and p.get("carry"):
+		carry_label.text = p.carry.load_text()
+	if timber_panel.visible:
+		_timber_t -= delta
+		if _timber_t <= 0.0:
+			_timber_t = 0.5
+			timber_label.text = _timber_text()
 
 
 func _debug_text() -> String:

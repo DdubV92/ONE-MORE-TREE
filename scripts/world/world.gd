@@ -13,6 +13,7 @@ var terrain: TerrainSystem
 var water: WaterSystem
 var vegetation: VegetationSystem
 var trees: TreeService
+var timber: TimberService
 var ground_cover: Node3D
 var environment: EnvironmentController
 var camp: Node3D
@@ -51,6 +52,15 @@ func _ready() -> void:
 	add_child(actors)
 	trees.setup(actors, not Game.is_preview())
 	Game.trees = trees
+	timber = TimberService.new()
+	timber.name = "Timber"
+	add_child(timber)
+	var logs := Node3D.new()
+	logs.name = "TimberBodies"
+	add_child(logs)
+	timber.setup(logs, not Game.is_preview())
+	trees.timber = timber
+	Game.timber = timber
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()

@@ -111,6 +111,17 @@ func _listener_pos() -> Vector3:
 	return cam.global_position if cam else Vector3.ZERO
 
 
+## Crackle follows the actual fuel in the pit (quiet coals when empty).
+func _update_fire() -> void:
+	if _fire == null:
+		return
+	var fires := get_tree().get_nodes_in_group("interactable_fire")
+	if fires.is_empty():
+		return
+	var lvl: float = fires[0].get("level")
+	_fire.volume_db = -1.0 + linear_to_db(clampf(0.12 + 0.75 * lvl, 0.05, 1.3))
+
+
 func _process(delta: float) -> void:
 	var lp := _listener_pos()
 	_t_update -= delta
@@ -119,6 +130,7 @@ func _process(delta: float) -> void:
 		_place_ocean(lp)
 		_place_river(lp)
 		_update_wind(lp)
+		_update_fire()
 	_t_bird -= delta
 	if _t_bird <= 0.0:
 		_t_bird = _rng.randf_range(1.5, 7.0)
