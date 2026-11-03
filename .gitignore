@@ -1,0 +1,20 @@
+# Godot generated caches / imports
+.godot/
+*.import.tmp
+.import/
+# Exports and local builds
+build/
+export/
+*.tmp
+# Engine binaries must never be committed
+Godot_v*
+*.tpz
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+# CI-written build stamp (generated at export time)
+/build_info.json
+# Local screenshots from the capture tool (curated ones live in docs/screenshots)
+/captures/
