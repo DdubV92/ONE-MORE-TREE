@@ -123,8 +123,10 @@ func _card(base: Vector3, along: Vector3, side: Vector3, length: float, width: f
 		_leaf.add_vertex(pair[0])
 
 
-func _clump(center: Vector3, outward: Vector3, size: float, cards: int) -> void:
+func _clump(center: Vector3, outward: Vector3, size: float, cards: int, pad := false) -> void:
 	## Crossed cards radiating from `center` along `outward` (pine/birch tufts).
+	## `pad` adds a near-horizontal card so pine crowns read as layered,
+	## cloud-like needle pads rather than round leafy balls.
 	var o := outward.normalized()
 	var ref := Vector3.UP if absf(o.y) < 0.9 else Vector3.RIGHT
 	var s0 := o.cross(ref).normalized()
@@ -132,6 +134,12 @@ func _clump(center: Vector3, outward: Vector3, size: float, cards: int) -> void:
 		var ang := PI * k / cards + _rng.randf_range(-0.2, 0.2)
 		var side := s0.rotated(o, ang)
 		_card(center - o * size * 0.25, o, side, size, size * _rng.randf_range(0.85, 1.05))
+	if pad:
+		var flat := Vector3(o.x, 0.0, o.z)
+		flat = flat.normalized() if flat.length() > 0.05 else Vector3.FORWARD
+		var tilt := (flat + Vector3.UP * 0.18).normalized()
+		var side2 := tilt.cross(Vector3.UP).normalized()
+		_card(center - tilt * size * 0.45, tilt, side2, size * 1.15, size * 1.25)
 
 
 func _ball(center: Vector3, size: float, cards: int) -> void:
@@ -169,7 +177,7 @@ func _build_pine(variant: int, detailed: bool) -> void:
 	_tube(trunk, radii, sides, 2.0)
 	var crown_lo: float = H * [0.6, 0.66, 0.56][variant]
 	_crown_center = Vector3(trunk[trunk.size() - 1].x * 0.8, (crown_lo + H) * 0.5, trunk[trunk.size() - 1].z * 0.8)
-	var branches := (11 if detailed else 6) + variant
+	var branches := (17 if detailed else 8) + variant
 	for b in branches:
 		var t := float(b) / branches
 		var y := lerpf(crown_lo, H * 0.97, t)
@@ -185,10 +193,10 @@ func _build_pine(variant: int, detailed: bool) -> void:
 			var pts: Array[Vector3] = [base, mid, tip]
 			var rr: Array[float] = [r0, r0 * 0.6, r0 * 0.25]
 			_tube(pts, rr, 5, 0.5)
-		var csize := lerpf(2.8, 2.0, t) * (1.0 if detailed else 1.35)
-		_clump(tip, (dir + Vector3.UP * 0.9).normalized(), csize, 3 if detailed else 2)
-		if detailed and length > 2.2:
-			_clump(mid, (dir + Vector3.UP * 0.5).normalized(), csize * 0.8, 2)
+		var csize := lerpf(2.3, 1.6, t) * (1.0 if detailed else 1.35)
+		_clump(tip, (dir + Vector3.UP * 0.7).normalized(), csize, 2 if detailed else 2, true)
+		if detailed and length > 1.8:
+			_clump(mid, (dir + Vector3.UP * 0.4).normalized(), csize * 0.8, 2, true)
 	_clump(trunk[trunk.size() - 1] + Vector3(0, -0.4, 0), Vector3.UP, 2.4 * (1.0 if detailed else 1.3), 3)
 	if detailed:
 		# Dead stubs on the lower trunk

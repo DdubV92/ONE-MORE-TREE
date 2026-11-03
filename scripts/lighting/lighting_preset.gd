@@ -27,3 +27,5 @@ extends Resource
 @export var heat_haze := 0.0
 @export var lamps := 0.0
 @export var cloud_cover := 0.25
+## Volumetric fog density (High/Ultra): light shafts through the canopy.
+@export var volumetric := 0.003

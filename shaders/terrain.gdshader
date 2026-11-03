@@ -76,14 +76,23 @@ float layer_scale(int l) {
 
 vec3 layer_tint(int l) {
 	// Grade photo-scanned layers into one coherent coastal-woodland palette.
-	if (l == L_GRASS) return vec3(0.78, 0.95, 0.62);
-	if (l == L_SPARSE) return vec3(0.8, 0.92, 0.66);
-	if (l == L_NEEDLES) return vec3(0.72, 0.74, 0.6);
-	if (l == L_LITTER) return vec3(0.68, 0.62, 0.56);
-	if (l == L_DIRT) return vec3(0.95, 0.88, 0.8);
+	if (l == L_GRASS) return vec3(0.66, 0.84, 0.46);
+	if (l == L_SPARSE) return vec3(0.74, 0.84, 0.54);
+	if (l == L_NEEDLES) return vec3(0.66, 0.68, 0.52);
+	if (l == L_LITTER) return vec3(0.66, 0.6, 0.52);
+	if (l == L_DIRT) return vec3(0.92, 0.85, 0.78);
 	if (l == L_SAND) return vec3(1.18, 1.12, 1.0);
 	if (l == L_DAMP) return vec3(1.0, 0.97, 0.92);
+	if (l == L_MOSSROCK) return vec3(0.95, 0.93, 0.86);
+	if (l == L_ROCK) return vec3(0.9, 0.86, 0.82);
 	return vec3(1.0);
+}
+
+float layer_desat(int l) {
+	if (l == L_LITTER) return 0.4;
+	if (l == L_MOSSROCK) return 0.35;
+	if (l == L_NEEDLES) return 0.2;
+	return 0.0;
 }
 
 void fragment() {
@@ -153,6 +162,12 @@ void fragment() {
 	vec3 arm = vec3(0.0);
 	float rot = n3 * 6.2831;
 	mat2 r2 = mat2(vec2(cos(rot), sin(rot)), vec2(-sin(rot), cos(rot)));
+	// Distance-aware sampling: close up two blended scales; mid distance a
+	// 4x larger scale (kills tiling and moire); far away the layer's average
+	// colour (top mip) so distant hills read as calm, varied colour fields.
+	float dist = length(v_wpos - CAMERA_POSITION_WORLD);
+	float far_k = smoothstep(30.0, 90.0, dist);
+	float vfar_k = smoothstep(140.0, 420.0, dist);
 	for (int i = 0; i < LAYERS; i++) {
 		float wi = w[i] / total;
 		if (wi < 0.02) continue;
@@ -160,14 +175,33 @@ void fragment() {
 		vec2 uv = xz / sc;
 		vec2 dx = dFdx(uv);
 		vec2 dy = dFdy(uv);
-		vec3 a1 = textureGrad(albedo_array, vec3(uv, float(i)), dx, dy).rgb;
-		// Second, rotated and larger-scale sample breaks visible tiling.
-		vec2 uv2 = (r2 * uv) * 0.37 + 0.31;
-		vec3 a2 = textureGrad(albedo_array, vec3(uv2, float(i)), dx * 0.37, dy * 0.37).rgb;
-		alb += mix(a1, a2, 0.35) * layer_tint(i) * wi;
-		nrm_ts += (textureGrad(normal_array, vec3(uv, float(i)), dx, dy).rgb * 2.0 - 1.0) * wi;
+		vec3 col = vec3(0.0);
+		if (vfar_k < 0.999) {
+			vec3 a1 = textureGrad(albedo_array, vec3(uv, float(i)), dx, dy).rgb;
+			vec2 uv2 = (r2 * uv) * 0.37 + 0.31;
+			vec3 a2 = textureGrad(albedo_array, vec3(uv2, float(i)), dx * 0.37, dy * 0.37).rgb;
+			col = mix(a1, a2, 0.35);
+			if (far_k > 0.001) {
+				vec2 uv3 = (r2 * uv) * 0.23 + 0.71;
+				vec3 a3 = textureGrad(albedo_array, vec3(uv3, float(i)), dx * 0.23, dy * 0.23).rgb;
+				col = mix(col, mix(a2, a3, 0.5), far_k);
+			}
+		}
+		if (vfar_k > 0.001) {
+			vec3 avg = textureLod(albedo_array, vec3(0.5, 0.5, float(i)), 12.0).rgb;
+			col = mix(col, avg * mix(0.9, 1.1, n2), vfar_k);
+		}
+		float lum = dot(col, vec3(0.3, 0.59, 0.11));
+		col = mix(col, vec3(lum), layer_desat(i));
+		alb += col * layer_tint(i) * wi;
+		nrm_ts += (textureGrad(normal_array, vec3(uv, float(i)), dx, dy).rgb * 2.0 - 1.0) * wi * (1.0 - vfar_k);
 		arm += textureGrad(arm_array, vec3(uv, float(i)), dx, dy).rgb * wi;
 	}
+	nrm_ts.z += vfar_k;
+	// Meadow colour drift: lush green hollows, drier golden rises.
+	float meadow = (w[L_GRASS] + w[L_SPARSE]) / total;
+	float lush = fbm2(xz * 0.006 + 3.7);
+	alb = mix(alb, alb * mix(vec3(1.06, 0.98, 0.82), vec3(0.82, 0.96, 0.8), lush), meadow * 0.55);
 	// Macro variation: large-scale tone drift, canopy shade on forest floor.
 	alb *= mix(0.86, 1.1, n1);
 	alb *= mix(1.0, 0.82, forest * (1.0 - sand));

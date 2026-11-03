@@ -23,9 +23,12 @@ void vertex() {
 	v_rapid = COLOR.r;
 	v_edge = COLOR.g;
 	if (is_river) {
-		// Small standing waves in rapids.
+		// Standing waves in riffles: a chevron train that stays in place
+		// (the water moves through it), strongest mid-channel.
 		float s = UV.x;
-		VERTEX.y += v_rapid * 0.06 * sin(s * 2.7 + UV.y * 3.0) * sin(world_time * 3.0 + s);
+		float mid = 1.0 - v_edge * v_edge;
+		float chevron = s * 2.2 - abs(UV.y) * 1.4;
+		VERTEX.y += v_rapid * mid * 0.07 * sin(chevron) * (0.8 + 0.2 * sin(world_time * 2.5 + s * 0.7));
 	}
 }
 
@@ -36,20 +39,30 @@ void fragment() {
 	float foam = 0.0;
 	if (is_river) {
 		vec2 uv = UV;   // x: downstream meters, y: across meters
-		float speed = flow_speed * (1.0 + v_rapid * 1.6);
-		float p0 = fract(t * 0.25);
-		float p1 = fract(t * 0.25 + 0.5);
+		float mid = 1.0 - v_edge * v_edge;
+		// Slower near the banks, faster mid-channel and over riffles.
+		float speed = flow_speed * (0.45 + 0.55 * mid) * (1.0 + v_rapid * 1.8);
+		float p0 = fract(t * 0.3);
+		float p1 = fract(t * 0.3 + 0.5);
 		float wgt = abs(p0 - 0.5) * 2.0;
-		vec2 uva = uv * vec2(0.12, 0.2) - vec2(p0 * speed * 0.6, 0.0);
-		vec2 uvb = uv * vec2(0.12, 0.2) - vec2(p1 * speed * 0.6, 0.0) + 0.37;
+		// Surface detail is stretched along the flow (long streaks, not glitter).
+		vec2 sc = vec2(0.07, 0.3);
+		vec2 uva = uv * sc - vec2(p0 * speed * 0.35, 0.0);
+		vec2 uvb = uv * sc - vec2(p1 * speed * 0.35, 0.0) + 0.37;
 		vec3 na = texture(detail_normal_a, uva).rgb * 2.0 - 1.0;
 		vec3 nb = texture(detail_normal_a, uvb).rgb * 2.0 - 1.0;
-		vec3 nc = texture(detail_normal_b, uv * 0.35 - vec2(t * speed * 0.35, 0.0)).rgb * 2.0 - 1.0;
-		slope = mix(na.xy, nb.xy, wgt) * (0.35 + v_rapid * 0.5) + nc.xy * 0.12;
-		float fa = texture(foam_noise, uv * vec2(0.18, 0.4) - vec2(t * speed * 0.55, 0.0)).r;
-		float fb = texture(foam_noise, uv * vec2(0.45, 0.9) - vec2(t * speed * 0.9, 0.0)).r;
-		foam = smoothstep(0.35, 0.9, v_rapid) * smoothstep(0.62, 0.9, fa * 0.6 + fb * 0.6) * 0.85;
-		foam += v_edge * smoothstep(0.6, 0.9, fb) * 0.35;
+		vec3 nc = texture(detail_normal_b, uv * vec2(0.2, 0.5) - vec2(t * speed * 0.25, 0.0)).rgb * 2.0 - 1.0;
+		slope = mix(na.xy, nb.xy, wgt) * (0.1 + v_rapid * 0.28) + nc.xy * (0.04 + v_rapid * 0.1);
+		// Whitewater: elongated, broken streaks advected with the current,
+		// concentrated in the fast centre of the riffle; none in calm water.
+		float fa = texture(foam_noise, uv * vec2(0.09, 0.55) - vec2(t * speed * 0.45, 0.0)).r;
+		float fb = texture(foam_noise, uv * vec2(0.3, 1.4) - vec2(t * speed * 0.8, 0.0) + 0.5).r;
+		float streak = smoothstep(0.5, 0.78, fa * 0.65 + fb * 0.5);
+		float riffle = smoothstep(0.3, 0.85, v_rapid) * (0.35 + 0.65 * mid);
+		foam = riffle * streak * 0.9;
+		// Thin bubble lines trailing downstream of a riffle, and faint bank scum.
+		foam += smoothstep(0.1, 0.4, v_rapid) * smoothstep(0.72, 0.9, fb) * 0.25;
+		foam += smoothstep(0.85, 1.0, v_edge) * smoothstep(0.65, 0.85, fa) * 0.18;
 	} else {
 		vec2 wd = normalize(wind_dir);
 		vec3 na = texture(detail_normal_a, xz * 0.09 + wd * t * 0.01).rgb * 2.0 - 1.0;
@@ -67,8 +80,8 @@ void fragment() {
 	foam = clamp(foam, 0.0, 1.0);
 	ALBEDO = mix(scatter_color * 0.12, vec3(0.9, 0.93, 0.92), foam);
 	EMISSION = body * (1.0 - fres) * (1.0 - foam);
-	ROUGHNESS = mix(is_river ? 0.06 : 0.03, 0.8, foam);
-	SPECULAR = 0.5 * (1.0 - foam);
+	ROUGHNESS = mix(is_river ? mix(0.13, 0.28, v_rapid) : 0.04, 0.8, foam);
+	SPECULAR = (is_river ? 0.35 : 0.5) * (1.0 - foam);
 	// Only the last few centimetres fade out (soft contact line).
 	ALPHA = clamp(refr.a * 30.0 + foam, 0.0, 1.0);
 }

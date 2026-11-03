@@ -56,7 +56,7 @@ func _make_materials() -> void:
 	birch_bark.shader = bark_shader
 	birch_bark.set_shader_parameter("birch", true)
 	var cards := ["pine_card", "spruce_card", "birch_card"]
-	var tints := [Color(0.95, 1.0, 0.85), Color(0.8, 0.95, 0.85), Color(1.0, 1.05, 0.8)]
+	var tints := [Color(0.82, 0.92, 0.7), Color(0.8, 0.95, 0.85), Color(0.92, 1.0, 0.72)]
 	var leaf_mats := []
 	for i in 3:
 		var m := ShaderMaterial.new()

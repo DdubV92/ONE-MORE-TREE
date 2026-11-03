@@ -260,14 +260,28 @@ func _head_bob(delta: float, speed: float) -> void:
 
 
 func _footsteps(delta: float, speed: float) -> void:
-	if not is_on_floor() or speed < 0.6:
+	# Cadence follows a human gait: ~1.8 steps/s strolling, ~2.7 sprinting,
+	# slower when crouched or wading. Time-based, not distance-based, so the
+	# fast game walk speed doesn't produce a drum roll of steps.
+	if not is_on_floor() or speed < 0.8:
+		_step_accum = 0.6   # next step lands soon after starting to move
 		return
-	_step_accum += speed * delta
-	var stride := 0.72 if speed < 5.0 else 0.95
-	if _step_accum >= stride:
-		_step_accum = 0.0
+	_step_accum += delta * step_rate(speed, _crouching, wading_depth)
+	if _step_accum >= 1.0:
+		_step_accum -= 1.0
 		surface_name = _surface_under()
-		get_tree().call_group("footstep_listeners", "play_footstep", surface_name, global_position, speed)
+		var intensity := 0.55 if _crouching else (1.0 if speed < WALK_SPEED + 0.5 else 1.35)
+		get_tree().call_group("footstep_listeners", "play_footstep", surface_name, global_position, intensity)
+
+
+## Footfalls per second for a given movement state (shared with tests).
+static func step_rate(speed: float, crouching: bool, wading: float) -> float:
+	var rate := lerpf(1.75, 2.7, clampf((speed - WALK_SPEED) / (SPRINT_SPEED - WALK_SPEED), 0.0, 1.0))
+	if crouching:
+		rate = 1.4
+	if wading > 0.2:
+		rate *= 0.8
+	return rate
 
 
 func _surface_under() -> String:

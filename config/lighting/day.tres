@@ -26,3 +26,4 @@ wind = 0.5
 heat_haze = 1.0
 lamps = 0.0
 cloud_cover = 0.25
+volumetric = 0.002

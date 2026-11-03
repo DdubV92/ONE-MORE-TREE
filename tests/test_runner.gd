@@ -27,6 +27,7 @@ func _ready() -> void:
 	_run("preview mode never writes campaign saves", _t_preview_save)
 	_run("settings sanitize and audio buses exist", _t_settings)
 	_run("diagnostics strip user paths", _t_diag)
+	_run("footstep cadence and loudness are natural", _t_footsteps)
 	await _run_async("diagnostics logger captures engine errors", _t_logger)
 	await _run_async("camp built: interiors, anchors, safety rules", _t_camp)
 	await _run_async("human walk keeps stance foot planted", _t_human_walk)
@@ -268,6 +269,27 @@ func _t_diag() -> String:
 	var r := Diag.build_report()
 	if not r.contains("Engine: Godot 4.5"):
 		return "report missing engine version"
+	return ""
+
+
+func _t_footsteps() -> String:
+	var walk := Player.step_rate(Player.WALK_SPEED, false, 0.0)
+	var sprint := Player.step_rate(Player.SPRINT_SPEED, false, 0.0)
+	var crouch := Player.step_rate(Player.CROUCH_SPEED, true, 0.0)
+	if walk < 1.5 or walk > 2.1:
+		return "walk cadence %.2f steps/s outside 1.5-2.1" % walk
+	if sprint < 2.3 or sprint > 3.0:
+		return "sprint cadence %.2f steps/s outside 2.3-3.0" % sprint
+	if crouch >= walk:
+		return "crouching should be slower than walking"
+	var audio_script: GDScript = load("res://scripts/audio/ambient_audio.gd")
+	var db: Dictionary = audio_script.get_script_constant_map()["STEP_DB"]
+	for surf in db:
+		if float(db[surf]) > -18.0:
+			return "footstep level for %s too loud (%.1f dB)" % [surf, db[surf]]
+		for v in 5:
+			if not ResourceLoader.exists("res://audio/generated/step_%s_%d.wav" % [surf, v]):
+				return "missing footstep variant %s_%d" % [surf, v]
 	return ""
 
 

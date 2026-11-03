@@ -194,8 +194,8 @@ func _build_river() -> void:
 	mat.shader = load("res://shaders/inland_water.gdshader")
 	_common_params(mat)
 	mat.set_shader_parameter("is_river", true)
-	mat.set_shader_parameter("absorption", Vector3(0.5, 0.2, 0.2))
-	mat.set_shader_parameter("scatter_color", Color(0.05, 0.15, 0.13))
+	mat.set_shader_parameter("absorption", Vector3(0.75, 0.38, 0.36))
+	mat.set_shader_parameter("scatter_color", Color(0.05, 0.14, 0.12))
 	inland_materials.append(mat)
 	var pts := World.river_points
 	var count := pts.size()
@@ -205,7 +205,7 @@ func _build_river() -> void:
 	var nrm := PackedVector3Array()
 	var tan := PackedFloat32Array()
 	var idx := PackedInt32Array()
-	const ACROSS := 5
+	const ACROSS := 9
 	var last := count - 1
 	for k in count:
 		# Stop where the river has merged into the sea.

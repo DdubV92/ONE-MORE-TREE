@@ -84,6 +84,13 @@ func build() -> void:
 	env.fog_aerial_perspective = 0.15
 	env.fog_height = 0.0
 	env.adjustment_enabled = true
+	env.volumetric_fog_density = 0.0
+	env.volumetric_fog_length = 96.0
+	env.volumetric_fog_detail_spread = 2.0
+	env.volumetric_fog_gi_inject = 0.6
+	env.volumetric_fog_sky_affect = 0.25
+	env.volumetric_fog_ambient_inject = 0.5
+	env.volumetric_fog_temporal_reprojection_enabled = true
 	world_env = WorldEnvironment.new()
 	world_env.environment = env
 	cam_attr = CameraAttributesPractical.new()
@@ -234,6 +241,11 @@ func _apply() -> void:
 	env.fog_light_color = p.fog_color
 	env.fog_density = p.fog_density
 	env.fog_height_density = p.fog_height_density
+	env.volumetric_fog_enabled = quality in ["high", "ultra"] and p.volumetric > 0.0005
+	env.volumetric_fog_density = p.volumetric * (1.0 if quality == "ultra" else 0.8)
+	env.volumetric_fog_albedo = p.fog_color.lerp(Color(1, 1, 1), 0.4)
+	sun.light_volumetric_fog_energy = 1.6
+	moon.light_volumetric_fog_energy = 0.8
 	env.glow_intensity = p.glow_intensity * (1.0 if Settings.get_v("bloom") else 0.0)
 	env.glow_enabled = Settings.get_v("bloom")
 	var grade: float = Settings.get_v("color_grading")

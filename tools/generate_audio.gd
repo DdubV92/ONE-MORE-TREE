@@ -23,7 +23,7 @@ func _init() -> void:
 		_save("bird_%d" % i, _bird(i), false)
 	_save("metal_creak", _creak(), false)
 	for s in ["grass", "dirt", "sand", "wood", "water", "rock", "forest"]:
-		for v in 3:
+		for v in 5:
 			_save("step_%s_%d" % [s, v], _step(s, v), false)
 	_save("ui_click", _click(), false)
 	print("audio generated")
@@ -217,28 +217,109 @@ func _creak() -> PackedFloat32Array:
 	return d
 
 
+# --- Footsteps -----------------------------------------------------------
+# Each step = heel impact + toe roll ~70-110 ms later, both shaped by the
+# surface: a filtered body thump, a material layer (grit, crunch, swish,
+# hollow knock, splash) and a soft attack so nothing clicks. Five variants
+# per surface; the runtime also randomizes pitch and level.
+
+class Biquad:
+	var b0 := 1.0
+	var b1 := 0.0
+	var b2 := 0.0
+	var a1 := 0.0
+	var a2 := 0.0
+	var x1 := 0.0
+	var x2 := 0.0
+	var y1 := 0.0
+	var y2 := 0.0
+
+	func setup(kind: String, f: float, q: float, rate: float) -> Biquad:
+		var w := TAU * f / rate
+		var cw := cos(w)
+		var alpha := sin(w) / (2.0 * q)
+		var a0 := 1.0 + alpha
+		match kind:
+			"lp":
+				b0 = (1.0 - cw) * 0.5; b1 = 1.0 - cw; b2 = b0
+			"hp":
+				b0 = (1.0 + cw) * 0.5; b1 = -(1.0 + cw); b2 = b0
+			"bp":
+				b0 = alpha; b1 = 0.0; b2 = -alpha
+		a1 = -2.0 * cw
+		a2 = 1.0 - alpha
+		b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0
+		return self
+
+	func run(x: float) -> float:
+		var y := b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+		x2 = x1; x1 = x; y2 = y1; y1 = y
+		return y
+
+
+func _bq(kind: String, f: float, q := 0.707) -> Biquad:
+	return Biquad.new().setup(kind, f, q, RATE)
+
+
+const STEP_SURFACES := {
+	# thump_f, thump_decay(s), layer, layer_f, layer_q, layer_gain, toe_gain, length
+	"grass":  [260.0, 0.035, "swish", 3200.0, 0.6, 0.55, 0.6, 0.26],
+	"forest": [240.0, 0.04, "crunch", 3600.0, 0.9, 0.75, 0.75, 0.3],
+	"dirt":   [320.0, 0.03, "grit", 2600.0, 0.8, 0.35, 0.55, 0.22],
+	"sand":   [380.0, 0.06, "hiss", 1500.0, 0.5, 0.5, 0.7, 0.3],
+	"rock":   [520.0, 0.02, "grit", 4200.0, 1.2, 0.6, 0.5, 0.2],
+	"wood":   [180.0, 0.07, "knock", 0.0, 0.0, 0.8, 0.6, 0.3],
+	"water":  [300.0, 0.05, "splash", 1400.0, 0.7, 1.0, 0.8, 0.38],
+}
+
+
 func _step(surface: String, variant: int) -> PackedFloat32Array:
-	rng.seed = hash(surface) + variant
-	var n := int(0.18 * RATE)
+	rng.seed = hash(surface) * 31 + variant * 7 + 1
+	var spec: Array = STEP_SURFACES[surface]
+	var n := int(float(spec[7]) * RATE)
 	var d := PackedFloat32Array()
 	d.resize(n)
-	var lp := 0.0
-	var cut: float = {"grass": 0.25, "dirt": 0.12, "sand": 0.35, "wood": 0.06, "water": 0.45, "rock": 0.5, "forest": 0.2}[surface]
-	var decay: float = {"grass": 0.9993, "dirt": 0.9991, "sand": 0.9994, "wood": 0.9986, "water": 0.9996, "rock": 0.998, "forest": 0.9994}[surface]
-	var env := 1.0
-	var phase := 0.0
-	for i in n:
-		env *= decay
-		lp += (_white() - lp) * cut
-		var v := lp
-		if surface == "wood":
-			phase += TAU * 140.0 / RATE
-			v = lp * 0.5 + sin(phase) * 0.7 * env
-		elif surface == "water":
-			v = lp * (0.6 + 0.4 * sin(float(i) / RATE * TAU * 30.0))
-		elif surface == "forest" and rng.randf() < 0.01:
-			v += _white() * 0.8
-		d[i] = v * env * minf(float(i) / 60.0, 1.0)
+	var toe_t := rng.randf_range(0.065, 0.11)
+	for hit in 2:
+		var t0 := 0.0 if hit == 0 else toe_t
+		var gain := 1.0 if hit == 0 else float(spec[6]) * rng.randf_range(0.8, 1.1)
+		var thump := _bq("lp", float(spec[0]) * rng.randf_range(0.85, 1.2), 0.9)
+		var layer_f: float = spec[3]
+		var layer := _bq("bp", maxf(layer_f, 100.0) * rng.randf_range(0.85, 1.2), float(spec[4]) if spec[4] > 0.0 else 1.0)
+		var hp := _bq("hp", 120.0)
+		var start := int(t0 * RATE)
+		var knock_f := [rng.randf_range(160, 200), rng.randf_range(390, 450), rng.randf_range(850, 980)]
+		for i in range(start, n):
+			var t := float(i - start) / RATE
+			var attack := minf(t / 0.004, 1.0)
+			var body := thump.run(_white()) * exp(-t / float(spec[1])) * 2.2
+			var lay := 0.0
+			match spec[2]:
+				"swish":
+					# Blades brushing: slower bloom, airy.
+					lay = layer.run(_white()) * smoothstep(0.0, 0.03, t) * exp(-t / 0.07)
+				"crunch":
+					# Needles and twigs: dense random crackle.
+					var c := _white() if rng.randf() < 0.18 * exp(-t / 0.06) else 0.0
+					lay = layer.run(c * 2.5) + layer.run(_white()) * 0.15 * exp(-t / 0.05)
+				"grit":
+					var c := _white() if rng.randf() < 0.08 * exp(-t / 0.04) else 0.0
+					lay = layer.run(c * 2.0 + _white() * 0.1 * exp(-t / 0.02))
+				"hiss":
+					# Sand: muffled shuffle, no sharp transient.
+					lay = layer.run(_white()) * smoothstep(0.0, 0.02, t) * exp(-t / 0.09)
+				"knock":
+					var k := 0.0
+					for m in 3:
+						k += sin(TAU * knock_f[m] * t) * exp(-t / [0.06, 0.035, 0.018][m]) * [1.0, 0.5, 0.25][m]
+					lay = k * 0.9
+				"splash":
+					var bub := sin(TAU * rng.randf_range(500, 1400) * t) * 0.3 if rng.randf() < 0.02 else 0.0
+					lay = layer.run(_white()) * smoothstep(0.0, 0.015, t) * exp(-t / 0.12) + bub * exp(-t / 0.15)
+			d[i] += hp.run(body + lay * float(spec[5])) * attack * gain
+	# Gentle tail fade so variants end silently.
+	for i in range(maxi(n - 600, 0), n):
+		d[i] *= float(n - i) / 600.0
 	return d
 
 

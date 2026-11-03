@@ -73,7 +73,7 @@ func _make_assets() -> void:
 		m.set_shader_parameter("tip_color", col_tip)
 		m.set_shader_parameter("sway", sway)
 		return m
-	_materials["grass"] = mk.call(Color(0.16, 0.22, 0.07), Color(0.5, 0.58, 0.24), 0.12)
+	_materials["grass"] = mk.call(Color(0.2, 0.23, 0.09), Color(0.44, 0.5, 0.22), 0.12)
 	_materials["dune"] = mk.call(Color(0.32, 0.33, 0.18), Color(0.72, 0.68, 0.45), 0.2)
 	_materials["reed"] = mk.call(Color(0.17, 0.22, 0.09), Color(0.55, 0.52, 0.3), 0.18)
 	_meshes["grass"] = _blade_tuft(14, 0.45, 0.07, 11)
@@ -244,7 +244,8 @@ func _build_cell(c: Vector2i) -> Node3D:
 		var damp := clampf(1.0 - (h - wl) / 3.0, 0.0, 1.0) if region != 0 else 0.0
 		var p_grass := (1.0 - shade * 0.85) * (1.0 - m.y * 0.6) + damp * 0.3
 		var p_fern := (m.y * 0.25 + shade * 0.25 + damp * 0.4) * (1.0 if h < 30.0 else 0.3)
-		var p_bush := 0.03 + m.y * 0.03
+		# Bushes gather at forest edges and under thin canopy, not mid-meadow.
+		var p_bush := 0.004 + m.y * 0.035 * (1.0 - shade * 0.5)
 		var t := rng.randf() * (p_grass + p_fern + p_bush + 0.6)
 		if t < p_grass:
 			# A small clump of tufts per accepted sample (dense but cheap).
@@ -277,7 +278,7 @@ func _build_cell(c: Vector2i) -> Node3D:
 		else:
 			# Low cover: shadows only for bushes (they read as volumes).
 			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if kind == "bush" else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mmi.visibility_range_end = {"grass": 70.0, "dune": 80.0, "reed": 110.0, "fern": 50.0, "bush": 110.0, "pebble": 40.0}[kind]
+		mmi.visibility_range_end = {"grass": 48.0, "dune": 60.0, "reed": 90.0, "fern": 50.0, "bush": 110.0, "pebble": 35.0}[kind]
 		mmi.visibility_range_end_margin = 10.0
 		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		node.add_child(mmi)

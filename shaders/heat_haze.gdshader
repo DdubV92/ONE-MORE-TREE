@@ -33,5 +33,6 @@ void fragment() {
 	vec2 n = vec2(vnoise(UV * vec2(6.0, 9.0) + vec2(0.0, t * 2.4)), vnoise(UV * vec2(7.0, 11.0) + vec2(3.1, t * 3.1))) - 0.5;
 	vec2 off = n * strength * edge * v_fade * g;
 	ALBEDO = textureLod(screen_tex, SCREEN_UV + off, 0.0).rgb;
-	ALPHA = step(0.0001, edge * v_fade * g);
+	// Soft-edged blend: the panel itself is never visible, only the shimmer.
+	ALPHA = clamp(edge * v_fade * g, 0.0, 1.0) * 0.9;
 }

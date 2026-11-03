@@ -13,7 +13,10 @@ var _ocean: Array[AudioStreamPlayer3D] = []
 var _river: Array[AudioStreamPlayer3D] = []
 var _ponds: Array[AudioStreamPlayer3D] = []
 var _birds: Array[AudioStreamPlayer3D] = []
-var _steps: Array[AudioStreamPlayer3D] = []
+var _steps: Array[AudioStreamPlayer] = []
+var _last_step := -1
+## Relative loudness per surface (files are peak-normalized).
+const STEP_DB := {"grass": -25.0, "forest": -23.0, "dirt": -24.0, "sand": -26.0, "rock": -22.0, "wood": -21.0, "water": -21.0}
 var _step_i := 0
 var _wind: AudioStreamPlayer
 var _fire: AudioStreamPlayer3D
@@ -44,8 +47,13 @@ func _ready() -> void:
 		_ponds.append(p)
 	for k in BIRD_POOL:
 		_birds.append(_emitter("bird_0", "Ambience", -2.0, 14.0, false))
+	# The player's own footsteps are non-positional (centered under the
+	# listener, like real footfalls), quiet and varied.
 	for k in STEP_POOL:
-		_steps.append(_emitter("step_grass_0", "Characters", -6.0, 3.0, false))
+		var sp := AudioStreamPlayer.new()
+		sp.bus = "Characters"
+		add_child(sp)
+		_steps.append(sp)
 	_wind = AudioStreamPlayer.new()
 	_wind.stream = _stream("wind_leaves", true)
 	_wind.bus = "Ambience"
@@ -213,11 +221,14 @@ func _creak_somewhere() -> void:
 	_creak.play()
 
 
-func play_footstep(surface: String, pos: Vector3, speed: float) -> void:
+func play_footstep(surface: String, _pos: Vector3, intensity: float) -> void:
 	var p := _steps[_step_i]
 	_step_i = (_step_i + 1) % _steps.size()
-	p.stream = _stream("step_%s_%d" % [surface, _rng.randi() % 3], false)
-	p.global_position = pos + Vector3(0, 0.05, 0)
-	p.pitch_scale = _rng.randf_range(0.9, 1.1)
-	p.volume_db = -8.0 + clampf((speed - 4.0) * 1.5, -3.0, 4.0)
+	var v := _rng.randi() % 5
+	if v == _last_step:
+		v = (v + 1 + _rng.randi() % 4) % 5   # never the same sample twice in a row
+	_last_step = v
+	p.stream = _stream("step_%s_%d" % [surface, v], false)
+	p.pitch_scale = _rng.randf_range(0.93, 1.07)
+	p.volume_db = float(STEP_DB.get(surface, -24.0)) + linear_to_db(intensity) + _rng.randf_range(-1.5, 1.5)
 	p.play()
