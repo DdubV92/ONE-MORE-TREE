@@ -19,6 +19,8 @@ var values := {
 	"vsync": true,
 	"fullscreen": false,
 	"render_scale": 1.0,
+	"upscaler": "fsr2",             # bilinear / fsr1 / fsr2 (used when render scale < 1)
+	"tonemapper": "filmic",         # filmic / agx
 	"dof_mode": "off",              # off / subtle / cinematic
 	"chromatic_aberration": 0.0,    # 0..1, default off
 	"vignette": 0.22,
@@ -106,6 +108,10 @@ func sanitize() -> void:
 		values.quality = "high"
 	if not values.dof_mode in ["off", "subtle", "cinematic"]:
 		values.dof_mode = "off"
+	if not values.upscaler in ["bilinear", "fsr1", "fsr2"]:
+		values.upscaler = "fsr2"
+	if not values.tonemapper in ["filmic", "agx"]:
+		values.tonemapper = "filmic"
 	for b in BUSES:
 		values["vol_" + b] = clampf(float(values["vol_" + b]), 0.0, 1.0)
 
@@ -139,4 +145,9 @@ func apply() -> void:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if want_fs else DisplayServer.WINDOW_MODE_WINDOWED)
 	if get_tree() and get_tree().root:
 		get_tree().root.scaling_3d_scale = values.render_scale
+		# FSR 2 is temporal upscaling (also anti-aliases); FSR 1 is spatial.
+		var mode := Viewport.SCALING_3D_MODE_BILINEAR
+		if float(values.render_scale) < 0.999:
+			mode = {"bilinear": Viewport.SCALING_3D_MODE_BILINEAR, "fsr1": Viewport.SCALING_3D_MODE_FSR, "fsr2": Viewport.SCALING_3D_MODE_FSR2}[values.upscaler]
+		get_tree().root.scaling_3d_mode = mode
 	changed.emit()

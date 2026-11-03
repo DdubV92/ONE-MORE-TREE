@@ -1,5 +1,19 @@
 # Phase checklist
 
+## Graphics pass 3 and nights (user request after Phase 3)
+
+| Item | Status | Notes |
+|---|---|---|
+| Moon phases: 29.5-day cycle (full moon on day 4, new moon around day 19); moonlight, night ambient, stars and the sky disc follow the visible fraction | ✅ / 🟡 | Preview: F4 moon slider, Tour "Dark night" / "Full moon" |
+| Night visibility: dark mist that thickens on moonless nights (things fade to black within a few dozen metres; a full moon lets you see silhouettes at 100–200 m) | 🟡 | Software-rendered comparisons in the session; judge on a real monitor |
+| Low ground mist that follows the terrain under the camera; volumetric night mist with lamp halos (High/Ultra) | 🟡 | |
+| Moonlight vision grade: desaturated, cooler, higher contrast at night; warm lamp pools and lit interiors stand out | 🟡 | |
+| Tonemapper option: Filmic (default) or AgX with contrast, saturation and exposure compensation | ✅ | AgX compared side by side: deeper shadows but muddier sunsets, so Filmic stays the default |
+| Upscaler option: FSR 2 (temporal), FSR 1 or bilinear, used when render scale < 100 % | ✅ | TAA + FXAA and soft shadows (quality 3) were already on |
+| Interior reflection probes (camper, cabin), rendered once | ✅ | |
+| SDFGI | ✅ (Ultra) | Kept off on High for the 60 FPS mid-range target. Lightmaps are not used because every tree can be felled. |
+| Reference video | ⬜ | Videos cannot be watched from this environment; the written tips were applied |
+
 ## Phase 3: Workdays, the thirty-day contract, delivery income, payroll, axes and saves
 
 Status key: ✅ implemented and observed (headless test) · 🟡 implemented, needs live review · ⬜ absent / later phase.

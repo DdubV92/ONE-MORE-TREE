@@ -8,6 +8,8 @@ const DEFAULT := ["day:coast_day", "day:shallows", "day:beach", "day:river", "da
 
 
 func _ready() -> void:
+	if OS.has_environment("TONEMAP"):
+		Settings.values.tonemapper = OS.get_environment("TONEMAP")
 	var args := OS.get_cmdline_user_args()
 	var shots: Array = DEFAULT if args.is_empty() else args
 	var world_scene: PackedScene = load("res://scenes/world.tscn")
@@ -37,6 +39,8 @@ func _ready() -> void:
 			continue
 		var vp: Dictionary = vps[vp_name]
 		world.environment.apply_named(lighting)
+		if lighting == "night":
+			world.environment.set_moon_phase(0.25)
 		cam.global_position = vp.pos
 		cam.look_at(vp.look)
 		world.vegetation.update_collision_around(vp.pos)

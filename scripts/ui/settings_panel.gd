@@ -32,6 +32,8 @@ func _ready() -> void:
 	_toggle(v, "Fullscreen", "fullscreen")
 	_section(v, "Cinematic effects (each can be disabled)")
 	_choice(v, "Depth of field", "dof_mode", ["off", "subtle", "cinematic"])
+	_choice(v, "Upscaler (render scale < 100%)", "upscaler", ["bilinear", "fsr1", "fsr2"])
+	_choice(v, "Tonemapper", "tonemapper", ["filmic", "agx"])
 	_slider(v, "Chromatic aberration", "chromatic_aberration", 0.0, 1.0, 0.01)
 	_slider(v, "Vignette", "vignette", 0.0, 1.0, 0.01)
 	_slider(v, "Color grading", "color_grading", 0.0, 1.0, 0.01)

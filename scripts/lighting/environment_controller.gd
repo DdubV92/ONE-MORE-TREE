@@ -15,6 +15,13 @@ const KEYFRAME_FILES := ["night", "dawn", "day", "golden", "sunset", "dusk"]
 var keyframes: Array[LightingPreset] = []
 var overcast_preset: LightingPreset
 var hour := 13.0
+## Moon phase 0..1 (0 = new, 0.5 = full). The campaign sets it from the day
+## (a 29.5-day cycle); Preview sets it from the time panel. Moonlight,
+## night ambient, how far you can see through the night mist, and the stars
+## all follow it: a new-moon night is nearly black beyond the camp lamps, a
+## full moon lets you read silhouettes at a distance.
+var moon_phase := 0.3
+var _ground_fog_y := 0.0
 var overcast := 0.0
 var interior := 0.0          # 0 outside .. 1 deep inside camper/cabin
 var _interior_target := 0.0
@@ -102,8 +109,22 @@ func build() -> void:
 	apply_quality()
 
 
+func moon_illumination() -> float:
+	return 0.5 * (1.0 - cos(TAU * moon_phase))
+
+
+func set_moon_phase(v: float) -> void:
+	moon_phase = fposmod(v, 1.0)
+	_apply()
+
+
+## Moon phase for a campaign day: full moon on day 4, new moon around day 19.
+static func moon_phase_for_day(day: int) -> float:
+	return fposmod(0.398 + float(day - 1) / 29.53, 1.0)
+
+
 func describe() -> String:
-	return "%02d:%02d, overcast %.2f, interior %.2f, preset near '%s'" % [int(hour), int(fmod(hour, 1.0) * 60.0), overcast, interior, current.label]
+	return "%02d:%02d, overcast %.2f, moon %.0f%% lit, interior %.2f, preset near '%s'" % [int(hour), int(fmod(hour, 1.0) * 60.0), overcast, moon_illumination() * 100.0, interior, current.label]
 
 
 ## Named review presets used by the Preview Tour.
@@ -112,6 +133,8 @@ func apply_named(preset: String) -> void:
 		"day": overcast = 0.0; set_time_of_day(12.5)
 		"sunset": overcast = 0.0; set_time_of_day(19.2)
 		"night": overcast = 0.0; set_time_of_day(23.5)
+		"night_new": overcast = 0.0; moon_phase = 0.02; set_time_of_day(23.5)
+		"night_full": overcast = 0.0; moon_phase = 0.5; set_time_of_day(23.5)
 		"dawn": overcast = 0.0; set_time_of_day(6.4)
 		"overcast": overcast = 1.0; set_time_of_day(12.5)
 
@@ -222,36 +245,48 @@ func _apply() -> void:
 	sun.visible = sun.light_energy > 0.01
 	sun.shadow_enabled = sun.visible
 	var moon_up := smoothstep(-0.02, 0.15, md.y)
+	var illum := moon_illumination()
+	var nf := _night_factor()
 	moon.light_color = p.moon_color
-	moon.light_energy = p.moon_energy * moon_up * (1.0 - sun_up)
+	# Moonlight scales with the visible fraction of the disc (new moon ~10 %).
+	moon.light_energy = p.moon_energy * moon_up * (1.0 - sun_up) * lerpf(1.0, 0.22 + 0.78 * illum, nf)
 	moon.visible = moon.light_energy > 0.01
 	moon.shadow_enabled = moon.visible and quality != "low"
 	sky_mat.set_shader_parameter("zenith_color", p.sky_zenith)
 	sky_mat.set_shader_parameter("horizon_color", p.sky_horizon)
 	sky_mat.set_shader_parameter("ground_color", p.sky_ground)
 	sky_mat.set_shader_parameter("halo_color", p.sun_halo)
-	sky_mat.set_shader_parameter("stars", p.stars)
+	sky_mat.set_shader_parameter("stars", p.stars * lerpf(1.0, 1.25 - 0.75 * illum, nf))
+	sky_mat.set_shader_parameter("moon_phase", moon_phase)
 	sky_mat.set_shader_parameter("cloud_cover", p.cloud_cover)
 	sky_mat.set_shader_parameter("sun_dir", sd)
 	sky_mat.set_shader_parameter("moon_dir", md)
 	sky_mat.set_shader_parameter("cloud_offset", _cloud_offset)
 	var interior_k := interior
-	env.ambient_light_energy = p.ambient_energy * lerpf(1.0, 0.35, interior_k)
+	# Night ambient follows the moon: on a dark night only lamps, fire and
+	# the moon's silhouette light remain.
+	env.ambient_light_energy = p.ambient_energy * lerpf(1.0, 0.6 + 0.4 * illum, nf) * lerpf(1.0, 0.35, interior_k)
 	env.ambient_light_sky_contribution = 1.0
 	env.fog_light_color = p.fog_color
-	env.fog_density = p.fog_density
-	env.fog_height_density = p.fog_height_density
+	# Night mist: thicker and darker on moonless nights so the forest fades
+	# to black within a few dozen metres; a full moon thins it.
+	env.fog_density = p.fog_density * lerpf(1.0, lerpf(1.6, 0.55, illum), nf)
+	env.fog_height = _ground_fog_y + 2.5
+	env.fog_height_density = lerpf(p.fog_height_density, 0.05, nf)
 	env.volumetric_fog_enabled = quality in ["high", "ultra"] and p.volumetric > 0.0005
-	env.volumetric_fog_density = p.volumetric * (1.0 if quality == "ultra" else 0.8)
+	env.volumetric_fog_density = p.volumetric * (1.0 if quality == "ultra" else 0.8) * lerpf(1.0, lerpf(1.3, 0.7, illum), nf)
 	env.volumetric_fog_albedo = p.fog_color.lerp(Color(1, 1, 1), 0.4)
 	sun.light_volumetric_fog_energy = 1.6
 	moon.light_volumetric_fog_energy = 0.8
 	env.glow_intensity = p.glow_intensity * (1.0 if Settings.get_v("bloom") else 0.0)
 	env.glow_enabled = Settings.get_v("bloom")
 	var grade: float = Settings.get_v("color_grading")
-	env.adjustment_saturation = lerpf(1.0, p.saturation, grade)
-	env.adjustment_contrast = lerpf(1.0, p.contrast, grade)
-	env.tonemap_exposure = p.exposure * lerpf(1.0, 1.35, interior_k)
+	# AgX keeps hues in bright light but reads flatter: compensate a little.
+	var agx: bool = Settings.get_v("tonemapper") == "agx"
+	env.tonemap_mode = Environment.TONE_MAPPER_AGX if agx else Environment.TONE_MAPPER_FILMIC
+	env.adjustment_saturation = lerpf(1.0, p.saturation, grade) * (1.14 if agx else 1.0)
+	env.adjustment_contrast = lerpf(1.0, p.contrast, grade) * (1.12 if agx else 1.0)
+	env.tonemap_exposure = p.exposure * lerpf(1.0, 1.35, interior_k) * (1.12 if agx else 1.0)
 	RenderingServer.global_shader_parameter_set("sun_dir_world", sd if sd.y > -0.1 else md)
 	RenderingServer.global_shader_parameter_set("daylight", clampf(sun_up * clampf(p.sun_energy, 0.0, 1.4) / 1.4 + 0.15 * moon_up * (1.0 - sun_up), 0.0, 1.0))
 	var wd := Vector2(0.8, 0.6)
@@ -271,6 +306,14 @@ func _orient(light: DirectionalLight3D, dir: Vector3) -> void:
 
 
 func _process(delta: float) -> void:
+	# Ground mist follows the terrain under the camera (fog height is world
+	# space, so it is re-centred as you move; cheap, only when it matters).
+	var cam := get_viewport().get_camera_3d()
+	if cam and _night_factor() > 0.01:
+		var gy := World.height_at(cam.global_position.x, cam.global_position.z)
+		if absf(gy - _ground_fog_y) > 0.5:
+			_ground_fog_y = gy
+			env.fog_height = _ground_fog_y + 2.5
 	if absf(interior - _interior_target) > 0.001:
 		interior = move_toward(interior, _interior_target, delta * 1.5)
 		_apply()
@@ -283,6 +326,7 @@ func _process(delta: float) -> void:
 
 func apply_quality() -> void:
 	quality = Settings.get_v("quality")
+	_apply()
 	match quality:
 		"low":
 			env.ssao_enabled = false

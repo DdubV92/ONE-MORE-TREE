@@ -140,7 +140,11 @@ func _sync_axe() -> void:
 
 func _process(_delta: float) -> void:
 	if active and clock.running and Game.environment and not test_route_light_override:
-		Game.environment.set_time_of_day(clock.lighting_hour())
+		var env: EnvironmentController = Game.environment
+		var mp := EnvironmentController.moon_phase_for_day(clock.day)
+		if absf(env.moon_phase - mp) > 0.0001:
+			env.moon_phase = mp
+		env.set_time_of_day(clock.lighting_hour())
 
 
 var test_route_light_override := false

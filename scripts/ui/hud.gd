@@ -202,6 +202,21 @@ func _build_time_panel() -> void:
 			Game.environment.set_overcast(x))
 	oc.add_child(_overcast_slider)
 	v.add_child(oc)
+	var mo := HBoxContainer.new()
+	mo.add_child(UITheme.label("Moon", 16))
+	var moon_slider := HSlider.new()
+	moon_slider.max_value = 1.0
+	moon_slider.step = 0.01
+	moon_slider.value = Game.environment.moon_phase if Game.environment else 0.3
+	moon_slider.custom_minimum_size = Vector2(200, 24)
+	moon_slider.value_changed.connect(func(x: float) -> void:
+		if Game.environment:
+			Game.environment.set_moon_phase(x)
+			_update_time_label())
+	mo.add_child(moon_slider)
+	mo.add_child(UITheme.button("New", func() -> void: moon_slider.value = 0.0, 60))
+	mo.add_child(UITheme.button("Full", func() -> void: moon_slider.value = 0.5, 60))
+	v.add_child(mo)
 
 
 func _apply_preset(p: String) -> void:
@@ -301,8 +316,8 @@ func _build_tour() -> void:
 	v.add_child(grid)
 	v.add_child(UITheme.label("Lighting", 16, UITheme.MUTED))
 	var lrow := HBoxContainer.new()
-	for p in ["day", "sunset", "night"]:
-		lrow.add_child(UITheme.button(p.capitalize(), func() -> void: _apply_preset(p), 84))
+	for p in ["day", "sunset", "night_new", "night_full"]:
+		lrow.add_child(UITheme.button({"day": "Day", "sunset": "Sunset", "night_new": "Dark night", "night_full": "Full moon"}[p], func() -> void: _apply_preset(p), 66))
 	v.add_child(lrow)
 	if Game.campaign:
 		var dt := DayTestPanel.new()

@@ -32,12 +32,29 @@ func build() -> void:
 	_build_tool_area()
 	_build_yard()
 	_build_anchors()
+	_reflection_probe("CamperProbe", L.CAMPER_POS + Vector3(0, L.CAMPER_FLOOR + L.CAMPER_SIZE.y * 0.5, 0), L.CAMPER_SIZE)
+	_reflection_probe("CabinProbe", L.CABIN_POS + Vector3(0, L.CABIN_FLOOR + L.CABIN_SIZE.y * 0.5, 0), L.CABIN_SIZE)
 	var res := CampReservations.new()
 	res.name = "Reservations"
 	add_child(res)
 	res.build(self)
 	var merged := BuildKit.batch_static(self)
 	print("Camp: batched %d static meshes" % merged)
+
+
+## Interior reflection probe (rendered once): glossy counters, glass and
+## metal inside show the room instead of the open sky.
+func _reflection_probe(name: String, local_centre: Vector3, box: Vector3) -> void:
+	var rp := ReflectionProbe.new()
+	rp.name = name
+	rp.size = box + Vector3(0.2, 0.2, 0.2)
+	rp.interior = true
+	rp.box_projection = true
+	rp.update_mode = ReflectionProbe.UPDATE_ONCE
+	rp.ambient_mode = ReflectionProbe.AMBIENT_DISABLED
+	rp.max_distance = 20.0
+	rp.position = _ground(local_centre)
+	add_child(rp)
 
 
 func _ground(local: Vector3) -> Vector3:

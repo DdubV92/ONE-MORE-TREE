@@ -14,6 +14,7 @@ uniform float cloud_offset = 0.0;
 uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 uniform vec3 moon_dir = vec3(0.0, -1.0, 0.0);
 uniform float sky_energy = 1.0;
+uniform float moon_phase = 0.5;   // 0 new, 0.5 full
 
 float h31(vec3 p) {
 	p = fract(p * 0.1031);
@@ -71,9 +72,17 @@ void sky() {
 		col += halo_color * 30.0 * smoothstep(0.99985, 0.99994, sd) * sun_vis;
 		// Moon disk with a hint of shading
 		float md = dot(d, normalize(moon_dir));
+		vec3 mdn = normalize(moon_dir);
 		float moon = smoothstep(0.99955, 0.9997, md) * smoothstep(-0.05, 0.05, moon_dir.y);
-		col += vec3(0.85, 0.88, 0.95) * moon * 2.5 * (0.8 + 0.2 * n2(d.xy * 400.0));
-		col += vec3(0.4, 0.45, 0.6) * pow(max(md, 0.0), 300.0) * 0.15 * smoothstep(-0.05, 0.1, moon_dir.y);
+		// Phase: lit side grows from the right (waxing) and shrinks to the
+		// left (waning); the dark side keeps a faint earthshine.
+		vec3 mr = normalize(cross(mdn, vec3(0.0, 1.0, 0.0)));
+		float u = dot(d - mdn * md, mr) / 0.0245;
+		float ph = fract(moon_phase);
+		float illum = 0.5 * (1.0 - cos(6.2831853 * ph));
+		float lit = ph < 0.5 ? smoothstep(-0.12, 0.12, u - (1.0 - 2.0 * illum)) : smoothstep(-0.12, 0.12, -u - (1.0 - 2.0 * illum));
+		col += vec3(0.85, 0.88, 0.95) * moon * 2.5 * (0.8 + 0.2 * n2(d.xy * 400.0)) * mix(0.025, 1.0, lit);
+		col += vec3(0.4, 0.45, 0.6) * pow(max(md, 0.0), 300.0) * 0.15 * smoothstep(-0.05, 0.1, moon_dir.y) * (0.1 + 0.9 * illum);
 		// Stars
 		if (stars > 0.01 && h > 0.0) {
 			vec3 sp = d * 260.0;
