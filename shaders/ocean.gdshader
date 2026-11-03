@@ -30,6 +30,9 @@ varying float v_rock;
 varying float v_crest;
 varying float v_swash_edge;
 varying float v_dist;
+varying float v_jac;
+uniform float shoal_depth = 9.0;
+uniform float shoal_min = 0.05;
 
 float ground_at(vec2 xz) {
 	vec2 f = (xz - grid_origin) / cell_size;
@@ -66,7 +69,7 @@ void vertex() {
 	float beach = m.r;
 	float dist = length(xz - CAMERA_POSITION_WORLD.xz);
 	// Waves calm in shallow water and fade far away (cheap horizon).
-	float amp = wave_scale * clamp(depth / 4.0, 0.12, 1.0) * (1.0 - smoothstep(700.0, 1400.0, dist));
+	float amp = wave_scale * clamp(depth / shoal_depth, shoal_min, 1.0) * (1.0 - smoothstep(700.0, 1400.0, dist));
 	vec3 tangent = vec3(1.0, 0.0, 0.0);
 	vec3 binormal = vec3(0.0, 0.0, 1.0);
 	vec3 disp = vec3(0.0);
@@ -76,11 +79,9 @@ void vertex() {
 	float y = sea_level + disp.y;
 	// Swash sheet: water runs up the beach and withdraws (shared with terrain wetness).
 	float sw = swash_level(xz, world_time, beach);
-	float edge = 0.0;
-	if (depth < 1.5 && sw > y) {
-		y = sw;
-		edge = 1.0;
-	}
+	// Soft blend into the swash sheet (a hard switch shows as a seam).
+	float edge = smoothstep(-0.03, 0.05, sw - y) * (1.0 - smoothstep(1.1, 1.5, depth));
+	y = mix(y, max(y, sw), edge);
 	wp.xz += disp.xz * (1.0 - edge);
 	wp.y = y;
 	VERTEX = (inverse(MODEL_MATRIX) * vec4(wp, 1.0)).xyz;
@@ -92,7 +93,9 @@ void vertex() {
 	v_ground = ground;
 	v_beach = beach;
 	v_rock = m.a;
-	v_crest = clamp(disp.y / max(0.18 * wave_scale, 0.01), 0.0, 1.0);
+	v_crest = clamp(disp.y / max(1.1 * wave_scale, 0.01), 0.0, 1.0);
+	// Jacobian of the horizontal Gerstner mapping: < 1 where crests bunch up.
+	v_jac = tangent.x * binormal.z - tangent.z * binormal.x;
 	v_swash_edge = edge;
 	v_dist = dist;
 }
@@ -123,18 +126,22 @@ void fragment() {
 	float ground_depth = sea_level - v_ground;
 	// Swash leading edge: thin water over sand.
 	float thin = v_wpos.y - v_ground;
-	float edge_foam = (1.0 - smoothstep(0.0, 0.07, thin)) * smoothstep(-0.02, 0.01, thin) * v_beach;
+	float edge_foam = (1.0 - smoothstep(0.0, 0.022, thin)) * smoothstep(-0.015, 0.004, thin) * v_beach * (0.25 + 0.6 * foam_lace(xz * 1.6, t, 0.55));
 	// Breaking band: a crest rolling in where the swash phase starts.
 	float ph = swash_phase(xz, t);
 	float band_pos = mix(1.3, 0.0, smoothstep(0.0, 0.28, ph));
 	float breaking = exp(-pow((ground_depth - band_pos) * 3.0, 2.0)) * (1.0 - smoothstep(0.2, 0.35, ph)) * smoothstep(-0.3, 0.2, ground_depth) * v_beach;
 	// Lingering wash lace during backwash.
-	float lace = v_swash_edge * smoothstep(0.3, 0.9, ph) * smoothstep(0.55, 0.8, fn2) * v_beach;
+	float lace = v_swash_edge * smoothstep(0.3, 0.9, ph) * foam_lace(xz * 1.3, t, 0.12) * v_beach;
 	// Impact foam around rocky coast, pulsing with the swash.
 	float rock_foam = v_rock * (1.0 - smoothstep(0.0, 1.6, ground_depth)) * (0.4 + 0.6 * swash_env(fract(ph + 0.15))) * smoothstep(0.35, 0.7, fn);
 	// Occasional open-water crest flecks.
 	float flecks = smoothstep(0.75, 1.0, v_crest) * smoothstep(0.62, 0.85, fn2) * 0.6 * (1.0 - smoothstep(200.0, 500.0, v_dist));
-	float foam = clamp(edge_foam * 1.2 + breaking * broken * 1.3 + lace * 0.8 + rock_foam + flecks, 0.0, 1.0);
+	// Whitecaps where the swell crests compress (Jacobian foam).
+	float whitecap = (1.0 - smoothstep(0.62, 0.8, v_jac)) * smoothstep(0.35, 0.7, fn * 0.7 + fn2 * 0.5) * (1.0 - smoothstep(300.0, 900.0, v_dist));
+	flecks = max(flecks, whitecap);
+	float shore_lace = foam_lace(xz, t, 0.35) * breaking * 0.85;
+	float foam = clamp(edge_foam * 1.2 + shore_lace + lace * 0.8 + rock_foam + flecks, 0.0, 1.0);
 
 	// --- Optics -----------------------------------------------------------
 	vec3 n_view = normalize(mix(NORMAL, normalize(TANGENT * nmap.x + BINORMAL * nmap.y + NORMAL * nmap.z), 1.0));

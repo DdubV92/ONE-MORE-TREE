@@ -28,6 +28,14 @@ static func all() -> Dictionary:
 		bz += 1.0
 	vp["beach"] = _v(Vector3(bx - 6.0, 0.0, bz - 9.0), Vector3(bx + 25.0, 0.0, bz + 6.0), eye, "Beach: foam, swash, wet sand")
 	vp["shallows"] = _v(Vector3(bx + 4.0, 0.0, bz + 4.0), Vector3(bx + 10.0, -2.0, bz + 20.0), eye, "Clear shallows: refraction and caustics")
+	# Surf: stand at the waterline and look along the breaker line.
+	var brz := bz
+	while brz < bz + 200.0 and World.height_at(bx, brz) > -SurfSystem.BREAK_DEPTH:
+		brz += 1.0
+	vp["surf"] = _v(Vector3(bx - 14.0, 0.0, bz - 5.0), Vector3(bx + 30.0, 0.8, brz + 2.0), eye, "Surf: breaking waves curling onto the beach")
+	vp["surf_side"] = _v(Vector3(bx + 2.0, 0.0, bz - 2.0), Vector3(bx + 6.0, 0.6, brz + 6.0), eye, "Surf: waves rolling in toward you")
+	vp["surf_wade"] = _v(Vector3(bx, 0.0, brz - 11.0), Vector3(bx + 28.0, 1.0, brz - 1.0), eye, "Surf from the shallows: the lip curling over")
+	vp["surf_profile"] = _v(Vector3(bx - 16.0, 0.0, brz - 4.0), Vector3(bx + 6.0, 1.2, brz - 4.0), 1.6, "Debug: breaker cross-section seen along the shore")
 	vp["coast_day"] = _v(Vector3(bx - 40.0, 0.0, bz - 22.0), Vector3(bx + 120.0, 0.0, bz + 40.0), eye + 1.0, "Daytime coast", "day")
 	# Forest: densest tree cell near the western trail.
 	vp["forest"] = _v(Vector3(-300.0, 0.0, 110.0), Vector3(-330.0, 0.0, 60.0), eye, "Dense forest")

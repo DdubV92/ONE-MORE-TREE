@@ -4,14 +4,20 @@ extends Node3D
 ## (data/world/layout.json). Owns the shared wave definition (GPU + CPU
 ## mirror), the pooled ripple emitters and the wading query.
 
-## Gerstner waves: dir.x, dir.z, wavelength (m), steepness. Sheltered coast.
+## Gerstner waves: dir.x, dir.z, wavelength (m), steepness (k*A).
+## A long ocean swell travelling roughly north onto the landing beach, plus
+## wind chop. Offshore crests reach ~1.5-2 m; amplitudes shoal down in
+## shallow water where the surf ribbons (SurfSystem) take over.
+## Keep the sum of steepness below ~0.5 (no Gerstner loops).
 const WAVES := [
-	Vector4(0.15, 1.0, 17.0, 0.055),
-	Vector4(-0.35, 1.0, 11.0, 0.05),
-	Vector4(0.6, 0.8, 7.3, 0.045),
-	Vector4(-0.1, 1.0, 4.6, 0.04),
-	Vector4(0.45, 0.9, 3.1, 0.03),
+	Vector4(0.2, -1.0, 72.0, 0.08),
+	Vector4(0.42, -1.0, 47.0, 0.066),
+	Vector4(-0.12, -1.0, 31.0, 0.06),
+	Vector4(0.7, -0.7, 14.0, 0.05),
+	Vector4(-0.5, -0.85, 8.2, 0.045),
 ]
+const SHOAL_DEPTH := 9.0        # full swell amplitude beyond this depth (m)
+const SHOAL_MIN := 0.05
 const MAX_RIPPLES := 16
 
 var ocean: MeshInstance3D
@@ -27,6 +33,7 @@ var wave_scale := 1.0
 var _detail_a: NoiseTexture2D
 var _detail_b: NoiseTexture2D
 var _foam: NoiseTexture2D
+var surf: SurfSystem
 
 
 func build(grid_resolution: int = 320) -> void:
@@ -37,6 +44,10 @@ func build(grid_resolution: int = 320) -> void:
 	_build_ponds()
 	_build_river()
 	_build_buoys()
+	surf = SurfSystem.new()
+	surf.name = "Surf"
+	add_child(surf)
+	surf.build(self)
 
 
 func _make_noise_textures() -> void:
@@ -324,7 +335,7 @@ func ocean_height_at(x: float, z: float, t: float = -1.0) -> float:
 	if t < 0.0:
 		t = Game.world_time
 	var depth := World.sea_level - World.height_at(x, z)
-	var amp := wave_scale * clampf(depth / 4.0, 0.12, 1.0)
+	var amp := wave_scale * clampf(depth / SHOAL_DEPTH, SHOAL_MIN, 1.0) * (1.0 - smoothstep(700.0, 1400.0, _cam_dist(x, z)))
 	var y := 0.0
 	for wv in WAVES:
 		var w: Vector4 = wv
@@ -334,6 +345,19 @@ func ocean_height_at(x: float, z: float, t: float = -1.0) -> float:
 		var f := k * (d.dot(Vector2(x, z)) - c * t)
 		y += (w.w / k) * amp * sin(f)
 	return World.sea_level + y
+
+
+func _cam_dist(x: float, z: float) -> float:
+	var cam := get_viewport().get_camera_3d() if is_inside_tree() else null
+	return Vector2(x, z).distance_to(Vector2(cam.global_position.x, cam.global_position.z)) if cam else 0.0
+
+
+func foam_texture() -> Texture2D:
+	return _foam
+
+
+func detail_texture() -> Texture2D:
+	return _detail_a
 
 
 ## Water surface height at a point for whichever region contains it.
