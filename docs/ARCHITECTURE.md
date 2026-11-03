@@ -26,6 +26,12 @@ Meters. **+Y up, +X east, +Z south (toward the landing beach), −Z north (fores
 | Characters | `characters/*` | Human and dog rigs, clip generation, preview scene, camp dog |
 | Systems | `systems/safety_service.gd`, `systems/later_interfaces.gd`, `save/save_service.gd` | Authoritative safety; documented future interfaces; versioned saves |
 
+| Logging (Phase 1) | `logging/tree_service.gd`, `logging/tree_actor.gd`, `logging/tree_work_config.gd` + `config/tree_work.tres`, `logging/logging_fx.gd`, `logging/logging_test.gd` | Tree states, work, TreeFelled, actor handoff, notch/fall/stump, pooled sounds/particles |
+| Player tools | `player/axe_controller.gd`, `player/view_model.gd` | Swing state machine, contact-timed probe, first-person arms + axe |
+| Placement | `systems/placement_validator.gd` | Grounding audit, cutting stands |
+| Campaign data | `systems/campaign_rules.gd`, `crew/*`, `config/traits/*.tres` | Fixed contract numbers, trait/employee data (no behaviour yet) |
+| Reservations | `camp/camp_reservations.gd` | Camera mounts, footprints, dock |
+
 `world/world.gd` (IslandWorld) builds everything in order and registers services on `Game`.
 
 ## Frozen world layout
@@ -96,7 +102,8 @@ Marker3D nodes in these groups:
 ## Modes and saves
 
 - `Game.Mode`: `MENU`, `CAMPAIGN`, `PREVIEW`. Preview Tour, the Character Preview and the benchmark run in PREVIEW, and `SaveService.save_campaign` refuses to write in any mode except CAMPAIGN (tested).
-- **Save schema v1** (`user://saves/campaign.json`, written atomically through a `.tmp` + rename):
+- **Save schema v2** (Phase 1) adds `trees` (modified trees by ID: state, work, cut side, fall direction, felled guard, trunk pose/velocity), `equipment`, and reserved `campaign` / `economy` / `timber` blocks. v1 saves migrate to a labeled **legacy** campaign. Saving keeps the previous good file as `.bak`; an unreadable main save falls back to the backup and is left on disk.
+- **Save schema v1** (Phase 0) (`user://saves/campaign.json`, written atomically through a `.tmp` + rename):
 
 ```json
 {

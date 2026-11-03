@@ -17,6 +17,7 @@ Start a test build (README → "Play a test build"), then choose **Preview Tour*
 | 7 | Tour → **Pond**, **Pond 2** | Calmer water, reeds at the edge, muddy banks. Step in for ripples. |
 | 8 | Tour → **Ridge** | Island scale and landmarks: the long axis is about 1.55 km, roughly a 6-minute walk. |
 | 9 | Lighting → **Sunset**, then **Night** (or F4 for the full time slider and Overcast) | Warm low sun and long shadows, then moonlit night with readable silhouettes and lit camp lamps. Camper and cabin windows readable from inside. F3 shows the night-safety status where you stand. |
+| 9b | Tour → **Logging Test**, then **Next test tree** | Chop with the left mouse button (hold to keep going). Watch the notch open on your side, the creak warning, the hinge and fall away from you, the landing and the stump. Cases: flat, slope, rock, neighbour, small birch, large pine, closest to camp. Try 1/2/3 to compare axe tiers. |
 | 10 | Tour → **Character Preview** | Human: Idle, Walk, Axe swing, Walk a circle, Next look (4 workers). Dog: Idle, Walk, Lie & sleep. Speed slider, joint/foot-contact debug, Day/Sunset/Night. |
 
 Optional:

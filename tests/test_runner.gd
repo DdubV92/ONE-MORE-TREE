@@ -301,11 +301,14 @@ func _t_footsteps() -> String:
 # ------------------------------------------------------------ scene tests
 
 func _t_logger() -> String:
-	var before := Diag.errors.size()
-	push_error("diagnostics-probe (expected by the test suite)")
-	await get_tree().process_frame
-	await get_tree().process_frame
-	return "" if Diag.errors.size() == before + 1 else "logger did not capture push_error"
+	var probe := "diagnostics-probe-%d" % Time.get_ticks_usec()
+	push_error(probe)
+	for i in 4:
+		await get_tree().process_frame
+	for e in Diag.errors:
+		if e.contains(probe):
+			return ""
+	return "logger did not capture push_error"
 
 
 func _t_camp() -> String:
@@ -525,7 +528,7 @@ func _t_grounding() -> String:
 	var r := PlacementValidator.audit_trees()
 	var rr := PlacementValidator.audit_rocks()
 	PlacementValidator.write_report("user://reports/placement_report.json", {"trees": r, "rocks": rr})
-	var bad := r.floating.size() + r.in_water.size() + r.on_rock.size() + rr.floating.size()
+	var bad: int = r.floating.size() + r.in_water.size() + r.on_rock.size() + rr.floating.size()
 	if bad > 0:
 		return "floating/invalid: trees %d, water %d, rock overlap %d, rocks %d (first: %s)" % [r.floating.size(), r.in_water.size(), r.on_rock.size(), rr.floating.size(), JSON.stringify((r.floating + rr.floating).slice(0, 2))]
 	if r.no_cut_stand.size() > 0:

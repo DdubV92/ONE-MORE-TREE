@@ -7,6 +7,9 @@
 | Space | Jump |
 | Shift | Sprint (forward) |
 | Ctrl | Crouch (stays crouched under low ceilings) |
+| Left mouse | Swing the axe (hold to keep chopping at the same pace) |
+| 1 / 2 / 3 | Small / medium / large axe (debug equip until the Phase 3 shop) |
+| F9 / F10 | Quick save / quick load (campaign only; a backup of the previous save is kept) |
 | E | Interact: doors, fire, axe rack, notice board, arcade |
 | Esc | Pause menu: resume, settings, diagnostics, save (campaign), title, quit. Releases the mouse. |
 | Click | Recapture the mouse after using a panel |

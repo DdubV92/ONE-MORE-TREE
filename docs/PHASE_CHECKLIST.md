@@ -1,5 +1,41 @@
 # Phase checklist
 
+## Phase 1: The axe, a grounded island, and convincing falling trees
+
+| Item | Status | Notes |
+|---|---|---|
+| Grounding audit (PlacementValidator) of all 12,000 tree bases and 598 rocks | ✅ | 475 trees floated on slopes under the old rule (worst 0.25 m, tree 3369); fixed at the source with footprint-minimum bases. Now 0 floating, 0 in water, 0 on rocks, every tree has a cutting stand. Tested. |
+| Visible hands and forearms holding a real axe (hatchet / medium / large) | ✅ | Arms are solved onto the handle grips each frame; the small hatchet is one-handed |
+| Central interaction arbitration | ✅ | One view-ray probe decides tree / hard surface / miss; trees behind a fence or another trunk are not strikeable. UI clicks never reach the axe (`_unhandled_input` + captured mouse only). |
+| Hold-to-chop at the same legal cadence | ✅ | Max one buffered press; tested frame-rate independent (30/60/144/23 Hz) |
+| Tree states STANDING → NOTCHED → FALLING → FALLEN (SECTIONED/DISPOSED reserved) | ✅ | Illegal transitions rejected; tested |
+| Exactly one TreeFelled per original tree (not a payment) | ✅ | Persisted guard; never re-emitted by restore; tested |
+| Single representation handoff (instance ↔ actor), no ghost canopy or collision | ✅ | Tested: 0 instances at the base after notching, 1 actor |
+| Work model: species/diameter, tiers 1.00/1.40/1.96, Hard-working ×1.25 once | ✅ | `config/tree_work.tres`, `CampaignRules`; tested (1.25/1.75/2.45) |
+| Contact-timed swing (prep, accel, contact, recoil, recover) | ✅ | Damage only at the contact frame |
+| Visible notch on the struck side, end-grain wood, chips, creak at 86 % | 🟡 | Rendered on a software GPU; judge close-up on a real GPU |
+| Directional fall: away from the chopper, bounded natural lean, hinge phase then rigid body | ✅ | See the measurements below |
+| Stump with growth-ring cut face; tracked target (group `stumps`) | ✅ | |
+| Settling validation (lift from ground, lower unsupported) with recorded reason | ✅ | All 7 test cases settled "rest" without correction |
+| Neighbour canopy flex on impact, impact/crack/rustle audio at the trunk | 🟡 | Implemented; motion and sound need live review |
+| Player never pinned (falling trunk ignores the player; push-clear after settle) | ✅ | |
+| Save v2: notch, falling (pose + velocity), fallen pose, stump; backup; corrupt fallback; legacy migration | ✅ | Tested |
+| Logging Test stop (7 real island trees) | ✅ | Preview Tour → Logging Test / Next test tree |
+| Reservations: camper couch + TV, 10 camera mounts (CAM_01–10, 3 on trail rocks), cabin extension footprint, 2 truck bays + turning circle, dock + utility footprint, hiding anchors, campaign state/clock/traits data | ✅ | Locations only; behaviour belongs to Prompts 3–6 |
+
+### Felling measurements (headless physics, real island trees, small axe, 60 Hz)
+
+| Case | Species | Trunk Ø | Work units | Small-axe swings | Chop time | Fall→rest | Settle | Lying angle | Ground penetration | TreeFelled |
+|---|---|---|---|---|---|---|---|---|---|---|
+| flat | pine | 0.89 m | 22.8 | 23 | 21.4 s | 8.9 s | rest | 88° | 0.00 m | 1 |
+| slope | pine | 0.61 m | 11.4 | 12 | 10.9 s | 7.2 s | rest | 86° | 0.00 m | 1 |
+| rock | pine | 0.56 m | 9.7 | 10 | 9.0 s | 8.1 s | rest | 91° | 0.00 m | 1 |
+| neighbour | pine | 0.70 m | 14.8 | 15 | 13.8 s | 6.6 s | rest | 82° | 0.00 m | 1 |
+| small | birch | 0.29 m | 2.4 | 3 | 2.3 s | 5.7 s | rest | 82° | 0.00 m | 1 |
+| large | pine | 1.05 m | 30.2 | 31 | 28.9 s | 10.1 s | rest | 78° | 0.00 m | 1 |
+| camp_edge | pine | 0.65 m | 13.0 | 13 | 11.9 s | 8.0 s | rest | 84° | 0.00 m | 1 |
+
+
 Legend: ✅ implemented and checked (test, smoke or render) · 🟡 implemented, only partially verified · ⛔ not done
 
 ## Phase 0: Build the island we want to live on
