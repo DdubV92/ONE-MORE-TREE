@@ -1,0 +1,29 @@
+[remap]
+
+importer="2d_array_texture"
+type="CompressedTexture2DArray"
+uid="uid://bk6pnte8lvrub"
+path.s3tc="res://.godot/imported/terrain_arm.jpg-3e4333de1ee1be3b089ec70666906a02.s3tc.ctexarray"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+
+[deps]
+
+source_file="res://assets/generated/terrain/terrain_arm.jpg"
+dest_files=["res://.godot/imported/terrain_arm.jpg-3e4333de1ee1be3b089ec70666906a02.s3tc.ctexarray"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+slices/horizontal=1
+slices/vertical=12

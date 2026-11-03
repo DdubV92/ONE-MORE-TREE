@@ -1,0 +1,630 @@
+{
+ "Barrel_02": {
+  "authors": {
+   "Jorge Camacho": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Barrel 02"
+ },
+ "Rockingchair_01": {
+  "authors": {
+   "Jorge Camacho": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Rockingchair 01"
+ },
+ "bark_brown_02": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Bark Brown 02"
+ },
+ "brown_mud_leaves_01": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Brown Mud Leaves 01"
+ },
+ "carved_wooden_plate": {
+  "authors": {
+   "Jan Martens": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Carved Wooden Plate"
+ },
+ "coast_sand_01": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Coast Sand 01"
+ },
+ "damp_beach_sand": {
+  "authors": {
+   "Dimitrios Savva": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Damp Beach Sand"
+ },
+ "denim_fabric": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Denim Fabric"
+ },
+ "dirt": {
+  "authors": {
+   "Charlotte Baglioni": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Dirt"
+ },
+ "dry_branches_medium_01": {
+  "authors": {
+   "Rico Cilliers": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Dry Branches Medium 01"
+ },
+ "dry_decay_leaves": {
+  "authors": {
+   "Amal Kumar": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Dry Decay Leaves"
+ },
+ "fabric_leather_01": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Fabric Leather 01"
+ },
+ "fern_02": {
+  "authors": {
+   "Rico Cilliers": "modeling",
+   "Rob Tuytel": "scanning"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Fern 02"
+ },
+ "fir_tree_01": {
+  "authors": {
+   "Rico Cilliers": "modeling",
+   "Rob Tuytel": "photography"
+  },
+  "files": "1k: twig_diff, twig_alpha, twig_nor_gl",
+  "kind": "texture maps from model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Fir Tree 01"
+ },
+ "folding_wooden_stool": {
+  "authors": {
+   "Ulan Cabanilla": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Folding Wooden Stool"
+ },
+ "forest_leaves_02": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Forest Leaves 02"
+ },
+ "gravel": {
+  "authors": {
+   "Dimitrios Savva": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Gravel"
+ },
+ "hatchet": {
+  "authors": {
+   "James Ray Cock": "Texturing",
+   "Ulan Cabanilla": "modeling"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Hatchet"
+ },
+ "industrial_wall_lamp": {
+  "authors": {
+   "Kuutti Siitonen": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Industrial Wall Lamp"
+ },
+ "leafy_grass": {
+  "authors": {
+   "Charlotte Baglioni": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Leafy Grass"
+ },
+ "metal_toolbox": {
+  "authors": {
+   "Mateusz Sadek": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Metal Toolbox"
+ },
+ "mossy_rock": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Mossy Rock"
+ },
+ "ocean_buoy": {
+  "authors": {
+   "Mateusz Sadek": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Ocean Buoy"
+ },
+ "old_bed_frame": {
+  "authors": {
+   "Luca B": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Old Bed Frame"
+ },
+ "painted_wooden_cabinet": {
+  "authors": {
+   "Kirill Sannikov": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Painted Wooden Cabinet"
+ },
+ "painted_wooden_chair_01": {
+  "authors": {
+   "Kuutti Siitonen": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Painted Wooden Chair 01"
+ },
+ "painted_wooden_nightstand": {
+  "authors": {
+   "Kirill Sannikov": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Painted Wooden Nightstand"
+ },
+ "pine_bark": {
+  "authors": {
+   "Dimitrios Savva": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Pine Bark"
+ },
+ "pine_tree_01": {
+  "authors": {
+   "Rico Cilliers": "modeling",
+   "Rob Tuytel": "photography"
+  },
+  "files": "1k: twig_diff, twig_alpha, twig_nor_gl, bark_diff, bark_nor_gl, bark_arm",
+  "kind": "texture maps from model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Pine Tree 01"
+ },
+ "plastic_jerrycan": {
+  "authors": {
+   "Ulan Cabanilla": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Plastic Jerrycan"
+ },
+ "plastic_thermos": {
+  "authors": {
+   "PierreB3D": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Plastic Thermos"
+ },
+ "pot_enamel_01": {
+  "authors": {
+   "Kuutti Siitonen": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Pot Enamel 01"
+ },
+ "propane_tank": {
+  "authors": {
+   "Slinc": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Propane Tank"
+ },
+ "river_small_rocks": {
+  "authors": {
+   "Rico Cilliers": "Minor adjustment",
+   "Rob Tuytel": "Photography, Processing"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "River Small Rocks"
+ },
+ "rock_face": {
+  "authors": {
+   "Dario Barresi": "Processing",
+   "Greg Zaal": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Rock Face"
+ },
+ "rubber_boots": {
+  "authors": {
+   "L": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Rubber Boots"
+ },
+ "russian_food_cans_01": {
+  "authors": {
+   "Kosan Aziz": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Russian Food Cans 01"
+ },
+ "rusted_spade_01": {
+  "authors": {
+   "Blemonade": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Rusted Spade 01"
+ },
+ "security_light": {
+  "authors": {
+   "Maximilian Schuster": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Security Light"
+ },
+ "shrub_03": {
+  "authors": {
+   "Rico Cilliers": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Shrub 03"
+ },
+ "sledgehammer_01": {
+  "authors": {
+   "Dylan Guzman": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Sledgehammer 01"
+ },
+ "small_wooden_table_01": {
+  "authors": {
+   "Ulan Cabanilla": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Small Wooden Table 01"
+ },
+ "sparse_grass": {
+  "authors": {
+   "Amal Kumar": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Sparse Grass"
+ },
+ "steel_frame_shelves_01": {
+  "authors": {
+   "James Ray Cock": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Steel Frame Shelves 01"
+ },
+ "stone_fire_pit": {
+  "authors": {
+   "Sebastian Platen": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Stone Fire Pit"
+ },
+ "throw_pillows_01": {
+  "authors": {
+   "Serhii Khromov": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Throw Pillows 01"
+ },
+ "tree_small_02": {
+  "authors": {
+   "Rico Cilliers": "All"
+  },
+  "files": "1k: leaves_diff, leaves_alpha, leaves_nor_gl, branch_diff",
+  "kind": "texture maps from model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Tree Small 02"
+ },
+ "tree_stump_01": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Tree Stump 01"
+ },
+ "wall_clock": {
+  "authors": {
+   "PierreB3D": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wall Clock"
+ },
+ "weathered_plank_siding": {
+  "authors": {
+   "Dimitrios Savva": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Weathered Plank Siding"
+ },
+ "weathered_planks": {
+  "authors": {
+   "Dario Barresi": "Processing",
+   "Dimitrios Savva": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Weathered Planks"
+ },
+ "wood_floor_worn": {
+  "authors": {
+   "Dimitrios Savva": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wood Floor Worn"
+ },
+ "wooden_axe_02": {
+  "authors": {
+   "Ulan Cabanilla": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Axe 02"
+ },
+ "wooden_axe_03": {
+  "authors": {
+   "Ulan Cabanilla": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Axe 03"
+ },
+ "wooden_bookshelf_worn": {
+  "authors": {
+   "Ulan Cabanilla": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Bookshelf Worn"
+ },
+ "wooden_bucket_01": {
+  "authors": {
+   "James Ray Cock": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Bucket 01"
+ },
+ "wooden_crate_01": {
+  "authors": {
+   "James Ray Cock": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Crate 01"
+ },
+ "wooden_crate_02": {
+  "authors": {
+   "James Ray Cock": "modeling",
+   "Jurita Burger": "graphic design"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Crate 02"
+ },
+ "wooden_cutting_board": {
+  "authors": {
+   "Kuutti Siitonen": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Cutting Board"
+ },
+ "wooden_lantern_01": {
+  "authors": {
+   "James Ray Cock": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Lantern 01"
+ },
+ "wooden_picnic_table": {
+  "authors": {
+   "Ulan Cabanilla": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Picnic Table"
+ },
+ "wooden_stool_01": {
+  "authors": {
+   "Kuutti Siitonen": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Wooden Stool 01"
+ }
+}

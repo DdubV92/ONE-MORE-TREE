@@ -18,3 +18,17 @@ Thumbs.db
 /build_info.json
 # Local screenshots from the capture tool (curated ones live in docs/screenshots)
 /captures/
+# Raw Poly Haven terrain sources: re-fetched by tools/fetch_polyhaven.py and
+# baked into assets/generated/terrain by tools/bake_terrain_arrays.py
+/assets/polyhaven/textures/coast_sand_01/
+/assets/polyhaven/textures/damp_beach_sand/
+/assets/polyhaven/textures/leafy_grass/
+/assets/polyhaven/textures/sparse_grass/
+/assets/polyhaven/textures/forest_leaves_02/
+/assets/polyhaven/textures/dry_decay_leaves/
+/assets/polyhaven/textures/dirt/
+/assets/polyhaven/textures/mossy_rock/
+/assets/polyhaven/textures/rock_face/
+/assets/polyhaven/textures/gravel/
+/assets/polyhaven/textures/river_small_rocks/
+/assets/polyhaven/textures/brown_mud_leaves_01/

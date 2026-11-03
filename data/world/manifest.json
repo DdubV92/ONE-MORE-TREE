@@ -1,0 +1,74 @@
+{
+	"format": 1,
+	"world_seed": 20261103,
+	"generation_version": 1,
+	"generator_revision": 1,
+	"config_fingerprint": "af11825ee6a4446de5779e358b99fbbd",
+	"grid": {
+		"width": 1001,
+		"height": 801,
+		"cell_size": 2.0,
+		"origin": [
+			-1000.0,
+			-800.0
+		]
+	},
+	"sea_level": 0.0,
+	"content_hashes": {
+		"heightmap.bin": "7e6df88e97a146690cb4cc53f1a416fd",
+		"masks.bin": "69f481e17ee36c653b12884411037865",
+		"water_surface.bin": "06c3ea2438916839c8e7ada4877c1990",
+		"water_region.bin": "f07dad3e60fd3d3ca89456ba0154c2b3",
+		"trees.bin": "1b707eb107fb4b915cfcd9931b4e61ef",
+		"rocks.bin": "d41e859b147b6b400b42fae1ba025f24",
+		"layout.json": "398beb1231018dacbdae39ef930af704"
+	},
+	"stats": {
+		"land_area_km2": 1.17,
+		"land_extent_m": [
+			1552.0,
+			1060.0
+		],
+		"land_bounds": [
+			-772.0,
+			-538.0,
+			780.0,
+			522.0
+		],
+		"max_height_m": 53.27,
+		"tree_count": 12000,
+		"trees_per_species": {
+			"pine": 6660,
+			"spruce": 3385,
+			"birch": 1955
+		},
+		"trees_per_km2": 10256.0,
+		"rocks_per_kind": {
+			"ridge": 170,
+			"boulder": 240,
+			"shore": 160,
+			"river": 28
+		},
+		"river_length_m": 926.6,
+		"river_source_level_m": 15.36,
+		"river_mouth_level_m": 0.04,
+		"ponds": [
+			{
+				"x": -430.0,
+				"z": -55.0,
+				"radius": 40.0,
+				"level": 2.1
+			},
+			{
+				"x": 275.0,
+				"z": -15.0,
+				"radius": 27.0,
+				"level": 8.5
+			}
+		],
+		"bridges": 2,
+		"shore_audio_points": 240,
+		"long_axis_walk_minutes_at_4_2mps": 6.2,
+		"generation_ms": 12031
+	}
+}
