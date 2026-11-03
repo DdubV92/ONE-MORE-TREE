@@ -1,0 +1,423 @@
+extends Node
+## Headless automated checks for Phase 0 invariants. Run:
+##   godot --headless res://tests/test_runner.tscn
+## Exit code 0 = all passed. Each test prints PASS/FAIL with details.
+## These verify data, rules and logic only. They do NOT verify shader
+## compilation, visual quality, audio quality or frame rate.
+
+var failures := 0
+var passes := 0
+var _log: PackedStringArray = []
+
+
+func _ready() -> void:
+	await get_tree().process_frame
+	World.ensure_loaded()
+	_run("world data matches manifest", _t_manifest)
+	_run("tree count and stable unique IDs", _t_tree_ids)
+	_run("trees respect exclusion zones", _t_tree_exclusions)
+	_run("minimum trunk spacing", _t_spacing)
+	_run("island size near target", _t_island_size)
+	_run("elevation sampling matches height field", _t_elevation)
+	_run("terrain continuous across chunk edges", _t_chunk_edges)
+	_run("river flows downhill to the sea", _t_river)
+	_run("ponds have closed rims", _t_ponds)
+	_run("bridges span the river", _t_bridges)
+	_run("save round trip and migration", _t_save)
+	_run("preview mode never writes campaign saves", _t_preview_save)
+	_run("settings sanitize and audio buses exist", _t_settings)
+	_run("diagnostics strip user paths", _t_diag)
+	await _run_async("diagnostics logger captures engine errors", _t_logger)
+	await _run_async("camp built: interiors, anchors, safety rules", _t_camp)
+	await _run_async("human walk keeps stance foot planted", _t_human_walk)
+	await _run_async("dog walk keeps stance paws planted", _t_dog_walk)
+	await _run_async("tree removal by ID updates render and collision", _t_tree_removal)
+	print("\n==== %d passed, %d failed ====" % [passes, failures])
+	DirAccess.make_dir_recursive_absolute("user://test_reports")
+	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
+	if f:
+		f.store_string("\n".join(_log))
+	get_tree().quit(1 if failures > 0 else 0)
+
+
+func _run(name: String, f: Callable) -> void:
+	var err: String = f.call()
+	_report(name, err)
+
+
+func _run_async(name: String, f: Callable) -> void:
+	var err: String = await f.call()
+	_report(name, err)
+
+
+func _report(name: String, err: String) -> void:
+	if err == "":
+		passes += 1
+		_log.append("PASS " + name)
+		print("PASS  ", name)
+	else:
+		failures += 1
+		_log.append("FAIL " + name + ": " + err)
+		print("FAIL  ", name, "\n      ", err)
+
+
+# ------------------------------------------------------------------ world
+
+func _t_manifest() -> String:
+	var m := World.manifest
+	if m.get("fallback", false):
+		return "world data missing; runtime regenerated it"
+	if int(m.generation_version) != World.config.generation_version:
+		return "generation_version mismatch"
+	if int(m.world_seed) != World.config.world_seed:
+		return "seed mismatch"
+	var h := IslandGenerator._md5(World.height.to_byte_array())
+	if h != m.content_hashes["heightmap.bin"]:
+		return "heightmap hash differs from manifest"
+	if IslandGenerator._md5(var_to_bytes(World.trees)) != m.content_hashes["trees.bin"]:
+		return "tree data hash differs from manifest"
+	return ""
+
+
+func _t_tree_ids() -> String:
+	var ids: PackedInt32Array = World.trees.id
+	var n := ids.size()
+	if absi(n - World.config.tree_target) > World.config.tree_target * 0.02:
+		return "tree count %d far from target %d" % [n, World.config.tree_target]
+	for i in n:
+		if ids[i] != i:
+			return "IDs not sequential/stable at %d" % i
+	var chunks: PackedInt32Array = World.trees.chunk
+	for i in range(1, n):
+		if chunks[i] < chunks[i - 1]:
+			return "records not sorted by chunk at %d" % i
+	return ""
+
+
+func _t_tree_exclusions() -> String:
+	var cfg := World.config
+	var gen := IslandGenerator.new(cfg)
+	for i in World.tree_count():
+		var p := Vector2(World.trees.x[i], World.trees.z[i])
+		if gen.camp_sd(p) < cfg.camp_tree_clearance - 0.01:
+			return "tree %d inside camp clearance" % i
+		if World.water_region_at(p.x, p.y) != 0:
+			return "tree %d inside inland water" % i
+		if World.height_at(p.x, p.y) < 1.5:
+			return "tree %d on the shoreline (h=%.2f)" % [i, World.height_at(p.x, p.y)]
+		for b in World.bridges():
+			if p.distance_to(Vector2(b.x, b.z)) < float(b.half_span) + 5.0:
+				return "tree %d blocks bridge site" % i
+	return ""
+
+
+func _t_spacing() -> String:
+	var cs := World.config.min_trunk_spacing - 0.01
+	var hashg := {}
+	for i in World.tree_count():
+		var p := Vector2(World.trees.x[i], World.trees.z[i])
+		var k := Vector2i(int(floor(p.x / 4.0)), int(floor(p.y / 4.0)))
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				for j in hashg.get(k + Vector2i(dx, dz), []):
+					if p.distance_to(Vector2(World.trees.x[j], World.trees.z[j])) < cs:
+						return "trees %d and %d closer than %.2f m" % [i, j, cs]
+		if not hashg.has(k):
+			hashg[k] = []
+		hashg[k].append(i)
+	return ""
+
+
+func _t_island_size() -> String:
+	var s: Dictionary = World.manifest.stats
+	var area: float = s.land_area_km2
+	if area < 0.9 or area > 1.25:
+		return "land area %.3f km2 outside 0.9-1.25" % area
+	var ext: Array = s.land_extent_m
+	if ext[0] > 1700 or ext[1] > 1300:
+		return "footprint %s exceeds ~1600x1200" % str(ext)
+	return ""
+
+
+func _t_elevation() -> String:
+	for k in 200:
+		var i := (k * 7919) % World.W
+		var j := (k * 104729) % World.H
+		var x := World.origin.x + i * World.cs
+		var z := World.origin.y + j * World.cs
+		if absf(World.height_at(x, z) - World.height[j * World.W + i]) > 0.001:
+			return "height_at disagrees with grid at (%d,%d)" % [i, j]
+	return ""
+
+
+func _t_chunk_edges() -> String:
+	var step := World.config.chunk_cells * World.cs
+	var worst := 0.0
+	for k in 60:
+		var x := World.origin.x + (k % 30 + 1) * step
+		var z := -300.0 + (k * 37) % 600
+		var a := World.height_at(x - 0.001, z)
+		var b := World.height_at(x + 0.001, z)
+		worst = maxf(worst, absf(a - b))
+	return "" if worst < 0.02 else "discontinuity %.3f m at chunk edge" % worst
+
+
+func _t_river() -> String:
+	var lv := World.river_levels
+	for k in range(1, lv.size()):
+		if lv[k] > lv[k - 1] + 0.0001:
+			return "river level rises at sample %d" % k
+	if lv[lv.size() - 1] > World.sea_level + 0.1:
+		return "river does not reach the sea"
+	# Water surface stays below its banks (no flat sea plane through valleys).
+	for k in range(0, World.river_points.size(), 10):
+		if lv[k] <= World.sea_level + 0.06:
+			continue
+		var p := World.river_points[k]
+		var t0 := World.river_points[mini(k + 1, World.river_points.size() - 1)] - World.river_points[maxi(k - 1, 0)]
+		var across := Vector2(-t0.y, t0.x).normalized() * (World.river_widths[k] * 0.5 + 3.0)
+		for s in [-1.0, 1.0]:
+			var q: Vector2 = p + across * s
+			if World.height_at(q.x, q.y) < lv[k]:
+				return "bank below water at sample %d" % k
+	var rapids := 0
+	for r in World.river_rapid:
+		if r > 0.3:
+			rapids += 1
+	return "" if rapids > 0 else "no grade changes found for whitewater"
+
+
+func _t_ponds() -> String:
+	for pd in World.ponds():
+		for k in 64:
+			var a := TAU * k / 64.0
+			var r: float = float(pd.radius) * 1.25 + 4.0
+			var p := Vector2(pd.x, pd.z) + Vector2(cos(a), sin(a)) * r
+			if World.height_at(p.x, p.y) < float(pd.level) + 0.02:
+				return "pond at (%d,%d) leaks at angle %d" % [pd.x, pd.z, k]
+	return ""
+
+
+func _t_bridges() -> String:
+	if World.bridges().size() < 2:
+		return "expected 2 bridge sites"
+	for b in World.bridges():
+		if float(b.deck) < World.water_level_at(b.x, b.z) + 0.5:
+			return "bridge deck too low"
+	return ""
+
+
+# ------------------------------------------------------------------- save
+
+func _t_save() -> String:
+	var path := "user://test_reports/test_save.json"
+	var state := {"schema": SaveService.SCHEMA_VERSION, "world": {"seed": 1}, "player": {"position": [1.0, 2.0, 3.0], "yaw": 0.5}, "time_of_day": 9.5, "felled_trees": [3, 7], "economy": {"funds": 0, "axe_tier": "small", "workers": []}, "timber": {"logs": [], "burned": 0}, "horror": {"exposure": 0.0}}
+	if not SaveService.write_file(path, state):
+		return "write failed"
+	var back := SaveService.read_file(path)
+	if back.get("felled_trees") != [3.0, 7.0] and back.get("felled_trees") != [3, 7]:
+		return "felled trees did not round-trip: %s" % str(back.get("felled_trees"))
+	if absf(float(back.time_of_day) - 9.5) > 0.0001:
+		return "time did not round-trip"
+	var old := SaveService.migrate({"position": [5, 6, 7]})
+	if int(old.schema) != SaveService.SCHEMA_VERSION or old.player.position != [5, 6, 7]:
+		return "v0 migration failed"
+	if not SaveService.migrate({"schema": 999}).is_empty():
+		return "future schema was not rejected"
+	return ""
+
+
+func _t_preview_save() -> String:
+	var prev := Game.mode
+	SaveService.path_override = "user://test_reports/should_not_exist.json"
+	if FileAccess.file_exists(SaveService.save_path()):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveService.save_path()))
+	Game.mode = Game.Mode.PREVIEW
+	var wrote := SaveService.save_campaign({"schema": 1})
+	Game.mode = prev
+	var exists := FileAccess.file_exists(SaveService.save_path())
+	SaveService.path_override = ""
+	if wrote or exists:
+		return "preview mode wrote a campaign save"
+	return ""
+
+
+func _t_settings() -> String:
+	var old: Dictionary = Settings.values.duplicate()
+	Settings.values.mouse_sensitivity = 99.0
+	Settings.values.quality = "potato"
+	Settings.values.chromatic_aberration = -3.0
+	Settings.sanitize()
+	var ok: bool = Settings.values.mouse_sensitivity <= 1.5 and Settings.values.quality == "high" and Settings.values.chromatic_aberration == 0.0
+	Settings.values = old
+	if not ok:
+		return "sanitize failed"
+	if float(Settings.defaults.chromatic_aberration) != 0.0 or Settings.defaults.dof_mode != "off":
+		return "comfort effects must default off"
+	for b in Settings.BUSES:
+		if AudioServer.get_bus_index(b) < 0:
+			return "missing audio bus " + b
+	return ""
+
+
+func _t_diag() -> String:
+	var s := Diag.sanitize("C:\\Users\\Dominic\\AppData\\x /home/someone/project " + OS.get_user_data_dir() + "/a.txt")
+	if s.contains("Dominic") or s.contains("someone") or s.contains(OS.get_user_data_dir()):
+		return "path not stripped: " + s
+	var r := Diag.build_report()
+	if not r.contains("Engine: Godot 4.5"):
+		return "report missing engine version"
+	return ""
+
+
+# ------------------------------------------------------------ scene tests
+
+func _t_logger() -> String:
+	var before := Diag.errors.size()
+	push_error("diagnostics-probe (expected by the test suite)")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	return "" if Diag.errors.size() == before + 1 else "logger did not capture push_error"
+
+
+func _t_camp() -> String:
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_player = false
+	world.build_ui = false
+	add_child(world)
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var err := ""
+	var needs := {"worker_bed": 4, "worker_seat": 4, "worker_spawn": 4, "arcade_spot": 2, "player_bed": 1, "dog_bed": 1, "shop_counter": 1, "payroll_anchor": 1, "burn_pit_load_point": 1, "safe_reset": 1}
+	for g in needs:
+		var n := get_tree().get_nodes_in_group(g).size()
+		if n != needs[g]:
+			err = "group %s has %d nodes, expected %d" % [g, n, needs[g]]
+	# Bridges are walkable: a downward ray at each bridge center hits the deck.
+	for b in World.bridges():
+		var top := Vector3(b.x, float(b.deck) + 2.0, b.z)
+		var hitb := world.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(top, top - Vector3(0, 4.0, 0)))
+		if err == "" and (hitb.is_empty() or absf(hitb.position.y - float(b.deck)) > 0.1):
+			err = "no walkable deck at bridge (%d, %d)" % [b.x, b.z]
+	var safety: SafetyService = world.safety
+	var camper := CampLayout.world(CampLayout.CAMPER_POS + Vector3(0, CampLayout.CAMPER_FLOOR + 1.0, -3.0))
+	var q := safety.query(camper)
+	if err == "" and not (q.safe and q.reason == SafetyService.Reason.CAMPER_INTERIOR):
+		err = "camper interior not safe"
+	# Camper safety must not depend on lamps.
+	for l in get_tree().get_nodes_in_group("camp_lamps"):
+		l.working = false
+	if err == "" and not safety.is_point_safe(camper):
+		err = "camper unsafe when lamps are off"
+	var yard := CampLayout.world(Vector3(0, 1.0, 1.0))
+	if err == "" and safety.is_point_safe(yard):
+		err = "yard safe with every lamp broken"
+	for l in get_tree().get_nodes_in_group("camp_lamps"):
+		l.working = true
+	if err == "" and not safety.is_point_safe(yard):
+		err = "yard near the central lamp not safe"
+	var outside := CampLayout.world(Vector3(0, 1.0, -40.0))
+	if err == "" and safety.is_point_safe(outside):
+		err = "forest outside the fence counted as safe"
+	# Next to the fire (bright) but far from lamps and outside: unsafe.
+	var beach := Viewpoints.all()["beach"].pos as Vector3
+	if err == "" and safety.is_point_safe(beach):
+		err = "beach counted as safe"
+	# Interiors are physically enterable: a ray through the camper doorway is clear.
+	var door_out := CampLayout.world(CampLayout.CAMPER_POS + Vector3(2.4, CampLayout.CAMPER_FLOOR + 1.2, 1.85))
+	var door_in := CampLayout.world(CampLayout.CAMPER_POS + Vector3(0.0, CampLayout.CAMPER_FLOOR + 1.2, 1.85))
+	for d in get_tree().get_nodes_in_group("doors"):
+		d.set_open(true, true)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var hit := world.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(door_out, door_in))
+	if err == "" and not hit.is_empty():
+		err = "camper doorway blocked by %s" % str(hit.collider)
+	world.queue_free()
+	await get_tree().process_frame
+	return err
+
+
+func _t_human_walk() -> String:
+	var h := HumanCharacter.new()
+	add_child(h)
+	await get_tree().process_frame
+	h.play("walk", 0.0)
+	var T := HumanCharacter.WALK_PERIOD
+	var worst := 0.0
+	var worst_speed := 0.0
+	var prev := Vector3.ZERO
+	var n := 40
+	for k in n:
+		var t := T * k / n
+		h.anim.seek(t, true)
+		var ph := fposmod(t / T, 1.0)
+		var foot: Vector3 = h.bones["FootL"].global_position
+		if ph > 0.05 and ph < HumanCharacter.STANCE * 0.7:
+			worst = maxf(worst, absf(foot.y - h.ankle_h))
+			if k > 0 and prev != Vector3.ZERO:
+				var v := (foot.z - prev.z) / (T / n)
+				worst_speed = maxf(worst_speed, absf(v - HumanCharacter.WALK_NOMINAL_SPEED))
+			prev = foot
+		else:
+			prev = Vector3.ZERO
+	h.queue_free()
+	if worst > 0.025:
+		return "stance foot height error %.3f m" % worst
+	if worst_speed > 0.2:
+		return "stance foot speed error %.2f m/s (stride/speed mismatch)" % worst_speed
+	return ""
+
+
+func _t_dog_walk() -> String:
+	var d := DogCharacter.new()
+	add_child(d)
+	await get_tree().process_frame
+	d.play("walk", 0.0)
+	var T := DogCharacter.WALK_PERIOD
+	var worst := 0.0
+	var n := 32
+	for k in n:
+		var t := T * k / n
+		d.anim.seek(t, true)
+		# Hind-left paw: stance while phase in (0, STANCE)
+		var ph := fposmod(t / T, 1.0)
+		if ph > 0.05 and ph < DogCharacter.STANCE * 0.8:
+			var paw: Vector3 = d.bones["HindPawL"].global_position
+			worst = maxf(worst, absf(paw.y - d.paw_h))
+	d.queue_free()
+	return "" if worst < 0.03 else "stance paw height error %.3f m" % worst
+
+
+func _t_tree_removal() -> String:
+	var veg := VegetationSystem.new()
+	add_child(veg)
+	veg.build()
+	var idx := 500
+	var id: int = World.trees.id[idx]
+	var p := World.tree_position(idx)
+	veg.update_collision_around(p)
+	await get_tree().physics_frame
+	var before := veg.active_tree_collision_count()
+	var chunk: int = World.trees.chunk[idx]
+	var count_instances := func() -> int:
+		var total := 0
+		for mmi in (veg.chunk_nodes[chunk] as Node).get_children():
+			if (mmi as MultiMeshInstance3D).multimesh.mesh.get_surface_count() == 1:
+				total += (mmi as MultiMeshInstance3D).multimesh.instance_count
+		return total
+	var inst_before: int = count_instances.call()
+	World.remove_tree(id)
+	await get_tree().process_frame
+	veg.update_collision_around(p)
+	await get_tree().physics_frame
+	var after := veg.active_tree_collision_count()
+	var inst_after: int = count_instances.call()
+	World.removed_trees.erase(id)
+	veg.queue_free()
+	if after != before - 1:
+		return "collision count %d -> %d (expected -1)" % [before, after]
+	if inst_after != inst_before - 1:
+		return "far-LOD instances %d -> %d (expected -1)" % [inst_before, inst_after]
+	return ""

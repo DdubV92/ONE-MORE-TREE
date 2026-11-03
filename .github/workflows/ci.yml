@@ -1,0 +1,135 @@
+name: Validate and build
+
+# Every push / PR: import + determinism check + headless tests + smoke test.
+# Pushes to main or phase-* branches (and manual runs) also export a Windows
+# x86_64 test build and upload it as a downloadable workflow artifact.
+# Uploading an artifact is NOT a public release.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: "4.5.1"
+  GODOT_RELEASE: "stable"
+
+jobs:
+  validate:
+    name: Import, tests, smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot editor
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-editor-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}-linux
+
+      - name: Install pinned Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -fsSL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_RELEASE}/Godot_v${GODOT_VERSION}-${GODOT_RELEASE}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-${GODOT_RELEASE}_linux.x86_64 ~/godot/godot
+
+      - name: Engine version
+        run: ~/godot/godot --version
+
+      - name: Import project (headless)
+        run: timeout 600 ~/godot/godot --headless --import 2>&1 | grep -E "ERROR|SCRIPT ERROR|Parse Error" || true
+
+      - name: World generation determinism check
+        run: timeout 600 ~/godot/godot --headless --script res://tools/generate_world.gd -- --check
+
+      - name: Automated tests
+        run: timeout 900 ~/godot/godot --headless res://tests/test_runner.tscn
+
+      - name: Startup smoke test
+        run: timeout 900 ~/godot/godot --headless res://tests/smoke_test.tscn
+
+  windows-build:
+    name: Windows test build
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/phase-')))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot editor
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-editor-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}-linux
+
+      - name: Install pinned Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -fsSL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_RELEASE}/Godot_v${GODOT_VERSION}-${GODOT_RELEASE}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-${GODOT_RELEASE}_linux.x86_64 ~/godot/godot
+
+      - name: Cache export templates
+        id: cache-templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.${{ env.GODOT_RELEASE }}
+          key: godot-templates-win-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}
+
+      - name: Install matching export templates (Windows only)
+        if: steps.cache-templates.outputs.cache-hit != 'true'
+        run: |
+          DEST=~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE}
+          mkdir -p "$DEST"
+          curl -fsSL -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_RELEASE}/Godot_v${GODOT_VERSION}-${GODOT_RELEASE}_export_templates.tpz"
+          unzip -j -o /tmp/templates.tpz "templates/version.txt" "templates/windows_release_x86_64.exe" "templates/windows_release_x86_64_console.exe" "templates/windows_debug_x86_64.exe" "templates/windows_debug_x86_64_console.exe" -d "$DEST"
+          rm /tmp/templates.tpz
+          cat "$DEST/version.txt"
+
+      - name: Stamp build info
+        run: |
+          printf '{"commit": "%s", "run": "%s", "built_at": "%s", "ref": "%s"}\n' "${GITHUB_SHA}" "${GITHUB_RUN_NUMBER}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${GITHUB_REF_NAME}" > build_info.json
+          cat build_info.json
+
+      - name: Import project
+        run: timeout 600 ~/godot/godot --headless --import 2>&1 | grep -E "ERROR|SCRIPT ERROR" || true
+
+      - name: Export Windows x86_64
+        run: |
+          mkdir -p build/windows
+          timeout 900 ~/godot/godot --headless --export-release "Windows Desktop" build/windows/OneMoreTree.exe
+          ls -la build/windows
+          test -f build/windows/OneMoreTree.exe
+          test -f build/windows/OneMoreTree.pck
+
+      - name: Add tester readme
+        run: |
+          cat > build/windows/README.txt <<EOF
+          ONE MORE TREE - Phase 0 test build
+          Commit: ${GITHUB_SHA}   Run: ${GITHUB_RUN_NUMBER}   Engine: Godot ${GODOT_VERSION}-${GODOT_RELEASE} (Forward+)
+
+          1. Extract this whole folder somewhere (keep OneMoreTree.exe and OneMoreTree.pck together).
+          2. Run OneMoreTree.exe. Windows SmartScreen may warn about an unsigned app: More info > Run anyway.
+          3. Title screen: Preview Tour (quick review), Explore the island, Character Preview.
+          4. F1 shows controls. F12 (or Pause > Write diagnostic report) writes a plain-text report.
+             Reports are saved in %APPDATA%\Godot\app_userdata\One More Tree\diagnostics\
+          Needs a GPU with Vulkan 1.2 support (Forward+ renderer).
+          EOF
+
+      - name: Upload test build
+        uses: actions/upload-artifact@v4
+        with:
+          name: OneMoreTree-windows-x86_64-${{ github.ref_name }}-${{ github.run_number }}
+          path: build/windows/
+          retention-days: 30
+          compression-level: 6
