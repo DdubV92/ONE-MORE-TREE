@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TraitDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crew/trait_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "level_headed"
+display_name = "Level-headed"
+description = "Fear rises more slowly after real evidence and recovers faster. Never immunity."
+fear_recovery = 1.5
+fear_tolerance = 1.15

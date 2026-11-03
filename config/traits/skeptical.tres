@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TraitDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crew/trait_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "skeptical"
+display_name = "Skeptical"
+description = "Needs strong direct or corroborated evidence before believing the boss; can still be terrified once convinced."
+evidence_threshold = 1.8

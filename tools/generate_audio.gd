@@ -26,6 +26,17 @@ func _init() -> void:
 		for v in 5:
 			_save("step_%s_%d" % [s, v], _step(s, v), false)
 	_save("ui_click", _click(), false)
+	# Logging (Phase 1)
+	for v in 5:
+		_save("chop_%d" % v, _chop(v), false)
+	for v in 3:
+		_save("clunk_%d" % v, _clunk(v), false)
+		_save("creak_wood_%d" % v, _wood_creak(v), false)
+	for v in 2:
+		_save("axe_miss_%d" % v, _whoosh(v, 0.28, 300.0, 1400.0, 0.5), false)
+		_save("tree_impact_%d" % v, _impact(v), false)
+	_save("tree_crack", _crack(), false)
+	_save("tree_rustle", _whoosh(9, 1.6, 1800.0, 4500.0, 0.4), false)
 	print("audio generated")
 	quit()
 
@@ -320,6 +331,113 @@ func _step(surface: String, variant: int) -> PackedFloat32Array:
 	# Gentle tail fade so variants end silently.
 	for i in range(maxi(n - 600, 0), n):
 		d[i] *= float(n - i) / 600.0
+	return d
+
+
+func _chop(v: int) -> PackedFloat32Array:
+	rng.seed = 900 + v
+	var n := int(0.32 * RATE)
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var f1 := rng.randf_range(170.0, 240.0)
+	var f2 := f1 * rng.randf_range(2.3, 2.9)
+	var click := _bq("bp", rng.randf_range(2500.0, 4200.0), 1.2)
+	var crunch := _bq("bp", rng.randf_range(1200.0, 1900.0), 0.8)
+	var body_lp := _bq("lp", 600.0, 0.8)
+	for i in n:
+		var t := float(i) / RATE
+		var att := minf(t / 0.0015, 1.0)
+		var tone := sin(TAU * f1 * t) * exp(-t / 0.07) + 0.4 * sin(TAU * f2 * t) * exp(-t / 0.035)
+		var thump := body_lp.run(_white()) * exp(-t / 0.03) * 1.6
+		var cl := click.run(_white()) * exp(-t / 0.006) * 2.2
+		var cr := crunch.run(_white() if rng.randf() < 0.3 else 0.0) * exp(-t / 0.05) * 1.4
+		d[i] = (tone * 0.9 + thump + cl + cr) * att
+	return d
+
+
+func _clunk(v: int) -> PackedFloat32Array:
+	rng.seed = 950 + v
+	var n := int(0.5 * RATE)
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var parts := [rng.randf_range(850, 1000), rng.randf_range(2200, 2500), rng.randf_range(3500, 3900)]
+	var click := _bq("hp", 2000.0, 0.7)
+	for i in n:
+		var t := float(i) / RATE
+		var ring := 0.0
+		for k in 3:
+			ring += sin(TAU * parts[k] * t) * exp(-t / [0.12, 0.07, 0.04][k]) * [1.0, 0.6, 0.35][k]
+		d[i] = ring * 0.7 + click.run(_white()) * exp(-t / 0.004) * 1.5
+	return d
+
+
+func _wood_creak(v: int) -> PackedFloat32Array:
+	rng.seed = 980 + v
+	var n := int(rng.randf_range(1.0, 1.6) * RATE)
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var res := _bq("bp", rng.randf_range(450.0, 750.0), 4.0)
+	var res2 := _bq("bp", rng.randf_range(1100.0, 1500.0), 5.0)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / n
+		var f := rng.randf_range(55.0, 70.0) + 40.0 * sin(t * PI) + 15.0 * sin(t * 17.0)
+		phase += f / RATE
+		var pulse := 1.0 if fmod(phase, 1.0) < 0.08 + 0.05 * rng.randf() else 0.0
+		var x := pulse * (0.6 + 0.4 * rng.randf())
+		d[i] = (res.run(x) + res2.run(x) * 0.5) * sin(PI * t) * (0.6 + 0.4 * sin(t * 9.0))
+	return d
+
+
+func _crack() -> PackedFloat32Array:
+	rng.seed = 1010
+	var n := int(1.4 * RATE)
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var lp := _bq("lp", 180.0, 0.7)
+	var split := _bq("bp", 2400.0, 0.9)
+	for i in n:
+		var t := float(i) / RATE
+		var snap := _white() * exp(-t / 0.012) * 2.0
+		var boom := lp.run(_white()) * exp(-t / 0.25) * 3.0 + sin(TAU * 52.0 * t) * exp(-t / 0.3) * 0.6
+		var splinter := split.run(_white() if rng.randf() < 0.25 * exp(-t / 0.35) else 0.0) * 2.0
+		d[i] = snap + boom + splinter
+	return d
+
+
+func _impact(v: int) -> PackedFloat32Array:
+	rng.seed = 1050 + v
+	var n := int(1.6 * RATE)
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var lp := _bq("lp", 140.0, 0.8)
+	var crash := _bq("hp", 1500.0, 0.6)
+	var f0 := rng.randf_range(38.0, 50.0)
+	for i in n:
+		var t := float(i) / RATE
+		var thud := lp.run(_white()) * exp(-t / 0.35) * 3.5 + sin(TAU * f0 * t) * exp(-t / 0.45) * 0.9
+		var branches := crash.run(_white()) * exp(-t / 0.4) * (0.6 + 0.4 * sin(t * 40.0)) * 0.7
+		d[i] = (thud + branches) * minf(t / 0.004, 1.0)
+	return d
+
+
+func _whoosh(v: int, dur: float, f_from: float, f_to: float, q: float) -> PackedFloat32Array:
+	rng.seed = 1100 + v
+	var n := int(dur * RATE)
+	var d := PackedFloat32Array()
+	d.resize(n)
+	# Time-varying band-pass (filter retuned every 256 samples).
+	var bp2 := _bq("bp", f_from, q)
+	for i in n:
+		var t := float(i) / n
+		if i % 256 == 0:
+			var keep_x1 := bp2.x1
+			var keep_x2 := bp2.x2
+			var keep_y1 := bp2.y1
+			var keep_y2 := bp2.y2
+			bp2 = _bq("bp", lerpf(f_from, f_to, t), q)
+			bp2.x1 = keep_x1; bp2.x2 = keep_x2; bp2.y1 = keep_y1; bp2.y2 = keep_y2
+		d[i] = bp2.run(_white()) * sin(PI * t) * (0.7 + 0.3 * sin(t * 30.0))
 	return d
 
 

@@ -17,3 +17,18 @@ vec3 tree_sway(vec3 local_pos, float tree_height, vec3 inst_origin, float phase,
 	vec2 off = wd * (g * 0.55 + sway * g * 0.4) * bend * min(tree_height * 0.045, 0.9);
 	return vec3(off.x, -dot(off, off) * 0.3, off.y);
 }
+
+// Neighbour flex after a felled trunk lands: x, z, start time, strength.
+global uniform vec4 tree_impact;
+
+vec3 impact_sway(vec3 local_pos, float tree_height, vec3 inst_origin, float t) {
+	float age = t - tree_impact.z;
+	if (age < 0.0 || age > 5.0 || tree_impact.w <= 0.0) return vec3(0.0);
+	vec2 d = inst_origin.xz - tree_impact.xy;
+	float dist = length(d);
+	if (dist > 14.0 || dist < 0.5) return vec3(0.0);
+	float hn = clamp(local_pos.y / max(tree_height, 1.0), 0.0, 1.5);
+	float amp = tree_impact.w * (1.0 - dist / 14.0) * exp(-age * 1.3) * sin(age * 5.5);
+	vec2 dir = d / dist;
+	return vec3(dir.x, 0.0, dir.y) * amp * hn * hn * 0.45;
+}

@@ -25,6 +25,7 @@ var environment: Node
 var safety: Node
 var player: Node3D
 var vegetation: Node
+var trees: TreeService
 
 var pending_teleport := ""
 var startup_ms := 0
@@ -81,4 +82,5 @@ func _change(path: String) -> void:
 	safety = null
 	player = null
 	vegetation = null
+	trees = null
 	get_tree().change_scene_to_file(path)

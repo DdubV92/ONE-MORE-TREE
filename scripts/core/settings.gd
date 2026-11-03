@@ -12,6 +12,9 @@ var values := {
 	"invert_y": false,
 	"fov": 75.0,
 	"head_bob": true,
+	"camera_shake": true,
+	"hold_to_chop": true,
+	"felling_aid": true,
 	"quality": "high",              # low / medium / high / ultra
 	"vsync": true,
 	"fullscreen": false,

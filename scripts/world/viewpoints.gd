@@ -39,6 +39,8 @@ static func all() -> Dictionary:
 	var pd2: Dictionary = World.ponds()[1]
 	vp["pond2"] = _v(Vector3(pd2.x, 0.0, pd2.z) + Vector3(float(pd2.radius) + 7.0, 0.0, 4.0), Vector3(pd2.x, 0.0, pd2.z), eye, "Second pond near the river")
 	vp["ridge"] = _v(Vector3(330.0, 0.0, -250.0), Vector3(-200.0, 0.0, 200.0), eye + 1.0, "Rocky ridge overlooking the island")
+	# Logging Test starting point: just outside the forest entrance.
+	vp["logging_test"] = _v(c + Vector3(0.0, 0.0, -24.0), c + Vector3(0.0, 0.0, -45.0), eye, "Logging Test (use the Tour panel to cycle test trees)")
 	vp["high_overview"] = _v(Vector3(420.0, 0.0, -170.0), Vector3(-150.0, 0.0, 300.0), 22.0, "High view from the ridge over the island")
 	var fire := c + CampLayout.BURN_PIT_POS
 	vp["fire_close"] = _v(fire + Vector3(0.0, 0.0, 4.2), fire + Vector3(0.0, 0.6, 0.0), 0.2, "Campfire close-up", "night")

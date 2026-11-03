@@ -14,6 +14,10 @@ uniform vec3 tint_variation : source_color = vec3(0.9, 1.0, 0.85);
 uniform float alpha_cut = 0.42;
 uniform vec3 translucency : source_color = vec3(0.35, 0.4, 0.15);
 uniform float flutter = 0.04;
+uniform float actor_height = 0.0;
+uniform float actor_phase = 0.0;
+uniform float actor_tint = 0.5;
+uniform float sway_scale = 1.0;
 
 varying float v_tint;
 varying float v_ao;
@@ -21,13 +25,14 @@ varying float v_ao;
 void vertex() {
 	vec3 origin = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	float sy = max(length(MODEL_MATRIX[1].xyz), 0.01);
-	float h = max(INSTANCE_CUSTOM.b, 1.0) / sy;
-	float phase = INSTANCE_CUSTOM.g * 6.28;
-	vec3 sway = tree_sway(VERTEX, h, origin, phase, world_time);
+	bool actor = actor_height > 0.0;
+	float h = (actor ? actor_height : max(INSTANCE_CUSTOM.b, 1.0)) / sy;
+	float phase = (actor ? actor_phase : INSTANCE_CUSTOM.g) * 6.28;
+	vec3 sway = (tree_sway(VERTEX, h, origin, phase, world_time) + impact_sway(VERTEX, h, origin, world_time)) * sway_scale;
 	// Small per-card flutter (COLOR.g = card seed).
 	float f = sin(world_time * 4.0 + COLOR.g * 40.0 + phase) * flutter * wind_strength * COLOR.r;
 	VERTEX += (inverse(MODEL_MATRIX) * vec4(sway, 0.0)).xyz + NORMAL * f;
-	v_tint = INSTANCE_CUSTOM.r;
+	v_tint = actor ? actor_tint : INSTANCE_CUSTOM.r;
 	v_ao = COLOR.b;
 }
 

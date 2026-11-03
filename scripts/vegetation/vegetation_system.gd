@@ -33,6 +33,7 @@ func build() -> void:
 	for chunk in chunk_trees:
 		_build_chunk(chunk)
 	World.tree_removed.connect(_on_tree_removed)
+	World.tree_restored.connect(_on_tree_removed)
 	_build_rocks()
 
 
@@ -111,7 +112,7 @@ func tree_transform(i: int) -> Transform3D:
 	var basis := Basis(Vector3.UP, World.trees.rot[i])
 	basis = Basis(Vector3.RIGHT, World.trees.lean_z[i]) * Basis(Vector3.BACK, -World.trees.lean_x[i]) * basis
 	basis = basis.scaled_local(Vector3(xs, ys, xs))
-	var pos := World.tree_position(i) - Vector3(0, 0.15, 0)
+	var pos := World.tree_position(i)
 	return Transform3D(basis, pos)
 
 
@@ -289,7 +290,7 @@ func _build_rocks() -> void:
 			var kind: int = World.rocks.kind[i]
 			var squash := Vector3(1.0, [0.75, 0.85, 0.55, 0.6][kind], 1.0)
 			var b := Basis(Vector3.UP, World.rocks.rot[i]).scaled(squash * s)
-			var t := Transform3D(b, Vector3(World.rocks.x[i], World.rocks.y[i], World.rocks.z[i]))
+			var t := Transform3D(b, World.rock_position(i))
 			mm.set_instance_transform(k, t)
 			if s > 0.6:
 				var cs := CollisionShape3D.new()

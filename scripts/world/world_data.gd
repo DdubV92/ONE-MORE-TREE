@@ -237,10 +237,33 @@ func tree_count() -> int:
 	return (trees.id as PackedInt32Array).size()
 
 
+## Grounded trunk base: the lowest terrain under the flared trunk footprint
+## minus a small root embed, so the downhill side never floats on slopes.
+## Deterministic from the frozen record (x, z, radius); shared by rendering,
+## collision, felling and the placement validator.
 func tree_position(idx: int) -> Vector3:
 	var x: float = trees.x[idx]
 	var z: float = trees.z[idx]
-	return Vector3(x, height_at(x, z), z)
+	return Vector3(x, grounded_base_y(x, z, float(trees.radius[idx]) * 1.45, 0.12), z)
+
+
+func grounded_base_y(x: float, z: float, footprint_radius: float, embed: float) -> float:
+	var lowest := height_at(x, z)
+	for k in 8:
+		var a := TAU * k / 8.0
+		lowest = minf(lowest, height_at(x + cos(a) * footprint_radius, z + sin(a) * footprint_radius))
+	return lowest - embed
+
+
+## Grounded rock centre height (rock meshes have a flattened base at -0.2
+## of their scaled height). Runtime grounding of the frozen rock record.
+func rock_position(idx: int) -> Vector3:
+	var x: float = rocks.x[idx]
+	var z: float = rocks.z[idx]
+	var s: float = rocks.scale[idx]
+	var squash: float = [0.75, 0.85, 0.55, 0.6][int(rocks.kind[idx])]
+	var base := grounded_base_y(x, z, s * 0.38, 0.06 * s)
+	return Vector3(x, base + 0.2 * s * squash, z)
 
 
 func tree_record(idx: int) -> Dictionary:
@@ -267,6 +290,13 @@ func remove_tree(tree_id: int) -> void:
 		return
 	removed_trees[tree_id] = true
 	tree_removed.emit(tree_id)
+
+
+## Returns a tree to the instanced forest (preview resets / tests only).
+signal tree_restored(tree_id: int)
+func restore_tree(tree_id: int) -> void:
+	if removed_trees.erase(tree_id):
+		tree_restored.emit(tree_id)
 
 
 func ponds() -> Array:

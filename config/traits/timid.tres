@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TraitDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crew/trait_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "timid"
+display_name = "Timid"
+description = "Lower fear tolerance; asks to head home earlier; reacts strongly to what they personally witness."
+fear_tolerance = 0.65
+dusk_return_bias_minutes = 1.0

@@ -40,6 +40,8 @@ var wading_depth := 0.0
 var too_deep := false
 var surface_name := "grass"
 var _last_safe := Vector3.ZERO
+var axe: AxeController
+var _shake := 0.0
 
 
 func _ready() -> void:
@@ -71,6 +73,10 @@ func _ready() -> void:
 	listener.make_current()
 	Settings.changed.connect(_apply_settings)
 	_apply_settings()
+	axe = AxeController.new()
+	axe.name = "Axe"
+	add_child(axe)
+	axe.setup(self)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -123,6 +129,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		_yaw -= event.relative.x * s
 		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-88.0), deg_to_rad(88.0))
 		_apply_look()
+	elif event.is_action_pressed("attack") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		# Only unhandled clicks reach here: a click consumed by a UI button
+		# can never also strike wood.
+		axe.try_swing()
+	elif event.is_action_pressed("tool_small"):
+		axe.equip("small")
+		show_message("Small axe (1.00x)")
+	elif event.is_action_pressed("tool_medium"):
+		axe.equip("medium")
+		show_message("Medium axe (1.40x) - debug equip until the shop arrives")
+	elif event.is_action_pressed("tool_large"):
+		axe.equip("large")
+		show_message("Large axe (1.96x) - debug equip until the shop arrives")
 	elif event.is_action_pressed("interact"):
 		if _interact_target and _interact_target.has_method("interact"):
 			_interact_target.interact(self)
@@ -198,6 +217,7 @@ func _physics_process(delta: float) -> void:
 	_footsteps(delta, h_before.length())
 	_head_bob(delta, Vector2(velocity.x, velocity.z).length())
 	_update_interaction()
+	axe._physics_process_step(delta)
 	if wading_depth > 0.05 and Vector2(velocity.x, velocity.z).length() > 0.5 and Game.water:
 		Game.water.emit_ripple(global_position, clampf(wading_depth * 1.5, 0.3, 1.2), self, 0.4)
 
@@ -257,6 +277,14 @@ func _head_bob(delta: float, speed: float) -> void:
 		_bob_t += delta * speed * 1.9
 		bob = sin(_bob_t * 2.0) * 0.022 * clampf(speed / WALK_SPEED, 0.0, 1.4)
 	head.position.y = _eye_current + bob
+	# Subtle, decaying hit shake (comfort-toggleable).
+	_shake = move_toward(_shake, 0.0, delta * 0.12)
+	camera.position = Vector3(randf_range(-1, 1), randf_range(-1, 1), 0.0) * _shake
+	axe._process_visual(delta, speed)
+
+
+func add_shake(amount: float) -> void:
+	_shake = minf(_shake + amount, 0.04)
 
 
 func _footsteps(delta: float, speed: float) -> void:

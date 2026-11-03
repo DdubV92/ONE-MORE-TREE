@@ -12,6 +12,7 @@ signal ready_to_play
 var terrain: TerrainSystem
 var water: WaterSystem
 var vegetation: VegetationSystem
+var trees: TreeService
 var ground_cover: Node3D
 var environment: EnvironmentController
 var camp: Node3D
@@ -26,6 +27,9 @@ func _ready() -> void:
 	Game.world_root = self
 	var t0 := Time.get_ticks_msec()
 	World.ensure_loaded()
+	# Every world starts from the frozen manifest; campaign modifications are
+	# re-applied from the save below. Preview changes never carry over.
+	World.removed_trees.clear()
 	build_ms["world_data"] = Time.get_ticks_msec() - t0
 	environment = _timed("environment", func() -> Node: var e := EnvironmentController.new(); e.name = "Environment"; add_child(e); e.build(); return e)
 	Game.environment = environment
@@ -36,6 +40,17 @@ func _ready() -> void:
 	_timed("bridges", func() -> Node: var b := BridgeBuilder.new(); b.name = "Bridges"; add_child(b); b.build(); return b)
 	vegetation = _timed("vegetation", func() -> Node: var v := VegetationSystem.new(); v.name = "Vegetation"; add_child(v); v.build(); return v)
 	Game.vegetation = vegetation
+	var fx := LoggingFX.new()
+	fx.name = "LoggingFX"
+	add_child(fx)
+	trees = TreeService.new()
+	trees.name = "Trees"
+	add_child(trees)
+	var actors := Node3D.new()
+	actors.name = "ActiveTrees"
+	add_child(actors)
+	trees.setup(actors, not Game.is_preview())
+	Game.trees = trees
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()

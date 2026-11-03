@@ -341,3 +341,27 @@ func _far_blob(st: SurfaceTool, c: Vector3, r: Vector3, col: Color) -> void:
 			for p in [a, b, cc, a, cc, d]:
 				st.set_color(col)
 				st.add_vertex(p)
+
+
+## Trunk radius (mesh-local units) at mesh-local height y, matching the
+## profiles used by the builders above. Used by notches, stumps, caps and
+## physics proxies so cuts line up with the visible bark.
+static func trunk_radius_local(species: int, variant: int, y: float) -> float:
+	match species:
+		Species.PINE:
+			var h: float = REF_HEIGHT[0] * [1.0, 0.95, 1.04][variant]
+			var t := clampf(y / h, 0.0, 1.0)
+			return REF_RADIUS[0] * (1.0 - t * 0.78) * (1.0 + 0.35 * exp(-t * 18.0))
+		Species.SPRUCE:
+			var h: float = REF_HEIGHT[1] * [1.0, 1.06, 0.93][variant]
+			var t := clampf(y / h, 0.0, 1.0)
+			return REF_RADIUS[1] * (1.0 - t * 0.9) * (1.0 + 0.3 * exp(-t * 20.0))
+		_:
+			var h: float = REF_HEIGHT[2] * [1.0, 0.92, 1.08][variant]
+			var fork: float = h * [0.45, 0.5, 0.4][variant]
+			var t := clampf(y / fork, 0.0, 1.0)
+			return REF_RADIUS[2] * (1.0 - t * 0.3) * (1.0 + 0.25 * exp(-t * 14.0))
+
+
+static func mesh_height(species: int, variant: int) -> float:
+	return REF_HEIGHT[species] * [[1.0, 0.95, 1.04], [1.0, 1.06, 0.93], [1.0, 0.92, 1.08]][species][variant]

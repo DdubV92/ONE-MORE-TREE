@@ -22,6 +22,10 @@ var _time_slider: HSlider
 var _time_label: Label
 var _overcast_slider: HSlider
 var _bench: Benchmark
+var axe_label: Label
+var chop_label: Label
+var _aid: MeshInstance3D
+var _aid_info := {}
 
 
 func _ready() -> void:
@@ -56,10 +60,25 @@ func _ready() -> void:
 	_build_tree_panel()
 	_build_pause()
 	_build_tour()
+	chop_label = _anchored_label(Vector2(0.5, 0.6), 18)
+	axe_label = UITheme.label("", 15, UITheme.MUTED)
+	axe_label.anchor_left = 1.0
+	axe_label.anchor_right = 1.0
+	axe_label.anchor_top = 1.0
+	axe_label.anchor_bottom = 1.0
+	axe_label.offset_left = -330
+	axe_label.offset_top = -40
+	root.add_child(axe_label)
 	var p: Node = Game.player
 	if p:
 		p.interact_target_changed.connect(func(t: String) -> void: prompt_label.text = ("[E] " + t) if t != "" else "")
 		p.message.connect(show_message)
+		if p.get("axe"):
+			p.axe.target_changed.connect(_on_chop_target)
+	if Game.trees:
+		Game.trees.tree_warning.connect(func(_id: int) -> void: show_message("The trunk is groaning - it's about to go. Stand clear of its fall line.", 3.5))
+		Game.trees.tree_felled.connect(func(_id: int) -> void: show_message("Timber!", 2.0))
+	_build_aid()
 	if Game.is_preview():
 		tour_panel.visible = true
 		show_message("Preview Tour: Tab toggles the tour panel, F1 shows controls")
@@ -118,6 +137,9 @@ func _build_help() -> void:
 		"F6  inspect tree under crosshair",
 		"F7  ripple test at your feet / in front",
 		"F8  reset to a safe camp position",
+		"LMB  swing axe (hold to keep chopping)",
+		"1 / 2 / 3  small / medium / large axe (debug)",
+		"F9 / F10  quick save / load (campaign)",
 		"F12  write diagnostic report",
 		"Tab  Preview Tour panel (preview mode)",
 		"V  fly mode (preview mode only)",
@@ -217,7 +239,7 @@ func _build_tour() -> void:
 	v.add_child(UITheme.label("Locations", 16, UITheme.MUTED))
 	var grid := GridContainer.new()
 	grid.columns = 2
-	var spots := [["Camp", "camp"], ["Camper", "camper"], ["Cabin", "cabin"], ["Beach", "beach"], ["Shallows", "shallows"], ["Forest", "forest"], ["River", "river"], ["Rapids", "rapids"], ["Pond", "pond"], ["Pond 2", "pond2"], ["Ridge", "ridge"], ["Coast", "coast_day"]]
+	var spots := [["Logging Test", "logging_test"], ["Next test tree", "__next_tree"], ["Camp", "camp"], ["Camper", "camper"], ["Cabin", "cabin"], ["Beach", "beach"], ["Shallows", "shallows"], ["Forest", "forest"], ["River", "river"], ["Rapids", "rapids"], ["Pond", "pond"], ["Pond 2", "pond2"], ["Ridge", "ridge"], ["Coast", "coast_day"]]
 	for s in spots:
 		grid.add_child(UITheme.button(s[0], func() -> void: _goto(s[1]), 130))
 	v.add_child(grid)
@@ -233,6 +255,11 @@ func _build_tour() -> void:
 
 
 func _goto(spot: String) -> void:
+	if spot == "__next_tree" or spot == "logging_test":
+		var info := LoggingTest.next(Game.world_root, spot == "logging_test")
+		show_message(info)
+		_capture_mouse()
+		return
 	if Game.world_root:
 		Game.world_root.teleport_to(spot)
 		var vp: Dictionary = Viewpoints.all().get(spot, {})
@@ -252,6 +279,52 @@ func _start_benchmark() -> void:
 	add_child(_bench)
 	tour_panel.visible = false
 	_capture_mouse()
+
+
+func _on_chop_target(info: Dictionary) -> void:
+	_aid_info = info
+	if info.is_empty():
+		chop_label.text = ""
+		return
+	var pr := float(info.get("progress", 0.0))
+	var notch := "" if pr <= 0.0 else "   notch %d%%" % int(pr * 100.0)
+	chop_label.text = "[LMB] Chop %s  (%.2f m)%s" % [info.species, info.diameter, notch]
+
+
+func _build_aid() -> void:
+	# Subtle optional fall-direction cue: a faint arrow on the ground.
+	_aid = MeshInstance3D.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var pts := [Vector3(-0.12, 0, 0), Vector3(0.12, 0, 0), Vector3(0.12, 0, 2.2), Vector3(-0.12, 0, 0), Vector3(0.12, 0, 2.2), Vector3(-0.12, 0, 2.2), Vector3(-0.4, 0, 2.2), Vector3(0.4, 0, 2.2), Vector3(0, 0, 2.9)]
+	for v in pts:
+		st.add_vertex(v)
+	_aid.mesh = st.commit()
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(1.0, 0.85, 0.5, 0.35)
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.no_depth_test = false
+	_aid.material_override = m
+	_aid.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_aid.visible = false
+	if Game.world_root:
+		Game.world_root.add_child.call_deferred(_aid)
+
+
+func _update_aid() -> void:
+	if _aid == null or not _aid.is_inside_tree():
+		return
+	var show_it: bool = Settings.get_v("felling_aid") and _aid_info.has("fall_dir") and float(_aid_info.get("progress", 0.0)) > 0.0
+	_aid.visible = show_it
+	if show_it:
+		var i: int = Game.vegetation.tree_index_by_id.get(int(_aid_info.id), int(_aid_info.id))
+		var base := World.tree_position(i)
+		var fd: Vector3 = _aid_info.fall_dir
+		var start := base + fd * (float(World.trees.radius[i]) + 0.6)
+		_aid.global_transform = Transform3D(Basis.looking_at(-fd, Vector3.UP), start + Vector3(0, 0.06, 0))
+		_aid.global_position.y = World.height_at(start.x, start.z) + 0.06
 
 
 func show_message(text: String, seconds := 4.0) -> void:
@@ -308,6 +381,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			var p: Vector3 = Game.player.global_position - Game.player.global_basis.z * 3.0
 			Game.water.emit_ripple(p, 1.5)
 			show_message("Ripple test emitted 3 m ahead")
+	elif event.is_action_pressed("quick_save"):
+		if Game.mode == Game.Mode.CAMPAIGN and Game.world_root:
+			Game.world_root.save_campaign()
+			show_message("Saved (previous save kept as backup).")
+		else:
+			show_message("Preview mode never writes saves.")
+	elif event.is_action_pressed("quick_load"):
+		if Game.mode == Game.Mode.CAMPAIGN:
+			Game.start_campaign()
+		else:
+			show_message("Preview mode has no save to load.")
 	elif event.is_action_pressed("write_diagnostics"):
 		_write_diag()
 	elif event is InputEventMouseButton and event.pressed and not get_tree().paused and not tour_panel.visible and not time_panel.visible:
@@ -335,7 +419,11 @@ func _process(delta: float) -> void:
 		_msg_t -= delta
 		if _msg_t <= 0.0:
 			message_label.text = ""
+	_update_aid()
 	var p: Node = Game.player
+	if p and p.get("axe"):
+		var t: String = p.axe.tier
+		axe_label.text = "Axe: %s  %.2fx  (1/2/3 debug tiers)" % [t.capitalize(), float(CampaignRules.AXE_RATES[t])]
 	if p:
 		if p.too_deep:
 			hint_label.text = "Too deep to wade - the water pushes you back toward the shore"
