@@ -6,7 +6,7 @@ extends Node3D
 
 const CELL := 32.0
 const RADIUS := 3          # cells (~96 m)
-const BUILD_PER_FRAME := 2
+const BUILD_PER_FRAME := 1
 
 var density := 1.0
 var _cells := {}           # Vector2i -> Node3D
@@ -39,8 +39,8 @@ func _hash_trees() -> void:
 	for i in xs.size():
 		var k := Vector2i(int(floor(xs[i] / 8.0)), int(floor(zs[i] / 8.0)))
 		if not _tree_hash.has(k):
-			_tree_hash[k] = PackedInt32Array()
-		(_tree_hash[k] as PackedInt32Array).append(i)
+			_tree_hash[k] = []
+		(_tree_hash[k] as Array).append(i)
 
 
 func _shade_and_clear(x: float, z: float) -> Vector2:
@@ -53,7 +53,7 @@ func _shade_and_clear(x: float, z: float) -> Vector2:
 			var list: Variant = _tree_hash.get(k + Vector2i(dx, dz))
 			if list == null:
 				continue
-			for i in (list as PackedInt32Array):
+			for i in (list as Array):
 				if World.removed_trees.has(int(World.trees.id[i])):
 					continue
 				var d := Vector2(x - World.trees.x[i], z - World.trees.z[i]).length()
@@ -198,13 +198,14 @@ func _refresh(center: Vector2i) -> void:
 func _build_cell(c: Vector2i) -> Node3D:
 	var node := Node3D.new()
 	node.name = "Cover_%d_%d" % [c.x, c.y]
+	node.position = Vector3((c.x + 0.5) * CELL, 0.0, (c.y + 0.5) * CELL)
 	add_child(node)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(Vector3i(c.x, c.y, 991))
 	var lists := {"grass": [], "dune": [], "reed": [], "fern": [], "bush": [], "pebble": []}
 	var x0 := c.x * CELL
 	var z0 := c.y * CELL
-	var samples := int(260 * density)
+	var samples := int(520 * density)
 	for s in samples:
 		var x := x0 + rng.randf() * CELL
 		var z := z0 + rng.randf() * CELL
@@ -246,7 +247,11 @@ func _build_cell(c: Vector2i) -> Node3D:
 		var p_bush := 0.03 + m.y * 0.03
 		var t := rng.randf() * (p_grass + p_fern + p_bush + 0.6)
 		if t < p_grass:
-			lists.grass.append(_xf(rng, x, h, z, 0.7, 1.3))
+			# A small clump of tufts per accepted sample (dense but cheap).
+			for k in 1 + int(rng.randf() * 4.0 * (1.0 - shade)):
+				var gx := x + rng.randf_range(-0.7, 0.7)
+				var gz := z + rng.randf_range(-0.7, 0.7)
+				lists.grass.append(_xf(rng, gx, World.height_at(gx, gz), gz, 0.7, 1.3))
 		elif t < p_grass + p_fern * 0.35:
 			lists.fern.append(_xf(rng, x, h, z, 0.55, 1.0))
 		elif t < p_grass + p_fern * 0.35 + p_bush:
@@ -261,7 +266,7 @@ func _build_cell(c: Vector2i) -> Node3D:
 		mm.use_custom_data = kind == "bush"
 		mm.instance_count = arr.size()
 		for k in arr.size():
-			mm.set_instance_transform(k, arr[k])
+			mm.set_instance_transform(k, (arr[k] as Transform3D).translated(-node.position))
 			if kind == "bush":
 				mm.set_instance_custom_data(k, Color(rng.randf(), rng.randf(), 1.2, 0))
 		var mmi := MultiMeshInstance3D.new()

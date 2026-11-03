@@ -93,8 +93,8 @@ func _ocean_grid() -> int:
 func _apply_quality() -> void:
 	var q: String = Settings.get_v("quality")
 	if vegetation:
-		var near := {"low": 110.0, "medium": 140.0, "high": 170.0, "ultra": 220.0}[q]
-		var mid := {"low": 380.0, "medium": 480.0, "high": 560.0, "ultra": 700.0}[q]
+		var near: float = {"low": 110.0, "medium": 140.0, "high": 170.0, "ultra": 220.0}[q]
+		var mid: float = {"low": 380.0, "medium": 480.0, "high": 560.0, "ultra": 700.0}[q]
 		if not is_equal_approx(near, vegetation.near_range) or not is_equal_approx(mid, vegetation.mid_range):
 			vegetation.set_ranges(near, mid, q == "ultra")
 	if terrain:

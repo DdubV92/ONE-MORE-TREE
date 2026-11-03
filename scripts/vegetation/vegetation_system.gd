@@ -89,12 +89,12 @@ func _index_trees() -> void:
 		tree_index_by_id[ids[i]] = i
 		var c := chunks[i]
 		if not tmp.has(c):
-			tmp[c] = PackedInt32Array()
-		(tmp[c] as PackedInt32Array).append(i)
+			tmp[c] = []
+		(tmp[c] as Array).append(i)
 		var cell := _cell_of(World.trees.x[i], World.trees.z[i])
 		if not _tree_cells.has(cell):
-			_tree_cells[cell] = PackedInt32Array()
-		(_tree_cells[cell] as PackedInt32Array).append(i)
+			_tree_cells[cell] = []
+		(_tree_cells[cell] as Array).append(i)
 	chunk_trees = tmp
 
 
@@ -120,11 +120,16 @@ func _build_chunk(chunk: int) -> void:
 		(chunk_nodes[chunk] as Node3D).queue_free()
 	var node := Node3D.new()
 	node.name = "TreeChunk_%d" % chunk
+	# Chunk node sits at the chunk center: visibility ranges are measured
+	# from the instance origin, so instances are stored relative to it.
+	var vcs := World.config.vegetation_chunk_size
+	var vcw := int(ceil((World.config.bounds_max.x - World.config.bounds_min.x) / vcs))
+	node.position = Vector3(World.origin.x + (chunk % vcw + 0.5) * vcs, 0.0, World.origin.y + (chunk / vcw + 0.5) * vcs)
 	add_child(node)
 	chunk_nodes[chunk] = node
 	var groups := {}
 	var all_by_species := [[], [], []]
-	for i in (chunk_trees[chunk] as PackedInt32Array):
+	for i in (chunk_trees[chunk] as Array):
 		if World.removed_trees.has(int(World.trees.id[i])):
 			continue
 		var key := int(World.trees.species[i]) * 3 + int(World.trees.variant[i])
@@ -150,7 +155,7 @@ func _add_mmi(parent: Node3D, mesh: Mesh, indices: Array, begin: float, end: flo
 	mm.instance_count = indices.size()
 	for k in indices.size():
 		var i: int = indices[k]
-		mm.set_instance_transform(k, tree_transform(i))
+		mm.set_instance_transform(k, tree_transform(i).translated(-parent.position))
 		var seed_v: int = World.trees.seed[i]
 		mm.set_instance_custom_data(k, Color(float(seed_v & 255) / 255.0, float((seed_v >> 8) & 255) / 255.0, float(World.trees.height[i]), 0.0))
 	var mmi := MultiMeshInstance3D.new()
@@ -222,7 +227,7 @@ func _make_cell_body(cell: Vector2i) -> StaticBody3D:
 	body.name = "TreeCollision_%d_%d" % [cell.x, cell.y]
 	body.collision_layer = 1 | 4    # world + harvestable trees
 	var ids := PackedInt32Array()
-	for i in (_tree_cells[cell] as PackedInt32Array):
+	for i in (_tree_cells[cell] as Array):
 		if World.removed_trees.has(int(World.trees.id[i])):
 			continue
 		var cs := CollisionShape3D.new()

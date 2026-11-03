@@ -8,6 +8,11 @@ global uniform float world_time;
 global uniform float sea_level;
 global uniform vec3 sun_dir_world;
 global uniform float daylight;
+global uniform float haze_strength;
+
+float global_haze_level() {
+	return haze_strength;
+}
 
 const float SWASH_PERIOD = 9.0;
 

@@ -167,7 +167,7 @@ func _build_pine(variant: int, detailed: bool) -> void:
 		var t := float(k) / (trunk.size() - 1)
 		radii.append(R * (1.0 - t * 0.78) * (1.0 + 0.35 * exp(-t * 18.0)))
 	_tube(trunk, radii, sides, 2.0)
-	var crown_lo := H * [0.6, 0.66, 0.56][variant]
+	var crown_lo: float = H * [0.6, 0.66, 0.56][variant]
 	_crown_center = Vector3(trunk[trunk.size() - 1].x * 0.8, (crown_lo + H) * 0.5, trunk[trunk.size() - 1].z * 0.8)
 	var branches := (11 if detailed else 6) + variant
 	for b in branches:
@@ -212,7 +212,7 @@ func _build_spruce(variant: int, detailed: bool) -> void:
 		var t := float(k) / (trunk.size() - 1)
 		radii.append(R * (1.0 - t * 0.9) * (1.0 + 0.3 * exp(-t * 20.0)))
 	_tube(trunk, radii, sides, 2.0)
-	var lowest := H * [0.12, 0.08, 0.16][variant]
+	var lowest: float = H * [0.12, 0.08, 0.16][variant]
 	_crown_center = Vector3(0, H * 0.45, 0)
 	var step := 0.62 if detailed else 1.25
 	var y := lowest
@@ -247,7 +247,7 @@ func _build_birch(variant: int, detailed: bool) -> void:
 	var R: float = REF_RADIUS[2]
 	var sides := 9 if detailed else 6
 	var lean := Vector3(_rng.randf_range(-0.8, 0.8), 0, _rng.randf_range(-0.8, 0.8))
-	var fork_y := H * [0.45, 0.5, 0.4][variant]
+	var fork_y: float = H * [0.45, 0.5, 0.4][variant]
 	var trunk := _wobble_path(Vector3.ZERO, Vector3(lean.x * 0.5, fork_y, lean.z * 0.5), 5 if detailed else 3, 0.12)
 	var radii: Array[float] = []
 	for k in trunk.size():

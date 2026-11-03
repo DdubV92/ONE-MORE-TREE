@@ -9,14 +9,15 @@ static var _cache := {}
 static func all() -> Dictionary:
 	if not _cache.is_empty():
 		return _cache
-	var c := World.camp_origin()
+	var co := World.camp_origin()
+	var c := Vector3(co.x, 0.0, co.z)   # heights come from the terrain in _v()
 	var eye := 1.65
 	var vp := {}
 	vp["camp"] = _v(c + Vector3(-3, 0, 14), c + Vector3(2, 0, -8), eye, "Camp: clearing, fire pit, fence and entrance")
 	vp["camp_sunset"] = _v(c + Vector3(-20, 0, 15), c + Vector3(4, 0, -6), eye, "Camp at sunset", "sunset")
 	var camper := c + CampLayout.CAMPER_POS
 	vp["camper"] = _v(camper + Vector3(0.2, CampLayout.CAMPER_FLOOR, 2.6), camper + Vector3(0.0, CampLayout.CAMPER_FLOOR, -3.0), eye, "Camper interior (kitchen toward bedroom)")
-	vp["camper_night"] = _v(camper + Vector3(0.6, CampLayout.CAMPER_FLOOR, -1.5), camper + Vector3(-1.4, CampLayout.CAMPER_FLOOR, -1.5), eye, "Camper at night: window to the woods", "night")
+	vp["camper_night"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, -2.0), camper + Vector3(-1.5, CampLayout.CAMPER_FLOOR + 0.1, -3.2), eye, "Camper bedroom at night: window to the woods", "night")
 	var cabin := c + CampLayout.CABIN_POS
 	vp["cabin"] = _v(cabin + Vector3(-2.6, CampLayout.CABIN_FLOOR, 3.8), cabin + Vector3(1.0, CampLayout.CABIN_FLOOR, -3.0), eye, "Worker cabin: four beds and arcade corner")
 	# Beach: walk south from camp until the sand is ~0.25 m above sea.

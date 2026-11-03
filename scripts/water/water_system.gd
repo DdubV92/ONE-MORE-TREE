@@ -268,7 +268,7 @@ func _build_buoys() -> void:
 			continue
 		var b: Node3D = buoy_scene.instantiate()
 		b.name = "WadingBuoy_%d" % k
-		b.position = Vector3(x, World.sea_level - 1.0, z)
+		b.position = Vector3(x, World.sea_level - 0.3, z)
 		b.scale = Vector3.ONE * 0.55
 		b.set_script(load("res://scripts/water/bobbing.gd"))
 		add_child(b)

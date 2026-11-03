@@ -65,7 +65,7 @@ func build() -> void:
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
-	env.tonemap_mode = Environment.TONE_MAPPER_AGX
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_white = 6.0
 	env.ssao_enabled = true
 	env.ssao_radius = 1.4
@@ -81,8 +81,8 @@ func build() -> void:
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
 	env.fog_sky_affect = 0.35
-	env.fog_aerial_perspective = 0.4
-	env.fog_height = 30.0
+	env.fog_aerial_perspective = 0.15
+	env.fog_height = 0.0
 	env.adjustment_enabled = true
 	world_env = WorldEnvironment.new()
 	world_env.environment = env

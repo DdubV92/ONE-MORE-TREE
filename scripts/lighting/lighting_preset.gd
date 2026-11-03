@@ -16,7 +16,7 @@ extends Resource
 @export var ambient_energy := 1.0
 @export var fog_color := Color(0.7, 0.8, 0.88)
 @export var fog_density := 0.0012
-@export var fog_height_density := 0.02
+@export var fog_height_density := 0.0
 @export var exposure := 1.0
 @export var glow_intensity := 0.5
 @export var stars := 0.0
