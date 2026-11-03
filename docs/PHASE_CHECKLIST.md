@@ -1,5 +1,36 @@
 # Phase checklist
 
+## Phase 3: Workdays, the thirty-day contract, delivery income, payroll, axes and saves
+
+Status key: ✅ implemented and observed (headless test) · 🟡 implemented, needs live review · ⬜ absent / later phase.
+
+| Item | Status | Notes |
+|---|---|---|
+| One authoritative clock (900 s daylight, 300 s dusk, night at 1200) driving lighting, HUD, warnings, hooks and the deadline | ✅ | `WorkdayClock`. Boundaries at 899.9/900/1199.9/1200 are tested, and steps of 1/23, 1/60, 1/144 and 7.3 s each give exactly one event per boundary |
+| Dusk warnings: main warning, reminder, final warning, all as on-screen text | ✅ / 🟡 | Text and countdown never rely on colour; the lighting transition needs live review |
+| Pause and focus loss freeze the simulation; the night is bounded and never creates morning | ✅ | Tested: no time passes while paused, and 10,000 s of night stays day N |
+| `time_until_night()`, `schedule()` hooks and separate `night_exposure` | ✅ | Used by Phase 4/6 |
+| Contract closes at the end of day 30's dusk without sleep; sleeping on day 30 closes it instead of starting day 31 | ✅ | Tested |
+| Completion: no standing original trees, no stumps, all timber accepted, no orphan records (manifest-based counts) | ✅ | Stump removal (chop the stump out) was added for this |
+| Final-frame ordering, deferred evaluation, closed acceptance gate, persisted outcome id | ✅ | Tested: an on-time final delivery wins, a late delivery is refused, and outcomes never flip |
+| Wallet: integer cents, one subscriber, idempotent per receipt, credited at acceptance, never negative | ✅ | Tested, including a retry and reconciliation after reload |
+| Phase 2 receipts migrated once with a marker; untimed saves get an explicit legacy/new-rules choice with a backup | ✅ | `.pre_contract.json` copy is kept |
+| Payroll: $300 liabilities per active employee-day, one-day grace including the next day's wage, oldest-first auto-pay, manual pay, one quit request | ✅ | Day 7/8 example tested |
+| Starting crew records (2) and reserved axes; not charged until Phase 4 brings them | ✅ | Labeled "arrives in Phase 4" everywhere. Fixtures in the Day & Economy Test |
+| Axe shop at the tool rack: owned instances, receipts, affordability, payroll warning, equip by ownership | ✅ / 🟡 | Tested logic; UI needs live review |
+| Hire and truck entries locked with honest Phase 4/5 notes, including the 50 tree-eq milestone progress | ✅ | |
+| Camper bed sleep (whole mattress is the target), one settlement, bounded overnight burn, report, morning beside the bed | ✅ / 🟡 | Tested logic; staging needs live review |
+| Daily report: cash reconciliation, felled, remaining, delivered, purchases, wages, arrears with due days, contract status | ✅ | Reconciliation tested; reopenable from the journal |
+| HUD: day, phase, countdown, cash, wages owed; journal (J); delivery notices | 🟡 | |
+| Save v4 with three slots, atomic write + backup, corrupt fallback, separate settings, slot summaries on the title screen | ✅ / 🟡 | Slot UI needs live review |
+| Day & Economy Test route (in memory): speed, jumps, sleep, day 30, prepared win/loss, fixtures | ✅ / 🟡 | Never writes files; seed and tree count unchanged (tested) |
+| Fulfilled screen; failure → honest Phase 6 handoff screen (save kept) | ✅ | The hunt itself is Phase 6 ⬜ |
+| Employees with bodies, dialogue, firing (Phase 4); trucks, dock, TV, cameras (Phase 5); Terrors and hunt (Phase 6) | ⬜ | Not claimed |
+
+**Feasibility (honest).** The manifest holds 12,000 trees, so a 30-day clearance needs about 400 trees a day. Measured solo pace is roughly one tree every 2–3 minutes of real work (felling 10–30 s, bucking 20–40 s, four hand-load trips), or about 5–7 trees per 15-minute day. The count is provisional until crew and truck throughput are measured in Phases 4–5. No trees were removed and the day was not lengthened.
+
+**Economy check (provisional prices).** A solo day earns about $500–700, so the medium axe ($1,500) takes about two to three days of deliveries. Two active workers would cost $600 a day, so the crew must be productive to break even. These are review values in `config/economy.tres`.
+
 ## Phase 2: Fallen timber, bucking, carrying, delivery and the burn pit
 
 Status key: ✅ implemented and observed (headless test or sim) · 🟡 implemented, needs live/visual review on a real GPU · ⬜ absent.

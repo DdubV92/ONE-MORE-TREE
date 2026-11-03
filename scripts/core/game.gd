@@ -27,6 +27,9 @@ var player: Node3D
 var vegetation: Node
 var trees: TreeService
 var timber: TimberService
+var campaign: CampaignService
+var campaign_ui: CampaignUI
+var new_game := false              # start a fresh contract in SaveService.slot
 
 var pending_teleport := ""
 var startup_ms := 0
@@ -85,4 +88,6 @@ func _change(path: String) -> void:
 	vegetation = null
 	trees = null
 	timber = null
+	campaign = null
+	campaign_ui = null
 	get_tree().change_scene_to_file(path)

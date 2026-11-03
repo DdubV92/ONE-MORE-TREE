@@ -297,6 +297,16 @@ func _build_camper() -> void:
 	BuildKit.box(bed, Vector3(1.45, 0.75, 0.08), Vector3(0, 0.5, -1.0), "dark_wood", false)
 	BuildKit.prop(bed, "throw_pillows_01", Vector3(0, 0.55, -0.72), 0.0, 1.0)
 	BuildKit.marker(bed, "PlayerSleepPoint", Vector3(0, 0.75, 0.1), PI, "player_bed")
+	# Phase 3: the whole mattress is the sleep target (easy to hit at night).
+	var sleep := SleepSpot.new()
+	sleep.name = "SleepSpot"
+	var scs := CollisionShape3D.new()
+	var sbox := BoxShape3D.new()
+	sbox.size = Vector3(1.45, 0.3, 2.0)
+	scs.shape = sbox
+	scs.position = Vector3(0, 0.55, 0)
+	sleep.add_child(scs)
+	bed.add_child(sleep)
 	_hide_spot(bed, "UnderCamperBed", Vector3(0, 0.12, 0.2), "under_bed")
 	BuildKit.prop(c, "painted_wooden_nightstand", Vector3(1.15, F, -Lz + 0.35), PI, 0.85)
 	BuildKit.box(c, Vector3(0.6, 2.0, 0.85), Vector3(W - 0.3, F + 1.0, -1.95), "panel", true, 0.0, "Wardrobe")
@@ -534,16 +544,13 @@ func _build_tool_area() -> void:
 		var axe := BuildKit.prop(t, a[0], Vector3(x, 0.7 if i > 0 else 1.15, -0.96), 0.0, a[1], Vector3.ZERO, "Axe_%s" % ["Small", "Medium", "Large"][i])
 		axe.add_to_group("rack_axes")
 		BuildKit.box(t, Vector3(0.22, 0.08, 0.01), Vector3(x, 1.85, -1.03), BuildKit._plain([Color(0.8, 0.7, 0.3), Color(0.75, 0.5, 0.25), Color(0.6, 0.25, 0.2)][i], 0.6, 0.0), false)
-	var rack_it := StaticBody3D.new()
+	var rack_it := ToolShop.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(2.6, 1.6, 0.3)
 	cs.shape = shape
 	cs.position = Vector3(0, 1.2, -0.85)
 	rack_it.add_child(cs)
-	rack_it.set_script(load("res://scripts/interaction/interactable.gd"))
-	rack_it.set("prompt", "Inspect axe rack")
-	rack_it.set("message", "Small, medium and large axes. Buying and swinging them comes with the logging prompts.")
 	t.add_child(rack_it)
 	BuildKit.marker(t, "ShopCounter", Vector3(1.4, 0, 0.3), PI, "shop_counter")
 	# Chopping block, sawhorse, lumber, storage

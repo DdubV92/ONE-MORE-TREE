@@ -4,14 +4,37 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 3
-const DEFAULT_PATH := "user://saves/campaign.json"
+const SCHEMA_VERSION := 4
+const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
+const SLOTS := 3
 
 static var path_override := ""
+static var slot := 1
+
+
+## Campaign slots (Phase 3): user://saves/slot_N.json. Settings live in
+## their own file (Settings autoload), never in a slot.
+static func slot_path(n: int) -> String:
+	return "user://saves/slot_%d.json" % clampi(n, 1, SLOTS)
 
 
 static func save_path() -> String:
-	return path_override if path_override != "" else DEFAULT_PATH
+	return path_override if path_override != "" else slot_path(slot)
+
+
+## One-line description of a slot for the title screen ("" if empty).
+static func slot_summary(n: int) -> Dictionary:
+	var path := slot_path(n)
+	if not FileAccess.file_exists(path) and n == 1 and FileAccess.file_exists(DEFAULT_PATH):
+		path = DEFAULT_PATH
+	if not FileAccess.file_exists(path):
+		return {}
+	var d := read_file(path)
+	if d.is_empty():
+		return {"corrupt": true}
+	var c: Dictionary = d.get("campaign", {})
+	var cash := int(d.get("economy", {}).get("wallet", {}).get("cash", 0))
+	return {"day": int(c.get("day", 1)), "rule_set": str(c.get("rule_set", "?")), "state": str(c.get("state", "")), "cash": cash, "pre_contract": not bool(c.get("phase3", false)), "legacy_file": path == DEFAULT_PATH}
 
 
 static func capture_state(world: Node) -> Dictionary:
@@ -19,6 +42,7 @@ static func capture_state(world: Node) -> Dictionary:
 	var env: Node = world.get("environment")
 	var tree_service: TreeService = world.get("trees")
 	var timber: TimberService = world.get("timber")
+	var campaign: CampaignService = world.get("campaign")
 	return {
 		"schema": SCHEMA_VERSION,
 		"world": {
@@ -35,8 +59,10 @@ static func capture_state(world: Node) -> Dictionary:
 		"trees": tree_service.capture() if tree_service else {},
 		"equipment": {"axe_tier": p.axe.tier if p and p.get("axe") else "small"},
 		# Reserved for later prompts (kept explicit so loaders know the shape):
-		"campaign": {"rule_set": CampaignRules.RULE_SET_ID, "state": "CONTRACT_ACTIVE", "day": 1, "clock_running": false, "legacy": false},
-		"economy": {"funds_cents": 0, "ledger": [], "workers": [], "trucks": []},
+		# Phase 3: clock, contract outcome, day stats and reports; wallet,
+		# transaction ledger, payroll and owned equipment.
+		"campaign": campaign.capture_campaign() if campaign else {"rule_set": CampaignRules.RULE_SET_ID, "state": "CONTRACT_ACTIVE", "day": 1, "clock_running": false, "legacy": false},
+		"economy": campaign.capture_economy() if campaign else {"funds_cents": 0, "ledger": [], "workers": [], "trucks": []},
 		# Phase 2 timber ledger: per-tree segment states/receipts/burn, cut
 		# progress, world bodies (poses), carried bundle, queue, pit, receipts.
 		"timber": timber.capture() if timber else {},
@@ -70,6 +96,10 @@ static func write_file(path: String, state: Dictionary) -> bool:
 
 
 static func load_campaign() -> Dictionary:
+	if path_override == "" and slot == 1 and not FileAccess.file_exists(save_path()) and FileAccess.file_exists(DEFAULT_PATH):
+		# The single pre-slot save becomes slot 1 (the old file is kept).
+		DirAccess.make_dir_recursive_absolute(save_path().get_base_dir())
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(DEFAULT_PATH), ProjectSettings.globalize_path(save_path()))
 	var data := read_file(save_path())
 	if data.is_empty() and FileAccess.file_exists(save_path() + ".bak"):
 		push_warning("SaveService: main save unreadable, using the previous good backup")
@@ -128,7 +158,26 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# placeholder timber block carries no data.
 		data["timber"] = {}
 		data["schema"] = 3
+		v = 3
+	if v == 3:
+		# Phase 2 saves: untimed, entitlements tracked but never paid. The
+		# economy block is normalised; CampaignService credits each genuine
+		# receipt once (marker: migrated_phase2_delivery) and asks the player
+		# to pick legacy continuation or the new contract rules.
+		var old_c: Dictionary = data.get("campaign", {})
+		data["campaign"] = {"rule_set": str(old_c.get("rule_set", "pre_contract")), "state": "CONTRACT_ACTIVE", "day": 1, "phase3": false, "legacy": bool(old_c.get("legacy", false))}
+		data["economy"] = {"wallet": {"cash": 0, "transactions": [], "credited": {}}, "payroll": {}, "equipment": {"axes": [], "equipped": ""}, "phase2_migrated": false, "legacy_axe_tier": str(data.get("equipment", {}).get("axe_tier", "small"))}
+		data["schema"] = 4
 	return data
+
+
+## Keeps an untouched copy of a pre-contract save before its first rules
+## choice rewrites it.
+static func backup_pre_contract() -> void:
+	var path := save_path()
+	var bak := path.get_basename() + ".pre_contract.json"
+	if FileAccess.file_exists(path) and not FileAccess.file_exists(bak):
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(bak))
 
 
 static func apply_state(world: Node, data: Dictionary) -> void:
@@ -146,6 +195,11 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 	var p0: Node3D = world.get("player")
 	if p0 and p0.get("axe"):
 		p0.axe.equip(str(data.get("equipment", {}).get("axe_tier", "small")))
+	var campaign: CampaignService = world.get("campaign")
+	if campaign and (Game.mode == Game.Mode.CAMPAIGN or campaign.test_route):
+		if Game.mode == Game.Mode.CAMPAIGN and not bool(data.get("campaign", {}).get("phase3", false)):
+			backup_pre_contract()
+		campaign.restore(data.get("campaign", {}), data.get("economy", {}))
 	var env: Node = world.get("environment")
 	if env:
 		env.call("set_time_of_day", float(data.get("time_of_day", 12.0)))

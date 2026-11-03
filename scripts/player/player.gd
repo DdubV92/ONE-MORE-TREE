@@ -143,14 +143,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		# can never also strike wood.
 		axe.try_swing()
 	elif event.is_action_pressed("tool_small"):
-		axe.equip("small")
-		show_message("Small axe (1.00x)")
+		_select_tier("small")
 	elif event.is_action_pressed("tool_medium"):
-		axe.equip("medium")
-		show_message("Medium axe (1.40x) - debug equip until the shop arrives")
+		_select_tier("medium")
 	elif event.is_action_pressed("tool_large"):
-		axe.equip("large")
-		show_message("Large axe (1.96x) - debug equip until the shop arrives")
+		_select_tier("large")
 	elif event.is_action_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if _interact_target and _interact_target.has_method("interact"):
 			_interact_target.interact(self)
@@ -159,6 +156,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("toggle_fly") and Game.is_preview():
 		fly_mode = not fly_mode
 		show_message("Fly mode %s (preview only)" % ("ON" if fly_mode else "OFF"))
+
+
+## Campaign: only owned axes (bought at the tool rack). Preview: any tier
+## for review. Selecting never costs money.
+func _select_tier(tier: String) -> void:
+	var c: CampaignService = Game.campaign
+	const RATE := {"small": "1.00x", "medium": "1.40x", "large": "1.96x"}
+	if c and c.active and not Game.is_preview():
+		if not c.equipment.equip_tier(tier):
+			show_message("You don't own a %s axe yet. Buy one at the tool rack." % tier)
+		else:
+			show_message("%s axe (%s)" % [tier.capitalize(), RATE[tier]])
+		return
+	axe.equip(tier)
+	show_message("%s axe (%s) - preview tier" % [tier.capitalize(), RATE[tier]])
 
 
 func try_pick_up(body: TimberBody) -> void:

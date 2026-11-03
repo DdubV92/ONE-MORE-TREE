@@ -23,13 +23,13 @@ func _ready() -> void:
 	title.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.04))
 	title.add_theme_constant_override("outline_size", 10)
 	center.add_child(title)
-	center.add_child(UITheme.label("A cozy logging island. Phase 0: the island we want to live on.", 20, Color(0.9, 0.88, 0.8)))
+	center.add_child(UITheme.label("Thirty days to clear an island. Keep the crew paid. Be inside by night.", 20, Color(0.9, 0.88, 0.8)))
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 28)
 	center.add_child(spacer)
 	_menu = VBoxContainer.new()
 	center.add_child(_menu)
-	_menu.add_child(UITheme.button("Explore the island", func() -> void: _go(func() -> void: Game.start_campaign()), 340))
+	_menu.add_child(UITheme.button("Play the contract", _show_slots, 340))
 	_menu.add_child(UITheme.button("Preview Tour", func() -> void: _go(func() -> void: Game.start_preview("camp")), 340))
 	_menu.add_child(UITheme.button("Character Preview", func() -> void: _go(func() -> void: Game.open_character_preview()), 340))
 	_menu.add_child(UITheme.button("Settings", func() -> void:
@@ -55,8 +55,67 @@ func _ready() -> void:
 	add_child(_settings)
 
 
+## Three campaign slots. Continue loads a slot; New contract replaces only
+## the chosen slot (after a confirmation; the old file becomes its .bak).
+var _slots: VBoxContainer
+
+func _show_slots() -> void:
+	_menu.visible = false
+	if _slots:
+		_slots.queue_free()
+	_slots = VBoxContainer.new()
+	_menu.get_parent().add_child(_slots)
+	_slots.add_child(UITheme.label("Choose a save slot", 26, UITheme.ACCENT))
+	for n in range(1, SaveService.SLOTS + 1):
+		var info := SaveService.slot_summary(n)
+		var row := HBoxContainer.new()
+		var desc := "Slot %d: empty" % n
+		if info.get("corrupt", false):
+			desc = "Slot %d: unreadable (kept on disk; a backup is tried on load)" % n
+		elif not info.is_empty():
+			if bool(info.pre_contract):
+				desc = "Slot %d: island save from before the contract rules%s" % [n, " (old single save)" if bool(info.get("legacy_file", false)) else ""]
+			else:
+				desc = "Slot %d: day %d, $%s, %s%s" % [n, int(info.day), Money.format_cents(int(info.cash)), "legacy (no deadline)" if str(info.rule_set).begins_with("legacy") else "30-day contract", ("  ·  " + str(info.state).replace("_", " ").to_lower()) if str(info.state) != "CONTRACT_ACTIVE" else ""]
+		var l := UITheme.label(desc, 17)
+		l.custom_minimum_size = Vector2(520, 0)
+		row.add_child(l)
+		var slot := n
+		if not info.is_empty() and not info.get("corrupt", false):
+			row.add_child(UITheme.button("Continue", func() -> void:
+				SaveService.slot = slot
+				Game.new_game = false
+				_go(func() -> void: Game.start_campaign()), 140))
+		row.add_child(UITheme.button("New contract", func() -> void: _confirm_new(slot, not info.is_empty()), 160))
+		_slots.add_child(row)
+	_slots.add_child(UITheme.button("Back", func() -> void:
+		_slots.queue_free()
+		_slots = null
+		_menu.visible = true, 200))
+
+
+func _confirm_new(n: int, occupied: bool) -> void:
+	var start := func() -> void:
+		SaveService.slot = n
+		Game.new_game = true
+		if _slots:
+			_slots.visible = false
+		_go(func() -> void: Game.start_campaign())
+	if not occupied:
+		start.call()
+		return
+	for c in _slots.get_children():
+		c.queue_free()
+	_slots.add_child(UITheme.label("Start a new contract in slot %d?" % n, 22, UITheme.ACCENT))
+	_slots.add_child(UITheme.label("That slot's current save is replaced (kept once as a .bak file). Other slots are not touched.", 16))
+	_slots.add_child(UITheme.button("Yes, start a new contract", start, 340))
+	_slots.add_child(UITheme.button("Cancel", _show_slots, 200))
+
+
 func _go(action: Callable) -> void:
 	_menu.visible = false
+	if _slots:
+		_slots.visible = false
 	_status.text = "Building the island..."
 	await get_tree().process_frame
 	await get_tree().process_frame

@@ -29,6 +29,7 @@ var _aid_info := {}
 
 
 var carry_label: Label
+var campaign_ui: CampaignUI
 var timber_panel: PanelContainer
 var timber_label: Label
 var _timber_t := 0.0
@@ -88,6 +89,16 @@ func _ready() -> void:
 	carry_label = _anchored_label(Vector2(0.5, 0.92), 17)
 	carry_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.75))
 	_build_timber_panel()
+	if Game.campaign:
+		campaign_ui = CampaignUI.new()
+		campaign_ui.name = "CampaignUI"
+		root.add_child(campaign_ui)
+		campaign_ui.setup(self, Game.campaign)
+		Game.campaign_ui = campaign_ui
+		Game.campaign.notice.connect(func(t: String, secs: float) -> void: show_message(t, secs))
+		Game.campaign.request_pause.connect(func() -> void:
+			if not get_tree().paused:
+				_toggle_pause())
 	if Game.timber:
 		Game.timber.recovered.connect(func(sid: String, reason: String) -> void: show_message("Recovered log %s (%s) to safe ground." % [sid, reason.replace("_", " ")], 3.0))
 	_build_aid()
@@ -293,6 +304,10 @@ func _build_tour() -> void:
 	for p in ["day", "sunset", "night"]:
 		lrow.add_child(UITheme.button(p.capitalize(), func() -> void: _apply_preset(p), 84))
 	v.add_child(lrow)
+	if Game.campaign:
+		var dt := DayTestPanel.new()
+		v.add_child(dt)
+		dt.setup(self)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))
@@ -445,6 +460,18 @@ func _capture_mouse() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if campaign_ui and campaign_ui.is_open():
+		# A campaign panel owns input until it is closed (Esc or its button).
+		if event.is_action_pressed("pause") or event.is_action_pressed("toggle_journal"):
+			campaign_ui.close_panel()
+			get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("toggle_journal"):
+		if Game.campaign and Game.campaign.active and not get_tree().paused:
+			campaign_ui.toggle_journal()
+		else:
+			show_message("The journal tracks a campaign (Preview: Tour → Day & Economy Test).")
+		return
 	if event.is_action_pressed("pause"):
 		if settings_panel.visible:
 			settings_panel.visible = false
@@ -455,6 +482,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		help_panel.visible = not help_panel.visible
 	elif event.is_action_pressed("toggle_debug"):
 		debug_label.visible = not debug_label.visible
+	elif event.is_action_pressed("toggle_time_panel") and Game.campaign and Game.campaign.active and not Game.is_preview():
+		show_message("In the campaign the sun follows the workday clock.")
 	elif event.is_action_pressed("toggle_time_panel"):
 		time_panel.visible = not time_panel.visible
 		if time_panel.visible and Game.environment:
@@ -487,7 +516,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			show_message("Preview mode has no save to load.")
 	elif event.is_action_pressed("write_diagnostics"):
 		_write_diag()
-	elif event is InputEventMouseButton and event.pressed and not get_tree().paused and not tour_panel.visible and not time_panel.visible:
+	elif event is InputEventMouseButton and event.pressed and not get_tree().paused and not tour_panel.visible and not time_panel.visible and not (campaign_ui and campaign_ui.is_open()):
 		_capture_mouse()
 
 
@@ -516,7 +545,8 @@ func _process(delta: float) -> void:
 	var p: Node = Game.player
 	if p and p.get("axe"):
 		var t: String = p.axe.tier
-		axe_label.text = "Axe: %s  %.2fx  (1/2/3 debug tiers)" % [t.capitalize(), float(CampaignRules.AXE_RATES[t])]
+		var owned_hint := "(1/2/3 debug tiers)" if not (Game.campaign and Game.campaign.active and not Game.campaign.test_route) else "(1/2/3 owned axes · J journal)"
+		axe_label.text = "Axe: %s  %.2fx  %s" % [t.capitalize(), float(CampaignRules.AXE_RATES[t]), owned_hint]
 	if p:
 		if p.too_deep:
 			hint_label.text = "Too deep to wade - the water pushes you back toward the shore"

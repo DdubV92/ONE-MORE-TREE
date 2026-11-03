@@ -40,8 +40,15 @@ func _ready() -> void:
 	await _run_async("water and terrain surfaces face upward", _t_winding)
 	await _run_async("tree lifecycle: legal states, one TreeFelled, no ghosts, save/restore", _t_tree_lifecycle)
 	_run("timber shares: exact cents and quantities for every tree", _t_timber_shares)
-	_run("save v2 -> v3 migration keeps trees, adds timber", _t_save_v3)
+	_run("save v2 -> current migration keeps trees, adds timber", _t_save_v3)
 	await _run_async("timber ledger: buck, carry limits, one owner, receipts once, burn, recovery, reload", _t_timber_ledger)
+	_run("clock: boundaries, one event each at any frame rate, bounded night, deadline once", _t_clock)
+	await _run_async("clock stops while paused", _t_clock_pause)
+	_run("payroll: day 7/8 arrears example, partial pay keeps due date, no duplicates", _t_payroll)
+	_run("axes: ownership, affordability, receipts, rates, no softlock", _t_equipment)
+	_run("save v3 -> v4: pre-contract saves flagged, wallet credits once, slots separate", _t_save_v4)
+	await _run_async("contract: pay once on delivery, final-frame delivery wins, late cannot reopen, reload", _t_campaign_world)
+	await _run_async("sleep: one settlement, reconciled report, morning, day 30 closes", _t_sleep_report)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -691,14 +698,14 @@ func _t_timber_shares() -> String:
 func _t_save_v3() -> String:
 	var v2 := {"schema": 2, "trees": {"5": {"id": 5, "state": 3, "felled_committed": true, "pose": []}}, "timber": {"segments": [], "accepted_shares": []}, "campaign": {"legacy": false}}
 	var m := SaveService.migrate(v2)
-	if int(m.get("schema", 0)) != 3:
+	if int(m.get("schema", 0)) != SaveService.SCHEMA_VERSION:
 		return "v2 save not upgraded"
 	if not m.trees.has("5") or int(m.trees["5"].state) != 3:
 		return "tree states lost in migration"
 	if not (m.timber as Dictionary).is_empty():
 		return "placeholder timber block kept"
 	var v1 := SaveService.migrate({"schema": 1, "felled_trees": [9], "player": {"position": [0, 0, 0]}})
-	if int(v1.schema) != 3 or not bool(v1.campaign.legacy):
+	if int(v1.schema) != SaveService.SCHEMA_VERSION or not bool(v1.campaign.legacy):
 		return "v1 chain migration failed"
 	return ""
 
@@ -876,3 +883,372 @@ func _t_timber_ledger() -> String:
 	await get_tree().process_frame
 	Game.mode = Game.Mode.MENU
 	return err
+
+
+# ------------------------------------------------------------------ Phase 3
+
+func _t_clock() -> String:
+	var c := WorkdayClock.new()
+	var phases := []
+	var warns := []
+	c.phase_changed.connect(func(p: int) -> void: phases.append(p))
+	c.warning.connect(func(k: String, _l: float) -> void: warns.append(k))
+	if WorkdayClock.phase_at(899.9) != WorkdayClock.Phase.DAYLIGHT or WorkdayClock.phase_at(900.0) != WorkdayClock.Phase.DUSK:
+		return "daylight/dusk boundary wrong"
+	if WorkdayClock.phase_at(1199.9) != WorkdayClock.Phase.DUSK or WorkdayClock.phase_at(1200.0) != WorkdayClock.Phase.NIGHT:
+		return "dusk/night boundary wrong"
+	# Frame-rate independence: same boundaries with very different steps.
+	for step in [1.0 / 23.0, 1.0 / 60.0, 1.0 / 144.0, 7.3]:
+		c.restore({"day": 3, "t": 0.0})
+		phases.clear()
+		warns.clear()
+		var guard := 0
+		while c.t < 1300.0 and guard < 200000 and c.phase() != WorkdayClock.Phase.NIGHT:
+			c.advance(step)
+			guard += 1
+		if phases != [WorkdayClock.Phase.DUSK, WorkdayClock.Phase.NIGHT]:
+			return "phase events with step %.4f: %s" % [step, str(phases)]
+		if warns != ["dusk", "dusk_reminder", "dusk_final"]:
+			return "warnings with step %.4f: %s" % [step, str(warns)]
+	# Night is bounded and never makes morning by itself.
+	c.advance(10000.0)
+	if c.day != 3 or c.t != WorkdayClock.NIGHT_AT or c.night_exposure < 9999.0:
+		return "night not bounded (day %d t %.1f exposure %.0f)" % [c.day, c.t, c.night_exposure]
+	if absf(c.lighting_hour() - 23.6) > 0.01:
+		return "night lighting not bounded"
+	# Deadline: exactly once, only at the end of day 30's dusk.
+	var dl := [0]
+	c.deadline_reached.connect(func() -> void: dl[0] += 1)
+	c.restore({"day": 29, "t": 1100.0})
+	c.advance(500.0)
+	if dl[0] != 0:
+		return "deadline fired on day 29"
+	c.restore({"day": 30, "t": 1199.9})
+	c.advance(0.05)
+	if dl[0] != 0:
+		return "deadline fired early"
+	c.advance(0.05)
+	c.advance(50.0)
+	if dl[0] != 1:
+		return "deadline fired %d times" % dl[0]
+	c.restore({"day": 30, "t": 1199.0, "deadline_enabled": false})
+	c.advance(10.0)
+	if dl[0] != 1:
+		return "legacy run hit the deadline"
+	c.free()
+	return ""
+
+
+func _t_clock_pause() -> String:
+	var c := WorkdayClock.new()
+	add_child(c)
+	c.restore({"day": 1, "t": 100.0, "running": true})
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var t0 := c.t
+	if t0 <= 100.0:
+		c.queue_free()
+		return "clock did not run"
+	get_tree().paused = true
+	for i in 10:
+		await get_tree().process_frame
+	var t1 := c.t
+	get_tree().paused = false
+	c.queue_free()
+	if absf(t1 - t0) > 0.0001:
+		return "clock advanced while paused (%.3f -> %.3f)" % [t0, t1]
+	return ""
+
+
+func _economy_fixture() -> Array:
+	# Wallet + payroll + equipment with no world (pure bookkeeping).
+	var cfg: EconomyConfig = load("res://config/economy.tres")
+	var clock := WorkdayClock.new()
+	var w := Wallet.new()
+	w.setup(null, clock)
+	var p := Payroll.new()
+	p.setup(w, cfg)
+	var e := Equipment.new()
+	e.setup(w, cfg)
+	return [w, p, e, clock]
+
+
+func _free_all(arr: Array) -> void:
+	for n in arr:
+		(n as Node).free()
+
+
+func _t_payroll() -> String:
+	var f := _economy_fixture()
+	var w: Wallet = f[0]
+	var p: Payroll = f[1]
+	p.employees = Payroll.starting_crew()
+	# Pending (not yet arrived) employees are never charged.
+	var s0 := p.settle_day(1)
+	if int(s0.new_liabilities) != 0 or p.owed_total() != 0:
+		_free_all(f)
+		return "pending employees were charged"
+	p.employees[0].status = Payroll.ACTIVE
+	var quits := []
+	p.quit_due_to_arrears.connect(func(id: String) -> void: quits.append(id))
+	# Day 7: no cash -> $300 owed, due end of day 8.
+	p.settle_day(7)
+	if p.owed_for("EMP-01") != 30000 or p.due_day_for("EMP-01") != 8 or not quits.is_empty():
+		_free_all(f)
+		return "day 7 liability wrong (%d due %d)" % [p.owed_for("EMP-01"), p.due_day_for("EMP-01")]
+	# A token partial payment does not move the due date.
+	w.grant(5000, "test", "T", "token")
+	p.pay_oldest()
+	if p.owed_for("EMP-01") != 25000 or p.due_day_for("EMP-01") != 8:
+		_free_all(f)
+		return "partial payment changed the due date"
+	# Day 8 with only $300: oldest wage cleared, but day 8's wage is also due
+	# tonight (grace) -> exactly one quit request.
+	w.grant(25000, "test", "T", "cash")
+	p.settle_day(8)
+	if quits != ["EMP-01"] or p.owed_for("EMP-01") != 30000:
+		_free_all(f)
+		return "day 8 arrears: quits %s owed %d" % [str(quits), p.owed_for("EMP-01")]
+	# Repeat settlement: no duplicate liability or quit.
+	var again := p.settle_day(8)
+	if not bool(again.repeat) or quits.size() != 1 or p.liabilities.size() != 2:
+		_free_all(f)
+		return "repeated settlement duplicated records"
+	if w.cash < 0:
+		_free_all(f)
+		return "cash went negative"
+	# Full payment path: second employee active from day 10 with enough cash.
+	p.employees[1].status = Payroll.ACTIVE
+	w.grant(100000, "test", "T", "cash")
+	p.settle_day(10)
+	p.settle_day(11)
+	if p.owed_for("EMP-02") != 0 or quits.size() != 1:
+		_free_all(f)
+		return "paid employee flagged or owed"
+	_free_all(f)
+	return ""
+
+
+func _t_equipment() -> String:
+	var f := _economy_fixture()
+	var w: Wallet = f[0]
+	var e: Equipment = f[2]
+	e.init_new(["EMP-01", "EMP-02"])
+	if e.owned_by("boss").size() != 1 or e.owned_by("EMP-01").size() != 1 or e.equipped_tier() != "small":
+		_free_all(f)
+		return "starting axes wrong"
+	if bool(e.buy("medium").ok):
+		_free_all(f)
+		return "bought with no cash"
+	w.grant(160000, "test", "T", "cash")
+	var r := e.buy("medium")
+	if not bool(r.ok) or w.cash != 10000 or not e.boss_has("medium"):
+		_free_all(f)
+		return "purchase wrong (cash %d)" % w.cash
+	if bool(e.buy("medium").ok):
+		_free_all(f)
+		return "bought a duplicate"
+	if not e.equip_tier("medium") or e.equipped_tier() != "medium" or w.cash != 10000:
+		_free_all(f)
+		return "equipping cost money or failed"
+	# Axe ids are unique and each has one owner.
+	var ids := {}
+	for a in e.axes:
+		if ids.has(a.id):
+			_free_all(f)
+			return "duplicate axe id"
+		ids[a.id] = true
+	# Restore never softlocks.
+	e.restore({"axes": [], "equipped": ""})
+	if not e.boss_has("small"):
+		_free_all(f)
+		return "small axe lost"
+	var cfg: TreeWorkConfig = load("res://config/tree_work.tres")
+	# Rates are work per second (bigger axes swing slower but bite deeper).
+	if absf(cfg.work_per_second("medium") / cfg.work_per_second("small") - 1.4) > 0.001 or absf(cfg.work_per_second("large") / cfg.work_per_second("small") - 1.96) > 0.001 or absf(cfg.work_per_second("large", true) / cfg.work_per_second("large") - 1.25) > 0.001:
+		_free_all(f)
+		return "work rates disagree with the tiers"
+	_free_all(f)
+	return ""
+
+
+func _t_campaign_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	await get_tree().process_frame
+	var err := ""
+	var seed0 = World.manifest.get("world_seed")
+	var count0 := World.tree_count()
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(true)
+	cs.contract.scope_override = 1       # development fixture: one-tree contract
+	var t: TimberService = world.timber
+	var i := LoggingTest.find("small")
+	var id: int = World.trees.id[i]
+	var stand := PlacementValidator.cut_stands(i)[0]
+	world.vegetation.update_collision_around(stand)
+	await get_tree().physics_frame
+	var cash0 := cs.wallet.cash
+	world.trees.apply_contact(id, stand, float(world.trees.record(id).required) + 1.0)
+	var w := 0.0
+	while world.trees.state_of(id) < TreeService.State.SECTIONED and w < 30.0:
+		await get_tree().physics_frame
+		w += 1.0 / 60.0
+	if cs.wallet.cash != cash0:
+		err = "felling paid money"
+	# Buck instantly (large work) and wait for pieces to rest.
+	var guard := 0
+	while err == "" and guard < 200:
+		guard += 1
+		var tb: TimberBody = null
+		for key in t.bodies:
+			if not (t.bodies[key] as TimberBody).is_single_piece():
+				tb = t.bodies[key]
+				break
+		if tb == null:
+			break
+		var y := float(t.records[id].merch_top) if tb.crown else float(t.records[id].segments[tb.ks.max() - 1].b)
+		var res := t.apply_cut(tb, y, 100.0)
+		if str(res.get("reason", "")) == "wait" or bool(res.get("separated", false)):
+			for k in 20:
+				await get_tree().physics_frame
+	for k in 120:
+		await get_tree().physics_frame
+	# Deliver all but one piece: credited exactly once each, immediately.
+	var sids: Array = []
+	for key in t.bodies.keys():
+		var r := t.pick_up(t.bodies[key], 100000)
+		if bool(r.ok):
+			sids.append(r.sid)
+	var last: String = sids.pop_back()
+	t.accept(sids, "rack:test")
+	var paid := cs.wallet.cash - cash0
+	var expect := 0
+	for sid in sids:
+		expect += int(t.segment(sid).cents)
+	if err == "" and paid != expect:
+		err = "credited %d, expected %d" % [paid, expect]
+	t.accept(sids, "rack:retry")
+	cs.wallet.reconcile_receipts()
+	if err == "" and cs.wallet.cash - cash0 != expect:
+		err = "receipts paid twice"
+	# Stump removal is required.
+	world.trees.apply_stump_work(id, 1000.0)
+	if err == "" and world.trees.state_of(id) != TreeService.State.DISPOSED:
+		err = "stump not removed"
+	# Save/load round trip (in memory) keeps money, clock and ownership.
+	cs.clock.restore({"day": 30, "t": 1199.99, "running": true})
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(SaveService.capture_state(world)))
+	if err == "" and int(snap.economy.wallet.cash) != cs.wallet.cash:
+		err = "save missed the wallet"
+	# Final frame: the deadline is reached and, in the same frame, the last
+	# piece is accepted (timestamped at the deadline) -> success.
+	cs.clock.advance(0.05)
+	t.accept([last], "rack:test")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if err == "" and cs.contract.state != ContractService.FULFILLED:
+		err = "on-time final delivery did not fulfil (%s, %s)" % [cs.contract.state, JSON.stringify(cs.contract.counts())]
+	var oid := cs.contract.outcome_id
+	# Fuel still burning does not undo success.
+	if err == "" and (t.ash_clean() or cs.contract.state != ContractService.FULFILLED):
+		err = "burning backlog affected the outcome"
+	# Late transaction cannot reopen a closed contract.
+	if err == "" and not t.accept([last], "late").is_empty():
+		err = "closed contract accepted a delivery"
+	# Reload the pre-deadline snapshot, let the deadline pass WITHOUT the
+	# last delivery -> abandonment; a late delivery cannot turn it around.
+	SaveService.apply_state(world, snap)
+	cs.contract.scope_override = 1
+	await get_tree().process_frame
+	cs.clock.advance(0.05)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if err == "" and cs.contract.state != ContractService.ABANDONMENT:
+		err = "missed deadline did not end the contract (%s)" % cs.contract.state
+	var late := t.accept([last], "late")
+	if err == "" and (not late.is_empty() or cs.contract.state != ContractService.ABANDONMENT):
+		err = "late delivery changed the outcome"
+	if err == "" and oid == cs.contract.outcome_id:
+		err = "outcome ids not distinct per outcome"
+	# Preview tools never change the world identity.
+	if err == "" and (World.manifest.get("world_seed") != seed0 or World.tree_count() != count0):
+		err = "seed/tree count changed"
+	t.clear_all()
+	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+func _t_sleep_report() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	await get_tree().process_frame
+	var err := ""
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(true)
+	cs.wallet.grant(10000, "test", "T", "extra")
+	cs.clock.restore({"day": 4, "t": 1000.0, "running": true})
+	cs._begin_day_stats()
+	var cash0 := cs.wallet.cash
+	if bool(cs.can_sleep().ok) == false:
+		err = "cannot sleep at dusk"
+	var r := cs.sleep()
+	var rep: Dictionary = r.get("report", {})
+	if err == "" and (cs.clock.day != 5 or cs.clock.t != 0.0):
+		err = "morning not reached (day %d)" % cs.clock.day
+	if err == "" and not bool(rep.get("reconciles", false)):
+		err = "report does not reconcile: %s" % JSON.stringify(rep)
+	if err == "" and (int(rep.opening_cash) != cash0 or int(rep.wages_paid) != 60000 or int(rep.closing_cash) != cash0 - 60000):
+		err = "report cash wrong: %s" % JSON.stringify(rep)
+	# Sleeping again in daylight is refused; the report is reopenable without
+	# re-settling.
+	var again := cs.sleep()
+	if err == "" and bool(again.get("ok", false)):
+		err = "slept twice"
+	if err == "" and (cs.reports.size() != 1 or cs.payroll.settle_day(4).repeat != true):
+		err = "settlement repeated"
+	# Day 30: sleeping routes to the outcome instead of a day 31.
+	cs.clock.restore({"day": 30, "t": 1000.0, "running": true})
+	var fin := cs.sleep()
+	await get_tree().process_frame
+	if err == "" and (not bool(fin.get("terminal", false)) or cs.clock.day != 30 or not cs.contract.is_closed()):
+		err = "day 30 sleep did not close the contract"
+	world.timber.clear_all()
+	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+func _t_save_v4() -> String:
+	# v3 (Phase 2) save with an accepted receipt that was never paid.
+	var v3 := {"schema": 3, "trees": {}, "timber": {"receipts": [{"id": "RCPT-000001", "sid": "T5_S0", "tree": 5, "mte": 300, "cents": 3000, "settled": false}]}, "campaign": {"rule_set": "contract_v1", "state": "CONTRACT_ACTIVE", "day": 1, "clock_running": false, "legacy": false}, "economy": {"funds_cents": 0, "ledger": [], "workers": [], "trucks": []}}
+	var m := SaveService.migrate(v3)
+	if int(m.schema) != SaveService.SCHEMA_VERSION:
+		return "v3 not upgraded"
+	if bool(m.campaign.get("phase3", false)):
+		return "pre-contract save marked as contract save"
+	if not (m.economy as Dictionary).has("wallet") or int(m.economy.wallet.cash) != 0:
+		return "economy block not normalised"
+	# Wallet credit idempotence on a receipt list.
+	var f := _economy_fixture()
+	var w: Wallet = f[0]
+	w.credited["RCPT-000009"] = "TX-000001"
+	if w.credit_receipt("RCPT-000009") != "TX-000001" or w.cash != 0:
+		_free_all(f)
+		return "credited receipt paid again"
+	_free_all(f)
+	# Slots: separate files, new game in one slot never touches another.
+	var a := SaveService.slot_path(1)
+	var b := SaveService.slot_path(2)
+	if a == b or not a.begins_with("user://saves/"):
+		return "slot paths not separate"
+	return ""

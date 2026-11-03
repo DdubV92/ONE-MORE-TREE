@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EconomyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/economy_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+starting_cash_cents = 200000
+wage_cents = 30000
+hire_fee_cents = 100000
+axe_price_cents = {"large": 450000, "medium": 150000, "small": 0}
+truck_price_cents = 900000
+truck_unlock_tree_equivalents = 50.0
+max_trucks = 2

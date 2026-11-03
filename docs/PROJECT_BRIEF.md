@@ -43,6 +43,10 @@
 
 Combat, hunger meters, weapon shops, chainsaws, vehicles, crafting trees, multiplayer, supernatural lore explanations, a second web/Three.js version.
 
+## Current phase
+
+Phases 0–3 are implemented: the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
+
 ## Phase 0 scope (this pack)
 
 Phase 0 is the atmospheric, explorable world foundation, plus interfaces for later systems. No cutting, economy or horror director yet. See PHASE_CHECKLIST.md.

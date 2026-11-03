@@ -19,6 +19,8 @@ static func all() -> Dictionary:
 	vp["camper"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, 2.0), camper + Vector3(-0.4, CampLayout.CAMPER_FLOOR, -3.0), eye, "Camper interior (kitchen toward bedroom)")
 	vp["camper_lounge"] = _v(camper + Vector3(-0.9, CampLayout.CAMPER_FLOOR, 1.6), camper + Vector3(0.4, CampLayout.CAMPER_FLOOR + 0.3, 4.6), eye, "Camper lounge: couch and TV (camera wall arrives in Prompt 5)")
 	vp["camper_night"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, -2.0), camper + Vector3(-1.5, CampLayout.CAMPER_FLOOR + 0.1, -3.2), eye, "Camper bedroom at night: window to the woods", "night")
+	var rack := c + CampLayout.DELIVERY_RACK_POS
+	vp["delivery"] = _v(rack + Vector3(1.5, 0, 5.5), c + CampLayout.BURN_PIT_POS + Vector3(1.5, 0, 0), eye, "Delivery rack and burn pit")
 	var cabin := c + CampLayout.CABIN_POS
 	vp["cabin"] = _v(cabin + Vector3(-2.6, CampLayout.CABIN_FLOOR, 3.8), cabin + Vector3(1.0, CampLayout.CABIN_FLOOR, -3.0), eye, "Worker cabin: four beds and arcade corner")
 	# Beach: walk south from camp until the sand is ~0.25 m above sea.

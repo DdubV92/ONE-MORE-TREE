@@ -58,7 +58,7 @@ func _build_frame() -> void:
 	_sign.name = "Sign"
 	_sign.position = Vector3(hx + 0.35, 1.48, hz - 0.02)
 	_sign.pixel_size = 0.0022
-	_sign.font_size = 44
+	_sign.font_size = 32
 	_sign.outline_size = 0
 	_sign.modulate = Color(0.12, 0.08, 0.05)
 	_sign.width = 380.0

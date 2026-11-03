@@ -1,4 +1,4 @@
-# Review guide (Phases 0-2, about 15 minutes)
+# Review guide (Phases 0-3, about 20 minutes)
 
 Start a test build (README → "Play a test build"), then choose **Preview Tour** on the title screen.
 
@@ -19,6 +19,8 @@ Start a test build (README → "Play a test build"), then choose **Preview Tour*
 | 9 | Lighting → **Sunset**, then **Night** (or F4 for the full time slider and Overcast) | Warm low sun and long shadows, then moonlit night with readable silhouettes and lit camp lamps. Camper and cabin windows readable from inside. F3 shows the night-safety status where you stand. |
 | 9b | Tour → **Logging Test**, then **Next test tree** | Chop with the left mouse button (hold to keep going). Watch the notch open on your side, the creak warning, the hinge and fall away from you, the landing and the stump. Cases: flat, slope, rock, neighbour, small birch, large pine, closest to camp. Try 1/2/3 to compare axe tiers. |
 | 9c | Tour → **Logging Loop** | Fell the tree nearest camp. Aim at the **orange marks** on the trunk to buck it into logs (the crown drops off as brush). Press **E** on a log to shoulder it, then E on more logs to add them until the hand load is full. **G** sets one down at a checked spot, **X** drops all. Carry to the **delivery rack** beside the fire and press E. Watch the stack, the meter, and logs charring in the pit. **F2** shows the ledger and the exact $100 per tree. **Snapshot / Restore snap** exercise the save path in memory. **Reset logging** restores the trees. |
+| 9d | Tour → **Day & Economy Test → Start session** (in memory, never saved) | The top of the screen shows the day, phase and countdown in words, plus cash. Deliver a log at the rack: **+$ credited** at once. **J** opens the journal (contract, payroll fixtures, ledger). Press **Open shop**, buy the medium axe, then press 2 and chop to feel x1.40. **Jump to dusk** shows the dusk warning and lighting change. **Sleep now** (or E on the camper bed after dusk) gives one report and then morning. **Unpaid wages** then sleeping twice shows arrears and one quit request. **Day 30 dusk** / **Prepared loss** let the contract close at nightfall without sleeping, showing the honest Phase 6 handoff. **Prepared win** shows the fulfilled screen. |
+| 9e | Title → **Play the contract** → a slot → **New contract** | A real campaign: exact 15 + 5 minute days, $2,000 starting cash (provisional), two crew records waiting for Phase 4 (no wages yet), axes at the tool rack, and sleep in the camper bed. Quit and **Continue** the slot: trees, logs, money, time and day are kept. |
 | 10 | Tour → **Character Preview** | Human: Idle, Walk, Axe swing, Walk a circle, Next look (4 workers). Dog: Idle, Walk, Lie & sleep. Speed slider, joint/foot-contact debug, Day/Sunset/Night. |
 
 Optional:

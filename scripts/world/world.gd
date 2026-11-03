@@ -14,6 +14,7 @@ var water: WaterSystem
 var vegetation: VegetationSystem
 var trees: TreeService
 var timber: TimberService
+var campaign: CampaignService
 var ground_cover: Node3D
 var environment: EnvironmentController
 var camp: Node3D
@@ -61,6 +62,10 @@ func _ready() -> void:
 	timber.setup(logs, not Game.is_preview())
 	trees.timber = timber
 	Game.timber = timber
+	campaign = CampaignService.new()
+	campaign.name = "Campaign"
+	add_child(campaign)
+	Game.campaign = campaign
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()
@@ -100,6 +105,7 @@ func _ready() -> void:
 		add_child(hud)
 	Settings.changed.connect(_apply_quality)
 	_apply_quality()
+	campaign.setup()
 	_place_player()
 	build_ms["total"] = Time.get_ticks_msec() - t0
 	print("World built: ", build_ms)
@@ -140,7 +146,14 @@ func _place_player() -> void:
 	var spot := "camp"
 	if Game.is_preview() and Game.pending_teleport != "":
 		spot = Game.pending_teleport
-	elif Game.mode == Game.Mode.CAMPAIGN and load_campaign():
+	elif Game.mode == Game.Mode.CAMPAIGN and not Game.new_game and load_campaign():
+		return
+	if Game.mode == Game.Mode.CAMPAIGN:
+		# New contract in the selected slot (other slots are never touched).
+		Game.new_game = false
+		campaign.new_campaign()
+		teleport_to(spot)
+		save_campaign()
 		return
 	teleport_to(spot)
 

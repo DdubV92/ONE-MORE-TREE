@@ -2,7 +2,7 @@
 
 A first-person, single-player, cozy logging game on a large, finite island, built with **Godot 4.5.1 (Forward+), typed GDScript, desktop**.
 
-**Current state: Phase 0, "Build the island we want to live on".** The island is explorable: 1.17 km² of land, 12,000 harvestable trees (each with a stable ID), ocean, river and ponds, a complete camp with walkable interiors, day/sunset/night lighting, spatial ambience, and preview characters. Tree cutting, the economy and the night director arrive in later prompts.
+**Current state: Phase 3, "Workdays, the contract, delivery income, payroll, axes and saves".** The island is explorable: 1.17 km² of land, 12,000 harvestable trees (each with a stable ID), an ocean with curling surf, a river and ponds, a complete camp, day/dusk/night lighting and spatial ambience. You fell trees, buck them into logs, carry the logs to the delivery rack and watch them burn. Each tree pays exactly $100, split across its logs and credited when each log is accepted. The 30-day contract runs on 15-minute days with 5-minute dusks. Wages are $300 per worker-day with a one-day grace. Axes are bought at the tool rack, and sleeping ends the day with a report. There are three save slots. Employees (Phase 4), trucks and dock (Phase 5) and the night director and survival hunt (Phase 6) come later.
 
 ## Play a test build (recommended)
 

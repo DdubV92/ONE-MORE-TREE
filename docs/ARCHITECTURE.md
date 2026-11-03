@@ -116,9 +116,44 @@ Marker3D nodes in these groups:
 - **Acceptance.** `TimberService.accept(sids, source)` is the only place a receipt (`RCPT-000001`…) is created. It is idempotent per segment. The rack, future workers and future trucks all call it, and no camera ray or held mesh is required.
 - **Burning.** The pit holds three pieces. A one-third piece burns in 240 s, faster when a backlog is waiting (up to ×4). Pause stops burning. The overnight advance is a bounded `OVERNIGHT_BURN_SECONDS` (3600 s of game time), never OS time. The contract counts *accepted* timber (`tree_delivered`); ash cleanup (`ash_clean`) is separate.
 
+## Campaign, money and saves (Phase 3)
+
+**Authoritative values**
+- 30 workdays. Each day has 900 s of daylight and 300 s of dusk; night starts at t = 1200.
+- The contract closes at the end of day 30's dusk.
+- $100.00 (10,000 cents) per original tree, split across its logs and credited when each log is accepted at camp.
+- Wages are $300 per active employee-day. Arrears are due at the end of the following workday, including that day's wage.
+- Axes: small 1.00, medium 1.40, large 1.96. Hard-working applies ×1.25 once.
+- Provisional values live in `config/economy.tres`: starting cash $2,000, medium axe $1,500, large axe $4,500, hire $1,000, truck $9,000 unlocked at 50 delivered tree-equivalents, at most 2 trucks.
+
+| Module | Owns |
+|---|---|
+| `campaign/workday_clock.gd` (WorkdayClock) | The single campaign clock: day, t, phase, warnings (dusk start, reminder, final), schedule hooks, `time_until_night()`, bounded night with separate `night_exposure`, the deadline signal. It advances in `_physics_process`, so it is frame-rate independent and pausing stops it. |
+| `campaign/contract_service.gd` (ContractService) | Manifest-based progress counts, evaluation after state changes and deliveries, the deferred deadline evaluation, outcome commit with id, and the acceptance gate. |
+| `economy/wallet.gd` (Wallet) | The only payment service: integer cents, a transaction ledger, idempotent `credit_receipt()`, `reconcile_receipts()` for recovery and migration, and no negative cash. |
+| `economy/payroll.gd` (Payroll) | Employee identities, liabilities with due days, idempotent per-day settlement, oldest-first auto-pay, manual pay, and one QuitDueToArrears request per employee. |
+| `economy/equipment.gd` (Equipment) | Owned axe instances (`AXE-0001`…) with one owner each, receipted purchases and equip-by-ownership. The starting small axe can never be lost. |
+| `campaign/campaign_service.gd` (CampaignService) | Wires all of the above, drives lighting from the clock, keeps day stats, runs the sleep → settlement → overnight burn → report → morning sequence, handles the legacy rule choice, and captures/restores saves. |
+| `ui/campaign_ui.gd`, `ui/day_test_panel.gd`, `campaign/sleep_spot.gd`, `campaign/tool_shop.gd` | Clock/cash HUD, journal (J), shop, daily report, rules choice, outcome screens and the review route. |
+
+**Deadline ordering.** The clock emits `deadline_reached` inside the physics step where t reaches 1200 on day 30. ContractService evaluates at the end of that frame, so an acceptance committed in the same frame (timestamped at the deadline) counts. After the outcome commits, `TimberService.accept()` is gated closed and later transactions are refused. Outcomes (`OUT-FULFILLED-D30` / `OUT-ABANDON-D30`) are saved and never change. Burning backlog does not affect success. Sleeping on day 30 closes the contract instead of starting day 31.
+
+**Crew status.** Payroll records exist for the two starting employees (Marta Kell, Dale Ostrow) with reserved small axes. Until Phase 4 gives them bodies and work, they are `pending_integration`: never charged, and labeled as such in the journal and report. The Day & Economy Test switches them to `active` as development fixtures.
+
+**Feasibility.** The manifest has 12,000 trees, so 30 days would need about 400 trees a day. Measured solo throughput is a handful of trees per 15-minute day. The count stays provisional until crew (Phase 4) and truck (Phase 5) throughput is measured. Nothing was removed and the day was not lengthened.
+
+**Integration for later phases.**
+- Workers call `TimberService.claim/accept` and appear in `Payroll.employees`; status becomes `active` on arrival.
+- `Payroll.quit_due_to_arrears` drives departure.
+- Trucks use `reserve_for_vehicle` + `accept(sids, "truck:<id>")`.
+- Horror reads `WorkdayClock.night_exposure`.
+- `SleepSpot.blocked_reason` is the state guard for the once-only dog rescue.
+- `ContractService.ABANDONMENT` hands off to the Phase 6 hunt; until then an honest handoff screen keeps the save.
+
 ## Modes and saves
 
 - `Game.Mode`: `MENU`, `CAMPAIGN`, `PREVIEW`. Preview Tour, the Character Preview and the benchmark run in PREVIEW, and `SaveService.save_campaign` refuses to write in any mode except CAMPAIGN (tested).
+- **Save schema v4** (Phase 3) uses three slots, `user://saves/slot_N.json`. Settings stay separate, and the old single `campaign.json` becomes slot 1 while the original file is kept. v4 fills the `campaign` block: rule set, `phase3` flag, clock (day, t, night exposure, fired warnings, deadline flag), contract state and outcome id, day stats and the last 35 reports. It also fills the `economy` block: wallet cash, full transaction ledger, receipt→transaction map, payroll employees, liabilities, settlements and quit requests, owned axes and the equipped axe. On load the wallet re-checks every receipt: a genuine receipt without a credit is credited once, and a credited one is never paid again. v3 (Phase 2) saves migrate as *pre-contract*. Their tracked receipts are credited once (`migrated_phase2_delivery`), an untouched `.pre_contract.json` copy is kept, and the player chooses either legacy continuation (days pass, no deadline) or the 30-day contract from day 1 with the island kept. Phase 0–2 never paid whole-tree bounties, so there is no historical payment to protect.
 - **Save schema v3** (Phase 2) adds the `timber` block. It holds per-tree segment state, receipt id and burn progress, boundary/crown cut work, world bodies (tree, segments, crown flag, pose), carried bundle, queue order, pit contents, all receipts, the receipt counter and the recent recovery log. Geometry and shares are always rebuilt from the frozen tree record, so a save can never change quantities. On load the ledger is restored before trees: an accepted segment can never reappear as world timber, and a carried bundle returns to the hands exactly once. v2 saves migrate by adopting their fallen trunks into fresh timber records.
 - **Save schema v2** (Phase 1) adds `trees` (modified trees by ID: state, work, cut side, fall direction, felled guard, trunk pose/velocity), `equipment`, and reserved `campaign` / `economy` / `timber` blocks. v1 saves migrate to a labeled **legacy** campaign. Saving keeps the previous good file as `.bak`; an unreadable main save falls back to the backup and is left on disk.
 - **Save schema v1** (Phase 0) (`user://saves/campaign.json`, written atomically through a `.tmp` + rename):

@@ -1,0 +1,343 @@
+class_name CampaignService
+extends Node
+## Phase 3 campaign orchestration: owns the authoritative WorkdayClock, the
+## Wallet (only payment service), Payroll, Equipment and the Contract; keeps
+## per-day statistics; runs the sleep -> settlement -> report -> morning
+## transition exactly once per night; drives lighting from the clock; and
+## captures/restores the "campaign" and "economy" save blocks.
+##
+## Preview mode: the clock does not run and money is not tracked, unless the
+## Day & Economy Test route enables an isolated in-memory session (never
+## written to disk).
+
+signal notice(text: String, seconds: float)
+signal report_ready(report: Dictionary)
+signal outcome_ready(state: String, outcome_id: String)
+signal rules_choice_needed()
+signal request_pause()
+
+const RULE_SET := "contract_v1"
+
+var clock: WorkdayClock
+var wallet: Wallet
+var payroll: Payroll
+var equipment: Equipment
+var contract: ContractService
+var config: EconomyConfig
+var rule_set := RULE_SET
+var legacy := false
+var reports: Array[Dictionary] = []
+var day_stats := {}                # current day: opening cash, felled, delivered...
+var active := false                # a timed campaign or the test route
+var test_route := false
+var phase2_migrated := false
+var _sleeping := false
+
+
+func _ready() -> void:
+	config = load("res://config/economy.tres")
+	clock = WorkdayClock.new()
+	clock.name = "Clock"
+	add_child(clock)
+	wallet = Wallet.new()
+	wallet.name = "Wallet"
+	add_child(wallet)
+	payroll = Payroll.new()
+	payroll.name = "Payroll"
+	add_child(payroll)
+	equipment = Equipment.new()
+	equipment.name = "Equipment"
+	add_child(equipment)
+	contract = ContractService.new()
+	contract.name = "Contract"
+	add_child(contract)
+
+
+func setup() -> void:
+	wallet.setup(Game.timber, clock)
+	payroll.setup(wallet, config)
+	equipment.setup(wallet, config)
+	contract.setup(Game.trees, Game.timber, clock)
+	clock.warning.connect(_on_warning)
+	clock.night_started.connect(func(_d: int) -> void: notice.emit("Night. Camp lamps and the camper are safe; sleep in the camper bed to end the day.", 6.0))
+	contract.outcome.connect(func(s: String, oid: String) -> void: outcome_ready.emit(s, oid))
+	wallet.transaction.connect(_on_tx)
+	payroll.quit_due_to_arrears.connect(func(eid: String) -> void: notice.emit("%s has quit over unpaid wages (leaves when crew arrive in Phase 4)." % payroll.employee(eid).get("name", eid), 6.0))
+	if Game.trees:
+		Game.trees.tree_felled.connect(func(_id: int) -> void: _stat_add("felled", 1))
+		Game.trees.stump_removed.connect(func(_id: int) -> void: _stat_add("stumps_removed", 1))
+	if Game.timber:
+		Game.timber.delivery_accepted.connect(func(r: Dictionary) -> void: _stat_add("delivered_mte", int(r.mte)))
+	equipment.changed.connect(_sync_axe)
+	wallet.enabled = not Game.is_preview()
+
+
+# ------------------------------------------------------------ campaign life
+
+## Fresh timed campaign (the rules are fixed: 30 days, 15 + 5 minutes).
+func new_campaign() -> void:
+	rule_set = RULE_SET
+	legacy = false
+	clock.restore({"day": 1, "t": 0.0, "running": true, "deadline_enabled": true})
+	wallet.restore({})
+	wallet.grant(config.starting_cash_cents, "start", "NEW-CAMPAIGN", "Starting cash (provisional)")
+	payroll.restore({})
+	payroll.employees = Payroll.starting_crew()
+	var ids := []
+	for e in payroll.employees:
+		ids.append(e.id)
+	equipment.init_new(ids)
+	contract.restore({"state": ContractService.ACTIVE})
+	reports.clear()
+	phase2_migrated = true
+	_begin_day_stats()
+	active = true
+	_sync_axe()
+
+
+## Development: isolated in-memory Day & Economy Test session (Preview).
+func start_test_route(with_fixtures := true) -> void:
+	new_campaign()
+	test_route = true
+	wallet.enabled = true
+	if with_fixtures:
+		for e in payroll.employees:
+			e.status = Payroll.ACTIVE
+			e["fixture"] = true
+	notice.emit("Day & Economy Test: an isolated session in memory (never saved). Payroll fixtures are active.", 6.0)
+
+
+func _begin_day_stats() -> void:
+	day_stats = {"day": clock.day, "opening_cash": wallet.cash, "felled": 0, "delivered_mte": 0, "stumps_removed": 0, "trees_standing_start": contract.counts().standing}
+
+
+func _stat_add(k: String, n: int) -> void:
+	if active:
+		day_stats[k] = int(day_stats.get(k, 0)) + n
+
+
+func _on_tx(tx: Dictionary) -> void:
+	if str(tx.kind) == "delivery" and active:
+		notice.emit("+$%s delivery credited" % Money.format_cents(int(tx.amount)), 2.5)
+
+
+func _on_warning(kind: String, left: float) -> void:
+	var mins := int(ceil(left / 60.0))
+	match kind:
+		"dusk":
+			notice.emit("Dusk. Head back to camp: night falls in %d minutes." % mins, 7.0)
+		"dusk_reminder":
+			notice.emit("Reminder: %d minutes of light left." % mins, 5.0)
+		"dusk_final":
+			notice.emit("Final warning: one minute until night. Get inside the camp lights.", 6.0)
+
+
+func _sync_axe() -> void:
+	var p := Game.player
+	if p and p.get("axe") and active:
+		p.axe.equip(equipment.equipped_tier())
+
+
+func _process(_delta: float) -> void:
+	if active and clock.running and Game.environment and not test_route_light_override:
+		Game.environment.set_time_of_day(clock.lighting_hour())
+
+
+var test_route_light_override := false
+
+
+func _notification(what: int) -> void:
+	# Single-player baseline: losing focus pauses (no catch-up on return).
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and active and not Game.is_preview():
+		request_pause.emit()
+
+
+# ---------------------------------------------------------------- sleeping
+
+func can_sleep() -> Dictionary:
+	if not active:
+		return {"ok": false, "reason": "Sleeping only advances days in the campaign."}
+	if contract.is_closed():
+		return {"ok": false, "reason": "The contract has ended."}
+	if _sleeping:
+		return {"ok": false, "reason": ""}
+	if clock.phase() == WorkdayClock.Phase.DAYLIGHT:
+		return {"ok": false, "reason": "Too early to sleep. The workday runs until dusk (%s left)." % fmt_time(clock.time_until_dusk())}
+	return {"ok": true}
+
+
+## Ends the day: settlement, bounded overnight burn, report, next morning.
+## Locked so repeated input can never run it twice; settlement itself is
+## idempotent per day, so a reload cannot repeat wages or reports.
+func sleep() -> Dictionary:
+	var ok := can_sleep()
+	if not bool(ok.ok):
+		return ok
+	_sleeping = true
+	var d := clock.day
+	if clock.is_final_day() and clock.deadline_enabled:
+		# Sleeping on day 30 would cross the deadline: close it now.
+		clock.t = WorkdayClock.NIGHT_AT
+		contract._close_deadline()
+		_sleeping = false
+		return {"ok": true, "terminal": true}
+	var settlement := payroll.settle_day(d)
+	if Game.timber:
+		Game.timber.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS)
+	var report := build_report(d, settlement)
+	if reports.is_empty() or int(reports[reports.size() - 1].day) != d:
+		reports.append(report)
+	clock.start_next_day()
+	_begin_day_stats()
+	_wake_player()
+	if Game.world_root and Game.world_root.has_method("save_campaign"):
+		Game.world_root.save_campaign()
+	report_ready.emit(report)
+	_sleeping = false
+	return {"ok": true, "report": report}
+
+
+func _wake_player() -> void:
+	var p := Game.player
+	if p == null:
+		return
+	var beds := p.get_tree().get_nodes_in_group("player_bed")
+	if beds.is_empty():
+		return
+	var bed: Node3D = beds[0]
+	# Stand beside the bed, inside the camper (never on top of it).
+	var side := bed.global_position + bed.global_basis.x * 0.95
+	side.y = bed.global_position.y - 0.7
+	p.teleport_feet(side, bed.global_rotation.y)
+
+
+func build_report(d: int, settlement: Dictionary) -> Dictionary:
+	var income := 0
+	var purchases := 0
+	var wages := 0
+	var other := 0
+	var purchase_lines: Array[String] = []
+	for tx in wallet.transactions:
+		if int(tx.day) != d:
+			continue
+		match str(tx.kind):
+			"delivery":
+				income += int(tx.amount)
+			"purchase", "hire":
+				purchases += -int(tx.amount)
+				purchase_lines.append("%s $%s" % [tx.note, Money.format_cents(-int(tx.amount))])
+			"wage":
+				wages += -int(tx.amount)
+			_:
+				other += int(tx.amount)
+	var opening := int(day_stats.get("opening_cash", wallet.cash)) if int(day_stats.get("day", d)) == d else wallet.cash
+	var c := contract.counts()
+	var arrears := []
+	for e in payroll.employees:
+		var owed := payroll.owed_for(str(e.id))
+		arrears.append({"id": e.id, "name": e.name, "status": e.status, "owed": owed, "due_day": payroll.due_day_for(str(e.id))})
+	var closing := wallet.cash
+	return {
+		"day": d, "settlement": settlement.get("settlement", ""),
+		"opening_cash": opening, "closing_cash": closing,
+		"income": income, "purchases": purchases, "purchase_lines": purchase_lines, "wages_paid": wages, "other": other,
+		"reconciles": opening + income - purchases - wages + other == closing,
+		"felled": int(day_stats.get("felled", 0)), "stumps_removed": int(day_stats.get("stumps_removed", 0)),
+		"trees_remaining": int(c.standing), "delivered_mte": int(day_stats.get("delivered_mte", 0)),
+		"new_liabilities": int(settlement.get("new_liabilities", 0)), "arrears": arrears,
+		"quits": settlement.get("quits", []),
+		"contract_day": d, "days_remaining": WorkdayClock.CONTRACT_DAYS - d,
+		"stumps": int(c.stumps), "undelivered_mte": int(c.undelivered_mte), "trunks_to_buck": int(c.trunks_to_buck),
+		"next_day_payroll": payroll.todays_estimate(), "owed_total": payroll.owed_total(),
+		"legacy": legacy,
+	}
+
+
+# ----------------------------------------------------------------- legacy
+
+## A save from before the timed contract: the player chooses explicitly.
+func choose_legacy(continue_untimed: bool) -> void:
+	if continue_untimed:
+		legacy = true
+		rule_set = "legacy_untimed"
+		contract.restore({"state": ContractService.LEGACY})
+		clock.deadline_enabled = false
+		notice.emit("Legacy continuation: days pass, but there is no contract deadline.", 6.0)
+	else:
+		legacy = false
+		rule_set = RULE_SET
+		contract.restore({"state": ContractService.ACTIVE})
+		clock.restore({"day": 1, "t": 0.0, "running": true, "deadline_enabled": true})
+		notice.emit("The 30-day contract starts now (day 1). Your island progress is kept.", 6.0)
+	clock.running = true
+	active = true
+	_begin_day_stats()
+	if Game.world_root and Game.world_root.has_method("save_campaign"):
+		Game.world_root.save_campaign()
+
+
+# ------------------------------------------------------------ persistence
+
+func capture_campaign() -> Dictionary:
+	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day}
+
+
+func capture_economy() -> Dictionary:
+	return {"wallet": wallet.capture(), "payroll": payroll.capture(), "equipment": equipment.capture(), "phase2_migrated": phase2_migrated}
+
+
+## Restores both blocks. Returns true if the player must choose rules
+## (save from before the timed contract).
+func restore(campaign: Dictionary, economy: Dictionary) -> bool:
+	var pre_phase3 := not bool(campaign.get("phase3", false))
+	wallet.restore(economy.get("wallet", {}))
+	payroll.restore(economy.get("payroll", {}))
+	equipment.restore(economy.get("equipment", {}))
+	if payroll.employees.is_empty():
+		payroll.employees = Payroll.starting_crew()
+	phase2_migrated = bool(economy.get("phase2_migrated", false))
+	# Phase 2 tracked delivery entitlements without paying them: credit each
+	# genuine accepted receipt exactly once, with a conversion marker.
+	if not phase2_migrated:
+		var n := wallet.reconcile_receipts("migrated_phase2_delivery")
+		phase2_migrated = true
+		if n > 0:
+			notice.emit("Converted %d earlier delivery receipt(s) into cash (once)." % n, 6.0)
+	else:
+		# Recoverable write protocol: any genuine receipt saved without its
+		# credit is credited now; credited ones are never paid again.
+		wallet.reconcile_receipts()
+	rule_set = str(campaign.get("rule_set", RULE_SET))
+	legacy = bool(campaign.get("legacy", false))
+	reports.clear()
+	for r in campaign.get("reports", []):
+		reports.append(r)
+	contract.restore(campaign.get("contract", {"state": ContractService.LEGACY if legacy else ContractService.ACTIVE}))
+	if pre_phase3:
+		clock.restore({"day": 1, "t": 0.0, "running": false})
+		if wallet.transactions.is_empty() or wallet.transactions.filter(func(tx: Dictionary) -> bool: return str(tx.kind) == "start").is_empty():
+			wallet.grant(config.starting_cash_cents, "start", "MIGRATION", "Starting cash (provisional)")
+		if equipment.axes.size() <= 1:
+			var ids := []
+			for e in payroll.employees:
+				ids.append(e.id)
+			equipment.init_new(ids)
+		active = false
+		rules_choice_needed.emit()
+		return true
+	clock.restore(campaign.get("clock", {}))
+	clock.running = not contract.is_closed()
+	clock.deadline_enabled = not legacy
+	day_stats = (campaign.get("day_stats", {}) as Dictionary).duplicate()
+	if day_stats.is_empty():
+		_begin_day_stats()
+	active = true
+	_sync_axe()
+	if contract.is_closed():
+		outcome_ready.emit.call_deferred(contract.state, contract.outcome_id)
+	return false
+
+
+static func fmt_time(seconds: float) -> String:
+	var s := int(ceil(seconds))
+	return "%d:%02d" % [s / 60, s % 60]
