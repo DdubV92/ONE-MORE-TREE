@@ -10,6 +10,7 @@ render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_sc
 
 uniform sampler2D heightmap : filter_nearest, repeat_disable;
 uniform sampler2D masks : filter_linear, repeat_disable;
+uniform sampler2D water_region_map : filter_nearest, repeat_disable;
 uniform vec2 grid_origin;
 uniform float cell_size = 2.0;
 uniform ivec2 grid_dims;
@@ -98,6 +99,10 @@ void vertex() {
 
 void fragment() {
 	vec2 xz = v_wpos.xz;
+	// Inland water regions (river, ponds) have their own surfaces; the sea
+	// plane never shows through low inland ground.
+	vec2 ruv = (xz - grid_origin) / (cell_size * vec2(grid_dims - 1)) + 0.5 / vec2(grid_dims);
+	if (all(greaterThanEqual(ruv, vec2(0.0))) && all(lessThanEqual(ruv, vec2(1.0))) && texture(water_region_map, ruv).r > 0.002) discard;
 	float depth_here = max(v_wpos.y - v_ground, 0.0);
 	float t = world_time;
 
@@ -145,5 +150,5 @@ void fragment() {
 	SPECULAR = 0.5 * (1.0 - foam);
 	METALLIC = 0.0;
 	// Soft contact where water meets sand/rock: no hard intersection line.
-	ALPHA = clamp(refr.a * 6.0 + foam, 0.0, 1.0) * smoothstep(0.0, 0.015, thin + 0.01);
+	ALPHA = clamp(refr.a * 30.0 + foam, 0.0, 1.0) * smoothstep(0.0, 0.015, thin + 0.01);
 }

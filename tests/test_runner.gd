@@ -32,6 +32,7 @@ func _ready() -> void:
 	await _run_async("human walk keeps stance foot planted", _t_human_walk)
 	await _run_async("dog walk keeps stance paws planted", _t_dog_walk)
 	await _run_async("tree removal by ID updates render and collision", _t_tree_removal)
+	await _run_async("water and terrain surfaces face upward", _t_winding)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -421,3 +422,29 @@ func _t_tree_removal() -> String:
 	if inst_after != inst_before - 1:
 		return "far-LOD instances %d -> %d (expected -1)" % [inst_before, inst_after]
 	return ""
+
+
+func _t_winding() -> String:
+	# Godot front faces are clockwise seen from the viewer; for an upward
+	# facing triangle the right-hand cross product points down (-Y).
+	var w := WaterSystem.new()
+	add_child(w)
+	w.build(64)
+	var meshes := {"pond": w.pond_meshes[0].mesh, "river": w.river_mesh.mesh, "terrain": TerrainSystem._make_grid_mesh(4, 1, 2.0), "ocean": w.ocean.mesh}
+	var err := ""
+	for k in meshes:
+		var arr: Array = (meshes[k] as ArrayMesh).surface_get_arrays(0)
+		var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+		var tris := 16 if k == "terrain" else idx.size() / 3
+		for t in mini(tris, 400):
+			var a := v[idx[t * 3]]
+			var b := v[idx[t * 3 + 1]]
+			var c := v[idx[t * 3 + 2]]
+			var n := (b - a).cross(c - a)
+			if n.length() > 1e-6 and n.y >= 0.0:
+				err = "%s triangle %d faces down" % [k, t]
+				break
+	w.queue_free()
+	await get_tree().process_frame
+	return err

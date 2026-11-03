@@ -48,7 +48,7 @@ void fragment() {
 		slope = mix(na.xy, nb.xy, wgt) * (0.35 + v_rapid * 0.5) + nc.xy * 0.12;
 		float fa = texture(foam_noise, uv * vec2(0.18, 0.4) - vec2(t * speed * 0.55, 0.0)).r;
 		float fb = texture(foam_noise, uv * vec2(0.45, 0.9) - vec2(t * speed * 0.9, 0.0)).r;
-		foam = v_rapid * smoothstep(0.45, 0.75, fa * 0.6 + fb * 0.6);
+		foam = smoothstep(0.35, 0.9, v_rapid) * smoothstep(0.62, 0.9, fa * 0.6 + fb * 0.6) * 0.85;
 		foam += v_edge * smoothstep(0.6, 0.9, fb) * 0.35;
 	} else {
 		vec2 wd = normalize(wind_dir);
@@ -69,5 +69,6 @@ void fragment() {
 	EMISSION = body * (1.0 - fres) * (1.0 - foam);
 	ROUGHNESS = mix(is_river ? 0.06 : 0.03, 0.8, foam);
 	SPECULAR = 0.5 * (1.0 - foam);
-	ALPHA = clamp(refr.a * 5.0 + foam, 0.0, 1.0);
+	// Only the last few centimetres fade out (soft contact line).
+	ALPHA = clamp(refr.a * 30.0 + foam, 0.0, 1.0);
 }

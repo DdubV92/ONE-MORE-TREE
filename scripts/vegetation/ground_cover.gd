@@ -274,9 +274,10 @@ func _build_cell(c: Vector2i) -> Node3D:
 		if kind in ["grass", "dune", "reed"]:
 			mmi.material_override = _materials[kind]
 			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		elif kind == "pebble":
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mmi.visibility_range_end = {"grass": 70.0, "dune": 80.0, "reed": 110.0, "fern": 75.0, "bush": 110.0, "pebble": 40.0}[kind]
+		else:
+			# Low cover: shadows only for bushes (they read as volumes).
+			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if kind == "bush" else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mmi.visibility_range_end = {"grass": 70.0, "dune": 80.0, "reed": 110.0, "fern": 50.0, "bush": 110.0, "pebble": 40.0}[kind]
 		mmi.visibility_range_end_margin = 10.0
 		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		node.add_child(mmi)

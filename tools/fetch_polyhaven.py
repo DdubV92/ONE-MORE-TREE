@@ -26,10 +26,10 @@ MODELS = [
     "wooden_bookshelf_worn", "plastic_thermos", "wall_clock", "rubber_boots",
     "wooden_lantern_01", "wooden_picnic_table", "folding_wooden_stool",
     "rusted_spade_01", "sledgehammer_01", "metal_toolbox", "steel_frame_shelves_01",
-    "small_wooden_table_01", "carved_wooden_plate", "wooden_cutting_board",
+    "carved_wooden_plate", "wooden_cutting_board",
     "russian_food_cans_01", "plastic_jerrycan", "security_light",
-    "industrial_wall_lamp", "throw_pillows_01", "old_bed_frame", "wooden_stool_01",
-    "dry_branches_medium_01", "tree_stump_01", "fern_02", "shrub_03",
+    "industrial_wall_lamp", "throw_pillows_01", "old_bed_frame",
+    "tree_stump_01", "fern_02",
 ]
 
 # Surface textures: diffuse, OpenGL normal, AO/roughness/metal packed.

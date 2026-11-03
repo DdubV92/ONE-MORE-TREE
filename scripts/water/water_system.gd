@@ -76,6 +76,7 @@ func _build_ocean() -> void:
 	_common_params(ocean_material)
 	ocean_material.set_shader_parameter("heightmap", World.height_texture)
 	ocean_material.set_shader_parameter("masks", World.mask_texture)
+	ocean_material.set_shader_parameter("water_region_map", ImageTexture.create_from_image(Image.create_from_data(World.W, World.H, false, Image.FORMAT_R8, World.water_region)))
 	ocean_material.set_shader_parameter("grid_origin", World.origin)
 	ocean_material.set_shader_parameter("cell_size", World.cs)
 	ocean_material.set_shader_parameter("grid_dims", Vector2i(World.W, World.H))
@@ -134,8 +135,8 @@ func _build_ponds() -> void:
 	mat.shader = load("res://shaders/inland_water.gdshader")
 	_common_params(mat)
 	mat.set_shader_parameter("is_river", false)
-	mat.set_shader_parameter("absorption", Vector3(0.6, 0.3, 0.32))
-	mat.set_shader_parameter("scatter_color", Color(0.05, 0.13, 0.1))
+	mat.set_shader_parameter("absorption", Vector3(1.9, 1.2, 1.1))
+	mat.set_shader_parameter("scatter_color", Color(0.06, 0.13, 0.1))
 	inland_materials.append(mat)
 	for pd in World.ponds():
 		var mi := MeshInstance3D.new()
@@ -161,14 +162,15 @@ static func _disc_mesh(radius: float, seg: int, rings: int) -> ArrayMesh:
 			var a := TAU * s / seg
 			v.append(Vector3(cos(a) * rr, 0.0, sin(a) * rr))
 			uv.append(Vector2(cos(a) * rr, sin(a) * rr))
+	# Clockwise when seen from above (Godot front faces), so the disc faces up.
 	for s in seg:
-		idx.append_array([0, 1 + (s + 1) % seg, 1 + s])
+		idx.append_array([0, 1 + s, 1 + (s + 1) % seg])
 	for r in range(1, rings):
 		var b0 := 1 + (r - 1) * seg
 		var b1 := 1 + r * seg
 		for s in seg:
 			var s1 := (s + 1) % seg
-			idx.append_array([b0 + s, b0 + s1, b1 + s1, b0 + s, b1 + s1, b1 + s])
+			idx.append_array([b0 + s, b1 + s1, b0 + s1, b0 + s, b1 + s, b1 + s1])
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = v

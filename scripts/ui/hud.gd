@@ -41,7 +41,11 @@ func _ready() -> void:
 	hint_label = _anchored_label(Vector2(0.5, 0.86), 18)
 	hint_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
 	debug_label = UITheme.label("", 15)
-	debug_label.position = Vector2(14, 12)
+	# Bottom-left, clear of the Tour panel (top-left) and controls (top-right).
+	debug_label.anchor_top = 1.0
+	debug_label.anchor_bottom = 1.0
+	debug_label.offset_left = 14
+	debug_label.offset_top = -190
 	debug_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	debug_label.add_theme_constant_override("outline_size", 4)
 	debug_label.visible = false

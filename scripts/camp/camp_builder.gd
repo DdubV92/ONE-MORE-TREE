@@ -27,6 +27,8 @@ func build() -> void:
 	_build_tool_area()
 	_build_yard()
 	_build_anchors()
+	var merged := BuildKit.batch_static(self)
+	print("Camp: batched %d static meshes" % merged)
 
 
 func _ground(local: Vector3) -> Vector3:

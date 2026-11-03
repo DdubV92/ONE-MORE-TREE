@@ -89,16 +89,6 @@
   "source": "https://polyhaven.com",
   "title": "Dirt"
  },
- "dry_branches_medium_01": {
-  "authors": {
-   "Rico Cilliers": "All"
-  },
-  "files": "gltf 1k",
-  "kind": "model",
-  "license": "CC0 1.0 (Poly Haven)",
-  "source": "https://polyhaven.com",
-  "title": "Dry Branches Medium 01"
- },
  "dry_decay_leaves": {
   "authors": {
    "Amal Kumar": "All"
@@ -395,16 +385,6 @@
   "source": "https://polyhaven.com",
   "title": "Security Light"
  },
- "shrub_03": {
-  "authors": {
-   "Rico Cilliers": "All"
-  },
-  "files": "gltf 1k",
-  "kind": "model",
-  "license": "CC0 1.0 (Poly Haven)",
-  "source": "https://polyhaven.com",
-  "title": "Shrub 03"
- },
  "sledgehammer_01": {
   "authors": {
    "Dylan Guzman": "All"
@@ -414,16 +394,6 @@
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Sledgehammer 01"
- },
- "small_wooden_table_01": {
-  "authors": {
-   "Ulan Cabanilla": "All"
-  },
-  "files": "gltf 1k",
-  "kind": "model",
-  "license": "CC0 1.0 (Poly Haven)",
-  "source": "https://polyhaven.com",
-  "title": "Small Wooden Table 01"
  },
  "sparse_grass": {
   "authors": {
@@ -616,15 +586,5 @@
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Wooden Picnic Table"
- },
- "wooden_stool_01": {
-  "authors": {
-   "Kuutti Siitonen": "All"
-  },
-  "files": "gltf 1k",
-  "kind": "model",
-  "license": "CC0 1.0 (Poly Haven)",
-  "source": "https://polyhaven.com",
-  "title": "Wooden Stool 01"
  }
 }

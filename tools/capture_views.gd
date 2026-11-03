@@ -42,5 +42,5 @@ func _ready() -> void:
 		var img := get_viewport().get_texture().get_image()
 		var out := "res://captures/%s_%s.png" % [vp_name, lighting]
 		img.save_png(out)
-		print("captured ", out)
+		print("captured ", out, " | draw calls %d, primitives %dk, objects %d, VRAM %.0f MB, tree colliders %d, physics active %d" % [Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME) / 1000, Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME), Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0, world.vegetation.active_tree_collision_count(), Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS)])
 	get_tree().quit()

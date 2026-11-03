@@ -15,6 +15,8 @@ var _timer := 1.0
 var _rng := RandomNumberGenerator.new()
 var _speed := 0.0
 var _points: Array[Vector3] = []
+## Camp-local obstacle circles (x, z, radius): table, fire, camper, cabin, tools.
+const OBSTACLES := [Vector3(-4, 7.5, 2.2), Vector3(1.5, -7.5, 2.6), Vector3(-15, -2, 2.3), Vector3(-15, 3, 2.3), Vector3(-15, 8, 2.3), Vector3(14, -4, 4.4), Vector3(14, 2, 4.4), Vector3(13.5, -14, 3.6)]
 
 
 func _ready() -> void:
@@ -22,7 +24,7 @@ func _ready() -> void:
 	dog = DogCharacter.new()
 	add_child(dog)
 	var c := CampLayout
-	for p in [Vector3(-4, 0, 3), Vector3(4, 0, 2), Vector3(-6, 0, -9), Vector3(6, 0, -10), Vector3(-1, 0, 13), Vector3(5, 0, 14), Vector3(-9, 0, 12), Vector3(9, 0, -5), Vector3(-10, 0, -2), Vector3(0, 0, -13)]:
+	for p in [Vector3(-1, 0, 3), Vector3(4, 0, 2), Vector3(-6, 0, -9), Vector3(6, 0, -10), Vector3(1, 0, 13), Vector3(5, 0, 14), Vector3(-8, 0, 13), Vector3(8, 0, -6), Vector3(-9, 0, -2), Vector3(-2, 0, -14), Vector3(-9, 0, 4)]:
 		_points.append(c.world(p))
 	global_position = _points[0]
 
@@ -41,8 +43,13 @@ func _process(delta: float) -> void:
 			_speed = move_toward(_speed, 0.0, delta * 3.0)
 			_timer -= delta
 			if _timer <= 0.0:
-				_target = _points[_rng.randi() % _points.size()]
-				state = State.WANDER
+				for attempt in 12:
+					var cand := _points[_rng.randi() % _points.size()]
+					if _path_clear(global_position, cand):
+						_target = cand
+						state = State.WANDER
+						break
+				_timer = 1.0
 		State.WANDER, State.GO_HOME:
 			var to := _target - global_position
 			to.y = 0.0
@@ -73,3 +80,16 @@ func _go_to_bed() -> void:
 		rotation.y = 0.6
 	state = State.SLEEP
 	dog.play("lie", 1.2)
+
+
+func _path_clear(a: Vector3, b: Vector3) -> bool:
+	var o := World.camp_origin()
+	var a2 := Vector2(a.x - o.x, a.z - o.z)
+	var b2 := Vector2(b.x - o.x, b.z - o.z)
+	for ob in OBSTACLES:
+		var c := Vector2(ob.x, ob.y)
+		var ab := b2 - a2
+		var t := clampf((c - a2).dot(ab) / maxf(ab.length_squared(), 0.001), 0.0, 1.0)
+		if (a2 + ab * t).distance_to(c) < ob.z:
+			return false
+	return true

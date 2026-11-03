@@ -157,7 +157,11 @@ func _physics_process(delta: float) -> void:
 		speed = SPRINT_SPEED
 	# Water: slower with depth, gently pushed back beyond the wading limit.
 	var feet := global_position
-	wading_depth = Game.water.depth_at(feet.x, feet.z) if Game.water else 0.0
+	# Depth of water above the player's feet (not above the bed), so bridges,
+	# decks and stepping stones over water never trigger the push-back.
+	wading_depth = 0.0
+	if Game.water:
+		wading_depth = clampf(minf(Game.water.surface_height_at(feet.x, feet.z) - feet.y, Game.water.depth_at(feet.x, feet.z)), 0.0, 99.0)
 	var limit: float = World.config.wade_depth_limit
 	speed *= lerpf(1.0, 0.45, clampf(wading_depth / limit, 0.0, 1.0))
 	var dir := (transform.basis * Vector3(input.x, 0, input.y))

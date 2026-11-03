@@ -32,6 +32,7 @@ func _ready() -> void:
 	terrain = _timed("terrain", func() -> Node: var t := TerrainSystem.new(); t.name = "Terrain"; add_child(t); t.build(); return t)
 	water = _timed("water", func() -> Node: var w := WaterSystem.new(); w.name = "Water"; add_child(w); w.build(_ocean_grid()); return w)
 	Game.water = water
+	_timed("sand_haze", func() -> Node: var h := SandHaze.new(); h.name = "SandHaze"; add_child(h); h.build(); return h)
 	_timed("bridges", func() -> Node: var b := BridgeBuilder.new(); b.name = "Bridges"; add_child(b); b.build(); return b)
 	vegetation = _timed("vegetation", func() -> Node: var v := VegetationSystem.new(); v.name = "Vegetation"; add_child(v); v.build(); return v)
 	Game.vegetation = vegetation

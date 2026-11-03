@@ -10,6 +10,7 @@ const WIDTH := 2.4
 func build() -> void:
 	for i in World.bridges().size():
 		_bridge(i, World.bridges()[i])
+	BuildKit.batch_static(self)
 
 
 func _bridge(i: int, b: Dictionary) -> void:

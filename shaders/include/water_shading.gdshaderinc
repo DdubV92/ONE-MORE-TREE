@@ -4,8 +4,8 @@
 
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap, repeat_disable;
 uniform sampler2D depth_tex : hint_depth_texture, filter_nearest, repeat_disable;
-uniform vec3 absorption = vec3(0.45, 0.11, 0.075);   // per meter, R G B
-uniform vec3 scatter_color : source_color = vec3(0.03, 0.2, 0.24);
+uniform vec3 absorption = vec3(0.55, 0.12, 0.09);   // per meter, R G B
+uniform vec3 scatter_color : source_color = vec3(0.02, 0.26, 0.3);
 uniform float refraction_strength = 0.035;
 uniform vec4 ripples[16];      // x, z, start time, strength
 uniform int ripple_count = 0;

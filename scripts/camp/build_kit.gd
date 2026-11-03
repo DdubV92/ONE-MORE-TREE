@@ -259,3 +259,45 @@ static func marker(parent: Node3D, name: String, pos: Vector3, rot_y := 0.0, gro
 	if group != "":
 		m.add_to_group(group)
 	return m
+
+
+## Merges static primitive meshes under `root` into one mesh per material to
+## cut draw calls. Collision bodies stay on the original nodes (their mesh is
+## cleared, the node and its StaticBody remain). Moving parts (doors, anything
+## under an AnimatableBody3D) and non-primitive meshes are left untouched.
+static func batch_static(root: Node3D) -> int:
+	var groups := {}
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		if n is Door or n is AnimatableBody3D or n is GPUParticles3D:
+			continue
+		if n is MeshInstance3D:
+			var mi := n as MeshInstance3D
+			var m := mi.mesh
+			if m and mi.material_override and (m is BoxMesh or m is CylinderMesh or m is QuadMesh or m is TorusMesh) and mi.visible:
+				var key := mi.material_override.get_rid()
+				if not groups.has(key):
+					groups[key] = {"mat": mi.material_override, "items": [], "shadow": mi.cast_shadow}
+				groups[key].items.append(mi)
+		for c in n.get_children():
+			stack.append(c)
+	var merged := 0
+	var inv := root.global_transform.affine_inverse()
+	for key in groups:
+		var g: Dictionary = groups[key]
+		if g.items.size() < 2:
+			continue
+		var st := SurfaceTool.new()
+		for mi in g.items:
+			st.append_from((mi as MeshInstance3D).mesh, 0, inv * (mi as MeshInstance3D).global_transform)
+		var out := MeshInstance3D.new()
+		out.name = "Batched_%d" % merged
+		out.mesh = st.commit()
+		out.material_override = g.mat
+		out.cast_shadow = g.shadow
+		root.add_child(out)
+		for mi in g.items:
+			(mi as MeshInstance3D).mesh = null
+		merged += g.items.size()
+	return merged
