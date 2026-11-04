@@ -21,7 +21,7 @@ Status key: ✅ implemented and observed (automated test or headless sim) · �
 | Recovery button (journal) puts a stuck/flipped truck on the nearest drivable cell; refused during a future hunt | 🟡 | |
 | Save: trucks restored parked and stationary, nobody seated, cargo from the ledger, teams resume at "gather" | ✅ | Documented policy |
 
-**Team cycle measurement** (headless, `tools/truck_sim.tscn`, one full day, two starters, area 70 m north of the gate): 2 runs, 35 truck receipts, 3.07 tree-equivalents paid at the drop-off ($306.31), 797 m driven, 6 recovered "something in the road" stops. A truck run roughly doubles what the same two workers deliver by hand (3.0 tree-eq/day in Phase 4), but the honest conclusion stands: the 30-day contract still needs far more throughput. Loading by hand at the work site, not driving, is now the bottleneck.
+**Team cycle measurement** (headless, `tools/truck_sim.tscn`, one full day, two starters, area 70 m north of the gate). Run A: 2 runs, 35 truck receipts, 3.07 tree-equivalents paid at the drop-off ($306.31), 797 m driven. Run B (after the safe-stop changes): 1 run, 34 receipts, 2.90 tree-equivalents ($299.68), 412 m driven; on the way back one loader missed the 75 s boarding window and walked home. The difference is which trees the loaders reached. A truck day is roughly what the same two workers carry by hand (3.0 tree-eq/day in Phase 4), but with one load in place of dozens of trips to the rack, so the crew's time goes into felling and bucking. The honest conclusion stands: the 30-day contract needs far more throughput, and loading at the work site is now the bottleneck.
 
 ### Camp, dock, dog
 
