@@ -1,13 +1,17 @@
-# ONE MORE TREE LATEST BUILD PHASE 10
+# ONE MORE TREE LATEST BUILD PHASE 11
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 10 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 11 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 10 (stabilization)
+## New in Phase 11
 
-- **New Campaign = the new standard rules:** 10,000 trees (the island keeps its size and dense clusters), you plus five employees from day one, $4,500 to start, $1,500 a day in wages for the full crew.
-- **Your existing saves are untouched:** they load as "Legacy 12,000-tree contract" with their own crew, money and progress.
-- **Under the hood:** versioned rulesets, merit hooks for later phases, stable audio event names, and the reserved 1.5× section length (not active yet).
+- **Bigger camper (+25 % floor):** the lounge now has a **desk computer**. Sit with E; the window is on your right (D to glance, A to look back; E stands up at once).
+- **CampOS:** Cameras (the live wall moved here: click a feed to focus, sound from the desk speakers) and Shop (axes and the pickup, using your real money). Mail, News, Forums and Recordings are marked as coming later.
+- **TV:** now entertainment only.
+- **The crew rebuilt:** Marta, Dale, Priya, Tomas and Joan each have their own face, hair, build and workwear, and real gloved hands with fingers.
+- **Biscuit rebuilt:** a deep chest, a real canine hind leg (hock), toes, a longer muzzle, folded ears and a collar and tag.
+- **Optional subtle pixel style** for characters (Settings → Character art style).
+- **Review:** Preview Tour (Tab) → "Phase 11 cast, dog & camper".
 
-Still placeholder: the human, dog and Foreman models and all sounds (Phases 11 and 15). Voices are blocked: this environment has no voice-generation tool (Phase 18 needs a licensed voice provider). The contract is still not completable at current work rates; faster tools and bigger sections come in Phases 13–14.
+Checks: 53/53 tests, smoke clean, island audit 0 issues. Visuals were checked on a software renderer only. The characters are still built from primitives in code (better shapes and hands, but not sculpted or skinned).

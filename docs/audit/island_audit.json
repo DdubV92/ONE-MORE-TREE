@@ -1,5 +1,5 @@
 {
-	"elapsed_ms": 13816,
+	"elapsed_ms": 12299,
 	"engine": "4.5.1-stable (official)",
 	"facilities": {
 		"arcade_spot:Cabin/Arcade_1": {
@@ -132,48 +132,48 @@
 			"component_cells": 127715,
 			"remaining": 0,
 			"remaining_within_25m_of_truck_route": 0,
-			"removal_ms": 38,
+			"removal_ms": 29,
 			"removed": 12000,
-			"truck_cells": 65785,
+			"truck_cells": 65784,
 			"unreachable_remaining": 0
 		},
 		"25%": {
 			"component_cells": 127715,
 			"remaining": 9000,
 			"remaining_within_25m_of_truck_route": 8899,
-			"removal_ms": 929,
+			"removal_ms": 764,
 			"removed": 3000,
-			"truck_cells": 52827,
+			"truck_cells": 52826,
 			"unreachable_remaining": 0
 		},
 		"50%": {
 			"component_cells": 127715,
 			"remaining": 6000,
 			"remaining_within_25m_of_truck_route": 5899,
-			"removal_ms": 851,
+			"removal_ms": 899,
 			"removed": 6000,
-			"truck_cells": 57280,
+			"truck_cells": 57279,
 			"unreachable_remaining": 0
 		},
 		"90%": {
 			"component_cells": 127715,
 			"remaining": 1200,
 			"remaining_within_25m_of_truck_route": 1200,
-			"removal_ms": 1453,
+			"removal_ms": 1278,
 			"removed": 10800,
-			"truck_cells": 64163,
+			"truck_cells": 64162,
 			"unreachable_remaining": 0
 		},
 		"99%": {
 			"component_cells": 127715,
 			"remaining": 120,
 			"remaining_within_25m_of_truck_route": 120,
-			"removal_ms": 344,
+			"removal_ms": 307,
 			"removed": 11880,
-			"truck_cells": 65632,
+			"truck_cells": 65631,
 			"unreachable_remaining": 0
 		},
-		"rebuild_all_chunks_ms": 11,
+		"rebuild_all_chunks_ms": 10,
 		"tree_colliders_after_full_clear": 0
 	},
 	"issues": [],
@@ -357,7 +357,7 @@
 		}
 	},
 	"trucks_original": {
-		"drivable_cells_from_bays": 48381,
+		"drivable_cells_from_bays": 48380,
 		"per_region": {
 			"camp surroundings": {
 				"targets": 67,
