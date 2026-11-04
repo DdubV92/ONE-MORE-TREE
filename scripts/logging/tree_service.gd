@@ -137,6 +137,10 @@ func apply_contact(id: int, from_pos: Vector3, work: float) -> Dictionary:
 		(actors[id] as TreeActor).set_notch(p)
 	if p >= 0.86 and p - work / maxf(float(r.required), 0.001) < 0.86:
 		tree_warning.emit(id)
+	# Phase 15: the trunk starts to strain from the real notch depth (the
+	# service debounces it; louder as the hinge thins).
+	if p >= 0.6 and p < 1.0 and SoundService.instance() != null:
+		SoundService.play("tree.strain", base + Vector3(0, 2.4, 0), {"db": lerpf(-10.0, 0.0, clampf((p - 0.6) / 0.4, 0.0, 1.0))})
 	if p >= 1.0:
 		_commit_fell(id)
 		return {"accepted": true, "progress": 1.0, "felled": true}

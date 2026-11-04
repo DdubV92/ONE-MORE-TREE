@@ -109,6 +109,6 @@ func interact(by: Node) -> void:
 					var a := cs.equipment.item(str(id))
 					names.append(GearCatalog.display_name(str(a.kind), str(a.tier)))
 			msg = "Collected into camp storage: %s. Equip or hand them out at the tool rack (E) or on the computer." % ", ".join(names)
-			LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 1.0, 0), -10.0)
+			LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 1.0, 0), 0.0, {"event": "tool.pickup"})
 	if by.has_method("show_message"):
 		by.show_message(msg)

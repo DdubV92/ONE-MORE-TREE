@@ -22,8 +22,17 @@ static func unlisten(c: Callable) -> void:
 	_listeners.erase(c)
 
 
-static func emit(stream: AudioStream, pos: Vector3, volume_db := 0.0, category := "world", label := "") -> void:
+## Phase 15 hop rule: only ORIGIN "world" sounds reach microphones. Relay,
+## recording, UI, music and internal cues are refused here, so desk/TV
+## output can never be re-captured into an escalating loop.
+static var refused := 0
+
+
+static func emit(stream: AudioStream, pos: Vector3, volume_db := 0.0, category := "world", label := "", origin := "world") -> void:
 	if stream == null:
+		return
+	if origin != "world":
+		refused += 1
 		return
 	emitted += 1
 	recent.append(pos)

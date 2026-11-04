@@ -1,10 +1,34 @@
-# ONE MORE TREE LATEST BUILD PHASE 14
+# ONE MORE TREE LATEST BUILD PHASE 15
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 14 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 15 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 14
+## New in Phase 15 (sound). Headphones recommended
+
+- **About 200 new sounds:**
+  - axe bites by species and thickness;
+  - trunk strain and hinge cracks;
+  - falls sized by the tree;
+  - logs on ground, rack, cart and decks;
+  - a layered chainsaw;
+  - a truck with engine, tyres and cargo;
+  - the dog's paws, tags and voice;
+  - doors, the fridge and the computer;
+  - surf, rivers, frogs, wind by vegetation, rain on each roof, thunder from the flash;
+  - night insects and owls;
+  - more physical night encounters.
+- **Every sound comes from where it happens** and turns with your head.
+- **Walls muffle each sound separately.** In the camper with the door closed, outside sounds are muffled while your desk stays clear. With the door open, they come through the doorway.
+- **Small rooms** (camper, cabin) have their own short reverb. Far sounds arrive late, at the speed of sound.
+- **New Relay volume slider:** the desk camera microphones now have their own slider, separate from TV.
+- **Audition route:** Preview (title screen) -> Tab -> "Phase 15 sound audition" (distance, rotation, door, indoor/outdoor, work, chainsaw, truck and dog, ambience, relay, replay, quiet night, worst overlap).
+
+**Honest limits:** every sound is an original procedural approximation. There are no recordings, and **none of them has been listened to yet**, because this build machine has no audio output. A few older sounds remain (footsteps, music, some night families). There is no HRTF, only stereo panning. Please report anything that sounds wrong, too loud, or comes from the wrong place.
+
+Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
+
+## Phase 14 (previous build)
 
 - **Axes feel different:** all three swing at the same rhythm; bigger axes bite deeper per hit (x1.00 / x1.40 / x1.96).
 - **Chainsaw:**
@@ -23,7 +47,7 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns,
 
 **Checks:** see PHASE14_NOTES.md. Visuals were checked on a software renderer only. The chainsaw sounds are interim procedural placeholders (Phase 15 replaces the audio).
 
-## Phase 13 (previous build)
+## Phase 13
 
 - **Longer logs (new campaigns):** about 7 logs per tree instead of 9, each about 1.7 m. Every tree still pays exactly $100.
 - **Dragging:** a log too heavy to lift can be dragged by one end. You walk slowly and can't jump.

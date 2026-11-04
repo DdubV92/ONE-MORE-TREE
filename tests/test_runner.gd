@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P15"):
+		_run("phase 15 units", _t_phase15_units)
+		await _run_async("phase 15 world", _t_phase15_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P14"):
 		_run("phase 14 units", _t_phase14_units)
 		await _run_async("phase 14 world", _t_phase14_world)
@@ -122,6 +128,8 @@ func _ready() -> void:
 	await _run_async("phase 13 world: cradle intake pays once, full cradle refuses unpaid, deck delivery, yard moves, fire pile cap, mid-move reload, burn, old queue migrates once, cart partial unload + pose, drag", _t_phase13_world)
 	_run("phase 14 units: axes 1.00/1.40/1.96 per hit at one cadence (output unchanged), Hard-working x1.25 once, gear factors exact and smaller than a tier step, saw 3-5x with no work in the air or during the start, frame-rate/hitch-proof, legacy axes mapped once, tier replacement, one owner, supplier quote/warnings/idempotent order/schedule/collect once/refund once/stock limit, schema 10", _t_phase14_units)
 	await _run_async("phase 14 world: player saw cuts only real wood, sky = zero, hide/axe stop the saw, worker gear changes only between jobs, worker saw start/stop, fall lanes cost routes and release, team break keeps one cargo owner, parcel locker collects once", _t_phase14_world)
+	_run("phase 15 units: 200+ original sources all bound (60/25/25/45/20/25), no missing files, routing valid, loops use loop sources, hop rule (world only reaches mics), per-category occlusion + room buses", _t_phase15_units)
+	await _run_async("phase 15 world: one listener, one sound per contact, debounce, travel delay frozen by pause, loop lifecycle (owner freed/stop), saw loops end on kill, per-source occlusion indoor vs outdoor, door portal, mute keeps world evidence, replay never becomes live evidence", _t_phase15_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -4176,4 +4184,259 @@ func _p14_checks(world: IslandWorld) -> String:
 	lk.interact(p)
 	if cs.equipment.items_of("storage").size() != before + 1:
 		return "locker collected %d items (want 1)" % (cs.equipment.items_of("storage").size() - before)
+	return ""
+
+
+# ------------------------------------------------------------------ Phase 15
+
+func _t_phase15_units() -> String:
+	var cov := SoundBank.coverage()
+	if not (cov.missing as Array).is_empty():
+		return "missing sources: %s" % str(cov.missing)
+	if int(cov.library) < 200:
+		return "library has %d sources (< 200)" % int(cov.library)
+	var lib_used := 0
+	var cats := {}
+	for k in SoundLibIndex.FILES:
+		cats[str(SoundLibIndex.FILES[k][2])] = int(cats.get(str(SoundLibIndex.FILES[k][2]), 0)) + 1
+		for id in SoundBank.EVENTS:
+			if k in SoundBank.EVENTS[id].files:
+				lib_used += 1
+				break
+	if lib_used != SoundLibIndex.FILES.size():
+		return "%d library sources are not bound to any event" % (SoundLibIndex.FILES.size() - lib_used)
+	if int(cats.get("work", 0)) < 60 or int(cats.get("vehicle", 0)) < 25 or int(cats.get("movement", 0)) < 25 or int(cats.get("env", 0)) < 45 or int(cats.get("domestic", 0)) < 20 or int(cats.get("horror", 0)) < 25:
+		return "category budget not met: %s" % str(cats)
+	for id in SoundBank.EVENTS:
+		var e: Dictionary = SoundBank.EVENTS[id]
+		if not SoundBank.CAL.has(str(e.get("cal", "contact"))) or not str(e.get("bus", "Work")) in Settings.BUSES:
+			return "event %s has bad routing" % id
+		if bool(e.get("loop", false)):
+			for f in e.files:
+				if not SoundBank.is_legacy(str(f)) and not bool(SoundLibIndex.FILES[f][1]):
+					return "loop event %s uses one-shot %s" % [id, f]
+	# Hop rule: only world-origin sounds reach microphones.
+	var got := [0]
+	var cb := func(_s: AudioStream, _p: Vector3, _d: float, _c: String, _l: String) -> void: got[0] += 1
+	SoundEvents.listen(cb)
+	var st: AudioStream = load(SoundBank.path_of("mouse_click"))
+	SoundEvents.emit(st, Vector3.ZERO, 0.0, "x", "", "relay")
+	SoundEvents.emit(st, Vector3.ZERO, 0.0, "x", "", "recording")
+	SoundEvents.emit(st, Vector3.ZERO, 0.0, "x", "", "world")
+	SoundEvents.unlisten(cb)
+	if got[0] != 1:
+		return "hop rule: %d deliveries (want 1, world only)" % got[0]
+	# Occlusion buses exist per category, each with its own low-pass.
+	for b in Settings.OCCLUDABLE:
+		for k in 2:
+			var i := AudioServer.get_bus_index("%s_O%d" % [b, k + 1])
+			if i < 0 or not (AudioServer.get_bus_effect(i, 0) is AudioEffectLowPassFilter) or AudioServer.get_bus_send(i) != b:
+				return "occlusion bus %s_O%d missing/miswired" % [b, k + 1]
+	for r in Settings.ROOMS:
+		if AudioServer.get_bus_index(r) < 0:
+			return "room bus %s missing" % r
+	return ""
+
+
+func _t_phase15_world() -> String:
+	# Acoustic rays see every collider in the space: a world left behind by an
+	# earlier test (same camp, same spot) would put its closed door on every
+	# path. Start from one world only.
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.sound == null or Game.campaign == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 30:
+		await get_tree().physics_frame
+	var err := await _p15_checks(world)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p15_checks(world: IslandWorld) -> String:
+	var snd: SoundService = Game.sound
+	# One authoritative listener.
+	var listeners := 0
+	for n in get_tree().root.find_children("*", "AudioListener3D", true, false):
+		if (n as AudioListener3D).is_current():
+			listeners += 1
+	if listeners != 1:
+		return "%d current 3D listeners (want exactly 1)" % listeners
+	var lis := get_viewport().get_camera_3d().global_position
+	# One contact = one sound; debounce merges a burst at one spot.
+	var p0 := int(snd.stats.played)
+	LoggingFX.play(LoggingFX.Sound.CHOP, lis + Vector3(2, 0, 0), 0.0, {"species": 2, "dia": 0.6})
+	if int(snd.stats.played) != p0 + 1:
+		return "one chop played %d sounds" % (int(snd.stats.played) - p0)
+	var h1 := SoundService.play("log.drop.log", lis + Vector3(3, 0, 0))
+	var h2 := SoundService.play("log.drop.log", lis + Vector3(3, 0, 0.3))
+	if h1 <= 0 or h2 != 0:
+		return "debounce wrong (%d, %d)" % [h1, h2]
+	# Travel time: a far contact waits distance/343 s; pause freezes it.
+	var far := lis + Vector3(110, 0, 0)
+	if SoundService.play("work.axe.buck", far) != -1:
+		return "far transient not delayed"
+	get_tree().paused = true
+	for i in 30:
+		await get_tree().process_frame
+	var still := int(SoundService.active_count().delayed)
+	get_tree().paused = false
+	if still != 1:
+		return "delay advanced while paused (%d queued)" % still
+	await get_tree().create_timer(0.6).timeout
+	if int(SoundService.active_count().delayed) != 0:
+		return "delayed sound never arrived"
+	# Loop lifecycle: owner freed -> loop gone; stop -> gone after fade.
+	var owner := Node3D.new()
+	world.add_child(owner)
+	owner.global_position = lis + Vector3(4, 0, 0)
+	var lh := SoundService.loop("tool.saw.idle", owner)
+	if not SoundService.is_playing(lh):
+		return "loop did not start"
+	owner.queue_free()
+	for i in 3:
+		await get_tree().process_frame
+	if SoundService.is_playing(lh):
+		return "orphan loop survived its owner"
+	var lh2 := SoundService.loop("fire.bed.small", lis + Vector3(4, 0, 0))
+	SoundService.loop_stop(lh2, 0.05)
+	await get_tree().create_timer(0.3).timeout
+	if SoundService.is_playing(lh2):
+		return "stopped loop still playing"
+	# Saw audio: running -> loops; kill -> no loops left.
+	var m := SawMachine.new()
+	var sa := SawAudio.new()
+	world.add_child(sa)
+	sa.global_position = lis + Vector3(2, 0, 0)
+	m.start()
+	for i in 120:
+		m.step(1.0 / 60.0, i > 100, false)
+		sa.update(m, 1.0 / 60.0)
+	var loops_running := snd.loops.size()
+	m.kill()
+	sa.update(m, 1.0 / 60.0)
+	for i in 20:
+		await get_tree().process_frame
+	var left := 0
+	for h in snd.loops:
+		if (snd.loops[h] as SoundService.Voice).attach == sa:
+			left += 1
+	sa.queue_free()
+	if loops_running < 3 or left != 0:
+		return "saw loops: %d while running, %d after kill" % [loops_running, left]
+	# Per-source occlusion inside the camper; door closed vs open.
+	world.teleport_to("camper")
+	for i in 8:
+		await get_tree().physics_frame
+	lis = get_viewport().get_camera_3d().global_position
+	var door: Door = null
+	var outside := World.camp_origin() + CampLayout.CAMPER_POS + Vector3(6.0, 1.2, 0.0)
+	var space := world.get_world_3d().direct_space_state
+	var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(lis, outside, 1))
+	if not hit.is_empty() and (hit.collider as Node).get_parent() is Door:
+		door = (hit.collider as Node).get_parent()
+	if door == null:
+		return "camper door not on the test path"
+	# Aim the outside source straight through the doorway's centre (not the
+	# hinge side, where the opened panel itself stands) so "open" means a
+	# genuinely clear line wherever the camera spawned.
+	var opening := door.global_position + door.global_basis.x * door.width * 0.5 + Vector3(0, 1.5, 0)
+	var flat := Vector3(opening.x - lis.x, 0, opening.z - lis.z)
+	outside = opening + flat.normalized() * 3.0 + Vector3(0, (opening.y - lis.y) / maxf(flat.length(), 0.5) * 3.0, 0)
+	outside.y = maxf(outside.y, World.height_at(outside.x, outside.z) + 1.0)
+	door.set_open(false, true)
+	await get_tree().physics_frame
+	var out_h := SoundService.loop("terror.drone.low", outside)
+	var in_h := SoundService.loop("home.keyboard", lis + Vector3(0.3, -0.3, 0.4))
+	for i in 4:
+		await get_tree().physics_frame
+	await get_tree().create_timer(0.6).timeout
+	var vo: SoundService.Voice = snd.loops[out_h]
+	var vi: SoundService.Voice = snd.loops[in_h]
+	if vo.tier < 1 or vi.tier != 0 or vi.p.bus != "UI" or not vo.p.bus.ends_with("_O%d" % vo.tier):
+		return "per-source occlusion wrong: outside tier %d (%s), inside tier %d (%s)" % [vo.tier, vo.p.bus, vi.tier, vi.p.bus]
+	door.set_open(true, true)
+	# Wait on physics steps and wall time (occlusion re-checks every 0.2 s of
+	# real time; the panel moves in the physics step), not a frame count:
+	# uncapped headless frames can pass 50 frames before either happens.
+	for i in 4:
+		await get_tree().physics_frame
+	await get_tree().create_timer(0.6).timeout
+	if vo.tier != 0:
+		var seen := PackedStringArray()
+		var ex: Array[RID] = []
+		var cur := get_viewport().get_camera_3d().global_position
+		for k in 4:
+			var q := PhysicsRayQueryParameters3D.create(cur, outside, 1)
+			q.exclude = ex
+			var hq := space.intersect_ray(q)
+			if hq.is_empty():
+				break
+			var c2: Node = hq.collider
+			seen.append("%s/%s(%s)" % [c2.get_parent().name, c2.name, str(c2.get_meta("acoustic", "-"))])
+			ex.append((c2 as CollisionObject3D).get_rid())
+		var cds := PackedStringArray()
+		for dd in get_tree().get_nodes_in_group("doors"):
+			if str((dd as Node).name).contains("Camper"):
+				var pd: Door = dd
+				var phys: Transform3D = PhysicsServer3D.body_get_state(pd._panel.get_rid(), PhysicsServer3D.BODY_STATE_TRANSFORM)
+				cds.append("%s open=%s rot=%.0f phys_rot=%.0f body=%s pm=%s" % [pd.get_path(), str(pd.is_open), rad_to_deg(pd._panel.rotation.y), rad_to_deg(phys.basis.get_euler().y), pd._panel.name, str(pd.process_mode)])
+		return "open door: outside source still filtered (tier %d, occ %.1f dB, portal %s, listener %s -> %s, hits %s; this door %s; doors: %s; paused %s)" % [vo.tier, vo.occ_target, str(vo.portal), str(cur), str(outside), ", ".join(seen), str(door.get_path()), " | ".join(cds), str(get_tree().paused)]
+	# Around the corner from the open door: the direct line hits the wall,
+	# the doorway gives the better path (sound arrives from the opening).
+	var dp := door.global_position + door.global_basis.x * door.width * 0.5 + Vector3(0, 1.0, 0)
+	var outward := Vector3(dp.x - lis.x, 0, dp.z - lis.z).normalized()
+	var tangent := outward.cross(Vector3.UP).normalized()
+	var corner_h := -1
+	for sgn in [1.0, -1.0]:
+		var src: Vector3 = dp + outward * 2.0 + tangent * 3.5 * sgn
+		if snd.path_loss(lis, src) >= 12.0:
+			corner_h = SoundService.loop("terror.drone.beating", src)
+			break
+	if corner_h <= 0:
+		return "no around-the-corner test position (every candidate had a clear direct line)"
+	if corner_h > 0:
+		await get_tree().create_timer(0.6).timeout
+		var vc: SoundService.Voice = snd.loops[corner_h]
+		if vc.portal == Vector3.INF or vc.tier > 1:
+			return "around-the-corner source not routed through the doorway (tier %d, portal %s)" % [vc.tier, str(vc.portal)]
+		SoundService.loop_stop(corner_h, 0.02)
+	door.set_open(false, true)
+	SoundService.loop_stop(out_h, 0.02)
+	SoundService.loop_stop(in_h, 0.02)
+	# Muting the mix does not change world evidence (cameras/AI/recorder).
+	var master := AudioServer.get_bus_index("Master")
+	var was_mute := AudioServer.is_bus_mute(master)
+	AudioServer.set_bus_mute(master, true)
+	var e0 := SoundEvents.emitted
+	var r0 := snd.recorder.size()
+	SoundService.play("terror.knock.wood", lis + Vector3(5, 0, 0), {"no_delay": true})
+	AudioServer.set_bus_mute(master, was_mute)
+	if SoundEvents.emitted != e0 + 1 or snd.recorder.size() != r0 + 1:
+		return "muted mix changed world evidence (%d emits, %d records)" % [SoundEvents.emitted - e0, snd.recorder.size() - r0]
+	# Replay: desk speaker, RECORDING origin - no capture, no new records.
+	var mons := get_tree().get_nodes_in_group("camper_monitor")
+	if mons.is_empty():
+		return "no desk monitor"
+	var e1 := SoundEvents.emitted
+	var r1 := snd.recorder.size()
+	var t1 := float(snd.recorder[snd.recorder.size() - 1].t)
+	var n := SoundService.replay(snd.recorder.duplicate(), mons[0], t1 - 60.0, t1 + 1.0)
+	if n <= 0 or SoundEvents.emitted != e1 or snd.recorder.size() != r1:
+		return "replay leaked into live evidence (%d played, %d emits, %d records)" % [n, SoundEvents.emitted - e1, snd.recorder.size() - r1]
 	return ""

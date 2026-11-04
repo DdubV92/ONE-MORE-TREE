@@ -5,7 +5,13 @@ extends Node
 signal changed
 
 const PATH := "user://settings.cfg"
-const BUSES := ["Master", "Ambience", "Work", "Characters", "Music", "Horror", "UI", "TV"]
+const BUSES := ["Master", "Ambience", "Work", "Characters", "Music", "Horror", "UI", "TV", "Relay"]
+## Phase 15: per-source occlusion tiers (a source routes itself to one of
+## these by ITS OWN path; nothing filters a whole category at once) and the
+## room-response buses Area3D zones send to.
+const OCCLUDABLE := ["Ambience", "Work", "Characters", "Horror"]
+const OCCLUSION_CUTOFF := [2400.0, 750.0]
+const ROOMS := {"RoomCamper": [0.16, 0.55, 0.22], "RoomCabin": [0.3, 0.5, 0.26], "RockHollow": [0.62, 0.35, 0.12]}
 
 var values := {
 	"mouse_sensitivity": 0.22,
@@ -36,6 +42,7 @@ var values := {
 	"vol_Horror": 0.9,
 	"vol_UI": 0.7,
 	"vol_TV": 0.8,
+	"vol_Relay": 0.8,
 	"tv_interval": 5.0,             # camera wall: seconds per tile swap (0 = frozen)
 	# Phase 8 comfort / presentation
 	"flash_reduction": "reduced",   # full / reduced / off (distant lightning, bright cues)
@@ -107,6 +114,44 @@ func _ensure_buses() -> void:
 		var ml := AudioEffectHardLimiter.new()
 		ml.ceiling_db = -0.3
 		AudioServer.add_bus_effect(0, ml)
+	# Phase 15: the camera relay (computer speakers) is its own bus: the
+	# same transmission band-limit and limiter as a small speaker.
+	var rb := AudioServer.get_bus_index("Relay")
+	if AudioServer.get_bus_effect_count(rb) == 0:
+		var rlp := AudioEffectLowPassFilter.new()
+		rlp.cutoff_hz = 2600.0
+		AudioServer.add_bus_effect(rb, rlp)
+		var rhp := AudioEffectHighPassFilter.new()
+		rhp.cutoff_hz = 180.0
+		AudioServer.add_bus_effect(rb, rhp)
+		var rl := AudioEffectHardLimiter.new()
+		rl.ceiling_db = -3.0
+		AudioServer.add_bus_effect(rb, rl)
+	for base in OCCLUDABLE:
+		for k in 2:
+			var nm := "%s_O%d" % [base, k + 1]
+			if AudioServer.get_bus_index(nm) == -1:
+				AudioServer.add_bus()
+				var oi := AudioServer.bus_count - 1
+				AudioServer.set_bus_name(oi, nm)
+				AudioServer.set_bus_send(oi, base)
+				var olp := AudioEffectLowPassFilter.new()
+				olp.cutoff_hz = OCCLUSION_CUTOFF[k]
+				olp.resonance = 0.5
+				AudioServer.add_bus_effect(oi, olp)
+	for room in ROOMS:
+		if AudioServer.get_bus_index(room) == -1:
+			AudioServer.add_bus()
+			var ri := AudioServer.bus_count - 1
+			AudioServer.set_bus_name(ri, room)
+			AudioServer.set_bus_send(ri, "Master")
+			var rv2 := AudioEffectReverb.new()
+			rv2.room_size = float(ROOMS[room][0])
+			rv2.damping = float(ROOMS[room][1])
+			rv2.wet = float(ROOMS[room][2])
+			rv2.dry = 0.0
+			rv2.spread = 0.6
+			AudioServer.add_bus_effect(ri, rv2)
 	var chars := AudioServer.get_bus_index("Characters")
 	if AudioServer.get_bus_effect_count(chars) == 0:
 		var rv := AudioEffectReverb.new()

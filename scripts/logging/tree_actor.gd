@@ -190,8 +190,9 @@ func start_fall() -> void:
 	_theta = deg_to_rad(1.5)
 	_omega = 0.02
 	_fall_t = 0.0
-	LoggingFX.play(LoggingFX.Sound.CRACK, _pivot + Vector3(0, 0.5, 0))
-	LoggingFX.play(LoggingFX.Sound.CREAK, _pivot + Vector3(0, 2.0, 0))
+	LoggingFX.play(LoggingFX.Sound.CRACK, _pivot + Vector3(0, 0.5, 0), 0.0, {"tree": tree_id})
+	LoggingFX.play(LoggingFX.Sound.CREAK, _pivot + Vector3(0, 2.0, 0), 0.0, {"tree": tree_id})
+	LoggingFX.play(LoggingFX.Sound.RUSTLE, _pivot + Vector3(0, 8.0, 0), 0.0, {"tree": tree_id})
 	set_physics_process(true)
 
 
@@ -346,7 +347,7 @@ func _on_body_entered(_other: Node) -> void:
 		body.linear_damp = 0.9
 		body.angular_damp = 2.6
 		var top := body.global_transform * Vector3(0, cut_h + (height - cut_h) * 0.6, 0)
-		LoggingFX.play(LoggingFX.Sound.IMPACT, top)
+		LoggingFX.play(LoggingFX.Sound.IMPACT, top, 0.0, {"tree": tree_id})
 		LoggingFX.dust(top)
 		RenderingServer.global_shader_parameter_set("tree_impact", Vector4(top.x, top.z, Game.world_time, clampf(v / 8.0, 0.3, 1.0)))
 
@@ -516,7 +517,7 @@ func set_stump_progress(p: float) -> void:
 func remove_stump() -> void:
 	if stump:
 		LoggingFX.dust(stump.global_position + Vector3(0, 0.3, 0))
-		LoggingFX.play(LoggingFX.Sound.CRACK, stump.global_position, -6.0)
+		LoggingFX.play(LoggingFX.Sound.CRACK, stump.global_position, 0.0, {"event": "stump.root.tear"})
 		stump.queue_free()
 		stump = null
 	_phase = "disposed"

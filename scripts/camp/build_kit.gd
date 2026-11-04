@@ -159,6 +159,8 @@ static func box(parent: Node3D, size: Vector3, pos: Vector3, material: Variant, 
 	parent.add_child(mi)
 	if collide:
 		var body := StaticBody3D.new()
+		# Phase 15: acoustic class of what this part is made of (occlusion).
+		body.set_meta("acoustic", acoustic_of(material))
 		var cs := CollisionShape3D.new()
 		var shape := BoxShape3D.new()
 		shape.size = size
@@ -166,6 +168,20 @@ static func box(parent: Node3D, size: Vector3, pos: Vector3, material: Variant, 
 		body.add_child(cs)
 		mi.add_child(body)
 	return mi
+
+
+## Phase 15: build material -> acoustic class for SoundService occlusion.
+static func acoustic_of(material: Variant) -> String:
+	var n := str(material) if material is String else ""
+	if n.contains("glass") or n.contains("window"):
+		return "glass"
+	if n.contains("steel") or n.contains("metal") or n.contains("camper_paint") or n.contains("chrome") or n.contains("fence"):
+		return "metal"
+	if n.contains("rock") or n.contains("stone") or n.contains("concrete"):
+		return "rock"
+	if n.contains("fabric") or n.contains("canvas") or n.contains("curtain") or n.contains("blanket"):
+		return "fabric"
+	return "wood"
 
 
 static func cylinder(parent: Node3D, radius: float, height: float, pos: Vector3, material: Variant, collide := true, sides := 12, top_radius := -1.0) -> MeshInstance3D:

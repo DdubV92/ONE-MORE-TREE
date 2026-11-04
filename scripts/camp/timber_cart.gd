@@ -154,7 +154,7 @@ func interact(by: Node) -> void:
 			if not load_sids().is_empty() and not rs.is_empty():
 				msg += " %d left on the cart: %s" % [load_sids().size(), t.last_refusal]
 			if not rs.is_empty():
-				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), -6.0)
+				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), 0.0, {"event": "log.drop.rack"})
 		else:
 			release()
 			msg = "Cart parked."
@@ -178,7 +178,7 @@ func interact(by: Node) -> void:
 					msg = "Too heavy for the cart (%.2f of %.2f tree-eq)." % [load_mte() / 1000.0, BUDGET_MTE / 1000.0]
 			if n > 0:
 				msg = "Loaded %d log%s onto the cart (%d/%d)." % [n, "" if n == 1 else "s", load_sids().size(), MAX_PIECES] + ((" " + msg) if msg != "" else "")
-				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), -9.0)
+				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), 0.0, {"event": "log.drop.cart"})
 	else:
 		grab(by as Node3D)
 		msg = "Pushing the cart. %s at the cradle or a deck unloads it; %s or %s again lets go." % [Keys.label("interact"), Keys.label("interact"), Keys.label("drop")]
@@ -202,9 +202,35 @@ func release() -> void:
 
 # -------------------------------------------------------------- pushing
 
+var _roll_h := 0
+var _roll_kind := ""
+
+
+## Phase 15: wheels on the real ground (dirt vs boards), louder with
+## speed; a squeak now and then; silent when parked.
+func _roll_audio(speed: float) -> void:
+	if SoundService.instance() == null:
+		return
+	var p := global_position
+	var kind := "cart.roll.wood" if p.y > World.height_at(p.x, p.z) + 0.2 else "cart.roll.dirt"
+	if speed < 0.15 or kind != _roll_kind:
+		if _roll_h != 0:
+			SoundService.loop_stop(_roll_h, 0.2)
+			_roll_h = 0
+		_roll_kind = kind
+		if speed < 0.15:
+			return
+	if _roll_h == 0 or not SoundService.is_playing(_roll_h):
+		_roll_h = SoundService.loop(kind, self, {"gain": -20.0})
+	SoundService.loop_set(_roll_h, linear_to_db(clampf(speed / 2.0, 0.05, 1.0)), 0.8 + 0.3 * clampf(speed / 2.0, 0.0, 1.0))
+	if randf() < 0.004:
+		SoundService.play("cart.squeak", self, {"emit": false})
+
+
 func _physics_process(delta: float) -> void:
 	if pusher == null or not is_instance_valid(pusher):
 		pusher = null
+		_roll_audio(0.0)
 		return
 	var fwd := -pusher.global_basis.z
 	fwd.y = 0.0
@@ -224,6 +250,7 @@ func _physics_process(delta: float) -> void:
 	var nxt := cur + step
 	if _blocked(nxt, yaw):
 		nxt = cur
+	_roll_audio(Vector2(nxt.x - cur.x, nxt.z - cur.z).length() / maxf(delta, 0.0001))
 	_place(nxt, yaw)
 	if Vector2(pusher.global_position.x - global_position.x, pusher.global_position.z - global_position.z).length() > SNAG_DIST + AHEAD:
 		var p := pusher

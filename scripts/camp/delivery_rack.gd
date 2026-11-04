@@ -124,7 +124,7 @@ func deliver_from(by: Node) -> void:
 	for r in rs:
 		cents += int(r.cents)
 	if not rs.is_empty():
-		LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), -6.0)
+		LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), 0.0, {"event": "log.drop.rack"})
 	if by.has_method("show_message"):
 		if rs.is_empty():
 			by.show_message("Not accepted: %s" % t.last_refusal)

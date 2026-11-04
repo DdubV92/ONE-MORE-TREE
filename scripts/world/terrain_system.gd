@@ -68,6 +68,7 @@ func _spawn_chunks() -> void:
 	var collision_root := StaticBody3D.new()
 	collision_root.name = "TerrainCollision"
 	collision_root.set_meta("surface", "terrain")
+	collision_root.set_meta("acoustic", "terrain")
 	add_child(collision_root)
 	for cj in ch:
 		for ci in cw:

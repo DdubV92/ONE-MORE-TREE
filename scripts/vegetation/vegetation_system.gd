@@ -249,6 +249,7 @@ func update_collision_around(p: Vector3) -> void:
 func _make_cell_body(cell: Vector2i) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = "TreeCollision_%d_%d" % [cell.x, cell.y]
+	body.set_meta("acoustic", "trunk")
 	body.collision_layer = 1 | 4    # world + harvestable trees
 	var ids := PackedInt32Array()
 	for i in (_tree_cells[cell] as Array):
@@ -299,6 +300,7 @@ func _build_rocks() -> void:
 		by_variant[v].append(i)
 	var body := StaticBody3D.new()
 	body.name = "RockCollision"
+	body.set_meta("acoustic", "rock")
 	add_child(body)
 	for v in by_variant:
 		var mm := MultiMesh.new()

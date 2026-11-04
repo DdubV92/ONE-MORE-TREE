@@ -10,6 +10,8 @@ extends Node3D
 ## Phase 5: a pet flap in the bottom of the panel (the dog's own door).
 @export var dog_flap := false
 var is_open := false
+## Set when the player opens it by hand (crew auto-close leaves it alone).
+var opened_by_player := false
 var flap: Node3D
 var _panel: AnimatableBody3D
 var _tween: Tween
@@ -19,6 +21,7 @@ func _ready() -> void:
 	add_to_group("doors")
 	_panel = AnimatableBody3D.new()
 	_panel.sync_to_physics = false
+	_panel.set_meta("acoustic", "door")
 	add_child(_panel)
 	var mi := MeshInstance3D.new()
 	var bm := BoxMesh.new()
@@ -54,12 +57,20 @@ func get_interact_text() -> String:
 
 func interact(_by: Node) -> void:
 	set_open(not is_open)
+	opened_by_player = is_open
 
 
 func set_open(v: bool, instant := false) -> void:
 	if v != is_open and not instant and Game.hunt:
 		Game.hunt.noise(global_position, 18.0, "door", "door")
+	if v != is_open and not instant and SoundService.instance() != null:
+		# Phase 15: the panel itself sounds (hinge on opening, latch + thud
+		# on closing), at the door, through the normal occlusion.
+		var at := global_position + global_basis.x * width * 0.5 + Vector3(0, 1.0, 0)
+		SoundService.play("door.wood.open" if v else "door.wood.close", at)
 	is_open = v
+	if not v:
+		opened_by_player = false
 	var target := deg_to_rad(open_angle if v else 0.0)
 	if _tween:
 		_tween.kill()

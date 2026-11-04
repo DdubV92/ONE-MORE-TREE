@@ -413,7 +413,7 @@ func _split(body: TimberBody, k: int) -> void:
 		if b.is_resting() and not b.has_support():
 			b.set_dynamic(true)
 	var at := pose * Vector3(0, float(records[tid].segments[k].b), 0)
-	LoggingFX.play(LoggingFX.Sound.CRACK, at, -8.0)
+	LoggingFX.play(LoggingFX.Sound.CRACK, at, 0.0, {"event": "tree.branch.snap"})
 	LoggingFX.chips(at, Vector3.UP, Color(0.85, 0.72, 0.5))
 
 

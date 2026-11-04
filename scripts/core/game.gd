@@ -27,6 +27,7 @@ var safety: Node
 var player: Node3D
 var vegetation: Node
 var cover: CoverService              # Phase 12 (island r2 only)
+var sound: SoundService              # Phase 15 sound-event service
 var trees: TreeService
 var timber: TimberService
 var yard: YardService                # Phase 13 logging yard

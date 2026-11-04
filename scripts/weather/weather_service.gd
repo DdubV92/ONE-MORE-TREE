@@ -81,8 +81,14 @@ func _ready() -> void:
 	player_view.follow_main_camera = true
 	add_child(player_view)
 	views.append(player_view)
-	_audio_open = _loop_player("rain_open")
-	_audio_roof = _loop_player("rain_roof")
+	# Phase 15: rain is positional (SoundService): open-air emitters around
+	# the listener (walls occlude them), the real roof above you (metal
+	# camper, wood cabin, canvas lean-to) and eave drips.
+	for k in 3:
+		var m := Marker3D.new()
+		m.name = "RainEmitter%d" % k
+		add_child(m)
+		_rain_pts.append(m)
 	_thunder = AudioStreamPlayer.new()
 	_thunder.bus = "Ambience"
 	add_child(_thunder)
@@ -292,12 +298,19 @@ func _update_lightning(delta: float) -> void:
 		flashes += 1
 		var dist := _cos_rng.randf_range(2200.0, 4500.0)
 		_thunder_due = minf(dist / 343.0, 12.0)
+		_thunder_ang = _cos_rng.randf_range(0.0, TAU)
 		_thunder_db = lerpf(-8.0, -16.0, (dist - 2200.0) / 2300.0)
 
 
 func _play_thunder() -> void:
-	var s: AudioStream = load("res://audio/generated/thunder_far_%d.wav" % (thunders % 2))
 	thunders += 1
+	if SoundService.instance() != null:
+		# From the flash direction, already delayed by its real distance.
+		var lp := _listener()
+		var dir := Vector3(cos(_thunder_ang), 0, sin(_thunder_ang))
+		SoundService.play("weather.thunder.far", lp + dir * 400.0 + Vector3(0, 120, 0), {"no_delay": true, "db": _thunder_db + 10.0})
+		return
+	var s: AudioStream = load("res://audio/generated/thunder_far_%d.wav" % (thunders % 2))
 	if s == null:
 		return
 	_thunder.stream = s
@@ -337,12 +350,59 @@ func _update_shelter(delta: float) -> void:
 	shelter = move_toward(shelter, target, 0.25 / 0.6)
 
 
+var _rain_pts: Array[Marker3D] = []
+var _rain_h := {}            # layer -> SoundService loop handle
+var _thunder_ang := 0.0
+var _roof_kind := ""
+var _roof_t := 0.0
+
+
 func _update_audio() -> void:
+	if SoundService.instance() == null:
+		return
 	var r := rain
-	var open_lin := r * lerpf(1.0, 0.18, shelter)
-	var roof_lin := r * clampf(shelter * 1.6, 0.0, 1.0)
-	_set_loop(_audio_open, open_lin, -9.0)
-	_set_loop(_audio_roof, roof_lin, -12.0)
+	var lp := _listener()
+	var cam := get_viewport().get_camera_3d() if get_viewport() else null
+	var right := cam.global_basis.x if cam else Vector3.RIGHT
+	right.y = 0.0
+	right = right.normalized() if right.length() > 0.01 else Vector3.RIGHT
+	# Open-air rain left/right of the listener, a little above (outdoors).
+	_rain_pts[0].global_position = lp + right * 7.0 + Vector3(0, 2.5, 0)
+	_rain_pts[1].global_position = lp - right * 7.0 + Vector3(0, 2.5, 0)
+	var heavy := clampf((r - 0.45) / 0.4, 0.0, 1.0)
+	_rain_layer("light_l", "weather.rain.light", _rain_pts[0], r * (1.0 - heavy * 0.6), -2.0)
+	_rain_layer("light_r", "weather.rain.light", _rain_pts[1], r * (1.0 - heavy * 0.6), -2.0)
+	_rain_layer("heavy", "weather.rain.heavy", _rain_pts[0], r * heavy, 0.0)
+	# The roof right above you, by what it is made of (rechecked 4x/s).
+	_roof_t -= 0.25
+	if _roof_t <= 0.0:
+		_roof_t = 1.0
+		_roof_kind = ""
+		var space := get_viewport().world_3d.direct_space_state if get_viewport() else null
+		if space:
+			var q := PhysicsRayQueryParameters3D.create(lp, lp + Vector3(0, 6.0, 0))
+			var hit := space.intersect_ray(q)
+			if not hit.is_empty():
+				var col := hit.collider as Node
+				var m := str(col.get_meta("acoustic", "wood")) if col else "wood"
+				_roof_kind = "metal" if m == "metal" else ("canvas" if m == "fabric" else "wood")
+				_rain_pts[2].global_position = hit.position
+	for k in ["metal", "wood", "canvas"]:
+		_rain_layer("roof_" + k, "weather.rain." + k, _rain_pts[2], r if _roof_kind == k else 0.0, -2.0)
+	_rain_layer("drips", "weather.rain.drips", _rain_pts[2], r * (0.6 if _roof_kind != "" else 0.0), 0.0)
+
+
+func _rain_layer(key: String, event: String, at: Node3D, lin: float, top_db: float) -> void:
+	var h := int(_rain_h.get(key, 0))
+	if lin < 0.01:
+		if h != 0:
+			SoundService.loop_stop(h, 0.6)
+			_rain_h.erase(key)
+		return
+	if h == 0 or not SoundService.is_playing(h):
+		h = SoundService.loop(event, at, {"gain": -40.0})
+		_rain_h[key] = h
+	SoundService.loop_set(h, top_db + linear_to_db(maxf(lin, 0.0001)))
 
 
 func _set_loop(p: AudioStreamPlayer, lin: float, top_db: float) -> void:

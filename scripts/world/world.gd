@@ -57,6 +57,10 @@ func _ready() -> void:
 	# 10,000 subset or the legacy/full 12,000) before anything is spawned.
 	World.apply_variant(Ruleset.variant_for_start())
 	build_ms["world_data"] = Time.get_ticks_msec() - t0
+	# Phase 15: the sound-event service exists before anything can play.
+	var snd := SoundService.new()
+	add_child(snd)
+	Game.sound = snd
 	environment = _timed("environment", func() -> Node: var e := EnvironmentController.new(); e.name = "Environment"; add_child(e); e.build(); return e)
 	Game.environment = environment
 	weather = WeatherService.new()

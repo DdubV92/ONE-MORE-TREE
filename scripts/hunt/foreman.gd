@@ -649,6 +649,14 @@ func _sounds(delta: float) -> void:
 		_feet.max_polyphony = 2
 		add_child(_feet)
 		body.foot_contact.connect(func(_side: int, heavy: bool) -> void:
+			if SoundService.instance() != null:
+				# Phase 15: from its feet, occluded like any world sound
+				# (walls and closed doors muffle it; an open door doesn't).
+				var fp := global_position
+				var wet := World.surface_at(fp.x, fp.z) in [World.Surface.WATER, World.Surface.SAND]
+				SoundService.play("foreman.step.wet" if wet else "foreman.step", fp + Vector3(0, 0.1, 0), {"db": 0.0 if heavy else -4.0})
+				steps_played += 1
+				return
 			var s: AudioStream = load("res://audio/generated/f_step_%d.wav" % (_rng.randi() % 2))
 			var db := 0.0 if heavy else -4.0
 			_feet.stream = s
@@ -677,7 +685,13 @@ func _sounds(delta: float) -> void:
 			mark("F-H25")
 
 
+const PLAY_EVENTS := {"f_breath": "foreman.breath", "f_intake": "foreman.breath"}
+
+
 func _play(n: String, db: float, at := Vector3.INF) -> void:
+	if SoundService.instance() != null and PLAY_EVENTS.has(n):
+		SoundService.play(str(PLAY_EVENTS[n]), (self if at == Vector3.INF else at), {"db": db, "offset": Vector3(0, 1.6, 0) if at == Vector3.INF else Vector3.ZERO})
+		return
 	var path_s := "res://audio/generated/%s.wav" % n
 	if not ResourceLoader.exists(path_s):
 		return

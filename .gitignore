@@ -36,3 +36,5 @@ Thumbs.db
 # Phase 12: raw Mixamo FBX sources (Adobe terms: not redistributable as
 # standalone files). Only the retargeted clip data is committed.
 assets/mixamo_src/
+# Python caches (tools)
+__pycache__/

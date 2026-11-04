@@ -298,7 +298,20 @@ const CAPTIONS := {
 }
 
 
+## Phase 15: kinds with a specific physical source in the new library play
+## it from the authored spot through SoundService (occluded, roomed,
+## captured by cameras as an ordinary world sound). The rest keep their
+## Phase 6 sources (listed as remaining gaps).
+const KIND_EVENTS := {"call": "terror.call.far", "scrape": ["terror.scrape", "terror.drag", "terror.scratch"], "knock": ["terror.knock.wood", "terror.knock.metal"], "chop": "work.axe.bite.pine.thin", "water": "terror.step.wet", "steps": "terror.steps.gravel", "breath": "terror.breath.far", "creak": ["door.creak", "terror.groan"]}
+
+
 func _sound(kind: String, at: Vector3) -> void:
+	if KIND_EVENTS.has(kind) and SoundService.instance() != null and not (kind == "bark" and family == 10):
+		var e: Variant = KIND_EVENTS[kind]
+		var ev: String = e[_rng.randi() % (e as Array).size()] if e is Array else str(e)
+		SoundService.play(ev, at + Vector3(0, 1.2, 0), {"db": -2.0 + linear_to_db(float(Settings.get_v("horror_intensity"))), "bus": "Horror", "label": ""})
+		TerrorDirector.caption(CAPTIONS.get(kind, "a sound"), at)
+		return
 	var names: Array = SOUNDS.get(kind, ["creak_wood_0"])
 	var n: String = names[_rng.randi() % names.size()]
 	var pitch := 0.82 if (kind == "bark" and family == 10) else 1.0

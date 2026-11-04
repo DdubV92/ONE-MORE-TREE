@@ -10,8 +10,19 @@ extends Area3D
 var player_inside := false
 
 
+## Phase 15: audio-area layer (SoundService players listen on this mask
+## only) and the zone's room response.
+const AUDIO_AREA_LAYER := 1 << 19
+
+
 func _ready() -> void:
 	add_to_group("zones")
+	if is_interior:
+		collision_layer |= AUDIO_AREA_LAYER
+		reverb_bus_enabled = true
+		reverb_bus_name = "RoomCamper" if zone_name.begins_with("camper") else "RoomCabin"
+		reverb_bus_amount = 0.7
+		reverb_bus_uniformity = 0.4
 	body_entered.connect(_on_enter)
 	body_exited.connect(_on_exit)
 

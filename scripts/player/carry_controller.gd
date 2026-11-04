@@ -130,7 +130,7 @@ func set_down_one() -> void:
 		player.show_message("No clear, level spot in front of you. Face open ground.")
 		return
 	Game.timber.put_down(sid, spot.centre, spot.dir, true)
-	LoggingFX.play(LoggingFX.Sound.CLUNK, spot.centre, -10.0)
+	LoggingFX.play(LoggingFX.Sound.CLUNK, spot.centre, -4.0, {"event": "log.drop.ground"})
 
 
 func drop_all() -> void:
@@ -153,7 +153,7 @@ func drop_all() -> void:
 	if dropped == 0:
 		player.show_message("No room to drop the load here.")
 	else:
-		LoggingFX.play(LoggingFX.Sound.CLUNK, player.global_position, -6.0)
+		LoggingFX.play(LoggingFX.Sound.CLUNK, player.global_position, 0.0, {"event": "log.drop.ground"})
 
 
 ## Finds a validated resting spot in front of the player for piece `sid`:

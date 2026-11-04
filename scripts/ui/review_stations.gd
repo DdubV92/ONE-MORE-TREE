@@ -71,6 +71,15 @@ const STATIONS14 := [
 	["Two-person carry", "p14_team"],
 	["Gear & tool numbers", "p14_numbers"],
 ]
+const STATIONS15 := [
+	["1 Distance ladder", "p15_distance"], ["2 Rotation & elevation", "p15_orbit"],
+	["3 Camper door closed/open", "p15_door"], ["4 Indoor + outdoor at once", "p15_in_out"],
+	["5 Work material sequence", "p15_work"], ["6 Chainsaw states", "p15_saw"],
+	["7 Truck & dog", "p15_truck_dog"], ["8 Ambience in place", "p15_ambience"],
+	["9 Desk relay (how to)", "p15_relay"], ["10 Replay last 20 s", "p15_replay"],
+	["11 Quiet night event", "p15_night"], ["12 Worst overlap", "p15_worst"],
+	["Active voices (dev)", "p15_debug"],
+]
 static var _clear_i := 0
 static var _density_i := 0
 static var _overlay12: CoverOverlay
@@ -312,6 +321,13 @@ static func go(hud: Node, which: String) -> String:
 				var b := ToolEffects.breakdown(k)
 				out.append("%s: %.2f work/s (%.2fx hatchet)" % [str(k), float(b.work_per_second), float(b.vs_hatchet)])
 			return "\n".join(out)
+		"p15_debug":
+			return Audition.debug_list()
+		"p15_distance", "p15_orbit", "p15_door", "p15_in_out", "p15_work", "p15_saw", "p15_truck_dog", "p15_ambience", "p15_relay", "p15_replay", "p15_night", "p15_worst":
+			if which in ["p15_distance", "p15_orbit", "p15_work", "p15_saw", "p15_truck_dog", "p15_worst"]:
+				w.teleport_to("camp")
+				env.apply_named("day")
+			return Audition.start(w, which.trim_prefix("p15_"))
 		"cleared":
 			var n := clear_near_camp(0.9)
 			w.teleport_to("ridge")

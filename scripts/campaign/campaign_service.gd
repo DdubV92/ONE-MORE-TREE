@@ -81,7 +81,11 @@ func setup() -> void:
 			notice.emit("The supply boat won't come again: %d undelivered order%s refunded." % [n, "" if n == 1 else "s"], 7.0))
 	supplier.arrived.connect(func(oid: String) -> void:
 		if active:
-			notice.emit("Supply boat: order %s arrived. Collect it from the parcel locker by the camp gate." % oid, 7.0))
+			notice.emit("Supply boat: order %s arrived. Collect it from the parcel locker by the camp gate." % oid, 7.0)
+			# Phase 15: the camper computer's own speaker chimes (local only).
+			var mons := get_tree().get_nodes_in_group("camper_monitor")
+			if not mons.is_empty() and SoundService.instance() != null:
+				SoundService.play("ui.chime", (mons[0] as Node3D).global_position, {"emit": false}))
 	clock.warning.connect(_on_warning)
 	clock.night_started.connect(func(_d: int) -> void: notice.emit("Night. Camp lamps and the camper are safe; sleep in the camper bed to end the day.", 6.0))
 	contract.outcome.connect(func(s: String, oid: String) -> void: outcome_ready.emit(s, oid))

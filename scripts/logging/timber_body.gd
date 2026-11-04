@@ -282,7 +282,7 @@ func _on_body_entered(_other: Node) -> void:
 	var v := linear_velocity.length()
 	if v > 1.2:
 		_impact_done = true
-		LoggingFX.play(LoggingFX.Sound.CLUNK, global_position, clampf(-14.0 + v * 2.0, -14.0, -4.0))
+		LoggingFX.play(LoggingFX.Sound.CLUNK, global_position, clampf(-8.0 + v * 2.0, -8.0, 2.0), {"event": "log.drop.ground" if v > 3.0 else "log.roll.ground"})
 
 
 func _physics_process(delta: float) -> void:

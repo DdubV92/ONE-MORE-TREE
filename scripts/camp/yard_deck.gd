@@ -43,7 +43,7 @@ func interact(by: Node) -> void:
 					placed += 1
 			msg = "Stacked %d log%s on deck %d." % [placed, "" if placed == 1 else "s", index + 1] if placed > 0 else y.last_reason
 			if placed > 0:
-				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.8, 0), -8.0)
+				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.8, 0), 0.0, {"event": "log.stack"})
 		else:
 			var rs := t.accept(t.carried.duplicate(), "deck:player", global_position)
 			var cents := 0
@@ -51,7 +51,7 @@ func interact(by: Node) -> void:
 				cents += int(r.cents)
 			msg = ("Delivered %d log%s onto deck %d. Contract entitlement +$%s." % [rs.size(), "" if rs.size() == 1 else "s", index + 1, Money.format_cents(cents)]) if not rs.is_empty() else t.last_refusal
 			if not rs.is_empty():
-				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.8, 0), -6.0)
+				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.8, 0), 0.0, {"event": "log.stack"})
 	else:
 		var budget := 333
 		if by.get("carry"):

@@ -606,7 +606,7 @@ func _do_fell(delta: float) -> void:
 		if bool(res.get("accepted", false)):
 			crew.contributions.add_work(id, wk)
 		if saw.state == SawMachine.S.STOPPED:
-			LoggingFX.play(LoggingFX.Sound.CHOP, base + Vector3(0, 0.8, 0), -6.0)
+			LoggingFX.play(LoggingFX.Sound.CHOP, base + Vector3(0, 0.8, 0), 0.0, {"tree": tid})
 		if bool(res.get("felled", false)):
 			crew.on_felled(self, tid)
 			_begin_retreat()
@@ -671,7 +671,7 @@ func _do_buck(delta: float) -> void:
 			return
 		crew.contributions.add_work(id, wk)
 		if saw.state == SawMachine.S.STOPPED:
-			LoggingFX.play(LoggingFX.Sound.CHOP, at, -6.0)
+			LoggingFX.play(LoggingFX.Sound.CHOP, at, 0.0, {"event": "work.axe.buck"})
 		if bool(res.get("separated", false)):
 			crew.on_bucked(self)
 			abandon("cut done")
@@ -703,7 +703,7 @@ func _do_stump(delta: float) -> void:
 			abandon("no stump there")
 			return
 		if saw.state == SawMachine.S.STOPPED:
-			LoggingFX.play(LoggingFX.Sound.CHOP, at + Vector3(0, 0.3, 0), -8.0)
+			LoggingFX.play(LoggingFX.Sound.CHOP, at + Vector3(0, 0.3, 0), 0.0, {"event": "work.axe.stump"})
 		crew.contributions.add_work(id, wk)
 		if bool(res.get("removed", false)):
 			crew.on_stump_removed(self, tid)

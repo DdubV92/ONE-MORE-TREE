@@ -258,6 +258,9 @@ func hotspot_use(t: Truck, kind: String, by: Node) -> void:
 
 
 func enter(p: Player, t: Truck, seat: String) -> void:
+	if SoundService.instance() != null:
+		SoundService.play("truck.door.open", t.door_point(-1.0 if seat == "driver" else 1.0))
+		SoundService.play("truck.door.close", t, {"offset": Vector3(0, 1.0, 0)})
 	if t.seats[seat] != "":
 		return
 	t.seats[seat] = "boss"
@@ -317,6 +320,8 @@ func _clear(spot: Vector3, p: Player) -> bool:
 ## Moves every piece a carrier holds into the truck while room remains.
 ## Atomic per piece through the ledger (one owner, no duplicates).
 func load_from(carrier: String, t: Truck) -> int:
+	if SoundService.instance() != null:
+		SoundService.play("truck.cargo.thud", t.tailgate_point())
 	var n := 0
 	for sid in timber.load_of(carrier).duplicate():
 		if timber.transfer(carrier, t.carrier(), sid, Truck.CAPACITY_MTE):
@@ -327,6 +332,8 @@ func load_from(carrier: String, t: Truck) -> int:
 
 
 func unload_accept(t: Truck, source: String) -> Array:
+	if SoundService.instance() != null:
+		SoundService.play("truck.tailgate.open", t.tailgate_point())
 	var rs := timber.accept(timber.load_of(t.carrier()).duplicate(), source, CampLayout.world(CampLayout.DELIVERY_RACK_POS))
 	t.refresh_cargo_visual()
 	return rs

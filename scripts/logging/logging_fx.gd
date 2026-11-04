@@ -52,9 +52,48 @@ static func _names(s: int) -> Array:
 	return []
 
 
-static func play(s: int, at: Vector3, volume_db := 0.0) -> void:
+static func play(s: int, at: Vector3, volume_db := 0.0, ctx := {}) -> void:
+	# Phase 15: the sound-event service plays the material-aware source at
+	# the real contact point (per-source occlusion, rooms, travel delay).
+	if SoundService.instance() != null:
+		SoundService.play(event_for(s, ctx), at, {"db": volume_db})
+		return
 	if _inst:
 		_inst._play(s, at, volume_db)
+
+
+## Event for a logging sound in context: ctx may carry "event" (explicit),
+## "tree" (an original tree id: species/diameter pick the axe bite and the
+## fall size) or "species"/"dia".
+static func event_for(s: int, ctx := {}) -> String:
+	if ctx.has("event"):
+		return str(ctx.event)
+	var sp := int(ctx.get("species", 0))
+	var dia := float(ctx.get("dia", 0.3))
+	var h := float(ctx.get("height", 18.0))
+	if ctx.has("tree") and Game.vegetation:
+		var i: int = Game.vegetation.tree_index_by_id.get(int(ctx.tree), -1)
+		if i >= 0:
+			sp = int(World.trees.species[i])
+			dia = float(World.trees.radius[i]) * 2.0
+			h = float(World.trees.height[i])
+	var sname: String = ["pine", "spruce", "birch"][clampi(sp, 0, 2)]
+	match s:
+		Sound.CHOP:
+			return "work.axe.bite.%s.%s" % [sname, "thick" if dia > 0.42 else "thin"]
+		Sound.CLUNK:
+			return "log.drop.log"
+		Sound.MISS:
+			return "work.axe.miss"
+		Sound.CREAK:
+			return "tree.strain"
+		Sound.CRACK:
+			return "tree.hinge.crack"
+		Sound.IMPACT:
+			return "tree.fall.large" if h > 24.0 else ("tree.fall.medium" if h > 14.0 else "tree.fall.small")
+		Sound.RUSTLE:
+			return "tree.crown.rustle.birch" if sp == 2 else "tree.crown.rustle.pine"
+	return "log.drop.ground"
 
 
 ## Debounce: several logs/trunks settling together in one spot make one

@@ -2,6 +2,27 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 15: Sound library, source-based spatial audio, occlusion and rooms
+
+Full detail: [PHASE15_NOTES.md](PHASE15_NOTES.md). Coverage matrix: [audio/SOUND_COVERAGE.md](audio/SOUND_COVERAGE.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| 200 original non-dialogue sources (60 work / 25 vehicle / 25 movement+dog / 45 env / 20 domestic / 25 horror) | ✅ | Procedural (`tools/audio_lib`), deterministic, QA'd; 0 recordings |
+| Every source bound to a stable event; 0 missing files | ✅ | Tested; 156 events |
+| SoundService (Godot native): pool, loop handles, priorities, debounce, no immediate repeat | ✅ | One tested backend; no Steam Audio/FMOD/Wwise |
+| Origin kinds (world/internal/relay/recording/ui/music); only world reaches microphones | ✅ | Hop rule tested |
+| Per-source occlusion by material (rays), filter tiers, no whole-bus indoor filter | ✅ | Tested indoor + outdoor at once |
+| Door portals (open door = path, closed = filtered) | ✅ | Around-the-corner routing tested; ray approximation, not diffraction |
+| Room response (camper, cabin) per source | ✅ | |
+| Distance classes, near-field caps, travel delay frozen by pause; Doppler off | ✅ | Tested |
+| Logging, saw, truck, cart, dog, doors, camper, ambience, weather, night, encounters, Foreman on the new path | ✅ | Some families still legacy (see notes) |
+| Relay bus separate from TV; replay through the desk without new evidence | ✅ | Tested; archive is Phase 19 |
+| AI hearing independent of mix volume | ✅ | Muted-master test |
+| Speech interface (`SoundService.speak`) | 🟡 | Interface only; no voice files yet |
+| Audition route (12 stops) + active voice list | ✅ | Probe ran; **not listened to** |
+| Heard on real headphones/speakers; HRTF; real audio CPU cost | ⛔ | No audio device here |
+
 ## Phase 14: Stronger axes, chainsaws, gear, the computer supplier and coordinated logging
 
 Full detail: [PHASE14_NOTES.md](PHASE14_NOTES.md).
@@ -11,7 +32,7 @@ Full detail: [PHASE14_NOTES.md](PHASE14_NOTES.md).
 | One tool/gear/trait calculation (player, crew, UI, tests) | ✅ | `ToolEffects.breakdown` |
 | Axes 1.00/1.40/1.96 per hit at one cadence; Hard-working x1.25 once | ✅ | Output per second unchanged (no progress rescale) |
 | Chainsaw state machine, contact-only work, bounded ticks, interruptions | ✅ | 3.23x a hatchet over whole trees (measured) |
-| Saw sound layers (start/idle/rev/load/stop) at the tool; hunt hearing evidence | 🟡 | Procedural interim sources, never listened to (Phase 15) |
+| Saw sound layers (start/idle/rev/load/stop) at the tool; hunt hearing evidence | ✅ | Replaced by the Phase 15 library + SoundService loops (still unauditioned) |
 | Boots/gloves/helmets, one per slot, tier replacement, honest numbers | ✅ | |
 | Unique items, one owner, legacy axes mapped once, issue/recall at boundaries | ✅ | |
 | Visible tools and gear on the crew; gloves in first person | ✅ | Software renderer only |

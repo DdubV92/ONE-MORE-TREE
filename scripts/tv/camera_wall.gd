@@ -141,13 +141,13 @@ func setup() -> void:
 		screen.material_override = _screen_mat
 	speaker = AudioStreamPlayer3D.new()
 	speaker.name = "TVSpeaker"
-	speaker.bus = "TV"
+	speaker.bus = "Relay"
 	speaker.unit_size = 3.0
 	speaker.max_polyphony = 6
 	tv.add_child(speaker)
 	_ambience = AudioStreamPlayer3D.new()
 	_ambience.name = "TVAmbience"
-	_ambience.bus = "TV"
+	_ambience.bus = "Relay"
 	_ambience.unit_size = 3.0
 	tv.add_child(_ambience)
 	_music = AudioStreamPlayer3D.new()
@@ -643,6 +643,10 @@ func _process(delta: float) -> void:
 ## not four copies) plays from the TV speaker, quiet for the wall, louder
 ## and clearer for the focused camera. TV output is never an event, so
 ## there is no feedback loop. The player's own listener stays in the room.
+## Phase 15: only ORIGIN "world" sounds arrive here (SoundEvents refuses
+## relay/recording/UI/internal), so desk output is never re-captured; the
+## remote capture (distance + occlusion at the camera) and the local
+## playback (desk speakers, Relay bus, normal room path) are two stages.
 func on_world_sound(stream: AudioStream, pos: Vector3, volume_db: float, category := "world", label := "") -> void:
 	if not _active or mic_muted or stream == null or mode == "entertainment" or speaker == null:
 		return
@@ -691,7 +695,7 @@ func on_world_sound(stream: AudioStream, pos: Vector3, volume_db: float, categor
 		dropped_dupe += 1
 	var p := AudioStreamPlayer3D.new()
 	p.stream = stream
-	p.bus = "TV"
+	p.bus = "Relay"
 	p.unit_size = 3.0
 	var g_db := lerpf(-15.0, -3.0, (_gain - 0.25) / 0.75)
 	p.volume_db = clampf(g_db + linear_to_db(best) + clampf(volume_db, -30.0, 6.0) * 0.5 + linear_to_db(maxf(tv_volume, 0.001)), -40.0, 0.0)
@@ -714,7 +718,7 @@ func on_world_sound(stream: AudioStream, pos: Vector3, volume_db: float, categor
 
 
 func _set_transmission() -> void:
-	var bus := AudioServer.get_bus_index("TV")
+	var bus := AudioServer.get_bus_index("Relay")
 	if bus < 0:
 		return
 	var fx := AudioServer.get_bus_effect(bus, 0)
@@ -845,7 +849,7 @@ func anomaly(kind: String, sec := 1.5) -> void:
 			if kind == "static" and speaker:
 				var p := AudioStreamPlayer3D.new()
 				p.stream = load("res://audio/generated/t_static.wav")
-				p.bus = "TV"
+				p.bus = "Relay"
 				p.volume_db = -14.0 + linear_to_db(maxf(tv_volume, 0.001))
 				speaker.add_child(p)
 				p.play()

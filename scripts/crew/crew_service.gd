@@ -1316,6 +1316,11 @@ func _close_doors() -> void:
 		if not is_instance_valid(door):
 			_door_open.erase(door)
 			continue
+		# Only close what the crew opened and is still open: once it's shut
+		# (by anyone) or the player opened it themselves, it isn't ours.
+		if not (door as Door).is_open or (door as Door).opened_by_player:
+			_door_open.erase(door)
+			continue
 		if now() - float(_door_open[door]) < 4.0:
 			continue
 		var busy := Game.player != null and (Game.player as Node3D).global_position.distance_to(door.global_position) < 2.5

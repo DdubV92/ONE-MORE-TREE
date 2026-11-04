@@ -105,6 +105,9 @@ func _forward_input(ev: InputEvent) -> void:
 		return
 	var e := ev.duplicate() as InputEventMouse
 	e.position = to_desktop(e.position, view.size)
+	if ev is InputEventMouseButton and (ev as InputEventMouseButton).pressed and monitor and SoundService.instance() != null:
+		# Phase 15: the real mouse on the desk (quiet, local, never relayed).
+		SoundService.play("ui.click", monitor.global_position + Vector3(0.25, -0.35, 0.2), {"emit": false})
 	vp.push_input(e, true)
 	forwarded += 1
 	view.accept_event()

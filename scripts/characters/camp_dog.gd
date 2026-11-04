@@ -422,6 +422,7 @@ func _follow(delta: float) -> void:
 	speed = move_toward(speed, want_speed, delta * 2.5)
 	var dir := flat.normalized()
 	var step := minf(speed * delta, flat.length())
+	_paw_audio(speed, delta)
 	var next := global_position + dir * step
 	if authored[_pi]:
 		# Explicit heights: ramp slope and camper floor.
@@ -574,7 +575,14 @@ func react_threat(pos: Vector3) -> void:
 	events.append("growl")
 
 
+const VOICE_EVENTS := {"dog_bark_0": "dog.bark", "dog_bark_1": "dog.bark", "dog_whine_0": "dog.whine", "dog_whine_1": "dog.whine", "dog_growl": "dog.growl", "dog_pant": "dog.pant", "dog_flap": "door.latch"}
+
+
 func _play(name: String, db: float) -> void:
+	# Phase 15: the dog's voice comes from its head, through SoundService.
+	if SoundService.instance() != null and VOICE_EVENTS.has(name) and str(VOICE_EVENTS[name]) != "dog.pant":
+		SoundService.play(str(VOICE_EVENTS[name]), voice, {"db": db + 6.0, "label": "the dog"})
+		return
 	if not _streams.has(name):
 		var path_s := "res://audio/generated/%s.wav" % name
 		_streams[name] = load(path_s) if ResourceLoader.exists(path_s) else null
@@ -824,3 +832,29 @@ func restore(d: Dictionary) -> void:
 		global_position.y = _surface(global_position)
 		state = State.IDLE
 		timer = 1.0
+
+
+# ------------------------------------------------------------ Phase 15
+var _paw_t := 0.0
+var _tag_t := 0.0
+
+
+## Paws by the real surface (claws on wood/decks), tags now and then while
+## moving. Quiet, local sources at the dog.
+func _paw_audio(speed: float, delta: float) -> void:
+	if SoundService.instance() == null or speed < 0.2:
+		return
+	_paw_t -= delta * speed * 3.2
+	if _paw_t <= 0.0:
+		_paw_t = 1.0
+		var p := global_position
+		var ev := "dog.paw.grass"
+		if p.y > World.height_at(p.x, p.z) + 0.25:
+			ev = "dog.paw.wood"
+		elif World.surface_at(p.x, p.z) in [World.Surface.DIRT, World.Surface.SAND, World.Surface.ROCK]:
+			ev = "dog.paw.dirt"
+		SoundService.play(ev, p + Vector3(0, 0.05, 0), {"emit": false})
+	_tag_t -= delta
+	if _tag_t <= 0.0:
+		_tag_t = randf_range(2.5, 6.0)
+		SoundService.play("dog.tags", global_position + Vector3(0, 0.45, 0), {"emit": false})
