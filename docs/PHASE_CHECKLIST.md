@@ -65,7 +65,11 @@ Status key: ✅ implemented and observed (automated test or headless sim) · �
 | Preview Tour stops: Driving & hauling, Dock & dog, Surveillance (with a preview-only surveyor walking past CAM-03), Arcade, Dog refuge / home | 🟡 | In memory only |
 | Terror Director, Foreman hunt, rescue ship (Phase 6+) | ⬜ | Hooks only |
 
-PERF_PLACEHOLDER
+### Phase 5 performance (honest status)
+
+- **Not measured on a GPU.** This container only has a software Vulkan renderer. `tools/perf_p5.tscn` (TV off, quad, focus, entertainment, then both trucks driving) did not finish 450 measured frames within 50 minutes there, so no frame-time numbers are reported. Run it on real hardware: `godot res://tools/perf_p5.tscn` prints a `PERF_P5` line with average/p95 frame time, main-view and summed security-camera render CPU/GPU time, and camera renders per second.
+- **Bounded by design (verified by tests):** at most four 384×216 feeds at 12 Hz (48 small renders a second, staggered) or one 1280×720 feed at 30 Hz; zero camera renders when the TV is off or nobody is within 14 m. Feeds use a lighter environment (no SDFGI/SSIL/SSR/volumetric fog).
+- **Draw-call counts from the capture tool** (software renderer, 1280×720 main view): couch view with the quad wall 8,060 draw calls in the frame (main view + four feeds), focused feed 2,612; the dock view alone 3,412.
 
 ## Phase 4: The living crew
 

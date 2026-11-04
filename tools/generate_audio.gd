@@ -45,6 +45,35 @@ func _init() -> void:
 	_save("dog_growl", _growl(), false)
 	_save("dog_flap", _flap(), false)
 	_save("dog_pant", _pant(2.0), true)
+	# Night director + Foreman (Phase 6) - separate seed, earlier sounds unchanged.
+	rng.seed = 606
+	_save("t_call", _tri_call(), false)
+	_save("t_fabric", _fabric(1.4), false)
+	for v in 3:
+		_save("t_knock_%d" % v, _knock(v), false)
+		_save("t_voice_%d" % v, _murmur(v), false)
+	_save("t_voice_3", _murmur(3), false)
+	_save("t_glass", _glass(), false)
+	_save("t_wing", _wingbeat(), false)
+	_save("t_scrape", _scrape(), false)
+	_save("t_bell_0", _bell(0), false)
+	_save("t_bell_1", _bell(1), false)
+	_save("t_choir", _choir(), false)
+	_save("t_breath", _breath(), false)
+	_save("t_drip", _drip(), false)
+	_save("t_lantern", _lantern(), false)
+	_save("t_whisper", _whisper(), false)
+	_save("t_stinger", _stinger(), false)
+	_save("t_static", _static(), false)
+	_save("wind_roar", _wind_roar(), false)
+	_save("door_bang", _door_bang(), false)
+	_save("f_tags", _tags(), false)
+	_save("f_step_0", _heavy_step(0), false)
+	_save("f_step_1", _heavy_step(1), false)
+	_save("f_breath", _f_breath(), false)
+	_save("f_intake", _f_intake(), false)
+	_save("f_drag", _fabric(2.0), false)
+	_save("ship_horn", _horn(), false)
 	print("audio generated")
 	quit()
 
@@ -466,7 +495,7 @@ func _whine(v: int) -> PackedFloat32Array:
 	var n := int(dur * RATE)
 	var f0 := 820.0 + v * 140.0
 	var phase := 0.0
-	var bp := _bq("bandpass", 1400.0, 1.2)
+	var bp := _bq("bp", 1400.0, 1.2)
 	for i in n:
 		var t := float(i) / n
 		var f := f0 * (1.0 + 0.25 * sin(PI * t)) - 180.0 * t * t + 18.0 * sin(TAU * 6.0 * float(i) / RATE)
@@ -482,8 +511,8 @@ func _bark(v: int) -> PackedFloat32Array:
 	var d := PackedFloat32Array()
 	var n := int((0.22 + v * 0.05) * RATE)
 	var phase := 0.0
-	var lp := _bq("lowpass", 1300.0, 0.9)
-	var bp := _bq("bandpass", 650.0 + v * 120.0, 2.0)
+	var lp := _bq("lp", 1300.0, 0.9)
+	var bp := _bq("bp", 650.0 + v * 120.0, 2.0)
 	for i in n:
 		var t := float(i) / n
 		var f := lerpf(330.0 + v * 40.0, 190.0, t)
@@ -498,7 +527,7 @@ func _bark(v: int) -> PackedFloat32Array:
 func _growl() -> PackedFloat32Array:
 	var d := PackedFloat32Array()
 	var n := int(1.3 * RATE)
-	var lp := _bq("lowpass", 420.0, 1.1)
+	var lp := _bq("lp", 420.0, 1.1)
 	var phase := 0.0
 	for i in n:
 		var t := float(i) / n
@@ -512,7 +541,7 @@ func _growl() -> PackedFloat32Array:
 ## Dog flap swinging closed: a light plastic clack and rattle.
 func _flap() -> PackedFloat32Array:
 	var d := PackedFloat32Array()
-	var bp := _bq("bandpass", 2300.0, 3.0)
+	var bp := _bq("bp", 2300.0, 3.0)
 	for i in int(0.35 * RATE):
 		var t := float(i) / RATE
 		var hit := exp(-t * 60.0) + 0.5 * exp(-maxf(t - 0.11, 0.0) * 70.0) * (1.0 if t > 0.11 else 0.0) + 0.25 * exp(-maxf(t - 0.19, 0.0) * 80.0) * (1.0 if t > 0.19 else 0.0)
@@ -524,10 +553,288 @@ func _flap() -> PackedFloat32Array:
 func _pant(sec: float) -> PackedFloat32Array:
 	var d := PackedFloat32Array()
 	var n := int(sec * RATE)
-	var bp := _bq("bandpass", 1800.0, 0.8)
+	var bp := _bq("bp", 1800.0, 0.8)
 	for i in n:
 		var t := float(i) / RATE
 		var ph := fposmod(t * 2.2, 1.0)
 		var env := pow(sin(PI * ph), 3.0) * (1.0 if ph < 0.5 else 0.6)
 		d.append(bp.run(_white()) * env)
 	return _loopify(d, int(0.05 * RATE))
+
+
+# ------------------------------------------------------------ night (P6)
+
+func _env(t: float, a: float, r: float) -> float:
+	return smoothstep(0.0, a, t) * (1.0 - smoothstep(1.0 - r, 1.0, t))
+
+
+## Soft three-note vocalization (breathy sine glides).
+func _tri_call() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var notes := [523.0, 466.0, 392.0]
+	var bp := _bq("bp", 900.0, 0.8)
+	for k in 3:
+		var n := int(0.55 * RATE)
+		var ph := 0.0
+		for i in n:
+			var t := float(i) / n
+			var f: float = notes[k] * (1.0 + 0.02 * sin(TAU * 5.0 * float(i) / RATE)) * (1.0 - 0.04 * t)
+			ph += TAU * f / RATE
+			var x := sin(ph) * 0.7 + 0.25 * sin(ph * 2.0) + bp.run(_white()) * 0.35
+			d.append(x * _env(t, 0.2, 0.4))
+		for i in int(0.12 * RATE):
+			d.append(0.0)
+	return d
+
+
+func _fabric(sec: float) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var n := int(sec * RATE)
+	var bp := _bq("bp", 1600.0, 0.6)
+	var lp := _bq("lp", 3000.0, 0.7)
+	for i in n:
+		var t := float(i) / n
+		var g := 0.5 + 0.5 * sin(TAU * 1.7 * t + sin(TAU * 0.6 * t))
+		d.append(lp.run(bp.run(_white())) * g * _env(t, 0.15, 0.3))
+	return d
+
+
+func _knock(v: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var f0: float = [190.0, 240.0, 150.0][v]
+	var bp := _bq("bp", f0 * 2.0, 4.0)
+	for hit in 3:
+		var n := int(0.32 * RATE)
+		var ph := 0.0
+		for i in n:
+			var t := float(i) / RATE
+			ph += TAU * f0 / RATE
+			d.append((sin(ph) * 0.6 + bp.run(_white()) * 0.7) * exp(-t * 28.0))
+	return d
+
+
+## Voice-like murmur: buzz through moving formants with syllable envelopes.
+## Original synthesized material (no recorded or cloned voices).
+func _murmur(v: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var syl := 3 + v
+	var f1 := _bq("bp", 600.0, 3.0)
+	var f2 := _bq("bp", 1300.0, 4.0)
+	var ph := 0.0
+	var base: float = [125.0, 170.0, 110.0, 210.0][v]
+	for k in syl:
+		var n := int(rng.randf_range(0.14, 0.26) * RATE)
+		var pitch: float = base * rng.randf_range(0.9, 1.15)
+		f1.setup("bp", rng.randf_range(450.0, 800.0), 3.0, RATE)
+		f2.setup("bp", rng.randf_range(1100.0, 2200.0), 4.0, RATE)
+		for i in n:
+			var t := float(i) / n
+			ph += TAU * pitch * (1.0 - 0.08 * t) / RATE
+			var src := fposmod(ph / TAU, 1.0) * 2.0 - 1.0
+			var x := f1.run(src) * 0.9 + f2.run(src) * 0.6 + _white() * 0.04
+			d.append(x * _env(t, 0.15, 0.35))
+		for i in int(rng.randf_range(0.04, 0.12) * RATE):
+			d.append(0.0)
+	return d
+
+
+func _glass() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	for i in int(0.25 * RATE):
+		var t := float(i) / RATE
+		d.append((sin(TAU * 3900.0 * t) * 0.5 + sin(TAU * 5200.0 * t) * 0.3) * exp(-t * 40.0))
+	return d
+
+
+func _wingbeat() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 380.0, 0.9)
+	for beat in 2:
+		var n := int(0.5 * RATE)
+		for i in n:
+			var t := float(i) / n
+			d.append(lp.run(_white()) * 2.5 * sin(PI * t) * (1.0 - 0.3 * beat))
+	return d
+
+
+func _scrape() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var n := int(1.6 * RATE)
+	var bp := _bq("bp", 2400.0, 2.5)
+	for i in n:
+		var t := float(i) / n
+		var grit := 1.0 if rng.randf() < 0.3 else 0.3
+		d.append(bp.run(_white()) * grit * _env(t, 0.1, 0.3))
+	return d
+
+
+func _bell(v: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var f0: float = [1480.0, 1760.0][v]
+	var parts := [[1.0, 0.6], [2.41, 0.3], [3.9, 0.15], [5.3, 0.08]]
+	for i in int(2.2 * RATE):
+		var t := float(i) / RATE
+		var x := 0.0
+		for pp in parts:
+			x += sin(TAU * f0 * float(pp[0]) * t) * float(pp[1]) * exp(-t * (1.6 + float(pp[0])))
+		d.append(x * smoothstep(0.0, 0.004, t))
+	return d
+
+
+func _choir() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var n := int(4.5 * RATE)
+	var voices := [196.0, 233.1, 293.7, 349.2]
+	var bp := _bq("bp", 700.0, 1.5)
+	var phs := [0.0, 0.0, 0.0, 0.0]
+	for i in n:
+		var t := float(i) / n
+		var x := 0.0
+		for k in 4:
+			phs[k] = float(phs[k]) + TAU * float(voices[k]) * (1.0 + 0.004 * sin(TAU * (0.3 + k * 0.17) * float(i) / RATE)) / RATE
+			x += sin(float(phs[k])) * 0.25
+		d.append(bp.run(x + _white() * 0.15) * _env(t, 0.4, 0.45))
+	return d
+
+
+func _breath() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var bp := _bq("bp", 1100.0, 0.7)
+	var n := int(1.3 * RATE)
+	for i in n:
+		var t := float(i) / n
+		d.append(bp.run(_white()) * sin(PI * t) * (0.6 + 0.4 * t))
+	return d
+
+
+func _drip() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	for k in 3:
+		var n := int(0.35 * RATE)
+		for i in n:
+			var t := float(i) / RATE
+			var f := 1300.0 + 900.0 * exp(-t * 30.0)
+			d.append(sin(TAU * f * t) * exp(-t * 22.0) * 0.6)
+	return d
+
+
+func _lantern() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var bp := _bq("bp", 1900.0, 6.0)
+	for i in int(1.2 * RATE):
+		var t := float(i) / RATE
+		var tick := exp(-fposmod(t, 0.37) * 45.0)
+		d.append(bp.run(_white()) * tick + sin(TAU * 2600.0 * t) * tick * 0.2)
+	return d
+
+
+func _whisper() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var bp := _bq("bp", 2600.0, 1.2)
+	var bp2 := _bq("bp", 5200.0, 2.0)
+	var n := int(1.8 * RATE)
+	for i in n:
+		var t := float(i) / n
+		var syl := 0.5 + 0.5 * sin(TAU * 4.3 * t * 1.8)
+		var w := _white()
+		d.append((bp.run(w) * 0.8 + bp2.run(w) * 0.3) * syl * _env(t, 0.1, 0.25))
+	return d
+
+
+## Bounded startle: short swell into a dull hit (never a scream).
+func _stinger() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 900.0, 0.8)
+	var n := int(1.1 * RATE)
+	for i in n:
+		var t := float(i) / n
+		var swell := pow(t / 0.35, 2.0) if t < 0.35 else exp(-(t - 0.35) * 6.0)
+		var hit := sin(TAU * 55.0 * t * 1.1) * (exp(-(t - 0.35) * 9.0) if t > 0.35 else 0.0)
+		d.append(lp.run(_white()) * swell * 0.7 + hit)
+	return d
+
+
+func _static() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var hp := _bq("hp", 900.0, 0.7)
+	for i in int(0.7 * RATE):
+		var t := float(i) / RATE
+		d.append(hp.run(_white()) * (0.6 if fposmod(t, 0.09) < 0.06 else 0.2))
+	return d
+
+
+func _wind_roar() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 500.0, 0.9)
+	var bp := _bq("bp", 900.0, 1.0)
+	var n := int(3.4 * RATE)
+	for i in n:
+		var t := float(i) / n
+		var g := smoothstep(0.0, 0.25, t) * (1.0 - smoothstep(0.55, 1.0, t)) * (0.8 + 0.2 * sin(TAU * 3.0 * t))
+		var w := _white()
+		d.append((lp.run(w) * 1.6 + bp.run(w) * 0.5) * g)
+	return d
+
+
+func _door_bang() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 1200.0, 0.8)
+	for i in int(0.6 * RATE):
+		var t := float(i) / RATE
+		d.append(lp.run(_white()) * exp(-t * 12.0) * 1.4 + sin(TAU * 90.0 * t) * exp(-t * 10.0))
+	return d
+
+
+func _tags() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	for k in 5:
+		var gap := int(rng.randf_range(0.06, 0.2) * RATE)
+		var f := rng.randf_range(2900.0, 4200.0)
+		for i in int(0.12 * RATE):
+			var t := float(i) / RATE
+			d.append((sin(TAU * f * t) * 0.5 + sin(TAU * f * 1.47 * t) * 0.3) * exp(-t * 35.0))
+		for i in gap:
+			d.append(0.0)
+	return d
+
+
+func _heavy_step(v: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 260.0 + v * 60.0, 1.0)
+	for i in int(0.45 * RATE):
+		var t := float(i) / RATE
+		d.append(lp.run(_white()) * 3.0 * exp(-t * 11.0) + sin(TAU * (48.0 + v * 6.0) * t) * exp(-t * 9.0) * 0.8)
+	return d
+
+
+func _f_breath() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var bp := _bq("bp", 420.0, 0.9)
+	var n := int(2.6 * RATE)
+	for i in n:
+		var t := float(i) / n
+		var cyc := sin(PI * fposmod(t * 2.0, 1.0))
+		d.append(bp.run(_white()) * cyc * 0.9 * _env(t, 0.05, 0.1))
+	return d
+
+
+func _f_intake() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var bp := _bq("bp", 700.0, 0.8)
+	var n := int(0.7 * RATE)
+	for i in n:
+		var t := float(i) / n
+		d.append(bp.run(_white()) * t * t * 1.4)
+	return d
+
+
+func _horn() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 700.0, 0.9)
+	var n := int(3.0 * RATE)
+	for i in n:
+		var t := float(i) / n
+		var ts := float(i) / RATE
+		var x := signf(sin(TAU * 98.0 * ts)) * 0.4 + sin(TAU * 196.0 * ts) * 0.3 + sin(TAU * 147.0 * ts) * 0.2
+		d.append(lp.run(x) * _env(t, 0.08, 0.2))
+	return d
