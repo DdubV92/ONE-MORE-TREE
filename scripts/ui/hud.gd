@@ -335,6 +335,12 @@ func _build_tour() -> void:
 	for s5 in [["Driving & hauling", "__p5_drive"], ["Dock & dog", "__p5_dock"], ["Surveillance", "__p5_tv"], ["Arcade", "__p5_arcade"], ["Dog: refuge", "__p5_refuge"], ["Dog: home now", "__p5_doghome"]]:
 		p5.add_child(UITheme.button(s5[0], func() -> void: _phase5_stop(s5[1]), 130))
 	v.add_child(p5)
+	v.add_child(UITheme.label("Phase 6 stops (in memory)", 16, UITheme.MUTED))
+	var p6 := GridContainer.new()
+	p6.columns = 2
+	for s6 in [["Night director", "__p6_night"], ["Next family event", "__p6_next"], ["Dog rescue", "__p6_rescue"], ["Abandon -> hunt", "__p6_hunt"], ["Hunt: day 35", "__p6_day35"], ["Hunt: ship", "__p6_ship"]]:
+		p6.add_child(UITheme.button(s6[0], func() -> void: _phase6_stop(s6[1]), 130))
+	v.add_child(p6)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))
@@ -416,6 +422,71 @@ func _phase5_stop(which: String) -> void:
 				var s: Node3D = spots[0]
 				p.teleport_feet(s.global_position, s.global_rotation.y)
 			show_message("Two original cabinets: Log Stacker and Flapjack Flip. E to play - the world pauses while you do.", 7.0)
+	tour_panel.visible = false
+	_capture_mouse()
+
+
+var _p6_family := 0
+
+
+## Preview-only Phase 6 fixtures (never saved; a separate test session).
+func _phase6_stop(which: String) -> void:
+	var w: IslandWorld = Game.world_root
+	var cs: CampaignService = Game.campaign
+	if w == null or cs == null:
+		return
+	if not cs.active:
+		cs.start_test_route(false)
+	match which:
+		"__p6_night":
+			cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+			cs.test_route_light_override = false
+			Game.director.next_in = 4.0
+			show_message("Contract night (test session): the director offers its first encounter in a few seconds, then every 45-150 s. Stay outside a lit area too long and the night catches you.", 9.0)
+		"__p6_next":
+			cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+			_p6_family = _p6_family % 25 + 1
+			var ctx := TerrorPlacement.context_of(Game.player)
+			var pick := ""
+			for e in Game.director.events_by_ctx.get(ctx, []):
+				if int(e.family) == _p6_family:
+					pick = str(e.id)
+					break
+			if Game.director.active:
+				Game.director.active.cancel()
+				Game.director.active = null
+			var got := Game.director.offer(pick) if pick != "" else ""
+			show_message("Family T%02d %s: %s" % [_p6_family, str(Game.director.bank.families[_p6_family - 1].name), (got + " - " + str(Game.director.find(got).text)) if got != "" else "no valid place here (a quiet outcome) - try another spot"], 8.0)
+		"__p6_rescue":
+			cs.clock.day = maxi(cs.clock.day, 6)
+			cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+			Game.dog.pets = maxi(Game.dog.pets, 1)
+			Game.dog_rescue.trigger_id = ""
+			Game.dog_rescue.state = "IDLE"
+			w.teleport_to("camper")
+			Game.dog.global_position = CampLayout.world(CampLayout.CAMPER_POS + Vector3(2.6, 0, 1.6))
+			Game.dog_rescue.force_start()
+			show_message("Dog rescue fixture: wait in the camper. When the wind takes the door, follow Biscuit's whining, pet the dog, and walk home together.", 9.0)
+		"__p6_hunt":
+			cs.clock.day = 30
+			cs.contract.state = ContractService.ABANDONMENT
+			Game.hunt.begin_abandonment()
+		"__p6_day35":
+			if not Game.hunt.hunt_active():
+				cs.clock.day = 30
+				cs.contract.state = ContractService.ABANDONMENT
+				Game.hunt.begin_abandonment()
+			Game.hunt.hunt_day = 35
+			Game.hunt.t = HuntService.DAYLIGHT - 20.0
+			show_message("Hunt day 35, just before dusk.")
+		"__p6_ship":
+			if not Game.hunt.hunt_active():
+				cs.clock.day = 30
+				cs.contract.state = ContractService.ABANDONMENT
+				Game.hunt.begin_abandonment()
+			Game.hunt.hunt_day = 35
+			Game.hunt.t = HuntService.CYCLE - 2.0
+			show_message("Dawn of day 36 in two seconds: the rescue ship comes to the dock.")
 	tour_panel.visible = false
 	_capture_mouse()
 

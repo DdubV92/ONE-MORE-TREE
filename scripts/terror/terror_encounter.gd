@@ -72,9 +72,16 @@ func reserve(viewer: Node3D) -> bool:
 	if context == "cameras" or (has_step("feed") and Game.tv and Game.tv.powered and Game.tv._active):
 		var tv: CameraWall = Game.tv
 		if tv and not tv.cams.is_empty():
+			# Try every displayed view (some look into the safe yard).
 			var shown := tv.shown_cameras()
-			cam = tv.cams[shown[_rng.randi() % shown.size()]]
-			spot = TerrorPlacement.in_camera_view(cam, _rng)
+			var start := _rng.randi() % shown.size()
+			for k in shown.size():
+				cam = tv.cams[shown[(start + k) % shown.size()]]
+				spot = TerrorPlacement.in_camera_view(cam, _rng)
+				if spot != Vector3.INF:
+					break
+			if spot == Vector3.INF:
+				cam = null
 	if spot == Vector3.INF:
 		match context:
 			"woods":

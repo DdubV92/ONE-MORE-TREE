@@ -82,3 +82,15 @@ Wading is allowed up to about 0.9 m deep. Movement slows as the water gets deepe
 - Wheel to zoom.
 - Middle-drag to pan.
 - Esc returns to the title.
+
+## Nights and the hunt (Phase 6)
+
+| Input | Action |
+|---|---|
+| E on the dog during "Find your dog" | Reunite; Biscuit then follows you home |
+| E on a hiding place (hunt only) | Hide under a bed, in a closet, under the utility desk, behind the utility shelves, or under the dock |
+| E while hidden | Get out (only when the exit is clear) |
+| Mouse while hidden | Look around a little |
+| E at the end of the dock (day 36) | Board the rescue ship (asks first if crew are still ashore) |
+
+Sleep is replaced by "Find your dog" during the rescue, and is unavailable during the hunt (nights pass on their own).

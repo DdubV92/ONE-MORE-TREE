@@ -1,5 +1,61 @@
 # Phase checklist
 
+## Phase 6: The Terror director, living nights, the dog rescue and the Foreman's hunt
+
+Status key: ✅ implemented and observed (automated test or headless sim) · 🟡 implemented, needs live review on real hardware · ⬜ later phase. Separate coverage statuses for the authored bank are in [docs/coverage/phase6_coverage.md](coverage/phase6_coverage.md).
+
+### Authored content as working data
+
+| Item | Status | Notes |
+|---|---|---|
+| Packet preserved verbatim (`docs/design/phase6_packet.md`) and compiled by `tools/compile_terror_bank.py` into `data/terror/bank.json` | ✅ | 26 families, 1,300 events (T01-E001…T26-E050), 312 startle types (T01-J01…T26-J12), 36 Foreman patterns (F-H01…F-H36); unique ids, source text kept per entry |
+| Every event has an executor plan made of real runtime primitives (sound, voice, figure, shadow, lantern lights, interior warmth, starless sky patch, props: red thread/footprints/stakes, camera feed watch/anomaly, dog reaction, worker witness, startle peak) | ✅ | Schema/reference validation test; the mapping is keyword-derived and traceable |
+| **Implemented** (has a valid executor) | 1,300 / 1,300 events, 312 / 312 startles | T26 events map to beats of the single rescue quest |
+| **RuntimeObserved** (executed headless in its context through the real director to cleanup, no script errors) | COV_OBSERVED | See the coverage table; quiet = no valid place in that fixture (a legal outcome) |
+| **Missing / art gaps** | 🟡 | Apparition bodies are stylised procedural silhouettes (tall woman, surveyor, worker-like, low crawler, antlered wing, backward walker, wrong dog, drowned walker, hanging shapes, afterimage, extra person). Several authored beats are approximated by the shared primitives (e.g. "two cameras catch different portions", "flashlight passes beneath her shoulders"): the cue plays, the exact staging is simplified. Voices are original synthesized murmurs with captions of lines the crew really said (no recorded voices). |
+
+### Ordinary nights
+
+| Item | Status | Notes |
+|---|---|---|
+| One director: context (woods / camp / cabin / camper / cameras), needs (workers, truck, dog), novelty, no repeat of a family the same night, quiet outcomes when nothing fits | ✅ | |
+| Pacing: 45–150 s quiet gaps, one active primary encounter, shared peak budget with 8–12 active-minute refractory (3 min under sustained pursuit), startle weight ~4 % (~22 % under pursuit) | ✅ | Refractory tested; values need night play-testing |
+| Behaviour profile: pursuit / retreat / stare / camera dwell from in-game movement only, decaying | ✅ / 🟡 | |
+| Encounters: grounded placement outside every safe area with cover, emergence instead of pop-in when watched, react to a sustained look or approach, optional peak, withdrawal through cover, aftermath, cleanup | ✅ / 🟡 | |
+| Sound at its world source through the Horror bus; real `SoundEvents`, so TV microphones relay it, workers can perceive it (Phase 4 evidence API), the dog reacts; captions without coordinates | ✅ | |
+| Morning removes night actors/props/audio; never touches wood, trees, money, roster, vehicles | ✅ | Tested |
+| "Live Feed That Lies": camera-only anomalies (frozen tile, static, wrong label, phantom figure on the feed) logged separately from real render faults | ✅ / 🟡 | |
+| Ordinary catch: exposure only while the physical body is outside safety on a contract night; boundary grace; three warnings; commit-frame re-check (safety wins); pause stops it; no catch during the rescue grace | ✅ | Tested |
+| Catch screen: saves blocked, load this morning's checkpoint (written every contract morning, separate from manual saves) or the last save | ✅ / 🟡 | |
+
+### The dog rescue (T26, once per campaign)
+
+| Item | Status | Notes |
+|---|---|---|
+| Eligibility: day ≥ 4, the dog has been petted, a contract night, boss awake in the camper, dog asleep, not day 30, never during the hunt; 35 % per eligible night | ✅ | |
+| Checkpoint + trigger id before the door opens; wind roar, the real camper door blown open, the real dog runs a validated 60–150 m route and waits at cover, whining (heard by mics/workers) | ✅ | Sim |
+| "Find your dog" replaces sleep; ≥ 200 s protected grace (longer for far routes) | ✅ | |
+| Pet to reunite → the dog follows → home through the flap → bed → sleep restored; stalled search assist after 8 min; invalid route recovery to the gate | ✅ | Sim |
+| Reload never replays the door; resolved state never retriggers | ✅ | Sim |
+
+### Abandonment and the hunt
+
+| Item | Status | Notes |
+|---|---|---|
+| Only on an unmet day-30 deadline; a fulfilled contract can never spawn the Foreman | ✅ | Tested |
+| Transition: company frozen (no hires, no boat, departing workers stay), beacon acknowledged at the utility radio (rescue at dawn day 36), dog walks to its dock refuge, clear rules card **before** anything can kill | ✅ | |
+| Continuous hunt clock: 900 s day + 300 s dusk + 300 s survival night, days 31–35, no sleep, pause stops it; survival checkpoint at each dawn; rescue only at dawn of day 36 | ✅ | Tested |
+| The Foreman: one persistent original procedural body (~3 m, coat, back mass, long arms/hands, hood, folds, off-centre jaw, throat tags), idle/walk/sprint/listen/low search/doorway fold/reach | ✅ / 🟡 | Stylised; close-up face/skin is an art gap. Character Preview has a dev turntable |
+| Senses: FOV, distance by light, occlusion, confirmation time; hears real sound events (footsteps, work, doors, engines, voices, hide doors) with uncertainty; decaying evidence; rare broad sector hints that are sometimes wrong | ✅ | |
+| States ARRIVAL/ROAM/LISTEN/NOTICE/INVESTIGATE/CONFIRM/CHASE/LOST_CONTACT/SEARCH/SHELTER_PROBE/INSPECT_TRUCK/ATTACK/DISENGAGE/RECOVER; sprint limited to 7 s then recovery; one false departure per search | ✅ / 🟡 | |
+| Hiding: camper bed + wardrobe, six cabin beds, utility desk + shelves, under the dock; enter/exit with a short transition and a verified exit; seen entry is evidence; probes find occupants by suspicion | ✅ | Probe trials in the sim |
+| Attacks: telegraphed 0.65 s, re-checked (reach, hidden-and-not-found, moving truck) — no stored kill after a valid evasion | ✅ | Tested |
+| Workers: stay in the cabin, warn, flee to free hiding places, come out when quiet; real death state persists; a witness believes | ✅ / 🟡 | |
+| Rescue ship approaches the real dock at dawn of day 36, 8-minute boarding window, workers board at the dock end, the dog boards automatically exactly once, boss boards (confirmation if crew still ashore); outcome lists escaped / departed / dead / left behind | ✅ | Sim |
+| 36 Foreman patterns as conditional plans in the one agent (pattern ids recorded when their situation occurs) | ✅ / 🟡 | Observed ids in the sim are listed below |
+
+HUNT_SIM_PLACEHOLDER
+
 ## Phase 5: Two logging pickups, a living camp, dock and dog, couch television, and ten live cameras
 
 Status key: ✅ implemented and observed (automated test or headless sim) · 🟡 implemented, needs live review on real hardware · ⬜ later phase.

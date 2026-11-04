@@ -18,6 +18,8 @@ func _ready() -> void:
 		_run("save v5 -> v6 migration adds the Phase 5 block", _t_save_v6)
 		_run("arcade games: score, failure, restart, high score", _t_arcade_logic)
 		await _run_async("phase 5 world", _t_phase5_world)
+		_run("phase 6 bank", _t_terror_bank)
+		await _run_async("phase 6 world", _t_phase6_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
@@ -65,6 +67,8 @@ func _ready() -> void:
 	_run("save v5 -> v6 migration adds the Phase 5 block", _t_save_v6)
 	_run("arcade games: score, failure, restart, high score", _t_arcade_logic)
 	await _run_async("phase 5: trucks, seats, cargo once, TV rotation/focus/pool, mics, arcade pause, dog door route, refuge, couch, saves", _t_phase5_world)
+	_run("phase 6 bank: 26 families, 1300 events, 312 startles, 36 Foreman patterns, valid executors", _t_terror_bank)
+	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -1984,5 +1988,179 @@ func _t_phase5_world() -> String:
 	world.trees.clear_all()
 	world.queue_free()
 	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+# ----------------------------------------------------------------- phase 6
+
+func _t_terror_bank() -> String:
+	var f := FileAccess.open("res://data/terror/bank.json", FileAccess.READ)
+	if f == null:
+		return "bank.json missing"
+	var b: Dictionary = JSON.parse_string(f.get_as_text())
+	if (b.families as Array).size() != 26 or (b.events as Array).size() != 1300 or (b.startles as Array).size() != 312 or (b.foreman as Array).size() != 36:
+		return "counts %d/%d/%d/%d" % [(b.families as Array).size(), (b.events as Array).size(), (b.startles as Array).size(), (b.foreman as Array).size()]
+	var d := TerrorDirector.new()
+	d.bank = b
+	var v := d.validate()
+	d.free()
+	if not (v.errors as Array).is_empty():
+		return "validation: %s" % str((v.errors as Array).slice(0, 4))
+	var per := {}
+	for e in b.events:
+		var k := "%02d" % int(e.family)
+		per[k] = int(per.get(k, 0)) + 1
+		if int(e.family) == 26 and not "rescue_beat" in str(e.steps):
+			return "T26 event not mapped to the rescue quest: %s" % str(e.id)
+		if not str(e.id).begins_with("T%02d-E" % int(e.family)):
+			return "bad id %s" % str(e.id)
+	for k in per:
+		if int(per[k]) != 50:
+			return "family %s has %d events" % [k, int(per[k])]
+	for fp in b.foreman:
+		if str(fp.text) == "":
+			return "empty Foreman pattern %s" % str(fp.id)
+	return ""
+
+
+func _t_phase6_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 600:
+		await get_tree().physics_frame
+		guard += 1
+	var err := ""
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(false)
+	var p: Player = world.player
+	var th: NightThreat = world.threat
+	# --- exposure only outside safety at night; same-frame safety wins.
+	cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+	cs.clock.running = false
+	world.teleport_to("forest")
+	await get_tree().physics_frame
+	th.exposure = 0.0
+	th.outside_t = 2.0
+	th._process(10.0)
+	if th.exposure <= 0.0:
+		err = "no exposure outside at night"
+	world.teleport_to("camper")
+	for i in 3:
+		await get_tree().physics_frame
+	var e0 := th.exposure
+	th._process(10.0)
+	if err == "" and th.exposure > e0:
+		err = "exposure grew inside the camper"
+	var caught := [false]
+	th.caught.connect(func() -> void: caught[0] = true)
+	th.exposure = 1.0
+	th._commit_catch(p)
+	if err == "" and caught[0]:
+		err = "a stale catch followed the player into the camper"
+	world.teleport_to("forest")
+	await get_tree().physics_frame
+	th.grant_grace(60.0)
+	th.exposure = 0.99
+	th.outside_t = 5.0
+	th._process(1.0)
+	if err == "" and caught[0]:
+		err = "catch during the protected rescue grace"
+	th.grace_until = -1.0
+	th._commit_catch(p)
+	if err == "" and not caught[0]:
+		err = "no catch after full exposure outside"
+	if world.end_screen.visible:
+		world.end_screen._resume()
+	Game.block_saves = false
+	# --- director: forced encounter starts, morning cleans up.
+	var dir: TerrorDirector = world.director
+	world.teleport_to("forest")
+	await get_tree().physics_frame
+	var id := dir.offer("T01-E001")
+	if err == "" and id == "":
+		err = "director could not place T01-E001 in the forest"
+	dir.morning_cleanup()
+	await get_tree().process_frame
+	if err == "" and (dir.active != null or not get_tree().get_nodes_in_group("terror_actor").is_empty() and is_instance_valid(get_tree().get_nodes_in_group("terror_actor")[0]) and not get_tree().get_nodes_in_group("terror_actor")[0].is_queued_for_deletion()):
+		err = "morning left a night actor behind"
+	dir._on_ended("peak", "TEST")
+	if err == "" and dir.peak_available():
+		err = "peak refractory not applied"
+	# --- success never hunts.
+	var h: HuntService = world.hunt
+	cs.contract.state = ContractService.FULFILLED
+	h.begin_abandonment()
+	if err == "" and (h.mode != "none" or h.foreman != null):
+		err = "a fulfilled contract started the hunt"
+	# --- abandonment -> hunt.
+	cs.contract.state = ContractService.ABANDONMENT
+	world.teleport_to("camp")
+	await get_tree().physics_frame
+	h.begin_abandonment()
+	if world.end_screen.showing == "info":
+		world.end_screen._resume()
+	await get_tree().physics_frame
+	if err == "" and (h.mode != "hunt" or h.foreman == null or get_tree().get_nodes_in_group("foreman").size() != 1):
+		err = "hunt did not start with exactly one Foreman"
+	if err == "" and h.foreman.global_position.distance_to(p.global_position) < 80.0:
+		err = "Foreman revealed too close (%.0f m)" % h.foreman.global_position.distance_to(p.global_position)
+	if err == "" and world.dog.routine != "refuge":
+		err = "dog not sent to the dock refuge"
+	if err == "" and bool(world.crew.can_hire().ok):
+		err = "hiring still open after abandonment"
+	for x in h.foreman._humans():
+		if err == "" and x == world.dog:
+			err = "the dog is a Foreman target"
+	if err == "" and world.director._is_ordinary_night():
+		err = "ordinary director still active during the hunt"
+	# --- hidden + unexposed: an attack commit is an evasion, not a kill.
+	var spots := get_tree().get_nodes_in_group("hide_spot")
+	if err == "" and spots.size() < 8:
+		err = "only %d hide spots" % spots.size()
+	if err == "":
+		var hs: HideSpot = spots[0]
+		p.teleport_feet(hs.exit_point, 0.0)
+		await get_tree().physics_frame
+		p.hide_in(hs)
+		h.foreman.global_position = p.global_position + Vector3(1.0, 0, 0)
+		h.foreman._begin_attack(p)
+		h.foreman.attack_t = 1.0
+		h.foreman._attack(0.1)
+		if h.player_dead:
+			err = "killed while hidden and not found"
+		p.leave_hide()
+	# --- continuous clock: five cycles before rescue.
+	if err == "":
+		h.foreman.grace = 9999.0
+		var day0 := h.hunt_day
+		h.t = HuntService.CYCLE - 0.1
+		h._process(0.2)
+		if h.hunt_day != day0 + 1:
+			err = "dawn did not advance the hunt day"
+		h.hunt_day = 34
+		h.t = HuntService.CYCLE - 0.1
+		h._process(0.2)
+		if err == "" and h.mode != "hunt":
+			err = "rescue arrived before five cycles"
+		h.t = HuntService.CYCLE - 0.1
+		h._process(0.2)
+		if err == "" and (h.mode != "rescue" or h.hunt_day != 36):
+			err = "rescue not available at dawn of day 36 (mode %s day %d)" % [h.mode, h.hunt_day]
+	# --- save v7 carries the hunt.
+	var data := SaveService.capture_state(world)
+	if err == "" and str(((data.get("phase6", {}) as Dictionary).get("hunt", {}) as Dictionary).get("mode", "")) != "rescue":
+		err = "hunt not saved"
+	if world.end_screen.visible:
+		world.end_screen._resume()
+	world.timber.clear_all()
+	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.block_saves = false
 	Game.mode = Game.Mode.MENU
 	return err

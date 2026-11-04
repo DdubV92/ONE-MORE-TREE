@@ -1,4 +1,4 @@
-# Review guide (Phases 0-5, about 40 minutes)
+# Review guide (Phases 0-6, about 55 minutes)
 
 Start a test build (README → "Play a test build"), then choose **Preview Tour** on the title screen.
 
@@ -26,6 +26,10 @@ Start a test build (README → "Play a test build"), then choose **Preview Tour*
 | 9h | Tour → **Dock & dog** | The finished dock (cleats, fenders, ladder, rail, lamp, sign), the utility building (door, shelves, panel, radio desk; E on the teal beacon console) and Biscuit's alcove. **Dog: refuge** sends the dog there on foot; **Dog: home now** walks it back and in through the flap in the camper door. Pet Biscuit (E). |
 | 9i | Tour → **Surveillance** | You sit on the couch facing the TV: four live feeds, one tile changes every 5 s. A surveyor in a hi-vis jacket walks past CAM-03 and the north fence (preview only). Click a tile to focus it (sharper, louder microphone), A/D to change camera, right-click back, C for Timber Tales, M mutes the camera microphones, [ ] changes the swap speed. Chop near a camera and listen for it from the TV. |
 | 9j | Tour → **Arcade** | E on a cabinet: the world pauses (banner says so). Play Log Stacker and Flapjack Flip, press H for help, Esc to leave; the high score stays. |
+| 9k | Tour → **Phase 6 stops → Night director** (test session, in memory) | Contract night. Within seconds and then every 45–150 s, something happens where you are: a tall pale figure among trunks, knocking on a wall, a voice like a worker's, lanterns between the trees, a starless patch of sky, a red thread on a fence. Look straight at a figure: it withdraws behind cover instead of popping out. Stand outside the lamp pools: three warnings, then the night catches you (Preview: return to camp). |
+| 9l | **Next family event** (repeat) | Steps through the 26 families one at a time in your current place (camp, woods, cabin, camper, or on the couch for the camera context). The message names the authored event id and text. |
+| 9m | **Dog rescue** | You are put in the camper with Biscuit asleep. The wind throws the door open and the dog runs. Follow the whining (60–150 m out), press E on the dog, and walk home: Biscuit follows, goes in through the flap, and sleep works again. |
+| 9n | **Abandon → hunt** | The day-30 failure card explains the new rules. Far away, the Foreman stands by a survey marker. Hide (E) under beds, in the camper wardrobe, under the utility desk or the dock. If it saw you go in, it may check. Break line of sight; it sprints for a few seconds, not forever. Biscuit stays at the dock alcove. **Hunt: day 35** and **Hunt: ship** jump the continuous clock; at dawn of day 36 the ship docks, the dog boards on its own, and E at the dock end boards you. |
 | 10 | Tour → **Character Preview** | Human: Idle, Walk, Axe swing, Walk a circle, Next look (4 workers). Dog: Idle, Walk, Lie & sleep. Speed slider, joint/foot-contact debug, Day/Sunset/Night. |
 
 Optional:

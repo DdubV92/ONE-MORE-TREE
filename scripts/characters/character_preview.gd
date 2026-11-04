@@ -61,6 +61,27 @@ func _ready() -> void:
 	_update_camera()
 
 
+var foreman: ForemanBody
+var _turn := false
+
+
+func _show_foreman(pose: String) -> void:
+	if foreman == null:
+		foreman = ForemanBody.new()
+		foreman.position = Vector3(0, 0, -2.2)
+		add_child(foreman)
+		_dist = 7.0
+		_focus = Vector3(0, 1.5, -1.0)
+	foreman.pose = pose
+	foreman.speed = 1.7 if pose == "walk" else (6.5 if pose == "sprint" else 0.0)
+	_turn = true
+
+
+func _process_turntable(delta: float) -> void:
+	if foreman and _turn:
+		foreman.rotation.y += delta * 0.35
+
+
 func _build_stage() -> void:
 	var floor_mi := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
@@ -105,6 +126,16 @@ func _build_ui() -> void:
 	h2.add_child(UITheme.button("Lie & sleep", func() -> void: _dog_circle = false; dog.play("lie"), 120))
 	v.add_child(h2)
 	v.add_child(UITheme.button("Dog: walk a circle", func() -> void: _dog_circle = true, 288))
+	var h2b := HBoxContainer.new()
+	for c in ["trot", "sit", "alert", "pet"]:
+		h2b.add_child(UITheme.button(c.capitalize(), func() -> void: _dog_circle = false; dog.play(c), 66))
+	v.add_child(h2b)
+	# Phase 6 development turntable: the Foreman (dev review only).
+	v.add_child(UITheme.label("The Foreman (Phase 6 dev turntable)", 18, UITheme.MUTED))
+	var h3 := HBoxContainer.new()
+	for fp in ["idle", "walk", "sprint", "listen", "search", "fold", "reach"]:
+		h3.add_child(UITheme.button(fp.capitalize(), func() -> void: _show_foreman(fp), 54))
+	v.add_child(h3)
 	var sp := HBoxContainer.new()
 	sp.add_child(UITheme.label("Speed", 16))
 	var sl := HSlider.new()
@@ -180,6 +211,7 @@ func _update_camera() -> void:
 
 
 func _process(delta: float) -> void:
+	_process_turntable(delta)
 	if _human_circle:
 		_human_angle += delta * HumanCharacter.WALK_NOMINAL_SPEED * _speed / 1.6
 		human.position = Vector3(-0.9 + cos(_human_angle) * 1.6, 0, sin(_human_angle) * 1.6)
