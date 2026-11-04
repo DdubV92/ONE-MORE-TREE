@@ -31,7 +31,8 @@ var monitor: Node3D
 var screen: MeshInstance3D
 var vp: SubViewport
 var overlay: CanvasLayer
-var container: SubViewportContainer
+var view: TextureRect
+var forwarded := 0
 var mat: ShaderMaterial
 var app := "Cameras"
 var powered := true
@@ -60,19 +61,27 @@ func setup() -> void:
 	overlay.layer = 40
 	overlay.visible = false
 	add_child(overlay)
-	container = SubViewportContainer.new()
-	container.stretch = true
-	container.anchor_left = 0.02
-	container.anchor_top = 0.06
-	container.anchor_right = 0.72
-	container.anchor_bottom = 0.86
-	overlay.add_child(container)
+	# The desktop viewport is NOT inside a container (a hidden container
+	# would stop it rendering on the in-world monitor). The seated overlay
+	# shows its texture and forwards mouse input into it.
 	vp = SubViewport.new()
 	vp.size = SIZE
 	vp.disable_3d = true
 	vp.handle_input_locally = true
+	vp.gui_embed_subwindows = true
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	container.add_child(vp)
+	add_child(vp)
+	view = TextureRect.new()
+	view.texture = vp.get_texture()
+	view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	view.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	view.anchor_left = 0.02
+	view.anchor_top = 0.06
+	view.anchor_right = 0.72
+	view.anchor_bottom = 0.86
+	view.mouse_filter = Control.MOUSE_FILTER_STOP
+	view.gui_input.connect(_forward_input)
+	overlay.add_child(view)
 	_build_shell()
 	mat = ShaderMaterial.new()
 	mat.shader = load("res://shaders/tv_screen.gdshader")
@@ -81,6 +90,26 @@ func setup() -> void:
 	mat.set_shader_parameter("powered", 1.0)
 	screen.material_override = mat
 	open_app("Cameras")
+
+
+## Overlay -> desktop: mouse events are re-expressed in desktop pixels.
+func _forward_input(ev: InputEvent) -> void:
+	if not (ev is InputEventMouse):
+		return
+	var e := ev.duplicate() as InputEventMouse
+	e.position = to_desktop(e.position, view.size)
+	vp.push_input(e, true)
+	forwarded += 1
+	view.accept_event()
+
+
+## Point in the overlay rect -> desktop pixel (aspect-kept letterbox).
+static func to_desktop(p: Vector2, rect: Vector2) -> Vector2:
+	var ar := float(SIZE.x) / float(SIZE.y)
+	var w := minf(rect.x, rect.y * ar)
+	var h := w / ar
+	var o := (rect - Vector2(w, h)) * 0.5
+	return (p - o) / Vector2(w, h) * Vector2(SIZE)
 
 
 # ------------------------------------------------------------ desktop shell

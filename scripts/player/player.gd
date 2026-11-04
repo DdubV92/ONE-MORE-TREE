@@ -310,7 +310,9 @@ func stand_from_couch() -> void:
 	var side := couch.global_basis.x
 	var base := couch.global_position
 	var spot := Vector3.INF
-	for off in [0.6, 0.45, 0.8]:
+	# Desk: the chair pushes back - stand up behind it, never into the desk.
+	var offsets := [-0.75, -0.6, -0.9] if at_desk else [0.6, 0.45, 0.8]
+	for off in offsets:
 		for lat in [0.0, 0.3, -0.3]:
 			var c: Vector3 = base + fwd * float(off) + side * float(lat)
 			c.y = couch.global_position.y - 0.55
@@ -324,11 +326,6 @@ func stand_from_couch() -> void:
 		return
 	var yaw := couch.global_rotation.y + _couch_yaw
 	if at_desk:
-		# The chair pushes back: stand up behind it, never into the desk.
-		var back := base - fwd * 0.75
-		back.y = couch.global_position.y - 0.55
-		if _stand_clear(back):
-			spot = back
 		yaw = couch.global_rotation.y
 		if Game.desk:
 			Game.desk.sit(false)

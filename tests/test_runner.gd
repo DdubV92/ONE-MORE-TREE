@@ -13,6 +13,11 @@ var _log: PackedStringArray = []
 func _ready() -> void:
 	await get_tree().process_frame
 	World.ensure_loaded()
+	if OS.has_environment("ONLY_P11"):
+		await _run_async("phase 11", _t_phase11_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P10"):
 		_run("phase 10 units", _t_phase10_units)
 		await _run_async("phase 10 world", _t_phase10_world)
@@ -92,6 +97,7 @@ func _ready() -> void:
 	await _run_async("phase 9 world: guide detects real results, night-rules gate, legacy saves skip the guide, final-tree milestone once, success summary from ledger, truthful sleep/hire reasons, true pause freezes timers", _t_phase9_world)
 	_run("phase 10 units: 10,000-tree manifest deterministic/unique/clustered, ruleset labels + unknown rulesets refused, share conservation incl. future 1.5x sections, contribution dedupe, audio event inventory", _t_phase10_units)
 	await _run_async("phase 10 world: standard ruleset = 10,000 natives + 5 employees + $4,500 + $1,500/day once, excluded trees untargetable, legacy load unchanged, deadline race, ruleset saved", _t_phase10_world)
+	await _run_async("phase 11: camper +25% area/safety/entrance, desk computer hosts cameras (relay at desk, tile click, sit/glance/stand, save standing), TV entertainment only, five distinct employees with real hands, dog anatomy, in-place pixel style", _t_phase11_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -2963,5 +2969,140 @@ func _t_phase10_world() -> String:
 	Game.preview_variant = ""
 	World.excluded_trees.clear()
 	World.manifest_variant = "full"
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+# ---------------------------------------------------------------- Phase 11
+
+func _t_phase11_world() -> String:
+	var ratio := CampLayout.camper_usable_area() / (CampLayout.CAMPER_V1_SIZE.x * CampLayout.CAMPER_V1_SIZE.z)
+	if ratio < 1.22 or ratio > 1.28:
+		return "camper area ratio %.3f (want ~1.25)" % ratio
+	if DeskComputer.tile_at(Vector2(10, 10), Vector2(1600, 900)) != 0 or DeskComputer.tile_at(Vector2(1590, 890), Vector2(1600, 900)) != 3 or DeskComputer.tile_at(Vector2(5, 450), Vector2(2000, 900)) != -1:
+		return "desk tile mapping wrong"
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 600:
+		await get_tree().physics_frame
+		guard += 1
+	var err := ""
+	var camper := world.camp.find_child("Camper", false, false) as Node3D
+	var F := CampLayout.CAMPER_FLOOR
+	# Safety covers the whole new lounge (desk corner included); outside the
+	# new front wall it does not come from the camper.
+	var desk_pt := camper.global_transform * Vector3(-1.0, F + 1.0, CampLayout.CAMPER_SOUTH_Z - 0.3)
+	var q: Dictionary = world.safety.query(desk_pt)
+	if not bool(q.safe) or str(q.get("zone", "")) != "camper":
+		err = "desk corner not inside the camper safety zone: %s" % str(q)
+	var outside := camper.global_transform * Vector3(-1.0, F + 1.0, CampLayout.CAMPER_SOUTH_Z + 0.8)
+	if err == "" and str(world.safety.query(outside).get("zone", "")) == "camper":
+		err = "camper safety leaks outside the new front wall"
+	# Entrance and dog route unchanged: door still at local z 2.3.
+	var door := camper.find_child("CamperDoor", false, false) as Node3D
+	if err == "" and (door == null or absf(door.position.z - 2.3) > 0.001):
+		err = "camper door moved"
+	# Desk computer hosts the live cameras; TV is entertainment only.
+	var wall := world.tv
+	if err == "" and not wall.hosted:
+		err = "camera wall still on the TV"
+	if err == "" and not wall.speaker.get_parent().is_in_group("camper_monitor"):
+		err = "camera relay not at the desk"
+	if err == "" and (world.tv_set == null or world.tv_set.screen == null or world.tv_set.screen == wall.screen):
+		err = "entertainment TV not separate"
+	var desk := world.desk
+	if err == "" and (desk == null or desk.monitor == null):
+		err = "desk computer missing"
+	# Sit, glance, click a tile, stand behind the chair.
+	var p: Player = world.player
+	var seat := WorldGroups.of(world, "desk_seat")[0] as Node3D
+	p.sit_on_couch(seat)
+	for i in 30:
+		await get_tree().process_frame
+	if err == "" and (not p.at_desk or not desk.seated):
+		err = "sitting at the desk failed"
+	wall.force_active = true
+	wall.set_mode("quad")
+	desk.open_app("Cameras")
+	for i in 5:
+		await get_tree().process_frame
+	var want: int = wall.tiles[3]
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	var fs: Vector2 = desk._feed.size
+	var fw := minf(fs.x, fs.y * 16.0 / 9.0)
+	ev.position = fs * 0.5 + Vector2(fw * 0.25, fw * 9.0 / 16.0 * 0.25)
+	desk._feed_input(ev)
+	if err == "" and (wall.mode != "focus" or wall.focus_index != want):
+		err = "clicking tile 4 focused %s/%d (wanted %d)" % [wall.mode, wall.focus_index, want]
+	wall.back_to_quad()
+	var g := InputEventAction.new()
+	g.action = "move_right"
+	g.pressed = true
+	p._couch_input(g)
+	if err == "" and (not desk.glancing or desk.overlay.visible):
+		err = "glance right did not hide the overlay"
+	p._couch_input(g)
+	var st := SaveService.capture_state(world)
+	if err == "" and str(st.player.get("seat", "")) != "":
+		err = "desk session not saved as standing"
+	p.stand_from_couch()
+	await get_tree().physics_frame
+	if err == "" and (p.at_desk or desk.seated or p.couch != null):
+		err = "standing up from the desk failed"
+	var local := camper.global_transform.affine_inverse() * p.global_position
+	if err == "" and local.z > CampLayout.CAMPER_SOUTH_Z - 0.7:
+		err = "stood up into the desk (z %.2f)" % local.z
+	if err == "" and not CampLayout.camper_local_inside(local, 0.0):
+		err = "stood up outside the camper"
+	wall.force_active = false
+	# Five distinct employees with real hands; the dog's canine anatomy.
+	var looks := {}
+	var hairs := {}
+	for k in 5:
+		var a := HumanAppearance.for_employee("EMP-0%d" % (k + 1), k)
+		looks[a.label] = true
+		hairs[a.hair_style] = true
+	if err == "" and (looks.size() != 5 or hairs.size() < 4):
+		err = "employee looks not distinct (%d labels, %d hair styles)" % [looks.size(), hairs.size()]
+	var wk: Worker = world.crew.workers.get("EMP-01") if world.crew.workers.has("EMP-01") else null
+	if err == "" and wk and wk.body_char.appearance.label != "Marta Kell":
+		err = "EMP-01 does not wear her authored look"
+	if wk:
+		var hand: Node3D = wk.body_char.bones["HandR"]
+		var fingers := 0
+		for c in hand.get_children():
+			if str(c.name).begins_with("Finger"):
+				fingers += 1
+		if err == "" and (fingers != 4 or hand.get_node_or_null("Thumb") == null):
+			err = "hand has %d fingers / thumb %s" % [fingers, str(hand.get_node_or_null("Thumb") != null)]
+	if world.dog:
+		var d: DogCharacter = world.dog.dog
+		var hl: Node3D = d.bones["HindLowerL"]
+		var has_hock := false
+		for c in hl.get_children():
+			if str(c.name).contains("Hock"):
+				has_hock = true
+		var toes := 0
+		for c in (d.bones["FrontPawL"] as Node3D).get_children():
+			if str(c.name).contains("Toe"):
+				toes += 1
+		if err == "" and (not has_hock or toes != 4):
+			err = "dog anatomy: hock %s, toes %d" % [str(has_hock), toes]
+	# Style switches in place.
+	CharMeshKit.apply_style("pixel")
+	var any_mat: StandardMaterial3D = CharMeshKit._mat_cache.values()[0]
+	if err == "" and any_mat.next_pass == null:
+		err = "pixel style not applied in place"
+	CharMeshKit.apply_style("clean")
+	if err == "" and any_mat.next_pass != null:
+		err = "clean style not restored"
+	world.queue_free()
+	await get_tree().process_frame
 	Game.mode = Game.Mode.MENU
 	return err

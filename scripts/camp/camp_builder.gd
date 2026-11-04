@@ -171,7 +171,7 @@ func _build_camper() -> void:
 	var east := [door_open, [0.44 + ext, 1.54 + ext, 1.0, 1.8], [7.34 + ext, 8.54 + ext, 1.1, 1.8], [5.04 + ext, 5.64 + ext, 1.6, 1.95], [0.3, 1.2, 1.0, 1.8]]
 	# West starts at the bedroom end (unchanged). [9.4, 10.6] is the new
 	# desk window: to the RIGHT of a player seated at the desk.
-	var west := [[5.54, 6.94, 1.25, 1.85], [0.84, 2.34, 0.95, 1.8], [8.14, 9.14, 1.0, 1.8], [9.4, 10.6, 0.95, 1.85]]
+	var west := [[5.54, 6.94, 1.25, 1.85], [0.84, 2.34, 0.95, 1.8], [8.5, 9.25, 1.0, 1.8], [9.4, 10.6, 0.95, 1.85]]
 	var east_o := Vector3(W + t * 0.5, F, zs + t)
 	var west_o := Vector3(-W - t * 0.5, F, zn - t)
 	BuildKit.wall(c, east_o, PI * 0.5, Lz * 2 + t * 2, H, t, east, "camper_paint")

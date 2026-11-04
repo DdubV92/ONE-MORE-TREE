@@ -96,6 +96,10 @@ func _build_rig() -> void:
 	var eye_white := CharMeshKit.mat(Color(0.95, 0.94, 0.9), 0.3)
 	var iris := CharMeshKit.mat(Color(0.12, 0.09, 0.07), 0.2)
 	var lip := CharMeshKit.mat(a.skin.darkened(0.35).lerp(Color(0.5, 0.2, 0.2), 0.3), 0.6)
+	var glove_cuff := CharMeshKit.mat(a.gloves.darkened(0.3), 0.85)
+	var knee := CharMeshKit.mat(a.pants.darkened(0.22), 0.95)
+	var accent := CharMeshKit.mat(a.accent, 0.6)
+	var stitch := CharMeshKit.mat(a.jacket.lightened(0.25), 0.9)
 	rig = Node3D.new()
 	rig.name = "Rig"
 	add_child(rig)
@@ -108,6 +112,12 @@ func _build_rig() -> void:
 	CharMeshKit.blob(chest, jacket, Vector3(0, 0.07 * H, 0.004 * H), Vector3(0.235 * H * B, 0.2 * H, 0.15 * H * B), Vector3.ZERO, "Torso")
 	CharMeshKit.blob(chest, shirt, Vector3(0, 0.148 * H, -0.058 * H * B), Vector3(0.05 * H, 0.035 * H, 0.016 * H), Vector3(0.5, 0, 0), "ShirtV")
 	CharMeshKit.blob(chest, jacket_dark, Vector3(0, 0.152 * H, 0.004 * H), Vector3(0.115 * H, 0.035 * H, 0.105 * H), Vector3.ZERO, "Collar")
+	# Phase 11 workwear read: zip placket, hem over the belt, hi-vis band
+	# on the shoulders (restrained accent), shoulder seams.
+	CharMeshKit.blob(chest, stitch, Vector3(0, 0.06 * H, -0.075 * H * B), Vector3(0.008 * H, 0.17 * H, 0.006 * H), Vector3.ZERO, "Placket")
+	CharMeshKit.blob(spine, jacket, Vector3(0, -0.012 * H, 0.003 * H), Vector3(0.214 * H * B, 0.05 * H, 0.152 * H * B), Vector3.ZERO, "Hem")
+	CharMeshKit.blob(spine, jacket_dark, Vector3(0, -0.034 * H, 0.003 * H), Vector3(0.216 * H * B, 0.012 * H, 0.154 * H * B), Vector3.ZERO, "HemBand")
+	CharMeshKit.blob(chest, accent, Vector3(0, 0.118 * H, 0.068 * H * B), Vector3(0.2 * H * B, 0.012 * H, 0.012 * H), Vector3.ZERO, "BackBand")
 	for s in [-1.0, 1.0]:
 		CharMeshKit.blob(chest, jacket, Vector3(s * 0.098 * H * B, 0.128 * H, 0.004 * H), Vector3(0.068 * H * B, 0.05 * H, 0.078 * H * B), Vector3.ZERO, "Shoulder%s" % ("L" if s < 0 else "R"))
 		# Pocket flaps for a workwear read
@@ -124,10 +134,7 @@ func _build_rig() -> void:
 		CharMeshKit.limb(fore, jacket, 0.031 * H * B, 0.026 * H * B, forearm_len - 0.01 * H)
 		CharMeshKit.blob(fore, jacket_dark, Vector3(0, -forearm_len + 0.012 * H, 0), Vector3(0.062 * H * B, 0.03 * H, 0.062 * H * B), Vector3.ZERO, "Cuff")
 		var hand := _bone("Hand" + side, fore, Vector3(0, -forearm_len, 0))
-		CharMeshKit.blob(hand, gloves, Vector3(0, -0.032 * H, -0.004 * H), Vector3(0.05 * H, 0.068 * H, 0.032 * H), Vector3.ZERO, "Mitten")
-		var thumb := CharMeshKit.limb(hand, gloves, 0.011 * H, 0.009 * H, 0.03 * H)
-		thumb.position = Vector3(-s * -0.018 * H, -0.012 * H, -0.016 * H)
-		thumb.rotation = Vector3(0.6, 0, s * 0.5)
+		_build_hand(hand, gloves, glove_cuff, s)
 		var grip := Marker3D.new()
 		grip.name = "Grip"
 		grip.position = Vector3(0, -0.035 * H, -0.01 * H)
@@ -137,9 +144,12 @@ func _build_rig() -> void:
 		var shin := _bone("Shin" + side, thigh, Vector3(0, -thigh_len, 0))
 		CharMeshKit.limb(shin, pants, 0.038 * H * B, 0.031 * H * B, shin_len - 0.03 * H)
 		CharMeshKit.blob(shin, boots, Vector3(0, -shin_len + 0.035 * H, 0), Vector3(0.075 * H, 0.08 * H, 0.08 * H), Vector3.ZERO, "BootTop")
+		CharMeshKit.blob(shin, knee, Vector3(0, -0.01 * H, -0.03 * H * B), Vector3(0.06 * H * B, 0.07 * H, 0.025 * H), Vector3.ZERO, "KneePatch")
 		var foot := _bone("Foot" + side, shin, Vector3(0, -shin_len, 0))
 		CharMeshKit.blob(foot, boots, Vector3(0, -ankle_h * 0.42, -0.035 * H), Vector3(0.068 * H, ankle_h * 1.15, 0.16 * H), Vector3.ZERO, "Boot")
 		CharMeshKit.blob(foot, sole, Vector3(0, -ankle_h * 0.92, -0.035 * H), Vector3(0.072 * H, ankle_h * 0.3, 0.165 * H), Vector3.ZERO, "Sole")
+		CharMeshKit.blob(foot, sole, Vector3(0, -ankle_h * 0.35, -0.1 * H), Vector3(0.06 * H, ankle_h * 0.8, 0.05 * H), Vector3.ZERO, "ToeCap")
+		CharMeshKit.blob(foot, glove_cuff, Vector3(0, ankle_h * 0.2, -0.05 * H), Vector3(0.02 * H, ankle_h * 0.9, 0.06 * H), Vector3(0.35, 0, 0), "Laces")
 	var carry := Marker3D.new()
 	carry.name = "LogCarry"
 	carry.position = Vector3(0, 0.1 * H, -0.18 * H)
@@ -153,11 +163,18 @@ func _build_rig() -> void:
 func _build_head(head: Node3D, skin: Material, hair: Material, eye_white: Material, iris: Material, lip: Material) -> void:
 	var a := appearance
 	CharMeshKit.blob(head, skin, Vector3(0, 0.058 * H, 0), Vector3(0.125 * H, 0.135 * H, 0.13 * H), Vector3.ZERO, "Skull")
-	CharMeshKit.blob(head, skin, Vector3(0, 0.022 * H, -0.016 * H), Vector3(0.098 * H, 0.07 * H, 0.096 * H), Vector3.ZERO, "Jaw")
-	CharMeshKit.blob(head, skin, Vector3(0, 0.05 * H, -0.068 * H), Vector3(0.026 * H, 0.038 * H, 0.034 * H), Vector3(0.25, 0, 0), "Nose")
+	CharMeshKit.blob(head, skin, Vector3(0, 0.022 * H, -0.016 * H), Vector3(0.098 * H * a.jaw, 0.07 * H, 0.096 * H), Vector3.ZERO, "Jaw")
+	# Chin and jaw angle: a readable lower-face silhouette, not an egg.
+	CharMeshKit.blob(head, skin, Vector3(0, 0.004 * H, -0.05 * H), Vector3(0.05 * H * a.jaw, 0.03 * H, 0.03 * H), Vector3.ZERO, "Chin")
 	for s in [-1.0, 1.0]:
-		CharMeshKit.blob(head, skin, Vector3(s * 0.064 * H, 0.055 * H, 0.004 * H), Vector3(0.016 * H, 0.036 * H, 0.028 * H), Vector3.ZERO, "Ear")
-		CharMeshKit.blob(head, skin, Vector3(s * 0.038 * H, 0.038 * H, -0.052 * H), Vector3(0.03 * H, 0.022 * H, 0.02 * H), Vector3.ZERO, "Cheek")
+		CharMeshKit.blob(head, skin, Vector3(s * 0.04 * H * a.jaw, 0.018 * H, -0.02 * H), Vector3(0.03 * H, 0.04 * H, 0.06 * H), Vector3(0, 0, s * 0.25), "JawAngle")
+	CharMeshKit.blob(head, skin, Vector3(0, 0.05 * H, -0.068 * H), Vector3(0.026 * H * a.nose, 0.038 * H * a.nose, 0.034 * H * a.nose), Vector3(0.25, 0, 0), "Nose")
+	CharMeshKit.blob(head, skin, Vector3(0, 0.034 * H, -0.074 * H), Vector3(0.03 * H * a.nose, 0.014 * H, 0.016 * H), Vector3.ZERO, "NoseTip")
+	for s in [-1.0, 1.0]:
+		CharMeshKit.blob(head, skin, Vector3(s * 0.064 * H, 0.055 * H, 0.004 * H), Vector3(0.016 * H, 0.036 * H, 0.028 * H) * a.ear, Vector3.ZERO, "Ear")
+		CharMeshKit.blob(head, skin, Vector3(s * 0.038 * H, 0.038 * H, -0.052 * H), Vector3(0.03 * H, 0.022 * H, 0.02 * H) * a.cheek, Vector3.ZERO, "Cheek")
+		# Upper eyelid shelf: gives the eyes a readable gaze/expression.
+		CharMeshKit.blob(head, skin, Vector3(s * 0.026 * H, 0.077 * H, -0.056 * H), Vector3(0.028 * H, 0.008 * H, 0.016 * H), Vector3(0.2, 0, s * (-0.08 + a.brow_tilt * 0.5)), "Lid")
 		var eye := Node3D.new()
 		eye.name = "Eye" + ("L" if s < 0 else "R")
 		eye.position = Vector3(s * 0.026 * H, 0.068 * H, -0.054 * H)
@@ -179,6 +196,24 @@ func _build_head(head: Node3D, skin: Material, hair: Material, eye_white: Materi
 		2:
 			CharMeshKit.blob(head, hair, Vector3(0, 0.094 * H, 0.008 * H), Vector3(0.134 * H, 0.084 * H, 0.14 * H), Vector3(-0.15, 0, 0), "Hair")
 			CharMeshKit.blob(head, hair, Vector3(0, 0.122 * H, 0.055 * H), Vector3.ONE * 0.052 * H, Vector3.ZERO, "Bun")
+		4:
+			# Curly crop: a cluster of small rounded masses (silhouette, not strands).
+			var hr := RandomNumberGenerator.new()
+			hr.seed = int(a.height * 1000.0)
+			CharMeshKit.blob(head, hair, Vector3(0, 0.094 * H, 0.008 * H), Vector3(0.13 * H, 0.08 * H, 0.136 * H), Vector3(-0.15, 0, 0), "Hair")
+			for k in 14:
+				var ang := TAU * k / 14.0
+				CharMeshKit.blob(head, hair, Vector3(sin(ang) * 0.055 * H, 0.112 * H + 0.01 * H * cos(ang * 2.0), cos(ang) * 0.055 * H + 0.008 * H), Vector3.ONE * 0.04 * H * hr.randf_range(0.85, 1.15), Vector3.ZERO, "Curl")
+			var cap2 := CharMeshKit.mat(a.accent.darkened(0.3), 0.8)
+			CharMeshKit.blob(head, cap2, Vector3(0, 0.118 * H, 0.004 * H), Vector3(0.12 * H, 0.05 * H, 0.124 * H), Vector3(-0.08, 0, 0), "Cap")
+			CharMeshKit.blob(head, cap2, Vector3(0, 0.104 * H, -0.07 * H), Vector3(0.09 * H, 0.008 * H, 0.06 * H), Vector3(-0.1, 0, 0), "Brim")
+		5:
+			CharMeshKit.blob(head, hair, Vector3(0, 0.095 * H, 0.01 * H), Vector3(0.134 * H, 0.086 * H, 0.142 * H), Vector3(-0.15, 0, 0), "Hair")
+			CharMeshKit.blob(head, hair, Vector3(0, 0.05 * H, 0.07 * H), Vector3(0.05 * H, 0.05 * H, 0.04 * H), Vector3.ZERO, "Tie")
+			CharMeshKit.limb(head, hair, 0.022 * H, 0.012 * H, 0.1 * H).position = Vector3(0, 0.05 * H, 0.08 * H)
+		6:
+			CharMeshKit.blob(head, hair, Vector3(0, 0.092 * H, 0.008 * H), Vector3(0.128 * H, 0.074 * H, 0.134 * H), Vector3(-0.15, 0, 0), "Buzz")
+			CharMeshKit.blob(head, hair, Vector3(0.03 * H, 0.122 * H, -0.02 * H), Vector3(0.07 * H, 0.02 * H, 0.08 * H), Vector3(0, 0, -0.2), "SidePart")
 		3:
 			var cap := CharMeshKit.mat(Color(0.75, 0.62, 0.3), 0.8)
 			CharMeshKit.blob(head, cap, Vector3(0, 0.103 * H, 0.004 * H), Vector3(0.134 * H, 0.072 * H, 0.138 * H), Vector3(-0.08, 0, 0), "Cap")
@@ -186,9 +221,39 @@ func _build_head(head: Node3D, skin: Material, hair: Material, eye_white: Materi
 	if a.beard == 2:
 		CharMeshKit.blob(head, hair, Vector3(0, 0.018 * H, -0.038 * H), Vector3(0.106 * H, 0.072 * H, 0.08 * H), Vector3.ZERO, "Beard")
 		CharMeshKit.blob(head, hair, Vector3(0, 0.038 * H, -0.066 * H), Vector3(0.04 * H, 0.01 * H, 0.012 * H), Vector3.ZERO, "Moustache")
+	elif a.beard == 3:
+		CharMeshKit.blob(head, hair, Vector3(0, 0.038 * H, -0.066 * H), Vector3(0.046 * H, 0.012 * H, 0.014 * H), Vector3.ZERO, "Moustache")
 	elif a.beard == 1:
 		var stubble := CharMeshKit.mat(a.skin.lerp(a.hair, 0.35), 0.8)
 		CharMeshKit.blob(head, stubble, Vector3(0, 0.02 * H, -0.02 * H), Vector3(0.1 * H, 0.066 * H, 0.098 * H), Vector3.ZERO, "Stubble")
+
+
+## Phase 11 gloved hand: palm, four curled fingers in two pairs, thumb and
+## a glove cuff - a real grip silhouette instead of a mitten block. Fingers
+## curl toward the palm (-Z) so they wrap a handle at the Grip marker.
+func _build_hand(hand: Node3D, gloves: Material, cuff: Material, s: float) -> void:
+	CharMeshKit.blob(hand, cuff, Vector3(0, -0.004 * H, 0), Vector3(0.05 * H, 0.022 * H, 0.04 * H), Vector3.ZERO, "GloveCuff")
+	CharMeshKit.blob(hand, gloves, Vector3(0, -0.028 * H, -0.002 * H), Vector3(0.048 * H, 0.05 * H, 0.026 * H), Vector3.ZERO, "Palm")
+	for k in 4:
+		var fx := (-0.018 + 0.012 * k) * H * s
+		var f := Node3D.new()
+		f.name = "Finger%d" % k
+		f.position = Vector3(fx, -0.05 * H, -0.002 * H)
+		f.rotation = Vector3(0.75, 0, 0)
+		hand.add_child(f)
+		var flen := (0.03 if k in [1, 2] else 0.026) * H
+		CharMeshKit.limb(f, gloves, 0.0068 * H, 0.0058 * H, flen)
+		var tip := Node3D.new()
+		tip.position = Vector3(0, -flen, 0)
+		tip.rotation = Vector3(0.8, 0, 0)
+		f.add_child(tip)
+		CharMeshKit.limb(tip, gloves, 0.0058 * H, 0.005 * H, flen * 0.7)
+	var th := Node3D.new()
+	th.name = "Thumb"
+	th.position = Vector3(-s * 0.022 * H, -0.016 * H, -0.012 * H)
+	th.rotation = Vector3(0.9, 0, s * 0.55)
+	hand.add_child(th)
+	CharMeshKit.limb(th, gloves, 0.0085 * H, 0.007 * H, 0.028 * H)
 
 
 func _build_axe() -> void:

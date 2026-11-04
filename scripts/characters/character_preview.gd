@@ -19,7 +19,8 @@ var _dog_circle := false
 var _human_angle := 0.0
 var _dog_angle := 0.0
 var _appearance_i := 0
-var _looks := HumanAppearance.presets()
+## Phase 11: the five standard employees (authored, by persistent ID).
+var _looks: Array[HumanAppearance] = [HumanAppearance.for_employee("EMP-01", 1), HumanAppearance.for_employee("EMP-02", 2), HumanAppearance.for_employee("EMP-03", 3), HumanAppearance.for_employee("EMP-04", 4), HumanAppearance.for_employee("EMP-05", 5)]
 var _show_joints := false
 var _joint_marks: Array[MeshInstance3D] = []
 var _info: Label

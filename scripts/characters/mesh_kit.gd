@@ -57,6 +57,43 @@ static func sphere(radius := 0.5, seg := 18, rings := 10) -> SphereMesh:
 	return s
 
 
+## Phase 11 character style: "clean" or "pixel" (subtle attached pixel
+## texture as a multiply next-pass; geometry, lighting and shadows intact).
+static var style := "clean"
+static var _pixel_pass: ShaderMaterial
+
+
+static func pixel_pass() -> ShaderMaterial:
+	if _pixel_pass == null:
+		_pixel_pass = ShaderMaterial.new()
+		_pixel_pass.shader = load("res://shaders/char_pixel.gdshader")
+	_pixel_pass.set_shader_parameter("strength", float(Settings.get_v("character_style_strength")) if Settings.values.has("character_style_strength") else 0.7)
+	return _pixel_pass
+
+
+static func _styled(m: StandardMaterial3D) -> StandardMaterial3D:
+	if style == "pixel":
+		m.next_pass = pixel_pass()
+		# Restrained texture filtering for the pixel look.
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	else:
+		m.next_pass = null
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	return m
+
+
+## Switches every character material in place (no rebuild, so carried
+## logs, grips and animation state are untouched).
+static func apply_style(s: String) -> void:
+	if s == style and _pixel_pass != null:
+		pixel_pass()
+		return
+	style = s
+	for m in _mat_cache.values():
+		if m is StandardMaterial3D:
+			_styled(m)
+
+
 static func mat(color: Color, rough := 0.75, sss := 0.0) -> StandardMaterial3D:
 	var key := "%s_%.2f_%.2f" % [color.to_html(), rough, sss]
 	if _mat_cache.has(key):
@@ -68,6 +105,7 @@ static func mat(color: Color, rough := 0.75, sss := 0.0) -> StandardMaterial3D:
 		m.subsurf_scatter_enabled = true
 		m.subsurf_scatter_strength = sss
 		m.subsurf_scatter_skin_mode = true
+	_styled(m)
 	_mat_cache[key] = m
 	return m
 
@@ -87,6 +125,7 @@ static func fabric(color: Color, texture: String = "denim_fabric") -> StandardMa
 	m.roughness = 0.9
 	m.uv1_triplanar = true
 	m.uv1_scale = Vector3.ONE * 3.0
+	_styled(m)
 	_mat_cache[key] = m
 	return m
 

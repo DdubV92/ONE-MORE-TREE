@@ -50,6 +50,9 @@ var values := {
 	"highlight": 1.0,               # interaction target highlight strength 0..1
 	"hints": true,                  # tutorial / contextual hints
 	"binds": {},                    # remapped actions (Keys.capture())
+	# Phase 11 art treatment (characters only; world rendering unchanged)
+	"character_style": "clean",     # clean / pixel
+	"character_style_strength": 0.7,
 }
 
 var defaults := {}
@@ -163,6 +166,9 @@ func sanitize() -> void:
 	values.horror_intensity = clampf(float(values.horror_intensity), 0.4, 1.0)
 	values.ui_scale = clampf(float(values.ui_scale), 0.85, 1.6)
 	values.highlight = clampf(float(values.highlight), 0.0, 1.0)
+	if not values.character_style in ["clean", "pixel"]:
+		values.character_style = "clean"
+	values.character_style_strength = clampf(float(values.character_style_strength), 0.0, 1.0)
 	if typeof(values.binds) != TYPE_DICTIONARY:
 		values.binds = {}
 
@@ -211,6 +217,7 @@ func apply() -> void:
 		var is_fs := DisplayServer.window_get_mode() in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]
 		if want_fs != is_fs:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if want_fs else DisplayServer.WINDOW_MODE_WINDOWED)
+	CharMeshKit.apply_style(str(values.character_style))
 	if get_tree() and get_tree().root:
 		get_tree().root.content_scale_factor = float(values.ui_scale)
 		get_tree().root.scaling_3d_scale = values.render_scale

@@ -59,7 +59,7 @@ func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
 	id = str(record.id)
 	name = "Worker_" + id
 	body_char = HumanCharacter.new()
-	body_char.appearance = HumanAppearance.from_seed(int(record.get("look_seed", 1)))
+	body_char.appearance = HumanAppearance.for_employee(id, int(record.get("look_seed", 1)))
 	add_child(body_char)
 	body_char.set_axe_tier(axe_tier())
 	_flavor_rng.seed = hash(id)

@@ -39,6 +39,8 @@ func _ready() -> void:
 	_slider(v, "Render scale", "render_scale", 0.5, 1.0, 0.05)
 	_toggle(v, "V-Sync", "vsync")
 	_toggle(v, "Fullscreen", "fullscreen")
+	_choice(v, "Character art style", "character_style", ["clean", "pixel"])
+	_slider(v, "Pixel style strength", "character_style_strength", 0.0, 1.0, 0.05)
 	_section(v, "Cinematic effects (each can be disabled)")
 	_choice(v, "Depth of field", "dof_mode", ["off", "subtle", "cinematic"])
 	_choice(v, "Upscaler (render scale < 100%)", "upscaler", ["bilinear", "fsr1", "fsr2"])

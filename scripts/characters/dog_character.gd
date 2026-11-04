@@ -87,16 +87,31 @@ func _build_rig() -> void:
 	var chest := _bone("Chest", body, Vector3(0, 0.02, -0.2))
 	CharMeshKit.blob(chest, f, Vector3(0, 0.0, 0.0), Vector3(0.27, 0.3, 0.28), Vector3.ZERO, "ChestMass")
 	CharMeshKit.blob(chest, cr, Vector3(0, -0.04, -0.1), Vector3(0.17, 0.22, 0.12), Vector3.ZERO, "Bib")
+	# Phase 11 anatomy: deep ribcage keel between the front legs, shoulder
+	# blades over the chest, and a tucked-up waist before the hindquarters.
+	CharMeshKit.blob(chest, cr, Vector3(0, -0.12, -0.02), Vector3(0.16, 0.14, 0.22), Vector3(0.1, 0, 0), "Keel")
+	for sb in [-1.0, 1.0]:
+		CharMeshKit.blob(chest, dk, Vector3(sb * 0.07, 0.1, 0.02), Vector3(0.07, 0.13, 0.12), Vector3(0.35, 0, sb * 0.2), "ShoulderBlade")
+	CharMeshKit.blob(body, cr, Vector3(0, -0.11, 0.12), Vector3(0.13, 0.07, 0.16), Vector3(-0.35, 0, 0), "TuckUp")
+	# Collar and tag (original, simple).
+	var collar_m := CharMeshKit.mat(Color(0.62, 0.14, 0.12), 0.6)
+	var tag_m := CharMeshKit.mat(Color(0.8, 0.68, 0.32), 0.3)
 	var pelvis := _bone("Pelvis", body, Vector3(0, 0.0, 0.21))
 	CharMeshKit.blob(pelvis, f, Vector3(0, 0.0, 0.02), Vector3(0.24, 0.25, 0.25), Vector3.ZERO, "Rump")
 	var neck := _bone("Neck", chest, Vector3(0, 0.1, -0.1))
 	CharMeshKit.blob(neck, f, Vector3(0, 0.05, -0.04), Vector3(0.15, 0.22, 0.15), Vector3(-0.55, 0, 0), "NeckMass")
 	CharMeshKit.blob(neck, dk, Vector3(0, 0.09, 0.0), Vector3(0.13, 0.12, 0.12), Vector3(-0.55, 0, 0), "Scruff")
+	CharMeshKit.blob(neck, collar_m, Vector3(0, 0.03, -0.03), Vector3(0.165, 0.035, 0.165), Vector3(-0.55, 0, 0), "Collar")
+	CharMeshKit.blob(neck, tag_m, Vector3(0, -0.035, -0.1), Vector3(0.03, 0.035, 0.008), Vector3.ZERO, "Tag")
 	var head := _bone("Head", neck, Vector3(0, 0.14, -0.09))
 	CharMeshKit.blob(head, f, Vector3(0, 0.03, 0.0), Vector3(0.17, 0.15, 0.18), Vector3.ZERO, "Skull")
-	CharMeshKit.blob(head, cr, Vector3(0, -0.005, -0.115), Vector3(0.1, 0.085, 0.16), Vector3(0.1, 0, 0), "Muzzle")
-	CharMeshKit.blob(head, black, Vector3(0, 0.022, -0.198), Vector3(0.045, 0.035, 0.035), Vector3.ZERO, "Nose")
-	CharMeshKit.blob(head, cr, Vector3(0, -0.035, -0.12), Vector3(0.08, 0.04, 0.12), Vector3.ZERO, "Chin")
+	CharMeshKit.blob(head, f, Vector3(0, 0.045, -0.075), Vector3(0.11, 0.06, 0.07), Vector3(-0.3, 0, 0), "Stop")
+	CharMeshKit.blob(head, cr, Vector3(0, 0.0, -0.13), Vector3(0.095, 0.08, 0.18), Vector3(0.08, 0, 0), "Muzzle")
+	CharMeshKit.blob(head, black, Vector3(0, 0.022, -0.218), Vector3(0.048, 0.035, 0.035), Vector3.ZERO, "Nose")
+	for sn2 in [-1.0, 1.0]:
+		CharMeshKit.blob(head, CharMeshKit.mat(Color(0.02, 0.02, 0.02), 0.5), Vector3(sn2 * 0.012, 0.022, -0.234), Vector3(0.012, 0.01, 0.006), Vector3.ZERO, "Nostril")
+		CharMeshKit.blob(head, cr, Vector3(sn2 * 0.03, -0.012, -0.16), Vector3(0.04, 0.035, 0.08), Vector3.ZERO, "Flew")
+	CharMeshKit.blob(head, cr, Vector3(0, -0.04, -0.12), Vector3(0.075, 0.035, 0.13), Vector3.ZERO, "Chin")
 	CharMeshKit.blob(head, tongue, Vector3(0, -0.05, -0.15), Vector3(0.035, 0.012, 0.05), Vector3(0.25, 0, 0), "Tongue")
 	for k in 6:
 		CharMeshKit.blob(head, cr, Vector3(rng.randf_range(-0.04, 0.04), -0.045, -0.09 - k * 0.012), Vector3(0.03, 0.04, 0.025), Vector3.ZERO, "Whisker")
@@ -107,7 +122,9 @@ func _build_rig() -> void:
 		CharMeshKit.blob(e, glint, Vector3(0.006, 0.008, -0.012), Vector3.ONE * 0.007)
 		CharMeshKit.blob(head, dk, Vector3(s * 0.045, 0.085, -0.08), Vector3(0.035, 0.012, 0.02), Vector3(0, 0, -s * 0.25), "Brow" + sn)
 		var ear := _bone("Ear" + sn, head, Vector3(s * 0.065, 0.085, 0.01), Vector3(0, 0, s * 0.35))
-		CharMeshKit.blob(ear, dk, Vector3(s * 0.01, -0.06, 0.0), Vector3(0.035, 0.13, 0.085), Vector3(0, 0, 0), "EarFlap")
+		CharMeshKit.blob(ear, dk, Vector3(s * 0.006, 0.02, 0.0), Vector3(0.05, 0.06, 0.08), Vector3.ZERO, "EarBase")
+		CharMeshKit.blob(ear, dk, Vector3(s * 0.012, -0.05, -0.005), Vector3(0.03, 0.11, 0.075), Vector3(0.12, 0, 0), "EarFlap")
+		CharMeshKit.blob(ear, f, Vector3(s * 0.016, -0.1, -0.012), Vector3(0.026, 0.04, 0.05), Vector3.ZERO, "EarTip")
 	var tail := _bone("TailBase", pelvis, Vector3(0, 0.08, 0.13), Vector3(-2.2, 0, 0))
 	CharMeshKit.limb(tail, f, 0.032, 0.026, 0.15)
 	var tip := _bone("TailTip", tail, Vector3(0, -0.15, 0), Vector3(0.4, 0, 0))
@@ -119,15 +136,31 @@ func _build_rig() -> void:
 		CharMeshKit.limb(fu, f, 0.05, 0.036, upper_f)
 		var fl := _bone("FrontLower" + sn, fu, Vector3(0, -upper_f, 0))
 		CharMeshKit.limb(fl, cr if s > 0 else f, 0.034, 0.03, lower_f)
+		CharMeshKit.blob(fu, f, Vector3(0, -0.03, 0.0), Vector3(0.1, 0.16, 0.12), Vector3.ZERO, "Upperarm")
+		# Pastern: a slight forward angle just above the paw.
+		CharMeshKit.blob(fl, cr if s > 0 else f, Vector3(0, -lower_f + 0.03, -0.012), Vector3(0.045, 0.06, 0.05), Vector3(-0.35, 0, 0), "Pastern")
 		var fp := _bone("FrontPaw" + sn, fl, Vector3(0, -lower_f, 0))
-		CharMeshKit.blob(fp, cr, Vector3(0, -paw_h * 0.5, -0.025), Vector3(0.065, 0.045, 0.09), Vector3.ZERO, "Paw")
+		_paw(fp, cr, black)
 		var hu := _bone("HindUpper" + sn, pelvis, Vector3(s * 0.085, -0.04, 0.03))
 		CharMeshKit.blob(hu, f, Vector3(0, -0.06, -0.01), Vector3(0.11, 0.2, 0.15), Vector3.ZERO, "Haunch")
 		CharMeshKit.limb(hu, f, 0.05, 0.036, upper_h)
 		var hl := _bone("HindLower" + sn, hu, Vector3(0, -upper_h, 0))
 		CharMeshKit.limb(hl, f, 0.034, 0.028, lower_h)
+		# Hock: the visible heel bend with the long metatarsal below it, so
+		# the hind leg reads canine (not a human knee) at any gait phase.
+		CharMeshKit.blob(hl, dk, Vector3(0, -lower_h * 0.55, 0.035), Vector3(0.05, 0.06, 0.06), Vector3.ZERO, "Hock")
+		CharMeshKit.blob(hl, f, Vector3(0, -lower_h * 0.25, 0.02), Vector3(0.07, 0.12, 0.09), Vector3(-0.2, 0, 0), "Gaskin")
 		var hp := _bone("HindPaw" + sn, hl, Vector3(0, -lower_h, 0))
-		CharMeshKit.blob(hp, cr, Vector3(0, -paw_h * 0.5, -0.025), Vector3(0.065, 0.045, 0.09), Vector3.ZERO, "Paw")
+		_paw(hp, cr, black)
+
+
+## Paw with four toe beads and a dark pad (reads as a paw from any side).
+func _paw(p: Node3D, cr: Material, black: Material) -> void:
+	CharMeshKit.blob(p, cr, Vector3(0, -paw_h * 0.45, -0.02), Vector3(0.06, 0.04, 0.075), Vector3.ZERO, "Paw")
+	for k in 4:
+		var tx := (-0.022 + 0.0147 * k)
+		CharMeshKit.blob(p, cr, Vector3(tx, -paw_h * 0.55, -0.055 - (0.006 if k in [1, 2] else 0.0)), Vector3(0.019, 0.022, 0.026), Vector3.ZERO, "Toe%d" % k)
+	CharMeshKit.blob(p, black, Vector3(0, -paw_h * 0.95, -0.02), Vector3(0.04, 0.008, 0.045), Vector3.ZERO, "Pad")
 
 
 # ------------------------------------------------------------- animation
