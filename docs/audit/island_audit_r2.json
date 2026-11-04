@@ -1,5 +1,5 @@
 {
-	"elapsed_ms": 8531,
+	"elapsed_ms": 8484,
 	"engine": "4.5.1-stable (official)",
 	"facilities": {
 		"arcade_spot:Cabin/Arcade_1": {
@@ -309,60 +309,60 @@
 	},
 	"fixtures": {
 		"100%": {
-			"component_cells": 126403,
+			"component_cells": 126391,
 			"remaining": 0,
 			"remaining_within_25m_of_truck_route": 0,
 			"removal_ms": 2,
 			"removed": 10000,
-			"truck_cells": 64520,
+			"truck_cells": 64511,
 			"unreachable_remaining": 0
 		},
 		"25%": {
-			"component_cells": 126403,
+			"component_cells": 126391,
 			"remaining": 7500,
 			"remaining_within_25m_of_truck_route": 7432,
-			"removal_ms": 449,
+			"removal_ms": 502,
 			"removed": 2500,
-			"truck_cells": 54687,
+			"truck_cells": 54678,
 			"unreachable_remaining": 0
 		},
 		"50%": {
-			"component_cells": 126403,
+			"component_cells": 126391,
 			"remaining": 5000,
 			"remaining_within_25m_of_truck_route": 4932,
-			"removal_ms": 456,
+			"removal_ms": 502,
 			"removed": 5000,
-			"truck_cells": 58044,
+			"truck_cells": 58035,
 			"unreachable_remaining": 0
 		},
 		"90%": {
-			"component_cells": 126403,
+			"component_cells": 126391,
 			"remaining": 1000,
 			"remaining_within_25m_of_truck_route": 1000,
-			"removal_ms": 752,
+			"removal_ms": 838,
 			"removed": 9000,
-			"truck_cells": 63219,
+			"truck_cells": 63210,
 			"unreachable_remaining": 0
 		},
 		"99%": {
-			"component_cells": 126403,
+			"component_cells": 126391,
 			"remaining": 100,
 			"remaining_within_25m_of_truck_route": 100,
-			"removal_ms": 159,
+			"removal_ms": 174,
 			"removed": 9900,
-			"truck_cells": 64374,
+			"truck_cells": 64365,
 			"unreachable_remaining": 0
 		},
 		"99.9%": {
-			"component_cells": 126403,
+			"component_cells": 126391,
 			"remaining": 10,
 			"remaining_within_25m_of_truck_route": 10,
-			"removal_ms": 14,
+			"removal_ms": 17,
 			"removed": 9990,
-			"truck_cells": 64503,
+			"truck_cells": 64494,
 			"unreachable_remaining": 0
 		},
-		"rebuild_all_chunks_ms": 7,
+		"rebuild_all_chunks_ms": 6,
 		"tree_colliders_after_full_clear": 0
 	},
 	"issues": [],
@@ -385,7 +385,7 @@
 			"in_buildings": 0,
 			"in_water": 0,
 			"instances": 0,
-			"unreadable_headless": 11669
+			"unreadable_headless": 11493
 		},
 		"rocks": {
 			"checked": 1449,
@@ -414,7 +414,7 @@
 	},
 	"r2": {
 		"coverage": {
-			"cells": 10916,
+			"cells": 10915,
 			"hide_max_m": 119.8,
 			"hide_p95_m": 90.8,
 			"max_m": 75.3,
@@ -438,7 +438,7 @@
 	},
 	"reach_original": {
 		"checked": 10000,
-		"component_cells": 126403,
+		"component_cells": 126391,
 		"label": "original",
 		"path_samples": [
 			{
@@ -570,7 +570,7 @@
 		}
 	},
 	"trucks_original": {
-		"drivable_cells_from_bays": 51287,
+		"drivable_cells_from_bays": 51278,
 		"per_region": {
 			"camp surroundings": {
 				"targets": 59,

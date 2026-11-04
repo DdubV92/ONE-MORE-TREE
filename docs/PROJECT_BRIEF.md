@@ -21,7 +21,8 @@
 **Camp**
 - Dirt clearing with a chain-link perimeter and a wide forest entrance.
 - Reliable exterior lights and a tool area.
-- Slow-burning outdoor timber pit.
+- Slow-burning outdoor timber pit, fed from its loading pile.
+- Logging yard (Phase 13): a receiving cradle by the fire, three log decks outside the north-east fence and an early handcart. Logs are paid when the yard accepts them, and only when it has room.
 - Worker cabin with an arcade corner: four beds plus an attached two-bed bedroom, kitchen and bathroom (six beds).
 - The player's camper: mini kitchen, bathroom, bedroom, player bed and dog bed.
 
@@ -29,6 +30,7 @@
 - New campaigns use island revision 2: exactly 10,000 native trees in groves and glades.
 - Persistent undergrowth, landforms, rock formations and 60 rock hides. They aren't contract targets and stay after logging.
 - Older saves keep the island they started on.
+- New campaigns (ruleset `expanded_v3`, Phase 13) cut fewer, longer logs. Older campaigns keep their cutting plan.
 
 **The dog** lives with the player. It wanders camp by day and comes inside at dusk. It cannot be harmed or lost.
 
@@ -50,7 +52,7 @@ Combat, hunger meters, weapon shops, chainsaws, vehicles, crafting trees, multip
 
 ## Current phase
 
-Phases 0–12 are implemented. The latest is Phase 12: the dense 10,000-tree island with cover and hiding, the owner's motion-capture clips, and proper fabrics. Earlier phases built: the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
+Phases 0–13 are implemented. The latest is Phase 13: longer logs for new campaigns, the logging yard (cradle, decks, fire loading pile), dragging, the handcart and crew yard work. Phase 12 added the dense 10,000-tree island with cover and hiding, the owner's motion-capture clips, and proper fabrics. Earlier phases built: the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
 
 ## Phase 0 scope (this pack)
 

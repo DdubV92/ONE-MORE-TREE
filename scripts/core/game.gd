@@ -29,6 +29,8 @@ var vegetation: Node
 var cover: CoverService              # Phase 12 (island r2 only)
 var trees: TreeService
 var timber: TimberService
+var yard: YardService                # Phase 13 logging yard
+var cart: TimberCart                 # Phase 13 early handcart
 var campaign: CampaignService
 var crew: CrewService
 var vehicles: VehicleService
@@ -112,6 +114,8 @@ func _change(path: String) -> void:
 	player = null
 	vegetation = null
 	cover = null
+	yard = null
+	cart = null
 	trees = null
 	timber = null
 	campaign = null

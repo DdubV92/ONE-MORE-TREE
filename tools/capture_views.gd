@@ -70,6 +70,23 @@ func _ready() -> void:
 		if Game.tv_set:
 			Game.tv_set.force_active = vp_name == "couch_tv"
 			Game.tv_set.set_power(vp_name == "couch_tv")
+		if vp_name.begins_with("p13_") and Game.yard and Game.yard.stock_count() == 0:
+			# Phase 13 views show a working yard: in-memory stock fixture
+			# plus three logs on the handcart (the capture tool never saves).
+			var was := Game.mode
+			Game.mode = Game.Mode.PREVIEW
+			ReviewStations.yard_fixture(0.55, 9)
+			if ReviewStations._hand_player(3, false) and Game.cart:
+				for sid in Game.timber.carried.duplicate():
+					Game.timber.transfer("player", TimberCart.CARRIER, str(sid), TimberCart.BUDGET_MTE)
+				Game.cart._refresh_logs()
+			Game.mode = was
+			# A few logs on the fire's loading pile.
+			for k in 6:
+				var ys := Game.yard.take_from_deck("capture", k % Game.yard.decks.size(), 100000)
+				if ys != "":
+					Game.yard.load_pit("capture", ys)
+			Game.yard.refresh()
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue

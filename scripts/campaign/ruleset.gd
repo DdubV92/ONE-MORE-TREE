@@ -24,7 +24,13 @@ extends RefCounted
 ##   persistent rock formations, undergrowth and hide anchors. Phase 10
 ##   saves keep expanded_v1 on the revision-1 island; legacy keeps
 ##   contract_v1. A save never changes island revision.
-const STANDARD := "expanded_v2"
+## expanded_v3 (Phase 13, new standard campaigns): expanded_v2's island and
+##   terms with the Phase 13 handling path ACTIVE: segmentation plan v2
+##   (target section length x1.5, fewer and larger pieces per tree, same
+##   $100 and tree-equivalent per tree), early handcart and dragging, the
+##   receiving yard and log decks. expanded_v2 saves (Phase 12) keep plan v1.
+const STANDARD := "expanded_v3"
+const PHASE12 := "expanded_v2"
 const PHASE10 := "expanded_v1"
 const LEGACY := "contract_v1"
 
@@ -33,6 +39,11 @@ const DEFS := {
 		"id": "contract_v1", "label": "Legacy 12,000-tree contract", "native_total": 12000, "variant": "full",
 		"starting_employees": 2, "start_cash_cents": 200000, "section_length_mult": 1.0, "section_length_active": true,
 		"tool_model": "per_contact_v1", "chainsaw": false, "version": 1,
+	},
+	"expanded_v3": {
+		"id": "expanded_v3", "label": "Standard 10,000-tree contract (island r2, logging yard)", "native_total": 10000, "variant": "island_r2",
+		"starting_employees": 5, "start_cash_cents": 450000, "section_length_mult": 1.5, "section_length_active": true, "section_plan": "v2",
+		"tool_model": "per_contact_v1", "chainsaw": false, "version": 3,
 	},
 	"expanded_v2": {
 		"id": "expanded_v2", "label": "Standard 10,000-tree contract (island r2)", "native_total": 10000, "variant": "island_r2",
@@ -49,6 +60,8 @@ const DEFS := {
 
 ## The ruleset a world variant belongs to (Preview fixtures, tests).
 static func for_variant(variant: String) -> String:
+	if str(DEFS[STANDARD].variant) == variant:
+		return STANDARD
 	for id in DEFS:
 		if str(DEFS[id].variant) == variant:
 			return id

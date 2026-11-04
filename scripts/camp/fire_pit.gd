@@ -74,9 +74,9 @@ func _ready() -> void:
 	cs.shape = shape
 	cs.position = Vector3(0, 0.5, 0)
 	body.add_child(cs)
-	body.set_script(load("res://scripts/interaction/interactable.gd"))
+	body.set_script(load("res://scripts/camp/fire_feed.gd"))
 	body.set("prompt", "Warm your hands")
-	body.set("message", "Coals glowing. Deliver logs at the rack beside the pit; they relight the fire automatically.")
+	body.set("message", "Coals glowing. Paid logs from the yard decks go on the loading pile beside the pit; the fire takes them from there.")
 	add_child(body)
 	_fire_body = body
 	BuildKit.marker(self, "LoadPoint", Vector3(0, 0, radius + 1.4), 0.0, "burn_pit_load_point")
@@ -451,4 +451,4 @@ func _update_burning_logs() -> void:
 			w.set_shader_parameter("glow", clampf(b * 2.0, 0.0, 1.0))
 	if _fire_body and t:
 		var tot := t.totals()
-		_fire_body.set("message", "Burning %d log%s, %d waiting on the rack. New deliveries relight the coals automatically." % [t.burning.size(), "" if t.burning.size() == 1 else "s", t.queue.size()] if not t.burning.is_empty() else "Coals glowing. Deliver logs at the rack beside the pit; they relight the fire automatically.")
+		_fire_body.set("message", "Burning %d log%s, %d on the loading pile (max %d). Yard decks hold the rest of the paid stock." % [t.burning.size(), "" if t.burning.size() == 1 else "s", t.queue.size(), CampLayout.PIT_QUEUE_CAP] if not t.burning.is_empty() else "Coals glowing. Carry paid logs from a yard deck to the loading pile beside the pit; the fire takes them from there.")

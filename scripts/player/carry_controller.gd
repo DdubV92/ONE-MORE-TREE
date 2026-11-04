@@ -47,18 +47,30 @@ func load_fraction() -> float:
 	return float(load_mte()) / float(budget())
 
 
-## Bounded movement penalty: up to 25 % slower with a full load.
+## Bounded movement penalty: up to 25 % slower with a full load; dragging
+## an oversized log (Phase 13) is half speed.
 func speed_factor() -> float:
+	if is_dragging():
+		return 0.5
 	return 1.0 - 0.25 * clampf(load_fraction(), 0.0, 1.0) if is_carrying() else 1.0
 
 
+func is_dragging() -> bool:
+	return Game.timber != null and Game.timber.is_dragging("player", budget())
+
+
 func can_jump() -> bool:
-	return load_fraction() < 0.5
+	return load_fraction() < 0.5 and not is_dragging()
 
 
 func load_text() -> String:
 	if not is_carrying():
 		return ""
+	var paid := Game.yard != null and Game.yard.is_yard_move(str(Game.timber.carried[0]))
+	if is_dragging():
+		return "Dragging a heavy log (%d%% of a hand load, slow)   [G] set down  [X] drop" % int(round(load_fraction() * 100.0))
+	if paid:
+		return "Carrying %d paid log%s to a deck or the fire   [G] at a deck/the pit" % [Game.timber.carried.size(), "" if Game.timber.carried.size() == 1 else "s"]
 	return "Carrying %d log%s · %d%% of a hand load   [G] set down  [X] drop all" % [Game.timber.carried.size(), "" if Game.timber.carried.size() == 1 else "s", int(round(load_fraction() * 100.0))]
 
 
@@ -75,7 +87,16 @@ func try_pick_up(body: TimberBody) -> void:
 		return
 	if player.axe.swinging:
 		return
+	if player.get("pushing_cart") != null:
+		player.show_message("Let go of the cart first (%s)." % Keys.label("drop"))
+		return
 	var res := Game.timber.pick_up(body, budget())
+	if not bool(res.ok) and not is_carrying():
+		# Phase 13: a log up to two hand loads can be dragged by one end.
+		res = Game.timber.pick_up_for("player", body, budget(), true)
+		if bool(res.ok):
+			player.show_message("Too heavy to lift, so you drag it by one end (slow). Take it to the cart or straight to the receiving cradle.")
+			return
 	if not bool(res.ok):
 		player.show_message(str(res.reason))
 		return
@@ -84,6 +105,20 @@ func try_pick_up(body: TimberBody) -> void:
 
 func set_down_one() -> void:
 	if not is_carrying():
+		return
+	# Phase 13: paid yard logs go on a deck or the fire's loading pile.
+	if Game.yard and Game.yard.is_yard_move(str(Game.timber.carried[0])):
+		var sid: String = Game.timber.carried[Game.timber.carried.size() - 1]
+		var deck := CampLayout.on_deck(player.global_position, 3.6)
+		var pit := CampLayout.world(CampLayout.BURN_PIT_POS)
+		if deck >= 0:
+			if not Game.yard.place_on_deck("player", sid, deck):
+				player.show_message(Game.yard.last_reason)
+		elif Vector2(player.global_position.x - pit.x, player.global_position.z - pit.z).length() < 4.6:
+			if not Game.yard.load_pit("player", sid):
+				player.show_message(Game.yard.last_reason)
+		else:
+			player.show_message("Paid logs go on a yard deck (outside the north gate, east) or the fire's loading pile.")
 		return
 	var rack := _rack_in_reach()
 	if rack:
@@ -99,7 +134,14 @@ func set_down_one() -> void:
 
 
 func drop_all() -> void:
+	if player.get("pushing_cart") != null:
+		(player.pushing_cart as TimberCart).release()
+		player.show_message("Cart parked.")
+		return
 	if not is_carrying():
+		return
+	if Game.yard and Game.yard.is_yard_move(str(Game.timber.carried[0])):
+		player.show_message("These logs are paid for: stack them on a deck or load them on the fire's pile (G there).")
 		return
 	var dropped := 0
 	for sid in Game.timber.carried.duplicate():
@@ -201,6 +243,15 @@ func _rebuild() -> void:
 
 
 func _layout() -> void:
+	if is_dragging() and _visuals.size() == 1:
+		# Dragged by the front end: held low at the right hand, trailing
+		# behind on the ground (mostly out of view in first person).
+		var mi := _visuals[0]
+		var length: float = mi.get_meta("length")
+		var b := TimberMesh.frame_for(Vector3(0.08, -0.32, 1.0).normalized())
+		mi.transform = Transform3D(b, Vector3(0.32, -0.95, -0.25) + b.y * (length * 0.5))
+		_place_rig(0.0)
+		return
 	# Stack: first log on the shoulder, the next beside it, then on top.
 	var x := 0.0
 	var y := 0.0

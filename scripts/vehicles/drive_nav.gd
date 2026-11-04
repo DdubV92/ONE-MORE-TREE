@@ -89,6 +89,8 @@ func _drivable_point(c: Vector2) -> bool:
 	if h < World.sea_level + 0.3:
 		return false
 	var p3 := Vector3(c.x, h, c.y)
+	if CampLayout.on_deck(p3, CLEAR) >= 0:
+		return false           # Phase 13 yard log decks
 	if crew_nav.in_camp(p3):
 		# Open yard only: every pedestrian fine cell within 1.6 m is open.
 		for dz in [-1.6, 0.0, 1.6]:

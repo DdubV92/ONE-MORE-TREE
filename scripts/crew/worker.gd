@@ -102,6 +102,10 @@ func interact(_by: Node) -> void:
 		Game.campaign_ui.open_talk(self)
 
 
+func dragging_log() -> bool:
+	return crew != null and is_carrying() and crew.timber.is_dragging(id, crew.carry_budget(self))
+
+
 func activity_words() -> String:
 	match activity:
 		"fell": return "felling"
@@ -110,7 +114,9 @@ func activity_words() -> String:
 		"stump": return "chopping out a stump"
 		"hidden": return "hiding"
 		"dead": return "dead"
-		"pick", "deliver", "load_truck": return "hauling"
+		"pick", "deliver", "load_truck": return "dragging a long log" if dragging_log() else "hauling"
+		"deliver_deck": return "stacking logs on a yard deck"
+		"yard_take", "yard_drop": return "yard work: moving paid logs"
 		"seated": return "riding in a truck"
 		"follow": return "following you"
 		"home": return "heading home"
@@ -204,6 +210,8 @@ func _move(delta: float) -> void:
 	var dir := to / maxf(dist, 0.001)
 	dir = _avoid(dir)
 	var want := (CARRY_WALK if is_carrying() else WALK)
+	if is_carrying() and crew.timber.is_dragging(id, crew.carry_budget(self)):
+		want = CARRY_WALK * 0.5           # dragging an oversized log
 	if mind.state >= WorkerMind.Fear.DISTRESSED and activity == "move" and _after_move == "home":
 		want *= 1.12       # hurrying home
 	_speed = move_toward(_speed, want, delta * 3.0)
@@ -343,6 +351,12 @@ func _physics_process(delta: float) -> void:
 			_do_pick()
 		"deliver":
 			_do_deliver()
+		"deliver_deck":
+			_do_deliver_deck()
+		"yard_take":
+			_do_yard_take()
+		"yard_drop":
+			_do_yard_drop()
 		"load_truck":
 			_do_load_truck()
 		"follow":
@@ -581,7 +595,7 @@ func _do_pick() -> void:
 	var sid: String = list.pop_front()
 	var b := crew.timber.body_of(sid)
 	if b != null:
-		var res := crew.timber.pick_up_for(id, b, crew.carry_budget(self))
+		var res := crew.timber.pick_up_for(id, b, crew.carry_budget(self), bool(target.get("drag", false)))
 		if bool(res.ok):
 			# The transaction already happened; the bend is presentation.
 			body_char.play_action("pickup")
@@ -600,11 +614,88 @@ func _do_pick() -> void:
 func _do_deliver() -> void:
 	var held: Array = crew.timber.load_of(id).duplicate()
 	if not held.is_empty():
-		var rs := crew.timber.accept(held, "rack:" + id)
+		var rs := crew.timber.accept(held, "rack:" + id, CampLayout.world(CampLayout.DELIVERY_RACK_POS))
 		crew.on_delivered(self, rs)
-		body_char.play_action("setdown")
+		if not rs.is_empty():
+			body_char.play_action("setdown")
+		_set_down_unpaid()
 	crew.release_rack_slot(self)
 	activity = "idle"
+	target.erase("drag")
+
+
+## Phase 13: logs the yard could not take (no free place) are set down on
+## the ground beside the receiving cradle - still unpaid, never lost - so a
+## worker is never stuck holding them until night.
+func _set_down_unpaid() -> void:
+	var left: Array = crew.timber.load_of(id).duplicate()
+	var k := 0
+	for sid in left:
+		if Game.yard and Game.yard.is_yard_move(str(sid)):
+			continue
+		var p := CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(-1.2 + 1.2 * (k % 3), 0.0, 3.2 + 0.7 * (k / 3)))
+		crew.timber.put_down_for(id, str(sid), p + Vector3(0, 0.45, 0), Vector3.RIGHT, true)
+		k += 1
+
+
+## Phase 13: cradle full -> deliver onto a yard deck (accepted there).
+func _do_deliver_deck() -> void:
+	var held: Array = crew.timber.load_of(id).duplicate()
+	var dk := int(target.get("deck", 0))
+	if not held.is_empty():
+		var rs := crew.timber.accept(held, "deck:" + id, CampLayout.world(CampLayout.YARD_DECKS[dk].center))
+		crew.on_delivered(self, rs)
+		if not rs.is_empty():
+			body_char.play_action("setdown")
+	activity = "idle"
+	target.erase("drag")
+
+
+## Phase 13 yard: take one paid log from the cradle or a deck.
+func _do_yard_take() -> void:
+	var y: YardService = Game.yard
+	var from := str(target.get("yard_from", ""))
+	var sid := ""
+	if y:
+		if from == "cradle":
+			sid = y.take_from_cradle(id, crew.carry_budget(self), global_position)
+		elif from.begins_with("deck:"):
+			sid = y.take_from_deck(id, int(from.get_slice(":", 1)), crew.carry_budget(self))
+	crew.release_yard_claims(self)
+	target.erase("yard_from")
+	if sid == "":
+		activity = "idle"
+		return
+	body_char.play_action("pickup")
+	if not go_to(crew.yard_destination_point(sid), "yard_drop", "the yard"):
+		y.return_to_origin(sid)
+		activity = "idle"
+
+
+## Puts the held paid log at its reserved place (or the nearest valid one).
+func _do_yard_drop() -> void:
+	var y: YardService = Game.yard
+	var held: Array = crew.timber.load_of(id).duplicate()
+	activity = "idle"
+	if y == null or held.is_empty():
+		return
+	var sid: String = held[0]
+	if not y.is_yard_move(sid):
+		return
+	var dest := str(y.moving[sid].dest)
+	var ok := false
+	if dest.begins_with("deck:"):
+		ok = y.place_on_deck(id, sid, int(dest.get_slice(":", 1)))
+		if not ok:
+			var alt := y.nearest_deck(global_position, sid)
+			ok = alt >= 0 and y.place_on_deck(id, sid, alt)
+	else:
+		ok = y.load_pit(id, sid)
+	if ok:
+		body_char.play_action("setdown")
+	else:
+		# Nowhere valid right now: put it back where it came from.
+		y.return_to_origin(sid)
 
 
 func _do_load_truck() -> void:
@@ -691,17 +782,49 @@ func leave_seat(at: Vector3) -> void:
 	activity = "idle"
 
 
+var _carry_sig := "-"
+
+
 func _update_carry_visual() -> void:
 	var held: Array = crew.timber.load_of(id)
-	if held.size() == _carry_nodes.size():
+	var sig := ",".join(PackedStringArray(held))
+	if sig == _carry_sig:
 		if held.is_empty():
 			body_char.carry_grips = []
 		return
+	_carry_sig = sig
 	for n in _carry_nodes:
 		n.queue_free()
 	_carry_nodes.clear()
 	if held.is_empty():
 		body_char.carry_grips = []
+		return
+	# Phase 13: one oversized log is dragged: front end in both hands at hip
+	# height, the rest trailing on the ground behind (+Z = behind).
+	if crew.timber.is_dragging(id, crew.carry_budget(self)):
+		var sid0 := str(held[0])
+		var s0 := crew.timber.segment(sid0)
+		var rec0: Dictionary = crew.timber.records[int(sid0.trim_prefix("T").split("_S")[0])]
+		var L := TimberMesh.piece_length(rec0, int(s0.k))
+		var r0 := TimberMesh.piece_radius(rec0, int(s0.k))
+		var mi0 := MeshInstance3D.new()
+		mi0.mesh = TimberMesh.piece_mesh(rec0, int(s0.k))
+		var axis := Vector3(0.0, -(0.85 - r0) / maxf(L, 0.5), 1.0).normalized()
+		var b0 := TimberMesh.frame_for(axis)
+		var front := Vector3(0.0, 0.85, -0.45)
+		var mid := (float(s0.a) + float(s0.b)) * 0.5
+		mi0.transform = Transform3D(b0, front + axis * (L * 0.5) - b0.y * mid)
+		body_char.add_child(mi0)
+		_carry_nodes.append(mi0)
+		var g0 := Marker3D.new()
+		var g1 := Marker3D.new()
+		g0.position = front + Vector3(-0.18, 0.05, 0.05)
+		g1.position = front + Vector3(0.18, 0.05, 0.05)
+		body_char.add_child(g0)
+		body_char.add_child(g1)
+		_carry_nodes.append(g0)
+		_carry_nodes.append(g1)
+		body_char.carry_grips = [g0, g1]
 		return
 	var mount := body_char.attachment("log")
 	var i := 0

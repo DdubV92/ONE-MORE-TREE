@@ -190,7 +190,7 @@ func _journal_contract() -> Control:
 	_text(v, "Rules: %s." % str(svc.ruleset.get("label", "?")), 14, UITheme.MUTED)
 	_text(v, "Island clearance for the theme park. %s" % ("LEGACY continuation: no deadline." if svc.legacy else "Day %d of %d. The contract closes at the END of day 30's dusk (when night falls on day 30). Sleep is not required for it to close." % [clk.day, WorkdayClock.CONTRACT_DAYS]))
 	_text(v, "State: %s%s" % [svc.contract.state.replace("_", " ").to_lower(), ("  (" + svc.contract.outcome_id + ")") if svc.contract.outcome_id != "" else ""])
-	_text(v, "Original trees standing: %d of %d\nFelled trunks still to buck: %d\nStumps to remove: %d\nTimber not yet delivered: %.2f tree-equivalents\nDelivered and accepted: %.2f tree-equivalents (waiting in the pit queue: %.2f)\nFinal ash cleanup: %s (not required for the contract)" % [c.standing, c.total_trees, c.trunks_to_buck, c.stumps, c.undelivered_mte / 1000.0, c.accepted_mte / 1000.0, c.backlog_mte / 1000.0, "clean" if c.ash_clean else "fire still burning"])
+	_text(v, "Original trees standing: %d of %d\nFelled trunks still to buck: %d\nStumps to remove: %d\nTimber not yet delivered: %.2f tree-equivalents\nDelivered and accepted: %.2f tree-equivalents (paid; stocked in the yard: %.2f, on the fire's loading pile: %.2f)\nFinal ash cleanup: %s (not required for the contract)" % [c.standing, c.total_trees, c.trunks_to_buck, c.stumps, c.undelivered_mte / 1000.0, c.accepted_mte / 1000.0, (Game.yard.stock_mte() / 1000.0) if Game.yard and is_instance_valid(Game.yard) else 0.0, c.backlog_mte / 1000.0, "clean" if c.ash_clean else "yard stock and fire still to burn"])
 	var where := _log_whereabouts()
 	_text(v, "Undelivered logs: %d on the ground · %d in hands (yours or crew) · %d loaded in trucks. Burning now in the pit: %d (already paid)." % [where.world, where.carried, where.truck, where.burning])
 	if svc.contract.state == ContractService.FULFILLED:
@@ -199,7 +199,7 @@ func _journal_contract() -> Control:
 			_text(v, line, 15)
 	if svc.onboarding and svc.onboarding.milestones.has("final_tree"):
 		_text(v, "Every original tree is down. What is left is cleanup: the stumps and logs above.", 15, UITheme.ACCENT)
-	_text(v, "Pay: exactly $100 per original tree, split across its logs and credited when each log is accepted at the camp rack. Felling alone pays nothing.", 15, UITheme.MUTED)
+	_text(v, "Pay: exactly $100 per original tree, split across its logs and credited when each log is accepted at the camp yard (receiving cradle or a log deck; the yard must have room). Felling alone pays nothing.", 15, UITheme.MUTED)
 	v.add_child(UITheme.button("Locate the nearest remaining work", func() -> void:
 		var from: Vector3 = Game.player.global_position
 		var near := ContractLocator.nearest(from)
@@ -426,6 +426,12 @@ func show_report(r: Dictionary) -> void:
 	_text(v, "Cash: opened $%s, closed $%s%s" % [Money.format_cents(int(r.opening_cash)), Money.format_cents(int(r.closing_cash)), "" if bool(r.reconciles) else "  (MISMATCH - please report)"])
 	_text(v, "  + deliveries credited during the day  $%s\n  - purchases  $%s%s\n  - wages paid tonight  $%s" % [Money.format_cents(int(r.income)), Money.format_cents(int(r.purchases)), ("  (" + ", ".join(PackedStringArray(r.purchase_lines)) + ")") if not (r.purchase_lines as Array).is_empty() else "", Money.format_cents(int(r.wages_paid))], 15)
 	_text(v, "Trees felled today: %d  ·  stumps removed: %d  ·  original trees remaining: %d\nDelivered today: %.2f tree-equivalents" % [int(r.felled), int(r.stumps_removed), int(r.trees_remaining), int(r.delivered_mte) / 1000.0])
+	if r.has("processed"):
+		var y: Dictionary = r.get("yard", {})
+		var wood := "Trees processed into logs: %d  ·  logs accepted: %d (%.2f tree-eq: by hand %.2f, handcart %.2f, truck %.2f)\nFire burned %.2f tree-eq  ·  yard moves: %d logs stacked on decks, %d loaded onto the fire pile" % [int(r.processed), int(r.delivered_pieces), int(r.delivered_mte) / 1000.0, int(r.hand_mte) / 1000.0, int(r.cart_mte) / 1000.0, int(r.truck_mte) / 1000.0, int(r.burned_mte) / 1000.0, int(r.yard_racked), int(r.yard_fed)]
+		if not y.is_empty():
+			wood += "\nYard stock (paid, waiting to burn): %.2f tree-eq  ·  cradle %d/%d  ·  decks %d logs (room for about %d more)  ·  fire pile %d/%d" % [int(y.stock_mte) / 1000.0, int(y.cradle), int(y.cradle_cap), int(y.deck_pieces), int(y.deck_free), int(y.pile), int(y.pile_cap)]
+		_text(v, wood, 15)
 	var lines: PackedStringArray = []
 	for a in r.arrears:
 		if str(a.status) == Payroll.PENDING:
@@ -543,7 +549,7 @@ func _journal_crew() -> Control:
 		_text(v, lines, 15)
 		if st == Payroll.ACTIVE and w:
 			var row := HBoxContainer.new()
-			for j in [["Auto", "automatic"], ["Fell", "felling"], ["Buck", "processing"], ["Haul", "hauling"], ["Follow", "follow"], ["Home", "home"]]:
+			for j in [["Auto", "automatic"], ["Fell", "felling"], ["Buck", "processing"], ["Haul", "hauling"], ["Yard", "yard"], ["Follow", "follow"], ["Home", "home"]]:
 				var job: String = j[1]
 				var b := UITheme.button(j[0] + (" *" if str(e.get("job", "automatic")) == job else ""), func() -> void:
 					order_job(w, job)
@@ -703,7 +709,7 @@ func open_talk(w: Worker) -> void:
 	var add := func(label: String, cb: Callable) -> void:
 		opts.add_child(UITheme.button(label, cb, 270))
 	add.call("What are you working on?", func() -> void:
-		var topic: String = {"fell": "work_felling", "buck": "work_processing", "pick": "work_hauling", "deliver": "work_hauling", "home": "work_home", "follow": "work_follow"}.get(w.activity, "work_idle")
+		var topic: String = {"fell": "work_felling", "buck": "work_processing", "pick": "work_hauling", "deliver": "work_hauling", "deliver_deck": "work_hauling", "yard_take": "work_hauling", "yard_drop": "work_hauling", "home": "work_home", "follow": "work_follow"}.get(w.activity, "work_idle")
 		answer.call(w.say(topic, false, {"target": "this one"})))
 	add.call("How's your axe?", func() -> void:
 		var tier := w.axe_tier()

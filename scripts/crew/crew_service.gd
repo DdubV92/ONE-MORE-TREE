@@ -594,6 +594,14 @@ func decide(w: Worker) -> void:
 		send_to_rack(w)
 		return
 	var job := str(e.get("job", "automatic"))
+	# Phase 13 yard: assigned yard hands always, others when intake is
+	# nearly blocked (cradle filling up) or the fire is about to run dry.
+	if job == "yard":
+		if not try_yard(w):
+			w.go_to(CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 4.5)), "idle", "the yard")
+		return
+	if job == "automatic" and Game.yard and (Game.yard.cradle_free() <= 3 or (Game.yard.pit_free() >= CampLayout.PIT_QUEUE_CAP - 1 and Game.yard.stock_count() > Game.yard.cradle.size())) and try_yard(w):
+		return
 	match job:
 		"ride":
 			var t: Truck = Game.vehicles.ride_target() if Game.vehicles else null
@@ -963,12 +971,84 @@ func _try_haul(w: Worker) -> bool:
 		if timber.claim(sid, w.id):
 			pick.append(sid)
 			total += m
+	# Phase 13: nothing liftable nearby, but an oversized log (up to two hand
+	# loads) can be dragged by one end, alone and slowly.
+	if pick.is_empty() and timber.carrier_mte(w.id) == 0:
+		for p in pieces:
+			var b2 := p as TimberBody
+			var sid2: String = b2.sid_list()[0]
+			var m2 := int(timber.segment(sid2).mte)
+			if m2 > carry_budget(w) and m2 <= carry_budget(w) * 2 + 2 and timber.claim(sid2, w.id):
+				pick.append(sid2)
+				w.target["drag"] = true
+				break
 	if pick.is_empty():
 		return false
 	return w.start_pick(pick)
 
 
+# ------------------------------------------------------------ yard (P13)
+
+## A yard move for an idle worker: clear the receiving cradle onto the
+## decks first (intake needs free slots), else keep the fire's loading pile
+## stocked from the decks. Reservations live in YardService; a worker holds
+## at most one yard log and always finishes at a valid place.
+func try_yard(w: Worker) -> bool:
+	var y: YardService = Game.yard
+	if y == null or timber.carrier_mte(w.id) > 0:
+		return false
+	var held_by_others := 0
+	for sid in y.moving:
+		if str(y.moving[sid].carrier) != "player":
+			held_by_others += 1
+	if held_by_others >= 2 and str(w.emp.get("job", "")) != "yard":
+		return false
+	if not y.cradle.is_empty() and y.nearest_deck(CampLayout.world(CampLayout.DELIVERY_RACK_POS), y.cradle[0]) >= 0:
+		if claim("yard:cradle", w):
+			if w.go_to(CampLayout.world(CampLayout.DELIVERY_STANDPOINTS[0]), "yard_take", "the receiving cradle"):
+				w.target["yard_from"] = "cradle"
+				return true
+			claims.erase("yard:cradle")
+	if y.pit_free() > 0:
+		for i in y.decks.size():
+			if (y.decks[i] as Array).is_empty() or not claim("yard:deck%d" % i, w):
+				continue
+			if w.go_to(CampLayout.world(CampLayout.deck_standpoint(i)), "yard_take", "deck %d" % (i + 1)):
+				w.target["yard_from"] = "deck:%d" % i
+				return true
+			claims.erase("yard:deck%d" % i)
+	return false
+
+
+func release_yard_claims(w: Worker) -> void:
+	for k in claims.keys():
+		if str(k).begins_with("yard:") and claims[k] == w.id:
+			claims.erase(k)
+
+
+## Where a worker takes a yard log it holds (its reserved destination).
+func yard_destination_point(sid: String) -> Vector3:
+	var y: YardService = Game.yard
+	var dest := str(y.moving[sid].dest) if y.moving.has(sid) else "pit"
+	if dest.begins_with("deck:"):
+		return CampLayout.world(CampLayout.deck_standpoint(int(dest.get_slice(":", 1))))
+	return CampLayout.world(CampLayout.PIT_LOAD_POS + Vector3(0, 0, 1.4))
+
+
 func send_to_rack(w: Worker) -> bool:
+	# Phase 13: paid yard logs go to their reserved deck or the fire pile.
+	if Game.yard and w.is_carrying() and Game.yard.is_yard_move(str(timber.load_of(w.id)[0])):
+		var sid0: String = timber.load_of(w.id)[0]
+		if w.go_to(yard_destination_point(sid0), "yard_drop", "the yard"):
+			return true
+		Game.yard.return_to_origin(sid0)
+		return false
+	# Phase 13: cradle full -> deliver straight onto a deck with room.
+	if Game.yard and Game.yard.cradle_free() <= 0 and w.is_carrying() and not (Game.vehicles and Game.vehicles.haul_target(w)):
+		var dk := Game.yard.nearest_deck(w.global_position, str(timber.load_of(w.id)[0]))
+		if dk >= 0 and w.go_to(CampLayout.world(CampLayout.deck_standpoint(dk)), "deliver_deck", "deck %d" % (dk + 1)):
+			w.target["deck"] = dk
+			return true
 	# Team members and people riding with the boss load the nearby truck.
 	if Game.vehicles:
 		var t: Truck = Game.vehicles.haul_target(w)

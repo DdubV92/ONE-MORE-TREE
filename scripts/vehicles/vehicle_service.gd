@@ -243,8 +243,15 @@ func hotspot_use(t: Truck, kind: String, by: Node) -> void:
 			elif t.cargo_mte() > 0:
 				if at_dropoff(t):
 					var rs := unload_accept(t, "truck:" + t.truck_id)
-					p.show_message("Unloaded %d logs at the delivery bay." % rs.size())
-					tutorial_mark("deliver")
+					var cents := 0
+					for r in rs:
+						cents += int(r.cents)
+					# Phase 13: only logs that get a free yard place are accepted
+					# (and paid); the rest stay in the bed with the reason.
+					var left := timber.load_of(t.carrier()).size()
+					p.show_message("Unloaded %d log%s into receiving, +$%s.%s" % [rs.size(), "" if rs.size() == 1 else "s", Money.format_cents(cents), (" %d still in the bed: %s" % [left, timber.last_refusal]) if left > 0 else ""])
+					if not rs.is_empty():
+						tutorial_mark("deliver")
 				else:
 					var n := unload_ground(t)
 					p.show_message("Unloaded %d logs onto the ground (unpaid until delivered)." % n)
@@ -320,7 +327,7 @@ func load_from(carrier: String, t: Truck) -> int:
 
 
 func unload_accept(t: Truck, source: String) -> Array:
-	var rs := timber.accept(timber.load_of(t.carrier()).duplicate(), source)
+	var rs := timber.accept(timber.load_of(t.carrier()).duplicate(), source, CampLayout.world(CampLayout.DELIVERY_RACK_POS))
 	t.refresh_cargo_visual()
 	return rs
 

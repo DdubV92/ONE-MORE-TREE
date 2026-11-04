@@ -15,7 +15,21 @@ extends Node
 ## entitlement receipt. Phase 3's PaymentService turns receipts into cash
 ## exactly once.
 
-enum Seg { ATTACHED, WORLD, CARRIED, VEHICLE_RESERVED, ACCEPTED_QUEUED, BURNING, CONSUMED }
+enum Seg { ATTACHED, WORLD, CARRIED, VEHICLE_RESERVED, ACCEPTED_QUEUED, BURNING, CONSUMED, ACCEPTED_STAGED, ACCEPTED_RACKED, ACCEPTED_MOVING }
+## Phase 13 states (appended so saved integers keep their meaning):
+##   ACCEPTED_STAGED  paid, lying in the receiving cradle
+##   ACCEPTED_RACKED  paid, stacked on a yard log deck
+##   ACCEPTED_MOVING  paid, in someone's hands between yard places
+## Every accepted state is >= ACCEPTED_QUEUED, so "accepted" checks hold.
+const SEG_MAX := Seg.ACCEPTED_MOVING
+## Segmentation plans: v1 = Phases 2-12 (0.9-2.0 m targets, at least three
+## pieces, each within a hand load); v2 = Phase 13 (targets x1.5, equal
+## pieces, as few as one; pieces over a hand load are dragged or carted).
+const PLAN_V1 := "v1"
+const PLAN_V2 := "v2"
+const SECTION_LENGTH_MULT_V2 := 1.5
+## Plan v2 bound: a piece is at most two hand loads (dragged or carted).
+const V2_MAX_PIECE_MTE := 666
 
 const TREE_MTE := 1000
 const TREE_CENTS := 10000
@@ -71,7 +85,18 @@ func setup(parent: Node3D, is_persistent: bool) -> void:
 
 ## Deterministic segment partition for a felled tree. Pure function of the
 ## frozen tree record, so it is identical on every load.
-static func partition(idx: int) -> Dictionary:
+## The plan new records use: the active campaign's ruleset, or (Preview,
+## tools) the standard ruleset of the loaded island variant.
+static func current_plan() -> String:
+	var rs: Dictionary = {}
+	if Game.campaign and Game.campaign.get("ruleset") is Dictionary and not (Game.campaign.ruleset as Dictionary).is_empty() and Game.campaign.active:
+		rs = Game.campaign.ruleset
+	else:
+		rs = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant))
+	return str(rs.get("section_plan", PLAN_V1))
+
+
+static func partition(idx: int, plan := PLAN_V1) -> Dictionary:
 	var sp: int = World.trees.species[idx]
 	var v: int = World.trees.variant[idx]
 	var height: float = World.trees.height[idx]
@@ -93,6 +118,31 @@ static func partition(idx: int) -> Dictionary:
 	var merch_len: float = maxf(top - cut_h, 1.0)
 	var d0: float = float(radius.call(cut_h)) * 2.0
 	var max_piece := clampf(2.2 - d0 * 1.4, 0.9, 2.0)
+	if plan == PLAN_V2:
+		# Phase 13: target length x1.5. Equal division of the merchantable
+		# length (no stub remainders); small trees can be one piece, large
+		# ones several. Shares by real volume, so $100/tree is unchanged.
+		var target := max_piece * SECTION_LENGTH_MULT_V2
+		var n2 := clampi(int(ceil(merch_len / target - 1e-6)), 1, MAX_SEGMENTS)
+		var parts2 := _shares(n2, cut_h, merch_len, radius)
+		# Supported bound: no piece heavier than two hand loads (what one
+		# person can drag or lever onto the cart); split further if needed.
+		while n2 < MAX_SEGMENTS:
+			var mx := 0
+			for q in parts2.mte:
+				mx = maxi(mx, q)
+			if mx <= V2_MAX_PIECE_MTE:
+				break
+			n2 += 1
+			parts2 = _shares(n2, cut_h, merch_len, radius)
+		parts2["cut_h"] = cut_h
+		parts2["merch_top"] = cut_h + merch_len
+		parts2["n"] = n2
+		parts2["species"] = sp
+		parts2["d0"] = d0
+		parts2["target"] = target
+		parts2["plan"] = PLAN_V2
+		return parts2
 	var n := clampi(int(ceil(merch_len / max_piece)), MIN_SEGMENTS, MAX_SEGMENTS)
 	var parts: Dictionary
 	while true:
@@ -108,6 +158,8 @@ static func partition(idx: int) -> Dictionary:
 	parts["n"] = n
 	parts["species"] = sp
 	parts["d0"] = d0
+	parts["target"] = max_piece
+	parts["plan"] = PLAN_V1
 	return parts
 
 
@@ -174,7 +226,10 @@ func has_record(tree_id: int) -> bool:
 ## data only overrides progress/state fields; geometry and shares always
 ## come from the frozen tree record, so a save cannot change quantities.
 func _build_record(id: int, idx: int, saved: Dictionary) -> Dictionary:
-	var p := partition(idx)
+	# A record keeps the plan it was created with for life (saves without a
+	# plan are Phases 2-12: v1). New trees use the campaign's current plan.
+	var plan := str(saved.get("plan", PLAN_V1)) if not saved.is_empty() else current_plan()
+	var p := partition(idx, plan)
 	var sp: int = World.trees.species[idx]
 	var v: int = World.trees.variant[idx]
 	var dims := tree_scale(idx)
@@ -186,9 +241,9 @@ func _build_record(id: int, idx: int, saved: Dictionary) -> Dictionary:
 	var saved_segs: Array = saved.get("segments", [])
 	for k in int(p.n):
 		var ss: Dictionary = saved_segs[k] if k < saved_segs.size() else {}
-		segs.append({"sid": "T%d_S%d" % [id, k], "k": k, "a": p.starts[k], "b": p.ends[k], "mte": p.mte[k], "cents": p.cents[k], "state": clampi(int(ss.get("state", Seg.ATTACHED)), Seg.ATTACHED, Seg.CONSUMED), "receipt": str(ss.get("receipt", "")), "burn": clampf(float(ss.get("burn", 0.0)), 0.0, 1.0)})
+		segs.append({"sid": "T%d_S%d" % [id, k], "k": k, "a": p.starts[k], "b": p.ends[k], "mte": p.mte[k], "cents": p.cents[k], "state": clampi(int(ss.get("state", Seg.ATTACHED)), Seg.ATTACHED, SEG_MAX), "receipt": str(ss.get("receipt", "")), "burn": clampf(float(ss.get("burn", 0.0)), 0.0, 1.0)})
 	var rec := {
-		"tree": id, "idx": idx, "species": sp, "variant": v,
+		"tree": id, "idx": idx, "species": sp, "variant": v, "plan": plan,
 		"xs": dims.x, "ys": dims.y, "base_basis": base_basis, "frame": TimberMesh.frame_for(axis),
 		"cut_h": float(p.cut_h), "merch_top": float(p.merch_top),
 		"segments": segs, "bounds": [], "crown": {},
@@ -248,6 +303,10 @@ func _make_body(tree_id: int, ks: Array[int], crown: bool, pose: Transform3D, dy
 			s.state = st
 			segment_state_changed.emit(str(s.sid), st)
 	return b
+
+
+func set_state(sid: String, st: int) -> void:
+	_set_state(sid, st)
 
 
 func segment(sid: String) -> Dictionary:
@@ -438,6 +497,12 @@ func load_of(carrier: String) -> Array:
 	return loads[carrier]
 
 
+## A carrier with one piece heavier than its hand budget is dragging it.
+func is_dragging(carrier: String, budget := HAND_BUDGET_MTE) -> bool:
+	var h := load_of(carrier)
+	return h.size() == 1 and int(segment(str(h[0])).mte) > budget + 2
+
+
 func carrier_mte(carrier: String) -> int:
 	var total := 0
 	for sid in load_of(carrier):
@@ -453,7 +518,7 @@ func pick_up(body: TimberBody, budget := HAND_BUDGET_MTE) -> Dictionary:
 
 ## Shared pickup for the boss and workers: one authoritative transaction, so
 ## two hands can never take the same piece.
-func pick_up_for(carrier: String, body: TimberBody, budget := HAND_BUDGET_MTE) -> Dictionary:
+func pick_up_for(carrier: String, body: TimberBody, budget := HAND_BUDGET_MTE, allow_drag := false) -> Dictionary:
 	if body == null or not is_instance_valid(body) or not bodies.has(body.key):
 		return {"ok": false, "reason": "That piece is gone."}
 	if body.ks.size() != 1 or body.crown:
@@ -464,7 +529,12 @@ func pick_up_for(carrier: String, body: TimberBody, budget := HAND_BUDGET_MTE) -
 	var s := segment(sid)
 	var held := load_of(carrier)
 	# Workers carry at most four pieces (what fits on a shoulder visibly).
-	if (carrier != "player" and held.size() >= 4) or carrier_mte(carrier) + int(s.mte) > budget + 2:
+	# Phase 13: a single piece up to two hand loads can be DRAGGED by one end
+	# (slowly, nothing else in hand); heavier pieces need the cart or a truck.
+	var drag := allow_drag and held.is_empty() and int(s.mte) > budget and int(s.mte) <= budget * 2 + 2
+	if not drag and ((carrier != "player" and held.size() >= 4) or carrier_mte(carrier) + int(s.mte) > budget + 2):
+		if held.is_empty() and int(s.mte) <= budget * 2 + 2:
+			return {"ok": false, "reason": "Too heavy to lift (%d%% of a hand load). Drag it (%s) or use the cart." % [int(100.0 * int(s.mte) / budget), "hold to drag"]}
 		return {"ok": false, "reason": "Too heavy to add to your load (%d%% of a hand load)." % int(100.0 * (carrier_mte(carrier) + int(s.mte)) / budget)}
 	# Record first, then visuals: the piece is CARRIED before the body goes.
 	held.append(sid)
@@ -520,9 +590,19 @@ func put_down_for(carrier: String, sid: String, centre: Vector3, dir: Vector3, d
 
 ## Accepts pieces into the camp delivery queue. The ONLY place entitlement
 ## receipts are created. Idempotent per segment.
-func accept(sids: Array, source: String) -> Array[Dictionary]:
+##
+## Phase 13: with a yard, each piece first needs a reserved destination at
+## `at` (a free cradle slot, or the deck it is delivered onto). No
+## destination = the piece is NOT accepted and NOT paid; `last_refusal`
+## says why and the carrier/truck keeps it.
+var last_refusal := ""
+
+
+func accept(sids: Array, source: String, at := Vector3.INF) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
+	last_refusal = ""
 	if accept_gate.is_valid() and not bool(accept_gate.call()):
+		last_refusal = "Deliveries are closed."
 		return out
 	for sid in sids:
 		var s := segment(sid)
@@ -530,6 +610,12 @@ func accept(sids: Array, source: String) -> Array[Dictionary]:
 			continue
 		if int(s.state) not in [Seg.CARRIED, Seg.WORLD, Seg.VEHICLE_RESERVED]:
 			continue
+		var dest := ""
+		if Game.yard and is_instance_valid(Game.yard):
+			dest = Game.yard.intake_destination(sid, at)
+			if dest == "":
+				last_refusal = Game.yard.last_reason
+				continue
 		_receipt_counter += 1
 		var r := {"id": "RCPT-%06d" % _receipt_counter, "sid": sid, "tree": int(sid.trim_prefix("T").split("_S")[0]), "mte": int(s.mte), "cents": int(s.cents), "source": source, "time": Game.world_time, "settled": false}
 		s.receipt = r.id
@@ -540,9 +626,12 @@ func accept(sids: Array, source: String) -> Array[Dictionary]:
 		var b := body_of(sid)
 		if b:
 			_remove_body(b)
-		queue.append(sid)
-		_set_state(sid, Seg.ACCEPTED_QUEUED)
 		claims.erase(sid)
+		if dest != "":
+			Game.yard.receive(sid, dest)
+		else:
+			queue.append(sid)
+			_set_state(sid, Seg.ACCEPTED_QUEUED)
 		delivery_accepted.emit(r)
 		out.append(r)
 	if not out.is_empty():
@@ -670,6 +759,8 @@ func tree_delivered(tree_id: int) -> bool:
 
 ## Optional final-ash cleanup view (separate from contract delivery).
 func ash_clean() -> bool:
+	if Game.yard and is_instance_valid(Game.yard) and Game.yard.stock_count() > 0:
+		return false
 	return queue.is_empty() and burning.is_empty()
 
 
@@ -727,12 +818,25 @@ func capture() -> Dictionary:
 		var bds := []
 		for bd in r.bounds:
 			bds.append({"work": bd.work, "cut": bd.cut})
-		recs[str(id)] = {"segments": segs, "bounds": bds, "crown": {"attached": r.crown.attached, "work": r.crown.work}}
+		recs[str(id)] = {"plan": str(r.get("plan", PLAN_V1)), "segments": segs, "bounds": bds, "crown": {"attached": r.crown.attached, "work": r.crown.work}}
 	var body_list := []
 	for key in bodies:
 		var b: TimberBody = bodies[key]
 		body_list.append({"tree": b.tree_id, "ks": b.ks.duplicate(), "crown": b.crown, "pose": TreeService._xf_to_array(b.global_transform)})
-	return {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "loads": loads.duplicate(true), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50)}
+	var out := {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "loads": loads.duplicate(true), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50)}
+	# Phase 13: yard places of accepted wood (cradle / decks / mid-move).
+	if Game.yard and is_instance_valid(Game.yard):
+		out["yard"] = Game.yard.capture()
+		# Accepted pieces in hands are yard moves, not unpaid carried wood.
+		var c2: Array = out.carried
+		for sid in c2.duplicate():
+			if Game.yard.is_yard_move(str(sid)):
+				c2.erase(sid)
+		for c in out.loads:
+			for sid in (out.loads[c] as Array).duplicate():
+				if Game.yard.is_yard_move(str(sid)):
+					(out.loads[c] as Array).erase(sid)
+	return out
 
 
 ## Rebuilds the ledger from a save. Ownership is re-derived and validated:
@@ -761,6 +865,16 @@ func restore(data: Dictionary) -> void:
 	for sid in data.get("queue", []):
 		if accepted.has(str(sid)) and not str(sid) in burning and not str(sid) in queue:
 			queue.append(str(sid))
+	# Phase 13 yard places (accepted pieces only; never re-paid).
+	var yard_places := {}
+	if Game.yard and is_instance_valid(Game.yard):
+		var yd: Dictionary = data.get("yard", {})
+		var clean := {}
+		for sid in accepted:
+			if not str(sid) in burning and not str(sid) in queue:
+				clean[sid] = true
+		Game.yard.restore(yd, clean)
+		yard_places = Game.yard.all_yard_sids()
 	for sid in accepted:
 		var sg := segment(sid)
 		if sg.is_empty():
@@ -769,6 +883,8 @@ func restore(data: Dictionary) -> void:
 			sg.state = Seg.BURNING
 		elif sid in queue:
 			sg.state = Seg.ACCEPTED_QUEUED
+		elif yard_places.has(sid):
+			sg.state = Seg.ACCEPTED_STAGED if str(yard_places[sid]) == "cradle" else Seg.ACCEPTED_RACKED
 		else:
 			sg.state = Seg.CONSUMED
 	for sid in data.get("carried", []):
@@ -814,6 +930,14 @@ func restore(data: Dictionary) -> void:
 			recovery_log.append({"sid": sid, "reason": "invalid_pose", "to": "stump", "time": Game.world_time})
 	for r in data.get("recovery_log", []):
 		recovery_log.append(r)
+	# Pre-Phase-13 saves: the accepted backlog moves from the pit queue onto
+	# the decks once (no payment or burn change).
+	if Game.yard and is_instance_valid(Game.yard) and not data.has("yard"):
+		var moved: int = Game.yard.migrate_old_queue()
+		if moved > 0:
+			recovery_log.append({"sid": "*", "reason": "phase13_queue_to_decks", "to": "%d pieces" % moved, "time": Game.world_time})
+	elif Game.yard and is_instance_valid(Game.yard):
+		Game.yard.migrated_queue = true
 	carried_changed.emit()
 	queue_changed.emit()
 
@@ -837,6 +961,8 @@ func clear_all() -> void:
 	queue.clear()
 	burning.clear()
 	receipts.clear()
+	if Game.yard and is_instance_valid(Game.yard):
+		Game.yard.restore({"migrated_queue": true}, {})
 	claims.clear()
 	recovery_log.clear()
 	_receipt_counter = 0

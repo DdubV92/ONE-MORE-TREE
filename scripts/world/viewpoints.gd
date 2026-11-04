@@ -22,6 +22,12 @@ static func all() -> Dictionary:
 	vp["camper_night"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, -2.0), camper + Vector3(-1.5, CampLayout.CAMPER_FLOOR + 0.1, -3.2), eye, "Camper bedroom at night: window to the woods", "night")
 	var rack := c + CampLayout.DELIVERY_RACK_POS
 	vp["delivery"] = _v(rack + Vector3(1.5, 0, 5.5), c + CampLayout.BURN_PIT_POS + Vector3(1.5, 0, 0), eye, "Delivery rack and burn pit")
+	# Phase 13 logging yard (outside the north-east fence).
+	var yc := c + Vector3(15.9, 0, -23.6)
+	vp["p13_yard"] = _v(c + Vector3(4.0, 3.2, -12.0), yc + Vector3(0, -1.0, 0), eye, "Logging yard: receiving cradle, three log decks, fire loading pile")
+	vp["p13_decks"] = _v(c + Vector3(6.5, 0, -19.6), yc + Vector3(4.0, 0, -0.6), eye, "Log decks from the yard walkway")
+	vp["p13_cradle"] = _v(rack + Vector3(2.8, 0, 4.2), rack + Vector3(-1.0, 0, -1.2), eye, "Receiving cradle (paid intake) and the fire's loading pile")
+	vp["p13_cart"] = _v(c + CampLayout.CART_PARK + Vector3(2.6, 0, 2.4), c + CampLayout.CART_PARK + Vector3(-0.4, -0.6, -0.8), eye, "Handcart parked by the fire")
 	var cabin := c + CampLayout.CABIN_POS
 	var bedroom := cabin + Vector3(-2.2, CampLayout.CABIN_FLOOR, -6.6)
 	vp["cabin_bedroom"] = _v(bedroom, bedroom + Vector3(-0.6, -0.8, -3.0), eye, "Extension bedroom: beds 5 and 6")

@@ -52,6 +52,16 @@ const STATIONS12 := [
 	["Undergrowth density preset", "p12_density"],
 	["Mocap: walk / run / sit", "p12_mocap"],
 ]
+const STATIONS13 := [
+	["Logging yard overview", "p13_yard"],
+	["Fill the yard (stock fixture)", "p13_fill"],
+	["Receiving cradle: full = refused", "p13_cradle_full"],
+	["Handcart: load, push, unload", "p13_cart"],
+	["Drag an oversized log", "p13_drag"],
+	["Feed the fire from a deck", "p13_feed"],
+	["Crew yard work", "p13_crew"],
+	["Longer logs (plan v2) side by side", "p13_compare"],
+]
 static var _clear_i := 0
 static var _density_i := 0
 static var _overlay12: CoverOverlay
@@ -215,6 +225,48 @@ static func go(hud: Node, which: String) -> String:
 			busy_camp_fixture()
 			w.teleport_to("camp")
 			return "Crew motion: walk and run are the owner's Mixamo clips retargeted to each body (feet re-planted per leg length); sitting, couch, driving and bed use the captured seated/lying clips."
+		"p13_yard":
+			w.teleport_to("p13_yard")
+			env.apply_named("day")
+			wx.set_override("clear", true)
+			return yard_summary()
+		"p13_fill":
+			var n := yard_fixture(0.8, 0)
+			w.teleport_to("p13_decks")
+			env.apply_named("day")
+			return "Stock fixture (in memory): %d paid logs stacked on the decks by real diameter and length. %s" % [n, yard_summary()]
+		"p13_cradle_full":
+			yard_fixture(0.0, CampLayout.CRADLE_SLOTS)
+			_hand_player(1, false)
+			w.teleport_to("p13_cradle")
+			return "The cradle is full (%d/%d) and you are holding an unpaid log. Try %s at the cradle: it is refused and NOT paid until a slot frees up. Deliver straight onto a deck instead, or move cradle logs to a deck first." % [Game.yard.cradle.size(), CampLayout.CRADLE_SLOTS, Keys.label("interact")]
+		"p13_cart":
+			yard_fixture(0.0, 0)
+			_hand_player(3, false)
+			w.teleport_to("p13_cart")
+			return "You hold %d unpaid logs. %s on the cart loads them (max %d logs / %.1f tree-eq). %s again grabs the handle; push it to the cradle and %s to unload (only what fits is accepted and paid)." % [Game.timber.carried.size(), Keys.label("interact"), TimberCart.MAX_PIECES, TimberCart.BUDGET_MTE / 1000.0, Keys.label("interact"), Keys.label("interact")]
+		"p13_drag":
+			yard_fixture(0.0, 0)
+			var ok := _hand_player(1, true)
+			w.teleport_to("p13_cradle")
+			if not ok:
+				return "No oversized log found."
+			return "You are dragging a log heavier than one hand load: slow walk, no jumping. Bring it to the cradle (%s) or load it on the cart." % Keys.label("interact")
+		"p13_feed":
+			yard_fixture(0.5, 0)
+			w.teleport_to("p13_decks")
+			return "The fire only burns from its loading pile (%d/%d). Take a log from a deck (%s) and carry it to the fire pit (%s there) - the pile is east of the pit." % [Game.timber.queue.size(), CampLayout.PIT_QUEUE_CAP, Keys.label("interact"), Keys.label("interact")]
+		"p13_crew":
+			yard_fixture(0.3, 8)
+			busy_camp_fixture()
+			if Game.crew:
+				for wk in Game.crew.workers.values():
+					(wk as Worker).emp["job"] = "yard"
+			w.teleport_to("p13_yard")
+			return "Crew on yard work (Journal -> Crew -> Yard): they move cradle logs onto decks and keep the fire pile topped up. Unassigned crew help automatically when the cradle is nearly full or the fire runs low."
+		"p13_compare":
+			w.teleport_to("p13_cradle")
+			return compare_plans()
 		"cleared":
 			var n := clear_near_camp(0.9)
 			w.teleport_to("ridge")
@@ -222,6 +274,110 @@ static func go(hud: Node, which: String) -> String:
 			wx.set_override("clear", true)
 			return "Station 11 - cleared overlook (in memory): %d original trees removed around camp. No stale shadows, leaf audio or birds where trees are gone." % n
 	return ""
+
+
+## Phase 13: one-line yard status for the tour.
+static func yard_summary() -> String:
+	var y: YardService = Game.yard
+	if y == null:
+		return "No yard on this island."
+	var deck_n := 0
+	for d in y.decks:
+		deck_n += (d as Array).size()
+	return "Yard: cradle %d/%d, decks %d logs (%.2f tree-eq paid stock, room for about %d more), fire pile %d/%d." % [y.cradle.size(), CampLayout.CRADLE_SLOTS, deck_n, y.stock_mte() / 1000.0, y.deck_free_estimate(), Game.timber.queue.size(), CampLayout.PIT_QUEUE_CAP]
+
+
+## In-memory yard stock (Preview only): accepted logs from real trees on the
+## decks (fraction of their estimated room) and `cradle_n` in the cradle.
+static func yard_fixture(deck_frac: float, cradle_n: int) -> int:
+	var t: TimberService = Game.timber
+	var y: YardService = Game.yard
+	if t == null or y == null or not Game.is_preview():
+		return 0
+	t.clear_all()
+	var want := int(y.deck_free_estimate() * deck_frac)
+	var placed := 0
+	var idx := 0
+	var cradle_at := CampLayout.world(CampLayout.DELIVERY_RACK_POS)
+	while (placed < want or y.cradle.size() < cradle_n) and idx < World.tree_count():
+		var id: int = World.trees.id[idx]
+		idx += 37
+		if t.records.has(id):
+			continue
+		t.records[id] = t._build_record(id, idx - 37, {})
+		var sids: Array = []
+		for sg in t.records[id].segments:
+			t.carried.append(str(sg.sid))
+			t.claims[str(sg.sid)] = "player"
+			sg.state = TimberService.Seg.CARRIED
+			sids.append(str(sg.sid))
+		for sid in sids:
+			if y.cradle.size() < cradle_n:
+				t.accept([sid], "fixture", cradle_at)
+			elif placed < want:
+				var dk := y.nearest_deck(y.deck_world(placed % y.decks.size()), sid)
+				if dk >= 0 and not t.accept([sid], "fixture", y.deck_world(dk)).is_empty():
+					placed += 1
+		# Pieces not used stay out of the world (fixture only).
+		for sid in t.carried.duplicate():
+			t.carried.erase(sid)
+			t.claims.erase(sid)
+			t.segment(str(sid)).state = TimberService.Seg.CONSUMED
+	t.carried_changed.emit()
+	y.refresh()
+	return placed
+
+
+## Puts `n` unpaid logs from a fresh tree in the player's hands (Preview).
+## `oversized`: one log heavier than a hand load (dragged).
+static func _hand_player(n: int, oversized: bool) -> bool:
+	var t: TimberService = Game.timber
+	if t == null:
+		return false
+	for j in range(3, World.tree_count(), 53):
+		var id: int = World.trees.id[j]
+		if t.records.has(id):
+			continue
+		var part := TimberService.partition(j, TimberService.current_plan())
+		if not oversized and float(part.d0) > 0.42:
+			continue                       # hand loads from moderate trees
+		var picks: Array[int] = []
+		for k in (part.mte as PackedInt32Array).size():
+			var m := int(part.mte[k])
+			if oversized and m > TimberService.HAND_BUDGET_MTE + 2 and m <= TimberService.HAND_BUDGET_MTE * 2:
+				picks = [k]
+				break
+			if not oversized and m <= 300 and picks.size() < n:
+				picks.append(k)
+		if picks.is_empty() or (not oversized and picks.size() < n):
+			continue
+		t.records[id] = t._build_record(id, j, {})
+		for sg in t.records[id].segments:
+			sg.state = TimberService.Seg.CONSUMED if not int(sg.k) in picks else TimberService.Seg.CARRIED
+			if int(sg.k) in picks:
+				t.carried.append(str(sg.sid))
+				t.claims[str(sg.sid)] = "player"
+		t.carried_changed.emit()
+		return true
+	return false
+
+
+## Plan v1 vs v2 piece counts and lengths over a sample of the island.
+static func compare_plans() -> String:
+	var n1 := 0
+	var n2 := 0
+	var l1 := 0.0
+	var l2 := 0.0
+	var trees := 0
+	for i in range(0, World.tree_count(), 25):
+		var a := TimberService.partition(i, TimberService.PLAN_V1)
+		var b := TimberService.partition(i, TimberService.PLAN_V2)
+		n1 += int(a.n)
+		n2 += int(b.n)
+		l1 += float(a.merch_top) - float(a.cut_h)
+		l2 += float(b.merch_top) - float(b.cut_h)
+		trees += 1
+	return "Plan v2 (new campaigns): %.2f logs per tree, mean %.2f m (old plan v1: %.2f logs, %.2f m). Same $100 and 1 tree-eq per tree; heavier logs are dragged or carted." % [float(n2) / trees, l2 / maxf(n2, 1), float(n1) / trees, l1 / maxf(n1, 1)]
 
 
 ## In-memory clearing fixture: removes the given fraction of original trees,

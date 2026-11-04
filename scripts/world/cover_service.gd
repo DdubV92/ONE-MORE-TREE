@@ -56,6 +56,8 @@ func _build_grid() -> void:
 		var k: int = World.shrubs.kind[i]
 		if k > 2:
 			continue          # bracken, sedge and deadwood are decorative
+		if CampLayout.in_yard(Vector3(xs[i], 0, zs[i]), 1.5):
+			continue
 		var r := UndergrowthSystem.crown_radius(i)
 		var h := UndergrowthSystem.crown_height(i)
 		var strength: float = [0.8, 0.6, 0.95][k]

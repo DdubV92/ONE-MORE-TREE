@@ -21,12 +21,14 @@ static func controls() -> String:
 
 static func contract() -> String:
 	return "\n".join([
-		"The contract: clear the whole island in 30 days. Every original tree must be felled, its stump removed and all of its merchantable logs delivered to the rack at camp.",
+		"The contract: clear the whole island in 30 days. Every original tree must be felled, its stump removed and all of its merchantable logs delivered to the camp yard.",
 		"Pay: $100 per original tree, paid in shares as each of its logs is accepted at camp. Felling alone pays nothing. Trees never grow back.",
 		"Crew: a standard campaign starts with 5 employees (the maximum; older legacy campaigns started with 2). Each active employee costs $300 per workday ($1,500 for five). Unpaid wages stay owed from their original day; after one more workday unpaid, that worker leaves. Paying part does not restart that grace, and firing does not cancel debt.",
 		"Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate (work per second; swings are slower with heavier axes but each bites deeper). Hard-working: ×1.25 cutting. Stronger: carries more by hand (not more in a truck). Timid: frightens sooner and heads home earlier.",
+		"Logs: new campaigns cut longer logs (about 1.5× the old length). Light logs are carried; a log too heavy for one load is dragged slowly (no jumping). The yard has a receiving cradle by the gate and three log decks outside the north-east fence. A log is paid the moment the yard accepts it; if the cradle and the nearby decks are full, the delivery is refused and nothing is paid until there is room.",
+		"The fire burns only from its loading pile (up to 12 logs). Carry paid logs from the cradle or decks to the fire (Interact on the fire), or set your crew to yard work. The handcart beside the yard takes up to 4 logs: grab its handle with Interact, push it, and Interact at the cradle or a deck to unload. Trucks unload what fits and keep the rest.",
 		"Trucks: up to 2, each with 3 seats (driver included) and room for 3 trees' worth of logs.",
-		"Finishing: the moment every tree, stump and log is done, the contract completes, even before day 30. Logs still burning in the pit do not count against you.",
+		"Finishing: the moment every tree, stump and log is done, the contract completes, even before day 30. Paid logs still in the yard or burning in the pit do not count against you.",
 	])
 
 

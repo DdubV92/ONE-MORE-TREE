@@ -32,6 +32,8 @@ var dock_site: DockSite
 var ground_cover: Node3D
 var undergrowth: UndergrowthSystem
 var cover: CoverService
+var yard: YardService
+var cart: TimberCart
 var environment: EnvironmentController
 var weather: WeatherService
 var camp: Node3D
@@ -161,6 +163,17 @@ func _ready() -> void:
 			add_child(c)
 			c.call("build")
 			return c)
+	if camp:
+		# Phase 13: the logging yard (receiving cradle, log decks, fire pile).
+		yard = YardService.new()
+		add_child(yard)
+		yard.setup()
+		Game.yard = yard
+		cart = TimberCart.new()
+		cart.name = "HandCart"
+		add_child(cart)
+		cart.setup(CampLayout.world(CampLayout.CART_PARK), 0.0)
+		Game.cart = cart
 	if camp:
 		dog = CampDog.new()
 		dog.name = "Dog"

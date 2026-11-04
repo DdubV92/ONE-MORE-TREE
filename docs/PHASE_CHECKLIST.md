@@ -2,6 +2,26 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 13: Logging yard, longer logs and storage
+
+Full detail: [PHASE13_NOTES.md](PHASE13_NOTES.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Cutting plan v2 (target length ×1.5) for new campaigns; exact $100 and 1 TE per tree | ✅ | Ruleset `expanded_v3`; plan stored per record |
+| Older rulesets and saves keep plan v1; no re-cutting on load | ✅ | Tested |
+| Oversized logs (up to two hand loads) dragged by player and crew | ✅ | Slow carry with a drag pose, not a physics skid |
+| Receiving cradle (12) + three log decks + fire loading pile (12) | ✅ | Measured deck capacity 141 logs ≈ 22.6 TE |
+| Acceptance reserves a yard place first; full = refused and unpaid | ✅ | Tested (cradle full, deck delivery, partial cart unload) |
+| Fire burns only from its loading pile; paid logs moved by hand or crew | ✅ | |
+| Handcart: load 4, push, unload what fits; pose and load saved | ✅ | Kinematic, bounded turning |
+| Crew yard job and automatic yard help | ✅ | Probe observed; full-day throughput unrun |
+| Trucks unload what fits and keep the rest | ✅ | |
+| Save schema 9; old pit backlog moves to decks once | ✅ | Tested, payments unchanged |
+| Daily report: processed, accepted by route, burned, yard moves and stock | ✅ | |
+| Preview stations, screenshots | ✅ | Software renderer |
+| 60 FPS at 1080p on a midrange GPU | ⛔ | Software renderer only |
+
 ## Phase 12: Dense 10,000-tree island, terrain, cover and hiding (plus motion capture and proper fabrics)
 
 Full detail: [PHASE12_NOTES.md](PHASE12_NOTES.md). Audit: [audit/ISLAND_AUDIT_R2.md](audit/ISLAND_AUDIT_R2.md).

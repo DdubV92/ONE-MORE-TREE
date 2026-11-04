@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P13"):
+		_run("phase 13 units", _t_phase13_units)
+		await _run_async("phase 13 world", _t_phase13_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P11"):
 		await _run_async("phase 11", _t_phase11_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -106,6 +112,8 @@ func _ready() -> void:
 	await _run_async("phase 10 world: standard ruleset = 10,000 natives + 5 employees + $4,500 + $1,500/day once, excluded trees untargetable, legacy load unchanged, deadline race, ruleset saved", _t_phase10_world)
 	await _run_async("phase 11: camper +25% area/safety/entrance, desk computer hosts cameras (relay at desk, tile click, sit/glance/stand, save standing), TV entertainment only, five distinct employees with real hands, dog anatomy, in-place pixel style", _t_phase11_world)
 	await _run_async("phase 12: island r2 exact 10,000 native records (unique, cohorts, low boughs, hashes), legacy islands untouched, removal clears every LOD, rocks supported, 62 rock hides with exits, geometric hide sight + bounded soft cover, lost contact vs seen entry, save island identity, undergrowth presets keep thickets, mocap clips, proper fabrics", _t_phase12_world)
+	_run("phase 13 units: plan v2 conserves $100 and 1 tree-eq per tree with fewer, longer pieces (bounded by two hand loads), old rulesets keep plan v1, save schema 9 + yard summary", _t_phase13_units)
+	await _run_async("phase 13 world: cradle intake pays once, full cradle refuses unpaid, deck delivery, yard moves, fire pile cap, mid-move reload, burn, old queue migrates once, cart partial unload + pose, drag", _t_phase13_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -964,6 +972,16 @@ func _t_timber_ledger() -> String:
 		get_tree().paused = false
 		if err == "" and JSON.stringify(t.capture().records) != before:
 			err = "fuel burned while paused"
+		# Phase 13: accepted logs wait in the yard; the fire burns only what
+		# is carried to its loading pile.
+		if Game.yard:
+			var g2 := 0
+			while not Game.yard.cradle.is_empty() and g2 < 64:
+				g2 += 1
+				var ys := Game.yard.take_from_cradle("player", 100000)
+				if ys == "" or not Game.yard.load_pit("player", ys):
+					err = "could not move the yard logs to the fire (%s)" % Game.yard.last_reason
+					break
 		t.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS * 4.0)
 		var r := t.reconcile(id)
 		if err == "" and (not r.ok or int(r.receipt_cents) != TimberService.TREE_CENTS or int(r.by_state.get("CONSUMED", 0)) != TimberService.TREE_MTE or not t.ash_clean()):
@@ -2427,7 +2445,7 @@ func _t_phase8_presentation() -> String:
 		if err == "" and not (st.get("phase8", {}) as Dictionary).has("weather"):
 			err = "save lacks the phase8 weather block"
 		var mig := SaveService.migrate({"schema": 7, "phase6": {}, "phase5": {}})
-		if err == "" and (int(mig.get("schema", 0)) != 8 or not mig.has("phase8")):
+		if err == "" and (int(mig.get("schema", 0)) != SaveService.SCHEMA_VERSION or not mig.has("phase8")):
 			err = "v7 -> v8 migration missing"
 	cs.test_route = false
 	# Weather never changes safety: lamp/camper answers identical in a storm,
@@ -2890,7 +2908,7 @@ func _t_phase10_units() -> String:
 	if not Ruleset.known("expanded_v1") or Ruleset.known("expanded_v99"):
 		return "ruleset registry wrong"
 	var std := Ruleset.get_def(Ruleset.STANDARD)
-	if int(std.native_total) != 10000 or int(std.starting_employees) != 5 or int(std.start_cash_cents) != 450000 or bool(std.section_length_active):
+	if int(std.native_total) != 10000 or int(std.starting_employees) != 5 or int(std.start_cash_cents) != 450000 or not bool(std.section_length_active) or str(std.get("section_plan", "")) != "v2" or bool(Ruleset.get_def(Ruleset.PHASE10).section_length_active) or bool(Ruleset.get_def(Ruleset.PHASE12).section_length_active):
 		return "standard ruleset parameters wrong: %s" % str(std)
 	var old := SaveService.summarize({"schema": SaveService.SCHEMA_VERSION, "campaign": {"phase3": true, "day": 7}})
 	if not str(old.status).begins_with("Legacy 12,000-tree contract"):
@@ -3339,7 +3357,7 @@ func _p12_checks(world: IslandWorld) -> String:
 	# --- saves keep their island ---------------------------------------------
 	var cs: CampaignService = world.campaign
 	cs.new_campaign()
-	if str(cs.ruleset.id) != "expanded_v2":
+	if str(cs.ruleset.id) != Ruleset.STANDARD:
 		return "new campaign on r2 got ruleset %s" % str(cs.ruleset.id)
 	var cap: Dictionary = cs.capture_campaign()
 	if str((cap.get("island", {}) as Dictionary).get("revision", "")) != "r2":
@@ -3391,4 +3409,385 @@ func _p12_checks(world: IslandWorld) -> String:
 			return "%s still uses denim" % m
 	if world.camp.find_child("sofa_02", true, false) == null:
 		return "camper couch is not the sofa model"
+	return ""
+
+
+# ------------------------------------------------------------------ Phase 13
+
+## Builds a fresh timber record for tree index `idx` with every piece placed
+## in `carrier`'s hands (no physics: the ledger is what is under test).
+func _p13_record_in_hands(t: TimberService, idx: int, carrier: String) -> Array:
+	var id: int = World.trees.id[idx]
+	t.records[id] = t._build_record(id, idx, {})
+	var out := []
+	for sg in t.records[id].segments:
+		t.load_of(carrier).append(str(sg.sid))
+		t.claims[str(sg.sid)] = carrier
+		sg.state = TimberService.Seg.CARRIED
+		out.append(str(sg.sid))
+	return out
+
+
+## Every accepted piece is in exactly one yard/fire place; nothing paid is
+## in anyone's hands unless it is a recorded yard move; receipts are unique.
+func _p13_conservation(t: TimberService) -> String:
+	var y: YardService = Game.yard
+	var places := {}
+	var add := func(sid: String, where: String) -> String:
+		if places.has(sid):
+			return "%s is in %s and %s" % [sid, places[sid], where]
+		places[sid] = where
+		return ""
+	for sid in y.cradle:
+		var e: String = add.call(str(sid), "cradle")
+		if e != "":
+			return e
+	for i in y.decks.size():
+		for sid in y.decks[i]:
+			var e: String = add.call(str(sid), "deck %d" % i)
+			if e != "":
+				return e
+	for sid in y.moving:
+		var e: String = add.call(str(sid), "moving")
+		if e != "":
+			return e
+	for sid in t.queue:
+		var e: String = add.call(str(sid), "fire pile")
+		if e != "":
+			return e
+	for sid in t.burning:
+		var e: String = add.call(str(sid), "burning")
+		if e != "":
+			return e
+	var seen := {}
+	for r in t.receipts:
+		if seen.has(str(r.sid)):
+			return "two receipts for %s" % str(r.sid)
+		seen[str(r.sid)] = true
+		var sg := t.segment(str(r.sid))
+		if int(sg.state) < TimberService.Seg.ACCEPTED_QUEUED:
+			return "receipted %s has unpaid state %d" % [str(r.sid), int(sg.state)]
+		if int(sg.state) != TimberService.Seg.CONSUMED and not places.has(str(r.sid)):
+			return "accepted %s is nowhere (state %d)" % [str(r.sid), int(sg.state)]
+	for sid in places:
+		if not seen.has(sid):
+			return "%s sits in the yard without a receipt" % sid
+	for sid in t.carried:
+		if seen.has(str(sid)) and not y.is_yard_move(str(sid)):
+			return "paid %s in hands without a yard move" % str(sid)
+	return ""
+
+
+func _t_phase13_units() -> String:
+	World.removed_trees.clear()
+	World.apply_variant("island_r2")
+	var n1 := 0
+	var n2 := 0
+	var over_hand := 0
+	var pieces := 0
+	for j in 600:
+		var idx := (j * 16) % World.tree_count()
+		var a := TimberService.partition(idx, TimberService.PLAN_V1)
+		var b := TimberService.partition(idx, TimberService.PLAN_V2)
+		var sm := 0
+		var sc := 0
+		for q in b.mte:
+			sm += q
+			if q > TimberService.HAND_BUDGET_MTE:
+				over_hand += 1
+			if q > TimberService.V2_MAX_PIECE_MTE and int(b.n) < TimberService.MAX_SEGMENTS:
+				return "tree %d: v2 piece %d mTE over the two-hand bound" % [idx, q]
+		for q in b.cents:
+			sc += q
+		if sm != TimberService.TREE_MTE or sc != TimberService.TREE_CENTS:
+			return "tree %d: v2 shares sum to %d mTE / %d cents" % [idx, sm, sc]
+		if int(b.n) > int(a.n):
+			return "tree %d: v2 has more pieces (%d) than v1 (%d)" % [idx, int(b.n), int(a.n)]
+		if absf(float(b.merch_top) - float(a.merch_top)) > 1e-4:
+			return "tree %d: v2 changed the merchantable length" % idx
+		n1 += int(a.n)
+		n2 += int(b.n)
+		pieces += int(b.n)
+	if float(n2) / float(n1) > 0.85:
+		return "v2 not meaningfully fewer pieces (%d vs %d)" % [n2, n1]
+	if over_hand == 0 or over_hand > pieces / 4:
+		return "oversized pieces %d of %d (expected some, but a minority)" % [over_hand, pieces]
+	# Ruleset plan selection: new standard = v2; Phase 10/12/legacy keep v1.
+	if str(Ruleset.get_def(Ruleset.STANDARD).get("section_plan", "v1")) != "v2":
+		return "standard ruleset does not use plan v2"
+	for rid in [Ruleset.PHASE12, Ruleset.PHASE10, Ruleset.LEGACY]:
+		if str(Ruleset.get_def(rid).get("section_plan", "v1")) != "v1":
+			return "%s changed its plan" % rid
+	# Save schema 8 -> 9 adds nothing destructive; summaries count yard stock.
+	var old := {"schema": 8, "campaign": {"phase3": true, "day": 4, "ruleset": {"id": "expanded_v2"}}, "timber": {"queue": ["T1_S0"]}}
+	var m := SaveService.migrate(old.duplicate(true))
+	if int(m.schema) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION != 9 or (m.timber.queue as Array).size() != 1:
+		return "schema 8 -> 9 migration wrong: %s" % str(m)
+	var sum := SaveService.summarize({"schema": 9, "campaign": {"phase3": true, "day": 2, "ruleset": {"id": "expanded_v3"}}, "timber": {"yard": {"cradle": ["a", "b"], "decks": [["c"], [], []]}}})
+	if int(sum.get("yard_pieces", -1)) != 3:
+		return "save summary yard count wrong: %s" % str(sum)
+	World.apply_variant("full")
+	return ""
+
+
+func _t_phase13_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.yard == null or Game.cart == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 5:
+		await get_tree().physics_frame
+	var err := await _p13_checks(world)
+	if Game.timber:
+		Game.timber.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p13_checks(world: IslandWorld) -> String:
+	var t: TimberService = world.timber
+	var y: YardService = Game.yard
+	var cart: TimberCart = Game.cart
+	if y == null or cart == null or y.decks.size() != CampLayout.YARD_DECKS.size():
+		return "yard or cart not built"
+	if TimberService.current_plan() != TimberService.PLAN_V2:
+		return "preview of the standard island does not use plan v2"
+	t.clear_all()
+	var cradle_at := CampLayout.world(CampLayout.DELIVERY_RACK_POS)
+	# Tall trees first: they give the oversized (draggable) pieces.
+	var order := range(World.tree_count())
+	order.sort_custom(func(a: int, b: int) -> bool: return float(World.trees.height[a]) > float(World.trees.height[b]))
+	var next := [0]
+	var fresh := func(carrier: String) -> Array:
+		var sids: Array = _p13_record_in_hands(t, int(order[next[0]]), carrier)
+		next[0] += 1
+		return sids
+	# --- 1. a whole tree delivered at the cradle pays exactly $100 ---------
+	var tree1: Array = fresh.call("player")
+	var rid := int(str(tree1[0]).trim_prefix("T").split("_S")[0])
+	if str(t.records[rid].plan) != "v2":
+		return "new record did not take plan v2"
+	if tree1.size() > CampLayout.CRADLE_SLOTS:
+		return "tree has more pieces (%d) than the cradle holds" % tree1.size()
+	var rs := t.accept(tree1.duplicate(), "rack:player", cradle_at)
+	var cents := 0
+	for r in rs:
+		cents += int(r.cents)
+	if rs.size() != tree1.size() or cents != 10000 or not t.tree_delivered(rid):
+		return "whole tree: %d of %d accepted, %d cents" % [rs.size(), tree1.size(), cents]
+	for sid in tree1:
+		if int(t.segment(str(sid)).state) != TimberService.Seg.ACCEPTED_STAGED or not str(sid) in y.cradle:
+			return "accepted piece %s not staged in the cradle" % str(sid)
+	# Idempotent: retries never pay twice.
+	var nrec := t.receipts.size()
+	t.accept(tree1.duplicate(), "rack:retry", cradle_at)
+	if t.receipts.size() != nrec:
+		return "retry created receipts"
+	var err := _p13_conservation(t)
+	if err != "":
+		return "after intake: " + err
+	# --- 2. cradle full: refused, unpaid, still in hands -------------------
+	while y.cradle_free() > 0:
+		var more: Array = fresh.call("player")
+		t.accept(more.slice(0, mini(more.size(), y.cradle_free())), "rack:player", cradle_at)
+		for sid in t.carried.duplicate():
+			t.carried.erase(sid)
+			t.claims.erase(sid)
+			t.segment(str(sid)).state = TimberService.Seg.WORLD
+	var paid_before := int(t.totals().entitlement_cents)
+	var extra: Array = fresh.call("player")
+	var refused := t.accept(extra.duplicate(), "rack:player", cradle_at)
+	if not refused.is_empty() or int(t.totals().entitlement_cents) != paid_before or t.last_refusal == "":
+		return "full cradle still accepted (%d) or gave no reason" % refused.size()
+	for sid in extra:
+		if int(t.segment(str(sid)).state) != TimberService.Seg.CARRIED or not str(sid) in t.carried:
+			return "refused piece left the hands"
+	# --- 3. delivery straight onto a deck ----------------------------------
+	var on_deck := t.accept(extra.duplicate(), "deck:player", y.deck_world(0))
+	if on_deck.size() != extra.size():
+		return "deck delivery accepted %d of %d (%s)" % [on_deck.size(), extra.size(), t.last_refusal]
+	for sid in extra:
+		if int(t.segment(str(sid)).state) != TimberService.Seg.ACCEPTED_RACKED or not str(sid) in y.decks[0]:
+			return "deck delivery not racked"
+	err = _p13_conservation(t)
+	if err != "":
+		return "after deck delivery: " + err
+	# --- 4. yard moves: cradle -> deck, deck -> fire pile ------------------
+	var sid1 := y.take_from_cradle("player", 1000)
+	if sid1 == "" or int(t.segment(sid1).state) != TimberService.Seg.ACCEPTED_MOVING or not sid1 in t.carried:
+		return "take from cradle failed (%s)" % y.last_reason
+	if t.accept([sid1], "rack:player", cradle_at).size() != 0:
+		return "a paid piece in hands was paid again"
+	if not y.place_on_deck("player", sid1, 1) or int(t.segment(sid1).state) != TimberService.Seg.ACCEPTED_RACKED or sid1 in t.carried:
+		return "place on deck failed (%s)" % y.last_reason
+	var sid2 := y.take_from_deck("player", 1, 1000)
+	if sid2 == "" or not y.load_pit("player", sid2) or not sid2 in t.queue or int(t.segment(sid2).state) != TimberService.Seg.ACCEPTED_QUEUED:
+		return "deck to fire pile failed (%s)" % y.last_reason
+	# Pile cap.
+	while y.pit_free() > 0:
+		var s := y.take_from_cradle("player", 1000)
+		if s == "":
+			s = y.take_from_deck("player", 0, 1000)
+		if s == "" or not y.load_pit("player", s):
+			return "could not fill the fire pile (%s)" % y.last_reason
+	var s_over := y.take_from_deck("player", 0, 1000)
+	if s_over == "":
+		s_over = y.take_from_cradle("player", 1000)
+	if s_over != "" and y.load_pit("player", s_over):
+		return "fire pile exceeded its cap"
+	if t.queue.size() > CampLayout.PIT_QUEUE_CAP:
+		return "fire pile holds %d" % t.queue.size()
+	err = _p13_conservation(t)
+	if err != "":
+		return "after yard moves: " + err
+	# --- 5. save mid-move: the piece goes back, nothing is re-paid --------
+	if s_over == "":
+		var spare: Array = fresh.call("player")
+		t.accept(spare.slice(0, 1), "rack:player", cradle_at)
+		for sid in t.carried.duplicate():
+			if not y.is_yard_move(str(sid)):
+				t.carried.erase(sid)
+				t.claims.erase(sid)
+				t.segment(str(sid)).state = TimberService.Seg.WORLD
+		s_over = y.take_from_cradle("player", 1000)
+	if s_over == "":
+		return "no piece to hold for the save test (%s)" % y.last_reason
+	var paid := int(t.totals().entitlement_cents)
+	var recs := t.receipts.size()
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+	t.restore(snap)
+	await get_tree().physics_frame
+	if int(t.totals().entitlement_cents) != paid or t.receipts.size() != recs:
+		return "reload changed payments"
+	if s_over in t.carried or not y.moving.is_empty():
+		return "mid-move piece restored in hands"
+	if int(t.segment(s_over).state) not in [TimberService.Seg.ACCEPTED_STAGED, TimberService.Seg.ACCEPTED_RACKED]:
+		return "mid-move piece did not return to the yard (state %d)" % int(t.segment(s_over).state)
+	err = _p13_conservation(t)
+	if err != "":
+		return "after reload: " + err
+	# --- 6. burning consumes from the pile only; yard stock blocks "ash clean"
+	t.advance_burn(20000.0)
+	if y.stock_count() > 0 and t.ash_clean():
+		return "ash clean reported with paid logs still in the yard"
+	err = _p13_conservation(t)
+	if err != "":
+		return "after burning: " + err
+	if int(t.totals().entitlement_cents) != paid:
+		return "burning changed payments"
+	# --- 7. old saves: the pit backlog moves to the decks once -------------
+	var legacy: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+	var backlog := []
+	for sid in legacy.yard.cradle:
+		backlog.append(sid)
+	for dk in legacy.yard.decks:
+		for sid in dk:
+			backlog.append(sid)
+	legacy.queue = backlog
+	legacy.erase("yard")
+	t.restore(legacy)
+	await get_tree().physics_frame
+	if t.queue.size() > CampLayout.PIT_QUEUE_CAP or not y.migrated_queue:
+		return "old queue not moved to the decks (%d left in the pile)" % t.queue.size()
+	if int(t.totals().entitlement_cents) != paid or t.receipts.size() != recs:
+		return "migration changed payments"
+	err = _p13_conservation(t)
+	if err != "":
+		return "after migration: " + err
+	var after_mig: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+	var q_before := t.queue.size()
+	t.restore(after_mig)
+	await get_tree().physics_frame
+	if t.queue.size() != q_before:
+		return "migration ran twice"
+	# --- 8. handcart: partial unload keeps the rest on the cart -----------
+	t.clear_all()
+	var cart_sids: Array = fresh.call(TimberCart.CARRIER)
+	while cart_sids.size() > TimberCart.MAX_PIECES:
+		var sid := str(cart_sids.pop_back())
+		t.load_of(TimberCart.CARRIER).erase(sid)
+		t.claims.erase(sid)
+		t.segment(sid).state = TimberService.Seg.WORLD
+	var filler := 0
+	while y.cradle_free() > 2:
+		var more: Array = fresh.call("player")
+		t.accept(more.slice(0, mini(more.size(), y.cradle_free() - 2)), "rack:player", cradle_at)
+		for sid in t.carried.duplicate():
+			t.carried.erase(sid)
+			t.claims.erase(sid)
+			t.segment(str(sid)).state = TimberService.Seg.WORLD
+		filler += 1
+		if filler > 20:
+			return "could not prepare the cradle"
+	var n_on := cart.load_sids().size()
+	cart.global_position = cradle_at + Vector3(0, 0, 2.0)
+	var unloaded := t.accept(cart.load_sids().duplicate(), "cart", cart.global_position)
+	if n_on < 3 or unloaded.size() != 2 or cart.load_sids().size() != n_on - 2 or t.last_refusal == "":
+		return "cart partial unload: %d on, %d accepted, %d left (%s)" % [n_on, unloaded.size(), cart.load_sids().size(), t.last_refusal]
+	for sid in cart.load_sids():
+		if int(t.segment(str(sid)).state) != TimberService.Seg.CARRIED or t.segment(str(sid)).receipt != "":
+			return "piece left on the cart was paid or changed state"
+	# Cart pose persists through the yard block.
+	var park := cart.global_position
+	var yard_cap: Dictionary = JSON.parse_string(JSON.stringify(t.capture()))
+	cart.global_position = park + Vector3(5, 0, 0)
+	t.restore(yard_cap)
+	var off := Vector2(cart.global_position.x - park.x, cart.global_position.z - park.z).length()
+	if off > 0.05:
+		return "cart pose not restored (%.2f m off)" % off
+	if cart.load_sids().size() != n_on - 2:
+		return "cart load not restored"
+	# --- 9. dragging: an oversized piece can be dragged, not lifted -------
+	t.clear_all()
+	var big := ""
+	for j in range(0, World.tree_count(), 7):
+		var part := TimberService.partition(j, TimberService.PLAN_V2)
+		var hit := -1
+		for k in (part.mte as PackedInt32Array).size():
+			if int(part.mte[k]) > TimberService.HAND_BUDGET_MTE + 2:
+				hit = k
+				break
+		if hit < 0:
+			continue
+		var sids: Array = _p13_record_in_hands(t, j, "player")
+		big = str(sids[hit])
+		for sid in sids:
+			t.carried.erase(sid)
+			t.claims.erase(sid)
+			t.segment(str(sid)).state = TimberService.Seg.WORLD
+		break
+	if big == "":
+		return "no oversized piece on the island"
+	t.carried.append(big)
+	t.claims[big] = "player"
+	t.segment(big).state = TimberService.Seg.CARRIED
+	var p: Player = world.player
+	var at := cradle_at + Vector3(4, 0.6, 4)
+	var body := t.put_down(big, at, Vector3.RIGHT, false)
+	if body == null:
+		return "could not set the big piece down"
+	var lift := t.pick_up_for("player", body, TimberService.HAND_BUDGET_MTE, false)
+	if bool(lift.ok) or not str(lift.reason).contains("Drag"):
+		return "oversized piece lifted or no drag hint: %s" % str(lift)
+	var drag := t.pick_up_for("player", body, TimberService.HAND_BUDGET_MTE, true)
+	if not bool(drag.ok) or not t.is_dragging("player"):
+		return "drag pick-up failed: %s" % str(drag)
+	if p == null:
+		return "no player"
+	err = _p13_conservation(t)
+	if err != "":
+		return "after drag: " + err
+	t.clear_all()
+	if not y.cradle.is_empty() or not t.queue.is_empty():
+		return "clear_all left yard stock"
 	return ""

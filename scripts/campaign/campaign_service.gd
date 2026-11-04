@@ -79,8 +79,12 @@ func setup() -> void:
 	if Game.trees:
 		Game.trees.tree_felled.connect(func(_id: int) -> void: _stat_add("felled", 1))
 		Game.trees.stump_removed.connect(func(_id: int) -> void: _stat_add("stumps_removed", 1))
+		Game.trees.tree_state_changed.connect(func(_id: int, st: int) -> void:
+			if st == TreeService.State.SECTIONED:
+				_stat_add("processed", 1))
 	if Game.timber:
-		Game.timber.delivery_accepted.connect(func(r: Dictionary) -> void: _stat_add("delivered_mte", int(r.mte)))
+		Game.timber.delivery_accepted.connect(_on_accepted)
+		Game.timber.piece_consumed.connect(func(sid: String) -> void: _stat_add("burned_mte", int(Game.timber.segment(sid).get("mte", 0))))
 	equipment.changed.connect(_sync_axe)
 	wallet.enabled = not Game.is_preview()
 
@@ -135,6 +139,19 @@ func start_test_route(with_fixtures := true, with_crew := true) -> void:
 
 func _begin_day_stats() -> void:
 	day_stats = {"day": clock.day, "opening_cash": wallet.cash, "felled": 0, "delivered_mte": 0, "stumps_removed": 0, "trees_standing_start": contract.counts().standing}
+
+
+## Phase 13: deliveries split by how they arrived (hands, handcart, truck).
+func _on_accepted(r: Dictionary) -> void:
+	_stat_add("delivered_mte", int(r.mte))
+	_stat_add("delivered_pieces", 1)
+	var src := str(r.get("source", ""))
+	if src.begins_with("cart"):
+		_stat_add("cart_mte", int(r.mte))
+	elif src.begins_with("rack:") or src.begins_with("deck:"):
+		_stat_add("hand_mte", int(r.mte))
+	else:
+		_stat_add("truck_mte", int(r.mte))
 
 
 func _stat_add(k: String, n: int) -> void:
@@ -314,7 +331,22 @@ func build_report(d: int, settlement: Dictionary) -> Dictionary:
 		"stumps": int(c.stumps), "undelivered_mte": int(c.undelivered_mte), "trunks_to_buck": int(c.trunks_to_buck),
 		"next_day_payroll": payroll.todays_estimate(), "owed_total": payroll.owed_total(),
 		"legacy": legacy,
+		# Phase 13: wood flow and the yard.
+		"processed": int(day_stats.get("processed", 0)), "delivered_pieces": int(day_stats.get("delivered_pieces", 0)),
+		"hand_mte": int(day_stats.get("hand_mte", 0)), "cart_mte": int(day_stats.get("cart_mte", 0)), "truck_mte": int(day_stats.get("truck_mte", 0)),
+		"burned_mte": int(day_stats.get("burned_mte", 0)), "yard_racked": int(day_stats.get("yard_racked", 0)), "yard_fed": int(day_stats.get("yard_fed", 0)),
+		"yard": _yard_snapshot(),
 	}
+
+
+func _yard_snapshot() -> Dictionary:
+	if Game.yard == null or not is_instance_valid(Game.yard) or Game.timber == null:
+		return {}
+	var y: YardService = Game.yard
+	var deck_n := 0
+	for d in y.decks:
+		deck_n += (d as Array).size()
+	return {"cradle": y.cradle.size(), "cradle_cap": CampLayout.CRADLE_SLOTS, "deck_pieces": deck_n, "stock_mte": y.stock_mte(), "deck_free": y.deck_free_estimate(), "pile": Game.timber.queue.size(), "pile_cap": CampLayout.PIT_QUEUE_CAP, "pile_mte": Game.timber.queue_mte()}
 
 
 # ----------------------------------------------------------------- legacy

@@ -48,6 +48,54 @@ const TRUCK_BAYS := [
 ]
 const TRUCK_TURNING := {"center": Vector3(-3.0, 0.0, -12.0), "radius": 5.5}
 
+## Phase 13 logging yard. The receiving cradle is the Phase 2 delivery rack
+## (unpaid intake becomes paid when it lands in a cradle slot). Accepted
+## stock goes to three log decks in a small yard extension just outside the
+## fence, north-east (flat, treeless on both islands, clear of the gate,
+## turning circle, lamps, cameras and trails). Fuel for the fire waits on a short loading pile
+## beside the pit. The early handcart parks by the cradle.
+const CRADLE_SLOTS := 12
+## Logs lie north-south (along Z), end grain facing the walkway; each deck
+## stacks across X on sleepers, up to `size.y` high. size = (stack width X,
+## max height, log bay length Z).
+const YARD_DECKS := [
+	{"center": Vector3(9.5, 0.0, -23.6), "size": Vector3(5.6, 2.4, 3.4)},
+	{"center": Vector3(15.9, 0.0, -23.6), "size": Vector3(5.6, 2.4, 3.4)},
+	{"center": Vector3(22.3, 0.0, -23.6), "size": Vector3(5.6, 2.4, 3.4)},
+]
+## Where people stand to work a deck's open south face (walkway between the
+## fence and the decks).
+const YARD_WALK_Z := -20.3
+const YARD_RECT := {"center": Vector3(15.9, 0.0, -23.0), "size": Vector3(20.0, 0.0, 5.6)}
+const PIT_LOAD_POS := Vector3(4.2, 0.0, -10.4)      # fuel loading pile (pit queue), east of the pit
+const PIT_QUEUE_CAP := 12                          # pieces waiting beside the pit
+const CART_PARK := Vector3(0.8, 0.0, -4.0)
+
+
+static func deck_standpoint(i: int) -> Vector3:
+	var c: Vector3 = YARD_DECKS[i].center
+	return Vector3(c.x, 0.0, YARD_WALK_Z)
+
+
+## True inside the yard extension (+margin): decorative ground cover and
+## undergrowth keep out, navigation treats decks as solid.
+static func in_yard(p: Vector3, margin := 0.0) -> bool:
+	var o := origin()
+	var c: Vector3 = YARD_RECT.center
+	var sz: Vector3 = YARD_RECT.size
+	return absf(p.x - (o.x + c.x)) < sz.x * 0.5 + margin and absf(p.z - (o.z + c.z)) < sz.z * 0.5 + margin
+
+
+static func on_deck(p: Vector3, margin := 0.0) -> int:
+	var o := origin()
+	for i in YARD_DECKS.size():
+		var c: Vector3 = YARD_DECKS[i].center
+		var sz: Vector3 = YARD_DECKS[i].size
+		if absf(p.x - (o.x + c.x)) < sz.x * 0.5 + margin and absf(p.z - (o.z + c.z)) < sz.z * 0.5 + margin:
+			return i
+	return -1
+
+
 ## Exterior camp lamps (pole lights). Each defines an authoritative safe
 ## radius used by the SafetyService.
 const LAMPS := [

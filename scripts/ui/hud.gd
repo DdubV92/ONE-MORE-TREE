@@ -434,6 +434,17 @@ func _build_tour() -> void:
 			tour_panel.visible = false
 			_capture_mouse(), 130))
 	v.add_child(p12)
+	v.add_child(UITheme.label("Phase 13 logging yard, longer logs & cart", 16, UITheme.MUTED))
+	var p13 := GridContainer.new()
+	p13.columns = 2
+	for s13 in ReviewStations.STATIONS13:
+		p13.add_child(UITheme.button(s13[0], func() -> void:
+			var msg := ReviewStations.go(self, s13[1])
+			if msg != "":
+				show_message(msg, 9.0)
+			tour_panel.visible = false
+			_capture_mouse(), 130))
+	v.add_child(p13)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))

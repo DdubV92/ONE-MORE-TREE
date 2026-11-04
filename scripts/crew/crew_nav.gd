@@ -116,6 +116,24 @@ func _build_island() -> void:
 		var rad := World.rock_radius(r)
 		if rad > 0.9:
 			_mark_disc(rp, rad, true)
+	# Phase 13: yard log decks are solid; their standpoints stay walkable.
+	var o := World.camp_origin()
+	for d in CampLayout.YARD_DECKS:
+		var c: Vector3 = d.center
+		var sz: Vector3 = d.size
+		var a2 := to_cell(Vector2(o.x + c.x - sz.x * 0.5 - 0.5, o.z + c.z - sz.z * 0.5 - 0.5))
+		var b2 := to_cell(Vector2(o.x + c.x + sz.x * 0.5 + 0.5, o.z + c.z + sz.z * 0.5 + 0.5))
+		for j in range(a2.y, b2.y + 1):
+			for ii in range(a2.x, b2.x + 1):
+				var k2 := Vector2i(ii, j)
+				var cc := cell_center(k2)
+				if _in_island(k2) and absf(cc.x - (o.x + c.x)) < sz.x * 0.5 + 0.5 and absf(cc.y - (o.z + c.z)) < sz.z * 0.5 + 0.5:
+					grid.set_point_solid(k2, true)
+	for i2 in CampLayout.YARD_DECKS.size():
+		var sp := CampLayout.deck_standpoint(i2)
+		var ks := to_cell(Vector2(o.x + sp.x, o.z + sp.z))
+		if _in_island(ks):
+			grid.set_point_solid(ks, false)
 	for i in World.tree_count():
 		var tid: int = World.trees.id[i]
 		if World.removed_trees.has(tid):

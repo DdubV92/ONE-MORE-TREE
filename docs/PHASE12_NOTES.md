@@ -27,7 +27,7 @@ New standard campaigns play on **island revision 2** (`island_r2`), a re-planned
 
 | Campaign | Island | Native trees | Notes |
 |---|---|---|---|
-| New standard campaign | **r2** (`data/world/r2`) | 10,000 planned records | Ruleset `expanded_v2` |
+| New standard campaign | **r2** (`data/world/r2`) | 10,000 planned records | Ruleset `expanded_v2` (Phase 13 new campaigns use `expanded_v3`: same island, longer logs, see PHASE13_NOTES.md) |
 | Phase 10 standard saves | r1 (`data/world`) | 10,000 subset (`standard_10k`) | Ruleset `expanded_v1`, unchanged |
 | Legacy saves | r1 | 12,000 | Ruleset `contract_v1`, unchanged |
 

@@ -45,6 +45,7 @@ var carry: CarryController
 var vehicle: Node3D = null          # Phase 5: the truck we sit in
 var couch: Node3D = null            # Phase 5: couch seat marker while seated
 var hiding: HideSpot = null         # Phase 6: hiding place while hidden
+var pushing_cart: TimberCart = null # Phase 13: early handcart in hand
 var _hide_blend := 1.0
 var _hide_from := Vector3.ZERO
 var _hide_yaw := 0.0
@@ -196,6 +197,8 @@ func _select_tier(tier: String) -> void:
 # ---------------------------------------------------------------- vehicle
 
 func enter_vehicle(t: Node3D, seat: String) -> void:
+	if pushing_cart != null:
+		pushing_cart.release()
 	vehicle = t
 	vehicle_seat = seat
 	_veh_yaw = 0.0
@@ -275,6 +278,8 @@ func _vehicle_process(_delta: float) -> void:
 ## Sits on a couch seat marker (faces the TV). Looking around stays free;
 ## the stand-up point is verified clear before leaving.
 func sit_on_couch(marker: Node3D) -> void:
+	if pushing_cart != null:
+		pushing_cart.release()
 	if vehicle != null or couch != null or carry.is_carrying():
 		if carry.is_carrying():
 			show_message("Put the wood down first.")
@@ -423,6 +428,8 @@ func _couch_process(delta: float) -> void:
 ## Gets into a hiding place: a short readable move, then a low/limited
 ## view from inside. Concealment only - see HuntService.
 func hide_in(spot: HideSpot) -> void:
+	if pushing_cart != null:
+		pushing_cart.release()
 	if vehicle != null or couch != null or hiding != null:
 		return
 	if carry.is_carrying():
@@ -529,7 +536,7 @@ func _physics_process(delta: float) -> void:
 		speed = CROUCH_SPEED
 	elif Input.is_action_pressed("sprint") and input.y < 0.0:
 		speed = SPRINT_SPEED
-	speed *= carry.speed_factor()
+	speed *= carry.speed_factor() * (0.8 if pushing_cart != null else 1.0)
 	# Water: slower with depth, gently pushed back beyond the wading limit.
 	var feet := global_position
 	# Depth of water above the player's feet (not above the bed), so bridges,

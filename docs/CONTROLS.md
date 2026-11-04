@@ -12,8 +12,8 @@
 | E on a crew member | Talk: what they're doing, their axe, wages, what they noticed, report what you saw, reassure, give orders (follow, work here, head home), hand over a spare axe, pay, fire |
 | J | Journal (crew roster and hiring first): contract progress, payroll and arrears (pay employees), money ledger, daily reports |
 | F9 / F10 | Quick save / quick load of the current slot (campaign only; a backup of the previous save is kept) |
-| E | Interact: doors, fire, the **tool rack** (axe shop), the **camper bed** (sleep: from dusk), notice board, arcade. Logs: pick up / add to your bundle; at the delivery rack: deliver everything you carry |
-| G | Set down one log at a checked spot in front of you (at the rack: deliver) |
+| E | Interact: doors, fire, the **tool rack** (axe shop), the **camper bed** (sleep: from dusk), notice board, arcade. Logs: pick up / add to your bundle; at the receiving cradle or a log deck: deliver everything you carry (refused, and not paid, if there is no room). Too heavy to lift: hold to drag. Handcart: load logs, grab or let go of the handle, unload at the cradle or a deck. Fire pit: load paid logs onto the fire |
+| G | Set down one log at a checked spot in front of you (at the cradle: deliver). Holding paid yard logs: put them on the nearest deck or the fire pile |
 | X | Drop the whole load (each log still needs a clear spot; otherwise you keep it) |
 | Esc | Pause menu: resume, settings, diagnostics, save (campaign), title, quit. Releases the mouse. |
 | Click | Recapture the mouse after using a panel |

@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 8
+const SCHEMA_VERSION := 9
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -47,6 +47,10 @@ static func summarize(raw: Dictionary, path := "") -> Dictionary:
 	var accepted := 0
 	for r in (d.get("timber", {}) as Dictionary).get("receipts", []):
 		accepted += int((r as Dictionary).get("mte", 0))
+	var yard: Dictionary = (d.get("timber", {}) as Dictionary).get("yard", {})
+	var yard_pieces := (yard.get("cradle", []) as Array).size()
+	for dk in yard.get("decks", []):
+		yard_pieces += (dk as Array).size()
 	var checkpoints: Array = []
 	var base := path.get_basename()
 	for k in ["morning", "survival", "rescue"]:
@@ -75,7 +79,7 @@ static func summarize(raw: Dictionary, path := "") -> Dictionary:
 	return {"day": int(c.get("day", 1)), "rule_set": str(c.get("rule_set", "?")), "state": state, "cash": cash, "pre_contract": not bool(c.get("phase3", false)), "legacy_file": path == DEFAULT_PATH and path != "",
 		"schema": schema, "too_new": schema > SCHEMA_VERSION, "hunt_mode": mode, "accepted_trees": accepted / 1000.0, "saved_unix": FileAccess.get_modified_time(path) if path != "" else 0,
 		"build": str(d.get("build", "")), "checkpoints": checkpoints, "status": status, "finished": mode == "escaped" or mode in ["dead", "stranded"],
-		"post_contract": bool(c.get("post_contract", false)), "ruleset": rid, "ruleset_label": str(rdef.label)}
+		"post_contract": bool(c.get("post_contract", false)), "ruleset": rid, "ruleset_label": str(rdef.label), "yard_pieces": yard_pieces}
 
 
 ## The slot to Continue: the most recently saved readable, compatible,
@@ -335,6 +339,12 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# the world seed and the restored clock, surfaces start dry.
 		data["phase8"] = {}
 		data["schema"] = 8
+		v = 8
+	if v == 8:
+		# Phase 8-12 saves: no log yard. TimberService.restore sees the missing
+		# "yard" block and moves the old pit backlog onto the decks once
+		# (receipts, payments and burn progress unchanged).
+		data["schema"] = 9
 	return data
 
 

@@ -13,7 +13,8 @@ A short guide in the top-right walks you through real work: walk, read the contr
 
 ## Money and crew
 
-- $100 per original tree, paid in shares as each log is accepted at the rack. Felling alone pays nothing.
+- $100 per original tree, paid in shares as each log is accepted at the camp yard (the receiving cradle by the fire, or a log deck outside the north-east fence). If there's no room, the delivery is refused and not paid until there is. Felling alone pays nothing.
+- The fire burns only what's on its loading pile. Carry paid logs from the cradle or decks to the fire, or put a worker on **Yard** duty. The handcart by the fire moves 4 logs at once, and logs too heavy to lift can be dragged.
 - Each active employee costs $300 a day, settled when you sleep. Unpaid wages stay owed from their day; one more unpaid workday and that worker leaves. Paying part doesn't reset that.
 - Example: two workers cost $600 a day. Five whole trees delivered that day earns $500, so you are $100 short on wages. A worker pays for themselves only by delivering more than three trees' worth of logs a day.
 - Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate. Hard-working: ×1.25. Stronger: carries more by hand. Timid: frightens sooner and heads home earlier.

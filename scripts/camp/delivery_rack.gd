@@ -1,5 +1,10 @@
 class_name DeliveryRack
 extends Node3D
+## Phase 13: this is the yard's RECEIVING CRADLE. Delivered logs need a free
+## cradle slot (CampLayout.CRADLE_SLOTS) to be accepted; accepted logs lie
+## here (paid) until someone carries them to a log deck. The sign and the
+## meter show what is really in the cradle; the burn backlog is on the
+## fire's loading pile and the decks.
 ## Accepted-delivery rack beside the burn pit (Phase 2). Carrying logs here
 ## and pressing E (or G while standing at the rack) commits one acceptance
 ## transaction per piece through TimberService.accept() - the ONLY place a
@@ -85,35 +90,54 @@ func _build_frame() -> void:
 func get_interact_text() -> String:
 	var p := Game.player
 	if p and p.get("carry") and p.carry.is_carrying():
+		if Game.yard and Game.yard.is_yard_move(str(Game.timber.carried[0])):
+			return "Paid logs go on a deck or the fire's loading pile"
 		var mte := Game.timber.carried_mte()
-		return "Deliver %d log%s (%.2f tree-equivalent)" % [Game.timber.carried.size(), "" if Game.timber.carried.size() == 1 else "s", mte / 1000.0]
-	return "Delivery rack: %s" % _status_short()
+		return "Deliver %d log%s to receiving (%.2f tree-equivalent)" % [Game.timber.carried.size(), "" if Game.timber.carried.size() == 1 else "s", mte / 1000.0]
+	if Game.yard and not Game.yard.cradle.is_empty():
+		return "Carry a log to the decks (%d in the cradle)" % Game.yard.cradle.size()
+	return "Receiving cradle: %s" % _status_short()
 
 
 func interact(by: Node) -> void:
 	if by.get("carry") and by.carry.is_carrying():
+		if Game.yard and Game.yard.is_yard_move(str(Game.timber.carried[0])):
+			if by.has_method("show_message"):
+				by.show_message("These logs are already paid for. Stack them on a yard deck (outside the north gate, east) or put them on the fire's loading pile.")
+			return
 		deliver_from(by)
+	elif Game.yard and not Game.yard.cradle.is_empty():
+		var budget: int = by.carry.budget() if by.get("carry") else TimberService.HAND_BUDGET_MTE
+		var sid := Game.yard.take_from_cradle("player", budget, global_position)
+		if by.has_method("show_message"):
+			by.show_message(("Take it to deck %s (outside the north gate, east) and press %s there." % [str(Game.yard.moving[sid].dest).get_slice(":", 1).to_int() + 1, Keys.label("interact")]) if sid != "" else Game.yard.last_reason)
 	elif by.has_method("show_message"):
-		by.show_message("Delivery rack: %s. Carry cut logs here and press %s." % [_status_short(), Keys.label("interact")])
+		by.show_message("Receiving cradle: %s. Carry cut logs here and press %s." % [_status_short(), Keys.label("interact")])
 
 
 func deliver_from(by: Node) -> void:
 	var t: TimberService = Game.timber
 	if t == null or t.carried.is_empty():
 		return
-	var rs := t.accept(t.carried.duplicate(), "rack:player")
+	var rs := t.accept(t.carried.duplicate(), "rack:player", global_position)
 	var cents := 0
 	for r in rs:
 		cents += int(r.cents)
-	LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), -6.0)
+	if not rs.is_empty():
+		LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.6, 0), -6.0)
 	if by.has_method("show_message"):
-		by.show_message("Delivered %d log%s. Contract entitlement +$%s." % [rs.size(), "" if rs.size() == 1 else "s", Money.format_cents(cents)])
+		if rs.is_empty():
+			by.show_message("Not accepted: %s" % t.last_refusal)
+		else:
+			by.show_message("Delivered %d log%s to receiving. Contract entitlement +$%s.%s" % [rs.size(), "" if rs.size() == 1 else "s", Money.format_cents(cents), (" %d still in hand: %s" % [t.carried.size(), t.last_refusal]) if not t.carried.is_empty() else ""])
 
 
 func _status_short() -> String:
 	var t: TimberService = Game.timber
 	if t == null:
 		return "empty"
+	if Game.yard:
+		return "%d/%d slots used, decks %d logs, fire pile %d, burning %d" % [Game.yard.cradle.size(), CampLayout.CRADLE_SLOTS, Game.yard.stock_count() - Game.yard.cradle.size(), t.queue.size(), t.burning.size()]
 	return "%d waiting (%.2f tree-eq), %d burning" % [t.queue.size(), t.queue_mte() / 1000.0, t.burning.size()]
 
 
@@ -124,7 +148,8 @@ func _refresh() -> void:
 	if t == null:
 		return
 	var shown: Array[String] = []
-	for sid in t.queue:
+	var src: Array = Game.yard.cradle if Game.yard else t.queue
+	for sid in src:
 		if shown.size() >= VISIBLE:
 			break
 		shown.append(sid)
@@ -151,9 +176,14 @@ func _refresh() -> void:
 		var z := (float(col) - 1.0) * (size.z - 0.4) / 3.0 + (0.12 if row % 2 == 1 else 0.0)
 		mi.basis = TimberMesh.frame_for(Vector3.RIGHT)
 		mi.position = Vector3(0, 0.42 + r + float(row) * r * 1.75, z)
-	var total := t.queue_mte()
-	var hidden := maxi(t.queue.size() - VISIBLE, 0)
-	_sign.text = "DELIVERY\nQueued %d  (%.2f tree-eq)%s\nIn the pit: %d\nAccepted total: %.2f trees" % [t.queue.size(), total / 1000.0, ("\n+%d more not shown" % hidden) if hidden > 0 else "", t.burning.size(), t.totals().accepted_mte / 1000.0]
+	var total := 0
+	for sid in src:
+		total += int(t.segment(str(sid)).mte)
+	var hidden := maxi(src.size() - VISIBLE, 0)
+	if Game.yard:
+		_sign.text = "RECEIVING\nIn cradle %d/%d  (%.2f tree-eq)%s\nDecks %.2f tree-eq\nAccepted total: %.2f trees" % [src.size(), CampLayout.CRADLE_SLOTS, total / 1000.0, ("\n+%d more not shown" % hidden) if hidden > 0 else "", (Game.yard.stock_mte() - total) / 1000.0, t.totals().accepted_mte / 1000.0]
+	else:
+		_sign.text = "DELIVERY\nQueued %d  (%.2f tree-eq)%s\nIn the pit: %d\nAccepted total: %.2f trees" % [t.queue.size(), total / 1000.0, ("\n+%d more not shown" % hidden) if hidden > 0 else "", t.burning.size(), t.totals().accepted_mte / 1000.0]
 	var f := clampf(total / 1000.0, 0.0, 1.0)
 	_meter_fill.scale = Vector3(1, maxf(f, 0.01), 1)
 	_meter_fill.position.y = 0.41 + 0.3 * maxf(f, 0.01)
