@@ -22,10 +22,25 @@ extends Node3D
 
 signal mode_changed(mode: String)
 
-const QUAD_SIZE := Vector2i(384, 216)
+const QUAD_SIZE := Vector2i(384, 216)     # medium/high defaults (see PROFILES)
 const FOCUS_SIZE := Vector2i(1280, 720)
 const QUAD_HZ := 12.0
 const FOCUS_HZ := 30.0
+## Phase 8: per-quality remote-view budgets. Quad tiles are genuinely
+## smaller and refresh less often; focus renders the composite's full
+## resolution (1:1, never an upscaled tile). The composite renders at the
+## focus resolution while its 2D layout stays in 960x540 units.
+const PROFILES := {
+	"low": {"quad": Vector2i(320, 180), "quad_hz": 10.0, "focus": Vector2i(960, 540), "focus_hz": 24.0},
+	"medium": {"quad": Vector2i(384, 216), "quad_hz": 12.0, "focus": Vector2i(1280, 720), "focus_hz": 30.0},
+	"high": {"quad": Vector2i(384, 216), "quad_hz": 12.0, "focus": Vector2i(1280, 720), "focus_hz": 30.0},
+	"ultra": {"quad": Vector2i(448, 252), "quad_hz": 15.0, "focus": Vector2i(1600, 900), "focus_hz": 30.0},
+}
+const LAYOUT := Vector2i(960, 540)
+## Display gain of the screen: feeds are scene-linear (no tone mapping in
+## the remote render) and are tone-mapped ONCE by the room's camera, as a
+## dimmer emissive display rather than a window onto full daylight.
+const SCREEN_GAIN := 0.42
 const MIC_RANGE := 38.0
 const LAYER_TV := 18          # TV screen: never captured by security cameras
 const LAYER_BOSS_BODY := 19   # boss stand-in body: cameras only (not the 1st-person view)
@@ -67,12 +82,20 @@ var _rps_count := 0
 var powered := true
 var _music: AudioStreamPlayer3D
 var _music_stream: AudioStreamWAV
+var profile_name := ""
+var quad_size := QUAD_SIZE
+var focus_size := FOCUS_SIZE
+var quad_hz := QUAD_HZ
+var focus_hz := FOCUS_HZ
+var _screen_mat: ShaderMaterial
 var _gain := 0.0          # smoothed relay gain (quad ~0.25 -> focus 1.0)
 var _recent := {}         # dedupe: stream id -> last replay time
 var _caption_t := -10.0
 var relayed := 0          # counters for tests / perf report
 var dropped_range := 0
 var dropped_dupe := 0
+var dropped_natural := 0
+const NATURAL_RANGE := 30.0
 var last_relay := {}
 
 
@@ -90,19 +113,22 @@ func setup() -> void:
 	screen = tv.get_node("Screen")
 	screen.layers = 1 << (LAYER_TV - 1)
 	var w := get_viewport().world_3d
+	_pick_profile()
 	for i in 4:
-		var vp := _make_vp(QUAD_SIZE, w)
+		var vp := _make_vp(quad_size, w)
 		_quad_vps.append(vp)
 		_quad_cams.append(vp.get_child(0))
-		_render_t.append(float(i) / (QUAD_HZ * 4.0))
-	_focus_vp = _make_vp(FOCUS_SIZE, w)
+		_render_t.append(float(i) / (quad_hz * 4.0))
+	_focus_vp = _make_vp(focus_size, w)
 	_focus_cam = _focus_vp.get_child(0)
 	_sync_env()
 	_build_composite()
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_texture = composite.get_texture()
-	screen.material_override = mat
+	_screen_mat = ShaderMaterial.new()
+	_screen_mat.shader = load("res://shaders/tv_screen.gdshader")
+	_screen_mat.set_shader_parameter("feed", composite.get_texture())
+	_screen_mat.set_shader_parameter("gain", SCREEN_GAIN)
+	_screen_mat.set_shader_parameter("powered", 1.0)
+	screen.material_override = _screen_mat
 	speaker = AudioStreamPlayer3D.new()
 	speaker.name = "TVSpeaker"
 	speaker.bus = "TV"
@@ -128,7 +154,39 @@ func setup() -> void:
 	Settings.changed.connect(func() -> void:
 		var want := float(Settings.get_v("tv_interval"))
 		if not is_equal_approx(want, interval):
-			set_interval(want))
+			set_interval(want)
+		if str(Settings.get_v("quality")) != profile_name:
+			_apply_profile())
+
+
+func _pick_profile() -> void:
+	profile_name = str(Settings.get_v("quality"))
+	var pr: Dictionary = PROFILES.get(profile_name, PROFILES["high"])
+	quad_size = pr.quad
+	focus_size = pr.focus
+	quad_hz = float(pr.quad_hz)
+	focus_hz = float(pr.focus_hz)
+
+
+## Quality change: resize the SAME pooled viewports (no new allocations
+## per click; only a settings change reallocates their textures).
+func _apply_profile() -> void:
+	_pick_profile()
+	for vp in _quad_vps:
+		vp.size = quad_size
+	if _focus_vp:
+		_focus_vp.size = focus_size
+	if composite:
+		composite.size = focus_size
+
+
+## Actual runtime configuration (published in the HUD/perf report/docs).
+func pipeline_info() -> Dictionary:
+	return {"profile": profile_name, "quad_px": [quad_size.x, quad_size.y], "quad_hz": quad_hz,
+		"focus_px": [focus_size.x, focus_size.y], "focus_hz": focus_hz,
+		"composite_px": [composite.size.x, composite.size.y] if composite else [0, 0],
+		"max_live_feeds": 1 if mode == "focus" else 4, "tone_map": "single (room camera), feeds linear, no remote bloom/grade",
+		"renders_last_second": renders_this_second}
 
 
 func _exit_tree() -> void:
@@ -164,6 +222,7 @@ func _make_vp(size: Vector2i, w: World3D) -> SubViewport:
 	vp.world_3d = w
 	vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	vp.msaa_3d = Viewport.MSAA_DISABLED
+	vp.use_hdr_2d = true      # keep scene-linear values for the single tone map
 	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED if size.x < 800 else Viewport.SCREEN_SPACE_AA_FXAA
 	vp.positional_shadow_atlas_size = 0
 	add_child(vp)
@@ -213,11 +272,23 @@ func _sync_env() -> void:
 			e.fog_density = maxf(src.fog_density, src.volumetric_fog_density * 0.6)
 	_env_quad.ssao_enabled = false
 	_env_focus.ssao_enabled = src.ssao_enabled
+	# One tone map only: remote renders stay scene-linear (HDR viewports);
+	# the room camera tone-maps, blooms and grades the screen once. Remote
+	# exposure is the outdoor preset's (never the camper interior boost).
+	var ec: EnvironmentController = Game.environment
+	for e in [_env_quad, _env_focus]:
+		e.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+		e.tonemap_exposure = ec.current.exposure if ec else 1.0
+		e.glow_enabled = false
+		e.adjustment_enabled = false
 
 
 func _build_composite() -> void:
 	composite = SubViewport.new()
-	composite.size = Vector2i(960, 540)
+	composite.size = focus_size
+	composite.size_2d_override = LAYOUT
+	composite.size_2d_override_stretch = true
+	composite.use_hdr_2d = true
 	composite.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	composite.disable_3d = true
 	add_child(composite)
@@ -296,10 +367,8 @@ func set_mode(m: String) -> void:
 
 func set_power(on: bool) -> void:
 	powered = on
-	var mat := screen.material_override as StandardMaterial3D
-	if mat:
-		mat.albedo_texture = composite.get_texture() if on else null
-		mat.albedo_color = Color.WHITE if on else Color(0.02, 0.02, 0.025)
+	if _screen_mat:
+		_screen_mat.set_shader_parameter("powered", 1.0 if on else 0.0)
 	_active = false   # re-evaluated next frame
 	_update_ambience()
 	_update_music()
@@ -525,7 +594,7 @@ func _process(delta: float) -> void:
 			rotate_once()
 	if mode == "focus":
 		_focus_t += delta
-		if _focus_t >= 1.0 / FOCUS_HZ:
+		if _focus_t >= 1.0 / focus_hz:
 			_focus_t = 0.0
 			_focus_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
 			_rps_count += 1
@@ -538,7 +607,7 @@ func _process(delta: float) -> void:
 			if i == _frozen_tile:
 				continue
 			_render_t[i] = float(_render_t[i]) + delta
-			if float(_render_t[i]) >= 1.0 / QUAD_HZ:
+			if float(_render_t[i]) >= 1.0 / quad_hz:
 				_render_t[i] = 0.0
 				_quad_vps[i].render_target_update_mode = SubViewport.UPDATE_ONCE
 				_rps_count += 1
@@ -578,6 +647,16 @@ func on_world_sound(stream: AudioStream, pos: Vector3, volume_db: float, categor
 	if best <= 0.02:
 		dropped_range += 1
 		return
+	# Already naturally audible where you are (e.g. a lamp-post camera right
+	# outside the camper): the relay steps back instead of doubling it.
+	var natural := 0.0
+	var lis := get_viewport().get_camera_3d() if get_viewport() else null
+	if lis:
+		natural = clampf(1.0 - lis.global_position.distance_to(pos) / NATURAL_RANGE, 0.0, 1.0)
+	if natural > 0.75:
+		dropped_natural += 1
+		return
+	best *= 1.0 - natural
 	# The same physical sound is one replay; repeated identical samples
 	# within 120 ms (e.g. heard by neighbouring cameras) are dropped.
 	var now := Time.get_ticks_msec()

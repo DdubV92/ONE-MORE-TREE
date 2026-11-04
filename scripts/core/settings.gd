@@ -41,7 +41,6 @@ var values := {
 	"flash_reduction": "reduced",   # full / reduced / off (distant lightning, bright cues)
 	"shake_strength": 1.0,          # 0..1 camera shake scale (camera_shake toggle still applies)
 	"bob_strength": 1.0,            # 0..1 head-bob scale
-	"auto_exposure": true,          # gentle eye adaptation (bounded; no severe pumping)
 	"horror_intensity": 1.0,        # 0.4..1 startle/peak loudness & flash scale (never changes event count or rules)
 	"music": true,                  # sparse daytime phrases
 }
@@ -85,6 +84,17 @@ func _ensure_buses() -> void:
 		var lim := AudioEffectHardLimiter.new()
 		lim.ceiling_db = -3.0
 		AudioServer.add_bus_effect(tvb, lim)
+	# Peak control: horror cues and the master mix are limited so a focused
+	# TV relay plus a local scare cannot stack into an uncontrolled spike.
+	var hb := AudioServer.get_bus_index("Horror")
+	if AudioServer.get_bus_effect_count(hb) == 0:
+		var hl := AudioEffectHardLimiter.new()
+		hl.ceiling_db = -2.0
+		AudioServer.add_bus_effect(hb, hl)
+	if AudioServer.get_bus_effect_count(0) == 0:
+		var ml := AudioEffectHardLimiter.new()
+		ml.ceiling_db = -0.3
+		AudioServer.add_bus_effect(0, ml)
 	var chars := AudioServer.get_bus_index("Characters")
 	if AudioServer.get_bus_effect_count(chars) == 0:
 		var rv := AudioEffectReverb.new()

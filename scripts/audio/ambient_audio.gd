@@ -122,7 +122,58 @@ func _update_fire() -> void:
 	_fire.volume_db = -1.0 + linear_to_db(clampf(0.12 + 0.75 * lvl, 0.05, 1.3))
 
 
+# ------------------------------------------------------------ music
+## Sparse original daytime phrases (synthesized plucks): one every few
+## minutes in good daylight, never at night, during the hunt or in heavy
+## rain; one soft dusk pad eases the day out (it does not announce danger).
+var _music: AudioStreamPlayer
+var _t_music := 75.0
+var _dusk_played_hour := -1.0
+var music_plays := 0
+
+
+func _update_music(delta: float) -> void:
+	if _music == null:
+		_music = AudioStreamPlayer.new()
+		_music.bus = "Music"
+		add_child(_music)
+	var env: EnvironmentController = Game.environment
+	if env == null:
+		return
+	var hunting: bool = Game.hunt != null and bool(Game.hunt.call("hunt_active"))
+	var raining: bool = Game.weather != null and float(Game.weather.get("rain")) > 0.4
+	var on: bool = bool(Settings.get_v("music")) and not hunting
+	var h := env.hour
+	if not on or env.is_night():
+		if _music.playing:
+			_music.volume_db = move_toward(_music.volume_db, -60.0, delta * 12.0)
+			if _music.volume_db <= -59.0:
+				_music.stop()
+		return
+	# Dusk: once, as the light turns.
+	if h >= 18.1 and h < 19.5:
+		if _dusk_played_hour < 0.0 and not _music.playing:
+			_dusk_played_hour = h
+			_music.stream = _stream("music_dusk", false)
+			_music.volume_db = -16.0
+			_music.play()
+			music_plays += 1
+		return
+	if h < 18.0:
+		_dusk_played_hour = -1.0
+	if h < 7.0 or raining:
+		return
+	_t_music -= delta
+	if _t_music <= 0.0 and not _music.playing:
+		_t_music = _rng.randf_range(150.0, 320.0)
+		_music.stream = _stream("music_day_%d" % (_rng.randi() % 3), false)
+		_music.volume_db = -13.0
+		_music.play()
+		music_plays += 1
+
+
 func _process(delta: float) -> void:
+	_update_music(delta)
 	var lp := _listener_pos()
 	_t_update -= delta
 	if _t_update <= 0.0:
@@ -241,6 +292,48 @@ func _creak_somewhere() -> void:
 	_creak.global_position = c + Vector3(_rng.randf_range(-20.0, 20.0), 1.5, 18.5 * side)
 	_creak.pitch_scale = _rng.randf_range(0.8, 1.2)
 	_creak.play()
+
+
+## Other people's footsteps (workers): positional, quieter than your own,
+## a bounded pool of 6 voices, culled beyond 28 m so a busy camp never
+## becomes a wall of steps and distant crews stay silent.
+const CROWD_POOL := 6
+const CROWD_RANGE := 28.0
+var _crowd: Array[AudioStreamPlayer3D] = []
+var _crowd_i := 0
+var crowd_steps := 0
+
+
+func play_crowd_step(pos: Vector3, speed: float) -> void:
+	if pos.distance_to(_listener_pos()) > CROWD_RANGE:
+		return
+	if _crowd.is_empty():
+		for k in CROWD_POOL:
+			var e := AudioStreamPlayer3D.new()
+			e.bus = "Characters"
+			e.unit_size = 2.5
+			e.max_distance = CROWD_RANGE + 4.0
+			e.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
+			add_child(e)
+			_crowd.append(e)
+	var surf := "grass"
+	match World.surface_at(pos.x, pos.z):
+		World.Surface.SAND: surf = "sand"
+		World.Surface.DIRT: surf = "dirt"
+		World.Surface.ROCK: surf = "rock"
+		World.Surface.FOREST: surf = "forest"
+		World.Surface.WATER: surf = "water"
+	# On decks, floors and bridges (well above the terrain) it is wood.
+	if pos.y > World.height_at(pos.x, pos.z) + 0.25:
+		surf = "wood"
+	var p := _crowd[_crowd_i]
+	_crowd_i = (_crowd_i + 1) % _crowd.size()
+	p.stream = _stream("step_%s_%d" % [surf, _rng.randi() % 5], false)
+	p.global_position = pos + Vector3(0, 0.05, 0)
+	p.volume_db = float(STEP_DB.get(surf, -24.0)) + 10.0 + (2.0 if speed > 2.0 else 0.0)
+	p.pitch_scale = _rng.randf_range(0.9, 1.06)
+	p.play()
+	crowd_steps += 1
 
 
 func play_footstep(surface: String, pos: Vector3, intensity: float) -> void:

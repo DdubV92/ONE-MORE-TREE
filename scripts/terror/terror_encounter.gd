@@ -41,7 +41,10 @@ func setup(event: Dictionary, ctx: String, peak_ok: bool, seed_v: int) -> void:
 	context = ctx
 	allow_peak = peak_ok
 	_rng.seed = seed_v
-	reduced = bool(Settings.get_v("reduced_startles")) if Settings.values.has("reduced_startles") else false
+	# Comfort: lower horror intensity softens the presentation of a peak
+	# (shorter withdrawal, breath instead of a stinger, quieter). It never
+	# changes which events run, their count, or any rule.
+	reduced = float(Settings.get_v("horror_intensity")) < 0.7
 
 
 func steps() -> Array:
@@ -308,7 +311,9 @@ func _play(n: String, at: Vector3, db: float, pitch := 1.0) -> void:
 	p.unit_size = 9.0
 	p.max_distance = 160.0
 	p.pitch_scale = pitch
-	p.volume_db = db
+	# Playback loudness follows the horror-intensity comfort setting; the
+	# evidence emitted below keeps the authored level (AI is unaffected).
+	p.volume_db = db + linear_to_db(float(Settings.get_v("horror_intensity")))
 	add_child(p)
 	p.global_position = at + Vector3(0, 1.2, 0)
 	p.play()

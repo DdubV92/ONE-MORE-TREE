@@ -243,6 +243,10 @@ func _build_animations() -> void:
 	lib.add_animation("swing", _make_swing())
 	lib.add_animation("sit", _make_static_pose("sit"))
 	lib.add_animation("lie", _make_static_pose("lie"))
+	# Phase 8 coverage: work handling, conversation, fear, trait idles,
+	# driving and hiding. All share the rig; feet stay planted by IK.
+	for k in CLIPS:
+		lib.add_animation(k, _make_body_clip(CLIPS[k]))
 	anim.add_animation_library("", lib)
 
 
@@ -251,6 +255,119 @@ func _leg_angles(side: float, hips_pos: Vector3, ankle_target: Vector3) -> Vecto
 	var hip := hips_pos + Vector3(side * foot_side, -0.02 * H, 0)
 	var d := ankle_target - hip
 	return LimbIK.solve_planar(d.y, d.z, thigh_len, shin_len, true)
+
+
+## Authored body clips (Phase 8). Each key: t, drop (hip lowering m),
+## spine/chest pitch, chest yaw, head pitch/yaw/roll, upper-arm pitch/roll
+## and forearm bend per side, and foot forward offsets. Feet are re-solved
+## with planar IK at every key so they stay on the ground (no sliding).
+const CLIPS := {
+	# Bend, reach to a log at shin height, straighten (0.8 s, one-shot).
+	"pickup": {"T": 0.8, "loop": false, "keys": [
+		{"t": 0.0},
+		{"t": 0.35, "drop": 0.28, "spine": 0.55, "chest": 0.35, "head_p": -0.2, "uaL": [1.1, -0.15], "uaR": [1.1, 0.15], "faL": 0.15, "faR": 0.15, "fL": 0.12, "fR": -0.08},
+		{"t": 0.5, "drop": 0.26, "spine": 0.5, "chest": 0.3, "head_p": -0.15, "uaL": [0.9, -0.15], "uaR": [0.9, 0.15], "faL": 0.6, "faR": 0.6, "fL": 0.12, "fR": -0.08},
+		{"t": 0.8, "uaL": [0.4, -0.1], "uaR": [0.4, 0.1], "faL": 1.2, "faR": 1.2}]},
+	# Lower the load to the rack/tailgate and let go (one-shot).
+	"setdown": {"T": 0.8, "loop": false, "keys": [
+		{"t": 0.0, "uaL": [0.4, -0.1], "uaR": [0.4, 0.1], "faL": 1.2, "faR": 1.2},
+		{"t": 0.4, "drop": 0.2, "spine": 0.45, "chest": 0.25, "head_p": -0.15, "uaL": [0.95, -0.12], "uaR": [0.95, 0.12], "faL": 0.4, "faR": 0.4, "fL": 0.1},
+		{"t": 0.8}]},
+	# Relaxed talk: weight shift, open hand gestures, nods (loop).
+	"talk": {"T": 3.2, "loop": true, "keys": [
+		{"t": 0.0, "head_y": 0.1, "uaR": [0.25, 0.15], "faR": 0.9},
+		{"t": 0.8, "head_p": 0.08, "head_y": -0.05, "uaR": [0.55, 0.25], "faR": 1.3, "chest_y": -0.06},
+		{"t": 1.6, "head_p": -0.04, "uaL": [0.4, -0.2], "faL": 1.1, "uaR": [0.2, 0.12], "faR": 0.6, "chest_y": 0.05},
+		{"t": 2.4, "head_p": 0.06, "head_y": 0.12, "uaR": [0.45, 0.2], "faR": 1.2},
+		{"t": 3.2, "head_y": 0.1, "uaR": [0.25, 0.15], "faR": 0.9}]},
+	# Witnessed something: arms folded tight, head low, glances off (loop).
+	"talk_shaken": {"T": 4.0, "loop": true, "keys": [
+		{"t": 0.0, "spine": 0.12, "chest": 0.06, "head_p": 0.22, "uaL": [0.55, -0.35], "uaR": [0.55, 0.35], "faL": 1.9, "faR": 1.9},
+		{"t": 1.5, "spine": 0.12, "chest": 0.06, "head_p": 0.1, "head_y": 0.45, "uaL": [0.55, -0.35], "uaR": [0.55, 0.35], "faL": 1.9, "faR": 1.9},
+		{"t": 2.5, "spine": 0.14, "chest": 0.08, "head_p": 0.25, "head_y": -0.1, "uaL": [0.55, -0.35], "uaR": [0.55, 0.35], "faL": 1.9, "faR": 1.9},
+		{"t": 4.0, "spine": 0.12, "chest": 0.06, "head_p": 0.22, "uaL": [0.55, -0.35], "uaR": [0.55, 0.35], "faL": 1.9, "faR": 1.9}]},
+	# Fear: knees soft, shoulders up, weight back, ready to retreat (loop).
+	"fear": {"T": 2.6, "loop": true, "keys": [
+		{"t": 0.0, "drop": 0.08, "spine": -0.08, "chest": 0.1, "head_p": 0.05, "head_y": 0.3, "uaL": [0.3, -0.25], "uaR": [0.3, 0.25], "faL": 1.3, "faR": 1.3, "fL": -0.12, "fR": 0.1},
+		{"t": 1.3, "drop": 0.1, "spine": -0.06, "chest": 0.12, "head_p": 0.0, "head_y": -0.35, "uaL": [0.35, -0.28], "uaR": [0.35, 0.28], "faL": 1.4, "faR": 1.4, "fL": -0.12, "fR": 0.1},
+		{"t": 2.6, "drop": 0.08, "spine": -0.08, "chest": 0.1, "head_p": 0.05, "head_y": 0.3, "uaL": [0.3, -0.25], "uaR": [0.3, 0.25], "faL": 1.3, "faR": 1.3, "fL": -0.12, "fR": 0.1}]},
+	# Observant: stops, head cocked toward the trees, very still (2.4 s).
+	"listen": {"T": 2.4, "loop": false, "keys": [
+		{"t": 0.0},
+		{"t": 0.5, "head_y": 0.55, "head_r": 0.18, "head_p": -0.05, "chest_y": 0.12},
+		{"t": 1.9, "head_y": 0.6, "head_r": 0.2, "head_p": -0.06, "chest_y": 0.12},
+		{"t": 2.4}]},
+	# Timid: a quick glance over the shoulder at the treeline (1.6 s).
+	"glance": {"T": 1.6, "loop": false, "keys": [
+		{"t": 0.0},
+		{"t": 0.35, "head_y": -0.95, "chest_y": -0.3, "head_p": 0.05},
+		{"t": 0.9, "head_y": -0.9, "chest_y": -0.28},
+		{"t": 1.6}]},
+	# Hard-working: rolls the shoulders and re-sets the grip (1.8 s).
+	"grip": {"T": 1.8, "loop": false, "keys": [
+		{"t": 0.0},
+		{"t": 0.45, "chest": 0.08, "uaL": [0.35, -0.2], "uaR": [0.35, 0.2], "faL": 1.5, "faR": 1.5, "head_p": 0.15},
+		{"t": 1.0, "chest": -0.05, "uaL": [0.2, -0.35], "uaR": [0.2, 0.35], "faL": 1.2, "faR": 1.2},
+		{"t": 1.8}]},
+	# Driving: seated, both hands forward on the wheel (loop).
+	"drive": {"T": 4.0, "loop": true, "seat": true, "keys": [
+		{"t": 0.0, "uaL": [1.0, -0.12], "uaR": [1.0, 0.12], "faL": 0.55, "faR": 0.55, "head_p": 0.02},
+		{"t": 2.0, "uaL": [1.02, -0.1], "uaR": [0.98, 0.14], "faL": 0.55, "faR": 0.58, "head_y": 0.12},
+		{"t": 4.0, "uaL": [1.0, -0.12], "uaR": [1.0, 0.12], "faL": 0.55, "faR": 0.55, "head_p": 0.02}]},
+	# Endgame hiding crouch: small, still, breathing (loop).
+	"hide": {"T": 3.0, "loop": true, "keys": [
+		{"t": 0.0, "drop": 0.55, "spine": 0.6, "chest": 0.3, "head_p": -0.2, "uaL": [0.9, -0.3], "uaR": [0.9, 0.3], "faL": 1.6, "faR": 1.6, "fL": 0.15, "fR": -0.05},
+		{"t": 1.5, "drop": 0.56, "spine": 0.62, "chest": 0.32, "head_p": -0.18, "uaL": [0.9, -0.3], "uaR": [0.9, 0.3], "faL": 1.6, "faR": 1.6, "fL": 0.15, "fR": -0.05},
+		{"t": 3.0, "drop": 0.55, "spine": 0.6, "chest": 0.3, "head_p": -0.2, "uaL": [0.9, -0.3], "uaR": [0.9, 0.3], "faL": 1.6, "faR": 1.6, "fL": 0.15, "fR": -0.05}]},
+}
+
+
+func _make_body_clip(spec: Dictionary) -> Animation:
+	var an := Animation.new()
+	var T: float = spec.T
+	an.length = T
+	an.loop_mode = Animation.LOOP_LINEAR if bool(spec.loop) else Animation.LOOP_NONE
+	var tracks := {}
+	for b in ["Hips", "Spine", "Chest", "Head", "ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR", "UpperArmL", "ForearmL", "UpperArmR", "ForearmR"]:
+		tracks[b] = _track_rot(an, b)
+	var hips_pos := _track_pos(an, "Hips")
+	var post := appearance.posture
+	var seat := bool(spec.get("seat", false))
+	for key in spec.keys:
+		var k: Dictionary = key
+		var t: float = float(k.get("t", 0.0))
+		var drop: float = float(k.get("drop", 0.0))
+		if seat:
+			an.position_track_insert_key(hips_pos, t, rest["Hips"].origin + Vector3(0, -(thigh_len + ankle_h) * 0.98 + 0.46 - 0.02, 0.06))
+			for sn in ["L", "R"]:
+				an.rotation_track_insert_key(tracks["Thigh" + sn], t, _q(PI * 0.5))
+				an.rotation_track_insert_key(tracks["Shin" + sn], t, _q(-PI * 0.5))
+				an.rotation_track_insert_key(tracks["Foot" + sn], t, _q(0))
+		else:
+			var hp: Vector3 = rest["Hips"].origin + Vector3(0, -drop, -drop * 0.25)
+			an.position_track_insert_key(hips_pos, t, hp)
+			for side in [-1.0, 1.0]:
+				var sn := "L" if side < 0 else "R"
+				var fwd := float(k.get("f" + sn, 0.0))
+				var foot := Vector3(side * foot_side * 1.15, ankle_h, -fwd)
+				var hip := hp + Vector3(side * foot_side, -0.02 * H, 0)
+				var d := foot - hip
+				var ang := LimbIK.solve_planar(d.y, d.z, thigh_len, shin_len, true)
+				var roll := atan2(d.x, -d.y) * 0.9
+				an.rotation_track_insert_key(tracks["Thigh" + sn], t, _q(ang.x, 0, roll))
+				an.rotation_track_insert_key(tracks["Shin" + sn], t, _q(ang.y))
+				an.rotation_track_insert_key(tracks["Foot" + sn], t, _q(-(ang.x + ang.y), 0, -roll))
+		an.rotation_track_insert_key(tracks["Hips"], t, _q(0))
+		an.rotation_track_insert_key(tracks["Spine"], t, _q(float(k.get("spine", 0.0)) + 0.03 - post * 0.05, float(k.get("chest_y", 0.0)) * 0.4, 0))
+		an.rotation_track_insert_key(tracks["Chest"], t, _q(float(k.get("chest", 0.0)) - post * 0.03, float(k.get("chest_y", 0.0)) * 0.6, 0))
+		# Head yaw is bounded so it never turns through the shoulders.
+		an.rotation_track_insert_key(tracks["Head"], t, _q(float(k.get("head_p", 0.0)), clampf(float(k.get("head_y", 0.0)), -1.0, 1.0), float(k.get("head_r", 0.0))))
+		for side in [-1.0, 1.0]:
+			var sn := "L" if side < 0 else "R"
+			var ua: Array = k.get("ua" + sn, [0.06, side * 0.1])
+			an.rotation_track_insert_key(tracks["UpperArm" + sn], t, _q(float(ua[0]), 0, float(ua[1])))
+			an.rotation_track_insert_key(tracks["Forearm" + sn], t, _q(float(k.get("fa" + sn, 0.22))))
+	return an
 
 
 func _make_idle() -> Animation:
@@ -461,7 +578,28 @@ func set_axe_tier(tier: String) -> void:
 
 # ---------------------------------------------------------------- runtime
 
+## A short one-shot action (pickup, setdown, listen, glance, grip). It
+## returns to `after` when done and is interruptible: locomotion or any
+## other play() call cancels it immediately (actions never hold a worker).
+var action := ""
+var _action_left := 0.0
+var _action_after := "idle"
+var actions_played := 0
+
+
+func play_action(name: String, after := "idle") -> void:
+	if not anim.has_animation(name):
+		return
+	play(name, 0.15)
+	action = name
+	_action_left = anim.get_animation(name).length
+	_action_after = after
+	actions_played += 1
+
+
 func play(name: String, blend := 0.25) -> void:
+	if action != "" and name != action:
+		action = ""
 	if current == name:
 		return
 	current = name
@@ -477,17 +615,43 @@ func play(name: String, blend := 0.25) -> void:
 ## Locomotion helper: picks idle/walk and scales walk playback so the stride
 ## matches `speed` (m/s).
 func set_locomotion(speed: float) -> void:
+	if action != "" and speed < 0.15:
+		return      # let a standing action finish
 	if speed < 0.15:
-		play("idle")
+		play("idle" if rest_clip == "" else rest_clip)
 		playback_scale = 1.0
 	else:
 		play("walk")
 		playback_scale = clampf(speed / WALK_NOMINAL_SPEED, 0.6, 1.7)
 
 
+## Idle variant while standing (e.g. "fear" when a worker is frightened).
+var rest_clip := ""
+## Foot plants of the walk cycle (0 and half period): emitted from the
+## animation's own phase, so sounds follow the visible stride.
+signal step(side: int)
+var _walk_prev := -1.0
+
+
 func _process(delta: float) -> void:
+	if action != "":
+		_action_left -= delta * playback_scale
+		if _action_left <= 0.0:
+			var nxt := _action_after
+			action = ""
+			play(nxt, 0.3)
 	if anim:
 		anim.advance(delta * playback_scale)
+		if current == "walk" and anim.current_animation == "walk":
+			var ph := fmod(anim.current_animation_position, WALK_PERIOD) / WALK_PERIOD
+			if _walk_prev >= 0.0:
+				if ph < _walk_prev:
+					step.emit(0)
+				elif _walk_prev < 0.5 and ph >= 0.5:
+					step.emit(1)
+			_walk_prev = ph
+		else:
+			_walk_prev = -1.0
 	if arm_ik and axe_rig.visible:
 		_solve_arms()
 	elif carry_grips.size() == 2:

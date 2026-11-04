@@ -41,8 +41,12 @@ func _process(_delta: float) -> void:
 	if p == null or hc == null:
 		return
 	var seated: bool = p.get("vehicle") != null or p.get("couch") != null
-	if seated:
-		hc.play("sit")
+	if p.get("hiding") != null:
+		# Endgame hiding: the camera-only body crouches small and still.
+		hc.play("hide", 0.3)
+		position = Vector3.ZERO
+	elif seated:
+		hc.play("drive" if p.get("vehicle") != null and str(p.get("vehicle_seat")) == "driver" else "sit")
 		position = Vector3(0, Player.EYE - 1.18, 0.1)
 	else:
 		var v: Vector3 = p.get("velocity")

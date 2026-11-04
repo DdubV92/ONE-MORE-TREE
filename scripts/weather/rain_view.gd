@@ -55,12 +55,14 @@ func _ready() -> void:
 	drops.interpolate = true
 	drops.local_coords = false
 	drops.collision_base_size = 0.02
-	drops.visibility_aabb = AABB(Vector3(-box.x, -HEIGHT - 6.0, -box.z), Vector3(box.x * 2.0, HEIGHT + 10.0, box.z * 2.0))
+	drops.visibility_aabb = AABB(Vector3(-box.x, -HEIGHT - 8.0, -box.z), Vector3(box.x * 2.0, HEIGHT * 2.0 + 10.0, box.z * 2.0))
 	drops.emitting = false
 	drops.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_pm = ParticleProcessMaterial.new()
 	_pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-	_pm.emission_box_extents = box * 0.5
+	# Spawn through the whole column (not only at the top) so the view is
+	# full immediately after a teleport or when rain begins.
+	_pm.emission_box_extents = Vector3(box.x * 0.5, HEIGHT * 0.55, box.z * 0.5)
 	_pm.direction = Vector3(0, -1, 0)
 	_pm.spread = 3.0
 	_pm.initial_velocity_min = FALL_SPEED * 0.9
@@ -72,18 +74,9 @@ func _ready() -> void:
 	_pm.scale_max = 1.2
 	drops.process_material = _pm
 	var q := QuadMesh.new()
-	q.size = Vector2(0.012, 0.46)
-	var m := StandardMaterial3D.new()
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(0.78, 0.82, 0.86, 0.2)
-	m.roughness = 0.15
-	m.metallic_specular = 0.8
-	m.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
-	m.billboard_keep_scale = true
-	m.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_PIXEL_ALPHA
-	m.distance_fade_min_distance = 0.35
-	m.distance_fade_max_distance = 1.8
-	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	q.size = Vector2(0.03, 0.6)
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/rain.gdshader")
 	q.material = m
 	drops.draw_pass_1 = q
 	add_child(drops)
@@ -107,9 +100,12 @@ func _ready() -> void:
 		splashes.process_material = sp
 		var sq := QuadMesh.new()
 		sq.size = Vector2(0.03, 0.03)
-		var smat := m.duplicate() as StandardMaterial3D
+		var smat := StandardMaterial3D.new()
+		smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		smat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		smat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-		smat.albedo_color = Color(0.85, 0.88, 0.9, 0.35)
+		smat.billboard_keep_scale = true
+		smat.albedo_color = Color(0.7, 0.74, 0.78, 0.3)
 		sq.material = smat
 		splashes.draw_pass_1 = sq
 		add_child(splashes)
@@ -123,6 +119,8 @@ func _ready() -> void:
 	roofs.update_mode = GPUParticlesCollisionHeightField3D.UPDATE_MODE_WHEN_MOVED
 	roofs.follow_camera_enabled = false
 	add_child(roofs)
+	if OS.has_environment("RAIN_NOCOLL"):
+		roofs.cull_mask = 0     # dev comparison: shelter mask off
 
 
 func set_rain(r: float, wind: Vector2, wind_mult: float) -> void:
@@ -131,7 +129,10 @@ func set_rain(r: float, wind: Vector2, wind_mult: float) -> void:
 	_wind_mult = wind_mult
 	if drops == null:
 		return
+	var was := drops.emitting
 	drops.emitting = r > 0.02
+	if drops.emitting and not was:
+		drops.restart()   # applies preprocess: the volume is already full
 	drops.amount_ratio = clampf(r / 0.85, 0.05, 1.0)
 	var push := wind.normalized() * (0.8 + 1.6 * wind_mult)
 	_pm.gravity = Vector3(push.x, -2.0, push.y)
@@ -161,7 +162,7 @@ func _process(_delta: float) -> void:
 	# Upwind offset so drifting drops still cross the view.
 	var up_wind := -Vector3(_wind.x, 0, _wind.y).normalized() * 1.5 * _wind_mult
 	var center := at + fwd * (4.0 if follow_main_camera else 7.0) + up_wind
-	drops.global_position = center + Vector3(0, HEIGHT, 0)
+	drops.global_position = center + Vector3(0, HEIGHT * 0.5, 0)
 	# Heightfield snaps in whole metres so it re-captures only when you move.
 	var snap := Vector3(roundf(center.x), roundf(at.y), roundf(center.z))
 	if roofs.global_position.distance_to(snap) > 2.0 or not _placed:

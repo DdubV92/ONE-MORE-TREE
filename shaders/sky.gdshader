@@ -59,6 +59,7 @@ void sky() {
 	col += halo_color * pow(max(sd, 0.0), 8.0) * 0.35 * sun_vis;
 	col += halo_color * pow(max(sd, 0.0), 64.0) * 0.6 * sun_vis;
 	// Clouds (cylindrical projection, thinner toward the horizon).
+	float cloud_occ = 0.0;
 	if (h > 0.0 && cloud_cover > 0.01) {
 		vec2 cp = d.xz / (h + 0.18) * 1.6 + vec2(cloud_offset, cloud_offset * 0.4);
 		float c = clouds(cp);
@@ -66,10 +67,13 @@ void sky() {
 		vec3 lit = mix(horizon_color * 1.05, vec3(1.0), 0.55 * sun_vis) + halo_color * pow(max(sd, 0.0), 6.0) * 0.4 * sun_vis;
 		vec3 cloud_col = mix(lit, zenith_color * 0.6 + horizon_color * 0.3, 0.35 * c);
 		col = mix(col, cloud_col, cov * 0.85);
+		cloud_occ = cov;
 	}
+	// Sun/moon discs sit behind the clouds; a full overcast hides them.
+	float disc_vis = (1.0 - cloud_occ * 0.97) * (1.0 - smoothstep(0.6, 0.95, cloud_cover));
 	if (!AT_CUBEMAP_PASS) {
 		// Sun disk
-		col += halo_color * 30.0 * smoothstep(0.99985, 0.99994, sd) * sun_vis;
+		col += halo_color * 30.0 * smoothstep(0.99985, 0.99994, sd) * sun_vis * disc_vis;
 		// Moon disk with a hint of shading
 		float md = dot(d, normalize(moon_dir));
 		vec3 mdn = normalize(moon_dir);
@@ -81,8 +85,8 @@ void sky() {
 		float ph = fract(moon_phase);
 		float illum = 0.5 * (1.0 - cos(6.2831853 * ph));
 		float lit = ph < 0.5 ? smoothstep(-0.12, 0.12, u - (1.0 - 2.0 * illum)) : smoothstep(-0.12, 0.12, -u - (1.0 - 2.0 * illum));
-		col += vec3(0.85, 0.88, 0.95) * moon * 2.5 * (0.8 + 0.2 * n2(d.xy * 400.0)) * mix(0.025, 1.0, lit);
-		col += vec3(0.4, 0.45, 0.6) * pow(max(md, 0.0), 300.0) * 0.15 * smoothstep(-0.05, 0.1, moon_dir.y) * (0.1 + 0.9 * illum);
+		col += vec3(0.85, 0.88, 0.95) * moon * 2.5 * (0.8 + 0.2 * n2(d.xy * 400.0)) * mix(0.025, 1.0, lit) * disc_vis;
+		col += vec3(0.4, 0.45, 0.6) * pow(max(md, 0.0), 300.0) * 0.15 * smoothstep(-0.05, 0.1, moon_dir.y) * (0.1 + 0.9 * illum) * mix(1.0, 0.3, cloud_cover);
 		// Stars
 		if (stars > 0.01 && h > 0.0) {
 			vec3 sp = d * 260.0;

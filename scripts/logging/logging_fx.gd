@@ -57,7 +57,22 @@ static func play(s: int, at: Vector3, volume_db := 0.0) -> void:
 		_inst._play(s, at, volume_db)
 
 
+## Debounce: several logs/trunks settling together in one spot make one
+## clunk/impact, not a burst of identical sounds over a few physics frames.
+var _recent_hits: Array = []    # [kind, pos, msec]
+var debounced := 0
+
+
 func _play(s: int, at: Vector3, volume_db: float) -> void:
+	if s in [Sound.CLUNK, Sound.IMPACT]:
+		var now := Time.get_ticks_msec()
+		for r in _recent_hits:
+			if int(r[0]) == s and now - int(r[2]) < 280 and (r[1] as Vector3).distance_to(at) < 3.0:
+				debounced += 1
+				return
+		_recent_hits.append([s, at, now])
+		if _recent_hits.size() > 12:
+			_recent_hits.pop_front()
 	var names := _names(s)
 	if names.is_empty():
 		return

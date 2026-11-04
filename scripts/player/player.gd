@@ -609,7 +609,7 @@ func _head_bob(delta: float, speed: float) -> void:
 	var bob := 0.0
 	if Settings.get_v("head_bob") and is_on_floor() and speed > 0.5:
 		_bob_t += delta * speed * 1.9
-		bob = sin(_bob_t * 2.0) * 0.022 * clampf(speed / WALK_SPEED, 0.0, 1.4)
+		bob = sin(_bob_t * 2.0) * 0.022 * clampf(speed / WALK_SPEED, 0.0, 1.4) * float(Settings.get_v("bob_strength"))
 	head.position.y = _eye_current + bob
 	# Subtle, decaying hit shake (comfort-toggleable).
 	_shake = move_toward(_shake, 0.0, delta * 0.12)
@@ -619,7 +619,7 @@ func _head_bob(delta: float, speed: float) -> void:
 
 
 func add_shake(amount: float) -> void:
-	_shake = minf(_shake + amount, 0.04)
+	_shake = minf(_shake + amount * float(Settings.get_v("shake_strength")), 0.04)
 
 
 func _footsteps(delta: float, speed: float) -> void:

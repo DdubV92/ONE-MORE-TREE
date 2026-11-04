@@ -2441,7 +2441,115 @@ func _t_phase8_presentation() -> String:
 	for i in near:
 		World.removed_trees.erase(int(World.trees.id[i]))
 	w.set_override("")
+	# ---- Animation coverage and contact sync (Phase 8)
+	if err == "":
+		err = _p8_animation(world)
+	# ---- Review stations that need no HUD: they apply, write nothing.
+	if err == "":
+		var saves_before := Game.can_write_campaign_save()
+		for st in ["morning", "forest", "river", "beach", "rain_night"]:
+			var msg := ReviewStations.go(self, st)
+			if msg == "":
+				err = "review station %s did nothing" % st
+				break
+		if err == "" and world.weather.override != "light_rain":
+			err = "rain-night station did not set rain"
+		if err == "" and (saves_before or Game.can_write_campaign_save()):
+			err = "preview stations may write campaign saves"
+		var removed := ReviewStations.clear_near_camp(0.9)
+		if err == "" and removed < 10000:
+			err = "cleared fixture removed only %d trees" % removed
+		if err == "" and world.vegetation.standing_trees_near(World.camp_origin(), 60.0).size() != 0:
+			err = "cleared fixture left standing trees near camp"
+		World.removed_trees.clear()
 	world.queue_free()
 	await get_tree().process_frame
 	Game.mode = Game.Mode.MENU
 	return err
+
+
+func _p8_animation(world: IslandWorld) -> String:
+	var wk: Worker = null
+	for x in world.crew.workers.values():
+		wk = x
+		break
+	if wk == null:
+		return "no worker body to test animation on"
+	var hc := wk.body_char
+	for clip in HumanCharacter.CLIPS:
+		if not hc.anim.has_animation(clip):
+			return "human clip missing: %s" % clip
+	# One accepted swing = one contact, however frames are skipped.
+	var cyc := wk._swing_cycle()
+	wk._swing_t = -1.0
+	var hits := 0
+	var total := 0.0
+	for d in [0.016, 0.016, 0.5, 1.3, 0.016, 0.2, 0.033, 0.9, 2.5, 0.016, 0.4, 0.4, 0.4]:
+		var h := 0
+		if wk._swing(d):
+			h += 1
+		hits += h
+		total += d
+	if hits > int(ceil(total / cyc)) + 1:
+		return "swing produced %d contacts in %.2f s (cycle %.2f): duplicated work" % [hits, total, cyc]
+	if hits < 3:
+		return "swing contacts lost under frame skips (%d)" % hits
+	wk._swing_t = -1.0
+	hc.play("idle", 0.0)
+	# One-shot actions finish back to idle and are interruptible by moving.
+	hc.play_action("pickup")
+	if hc.action != "pickup" or hc.current != "pickup":
+		return "pickup action did not start"
+	hc.set_locomotion(0.0)
+	if hc.current != "pickup":
+		return "standing locomotion cut a short action"
+	hc.set_locomotion(1.2)
+	if hc.action != "" or hc.current != "walk":
+		return "moving did not interrupt an action"
+	hc.play_action("listen")
+	for i in 200:
+		hc._process(0.02)
+	if hc.action != "" or hc.current != "idle":
+		return "listen action did not return to idle (%s)" % hc.current
+	# Planted feet: at the deepest pickup bend the ankles stay at ankle height.
+	hc.play("pickup", 0.0)
+	hc.anim.seek(0.35, true)
+	hc.anim.advance(0.0)
+	for a in hc.ankle_positions():
+		var local_y := (hc.global_transform.affine_inverse() * (a as Vector3)).y
+		if absf(local_y - hc.ankle_h) > 0.06:
+			return "pickup lifts/sinks a foot (ankle %.3f vs %.3f)" % [local_y, hc.ankle_h]
+	hc.play("idle", 0.0)
+	# Head yaw bounded in every authored clip (never through the shoulders).
+	for clip in HumanCharacter.CLIPS:
+		for k in HumanCharacter.CLIPS[clip].keys:
+			if absf(float((k as Dictionary).get("head_y", 0.0))) > 1.0:
+				return "clip %s turns the head too far" % clip
+	# Dog coverage.
+	var dc: DogCharacter = world.dog.dog if world.dog else null
+	if dc:
+		for clip in ["idle", "walk", "trot", "sit", "lie", "pet", "alert", "sniff", "growl"]:
+			if not dc.anim.has_animation(clip):
+				return "dog clip missing: %s" % clip
+	# Foreman: steps come from foot plants; a listening pause is silent.
+	var fb := ForemanBody.new()
+	add_child(fb)
+	fb.pose = "walk"
+	fb.speed = 1.7
+	for i in 300:
+		fb._process(1.0 / 60.0)
+	var walking_contacts := fb.contacts
+	fb.pose = "listen"
+	fb.speed = 0.0
+	for i in 60:
+		fb._process(1.0 / 60.0)
+	var c0 := fb.contacts
+	for i in 240:
+		fb._process(1.0 / 60.0)
+	var listen_contacts := fb.contacts - c0
+	fb.queue_free()
+	if walking_contacts < 4:
+		return "Foreman walk produced only %d foot contacts in 5 s" % walking_contacts
+	if listen_contacts != 0:
+		return "Foreman 'stepped' %d times while standing still" % listen_contacts
+	return ""

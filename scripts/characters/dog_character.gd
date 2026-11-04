@@ -155,6 +155,8 @@ func _build_animations() -> void:
 	lib.add_animation("sit", _make_sit(false))
 	lib.add_animation("pet", _make_sit(true))
 	lib.add_animation("alert", _make_alert())
+	lib.add_animation("sniff", _make_head_pose(2.4, 0.95, 0.08, -2.2, 0.35, 0.0))
+	lib.add_animation("growl", _make_head_pose(1.6, 0.55, 0.0, -1.2, 0.0, 0.45))
 	anim.add_animation_library("", lib)
 
 
@@ -427,6 +429,38 @@ func _make_alert() -> Animation:
 		an.rotation_track_insert_key(ear_r, t, _q(-0.25, 0, 0.08))
 		for side in [-1.0, 1.0]:
 			_leg_keys(an, tr, t, true, side, bp, Vector3(side * 0.09, 0, -0.23))
+			_leg_keys(an, tr, t, false, side, bp, Vector3(side * 0.09, 0, 0.27))
+	return an
+
+
+## Phase 8: standing head poses. sniff = nose to the ground, bobbing, tail
+## loose; growl = head low and forward, ears back, stiff legs, tail low.
+func _make_head_pose(T: float, neck_x: float, bob: float, tail_x: float, wag: float, ears_back: float) -> Animation:
+	var an := Animation.new()
+	an.length = T
+	an.loop_mode = Animation.LOOP_LINEAR
+	var tr := _leg_tracks(an)
+	var body_p := _track(an, "Body", Animation.TYPE_POSITION_3D)
+	var neck := _track(an, "Neck")
+	var head := _track(an, "Head")
+	var tail := _track(an, "TailBase")
+	var tip := _track(an, "TailTip")
+	var ear_l := _track(an, "EarL")
+	var ear_r := _track(an, "EarR")
+	var n := 12
+	for k in n + 1:
+		var t := T * k / n
+		var ph := TAU * t / T
+		var bp: Vector3 = rest["Body"].origin + Vector3(0, -0.01 - ears_back * 0.03, -0.02)
+		an.position_track_insert_key(body_p, t, bp)
+		an.rotation_track_insert_key(neck, t, _q(neck_x + bob * sin(ph * 3.0)))
+		an.rotation_track_insert_key(head, t, _q(bob * 0.8 * sin(ph * 3.0 + 0.6), 0.12 * sin(ph) * (1.0 - ears_back), 0))
+		an.rotation_track_insert_key(tail, t, _q(tail_x, wag * sin(ph * 4.0), 0))
+		an.rotation_track_insert_key(tip, t, _q(0.15))
+		an.rotation_track_insert_key(ear_l, t, _q(0.1 + ears_back, 0, -0.08 - ears_back * 0.3))
+		an.rotation_track_insert_key(ear_r, t, _q(0.1 + ears_back, 0, 0.08 + ears_back * 0.3))
+		for side in [-1.0, 1.0]:
+			_leg_keys(an, tr, t, true, side, bp, Vector3(side * (0.09 + ears_back * 0.03), 0, -0.24))
 			_leg_keys(an, tr, t, false, side, bp, Vector3(side * 0.09, 0, 0.27))
 	return an
 

@@ -304,7 +304,7 @@ func _apply() -> void:
 	env.fog_light_color = p.fog_color
 	# Night mist: thicker and darker on moonless nights so the forest fades
 	# to black within a few dozen metres; a full moon thins it.
-	env.fog_density = p.fog_density * lerpf(1.0, lerpf(1.6, 0.55, illum), nf) * (1.0 + weather_rain * 0.9)
+	env.fog_density = p.fog_density * lerpf(1.0, lerpf(1.6, 0.55, illum), nf) * (1.0 + weather_rain * 0.35)
 	env.fog_height = _ground_fog_y + 2.5
 	env.fog_height_density = lerpf(p.fog_height_density, 0.05, nf)
 	env.volumetric_fog_enabled = quality in ["high", "ultra"] and p.volumetric > 0.0005

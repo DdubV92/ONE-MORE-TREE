@@ -56,6 +56,9 @@ var _replan_t := 0.0
 var _audio: AudioStreamPlayer3D
 var _tags: AudioStreamPlayer3D
 var _step_t := 0.0
+var _steps_hooked := false
+var _feet: AudioStreamPlayer3D
+var steps_played := 0
 var _stuck_t := 0.0
 var _stuck_from := Vector3.ZERO
 
@@ -623,11 +626,29 @@ func _maybe_hint() -> void:
 
 
 func _sounds(delta: float) -> void:
-	_step_t -= delta * maxf(speed, 0.3)
-	if speed > 0.3 and _step_t <= 0.0:
-		_step_t = 1.6 if speed < 3.0 else 1.1
-		_play("f_step_%d" % (_rng.randi() % 2), -4.0 if speed < 3.0 else 0.0)
-	if not body.tags_silent and not _tags.playing and _rng.randf() < delta * 0.25 and speed < 2.5:
+	# Footsteps come from ForemanBody.foot_contact (stride-synced).
+	if not _steps_hooked:
+		_steps_hooked = true
+		_feet = AudioStreamPlayer3D.new()
+		_feet.bus = "Horror"
+		_feet.unit_size = 8.0
+		_feet.max_polyphony = 2
+		add_child(_feet)
+		body.foot_contact.connect(func(_side: int, heavy: bool) -> void:
+			var s: AudioStream = load("res://audio/generated/f_step_%d.wav" % (_rng.randi() % 2))
+			var db := 0.0 if heavy else -4.0
+			_feet.stream = s
+			_feet.volume_db = db
+			_feet.pitch_scale = _rng.randf_range(0.92, 1.05)
+			_feet.play()
+			steps_played += 1
+			SoundEvents.emit(s, global_position, db, "foreman", ""))
+	# Tags: only while the body actually moves; silent (and cut off) when it
+	# stops to listen, so a motionless listening pause is truly quiet.
+	if body.tags_silent or speed < 0.25:
+		if _tags.playing and body.tags_silent:
+			_tags.stop()
+	elif not _tags.playing and _rng.randf() < delta * 0.25 and speed < 2.5:
 		_tags.stream = load("res://audio/generated/f_tags.wav")
 		_tags.volume_db = -12.0
 		_tags.play()

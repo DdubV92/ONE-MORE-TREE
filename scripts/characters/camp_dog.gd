@@ -51,6 +51,7 @@ var _last_p := Vector3.ZERO
 var _after := State.IDLE
 var _face := Vector3.INF
 var _rest_clip := "idle"
+var _growl_t := 0.0
 var _flap_points := {}          # path index -> outward(bool)
 var _pet_t := 0.0
 var voice: AudioStreamPlayer3D
@@ -344,11 +345,15 @@ func _process(delta: float) -> void:
 		State.REFUGE:
 			_rest_clip = "lie"
 		State.ALERT:
-			_rest_clip = "alert"
+			_rest_clip = "growl" if _growl_t > 0.0 else "alert"
 		State.PET:
 			_rest_clip = "pet"
+		State.IDLE:
+			# Nose to the ground now and then (sniffing the yard).
+			_rest_clip = "sniff" if fmod(Time.get_ticks_msec() / 1000.0 + float(DOG_ID.length()), 17.0) < 5.0 else "idle"
 		_:
 			_rest_clip = "idle"
+	_growl_t = maxf(_growl_t - delta, 0.0)
 	dog.set_locomotion(speed, _rest_clip)
 
 
@@ -565,6 +570,7 @@ func react_threat(pos: Vector3) -> void:
 	state = State.ALERT
 	timer = 4.0
 	_play("dog_growl", -8.0)
+	_growl_t = 2.5
 	events.append("growl")
 
 

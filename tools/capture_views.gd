@@ -27,6 +27,11 @@ func _ready() -> void:
 	for s in shots:
 		var parts: PackedStringArray = str(s).split(":")
 		var lighting := parts[0] if parts.size() > 1 else "day"
+		# Optional weather: "night+light_rain:camp" (Phase 8 preview override).
+		var weather := ""
+		if "+" in lighting:
+			weather = lighting.get_slice("+", 1)
+			lighting = lighting.get_slice("+", 0)
 		var vp_name := parts[parts.size() - 1]
 		# Optional "@seconds" fixes the shared world clock (wave/swash phase).
 		var at := -1.0
@@ -65,6 +70,8 @@ func _ready() -> void:
 			continue
 		var vp: Dictionary = vps[vp_name]
 		world.environment.apply_named(lighting)
+		if world.weather:
+			world.weather.set_override(weather if weather != "" else "clear", true)
 		if lighting == "night":
 			world.environment.set_moon_phase(0.25)
 		cam.global_position = vp.pos
@@ -72,12 +79,12 @@ func _ready() -> void:
 		world.vegetation.update_collision_around(vp.pos)
 		if world.ground_cover and world.ground_cover.has_method("force_build_around"):
 			world.ground_cover.force_build_around(vp.pos)
-		for i in (40 if vp_name == "tv_wall" else 12):
+		for i in (40 if vp_name == "tv_wall" or weather != "" else 12):
 			if at >= 0.0:
 				Game.world_time = at
 			await get_tree().process_frame
 		var img := get_viewport().get_texture().get_image()
-		var out := "res://captures/%s_%s%s.png" % [(vp_name + ("_" + tv_mode if tv_mode != "" else "")), lighting, ("_t%.1f" % at) if at >= 0.0 else ""]
+		var out := "res://captures/%s_%s%s.png" % [(vp_name + ("_" + tv_mode if tv_mode != "" else "")), lighting + ("_" + weather if weather != "" else ""), ("_t%.1f" % at) if at >= 0.0 else ""]
 		img.save_png(out)
 		print("captured ", out, " | draw calls %d, primitives %dk, objects %d, VRAM %.0f MB, tree colliders %d, physics active %d" % [Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME) / 1000, Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME), Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0, world.vegetation.active_tree_collision_count(), Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS)])
 	get_tree().quit()

@@ -62,6 +62,10 @@ func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
 	body_char.appearance = HumanAppearance.from_seed(int(record.get("look_seed", 1)))
 	add_child(body_char)
 	body_char.set_axe_tier(axe_tier())
+	_flavor_rng.seed = hash(id)
+	body_char.step.connect(func(_side: int) -> void:
+		if body_char.visible:
+			get_tree().call_group("footstep_listeners", "play_crowd_step", global_position, _speed))
 	col = AnimatableBody3D.new()
 	col.sync_to_physics = false
 	col.collision_layer = 1
@@ -117,6 +121,51 @@ func activity_words() -> String:
 		"move":
 			return "walking to " + str(target.get("label", "a job"))
 	return "between jobs"
+
+
+## Phase 8 presentation layer (cosmetic only, never changes jobs, claims,
+## pay or timing): a frightened worker stands guarded instead of relaxed,
+## and between jobs each trait shows a restrained, interruptible idle.
+var _idle_flavor_t := 9.0
+var _flavor_rng := RandomNumberGenerator.new()
+
+
+func witnessed_firsthand() -> bool:
+	for m in mind.memories:
+		if bool((m as Dictionary).get("firsthand", false)) and str((m as Dictionary).get("status", "")) == "confirmed":
+			return true
+	return false
+
+
+func _presentation(delta: float) -> void:
+	body_char.rest_clip = "fear" if mind.state >= WorkerMind.Fear.DISTRESSED and activity in ["idle", "retreat_wait"] else ""
+	if activity == "seated":
+		var want := "drive" if driving_seat() else "sit"
+		if body_char.current != want:
+			body_char.play(want, 0.3)
+		return
+	if not activity in ["idle", "retreat_wait"] or _speed > 0.05 or body_char.action != "":
+		return
+	_idle_flavor_t -= delta
+	if _idle_flavor_t > 0.0:
+		return
+	_idle_flavor_t = _flavor_rng.randf_range(10.0, 22.0)
+	var clip := ""
+	if mind.has("timid") and _flavor_rng.randf() < 0.6:
+		clip = "glance"
+	elif mind.has("hard_working") and _flavor_rng.randf() < 0.6:
+		clip = "grip"
+	elif mind.has("observant") and _flavor_rng.randf() < 0.6:
+		clip = "listen"
+	elif _flavor_rng.randf() < 0.25:
+		clip = ["glance", "grip", "listen"][_flavor_rng.randi() % 3]
+	if clip != "":
+		body_char.play_action(clip, body_char.rest_clip if body_char.rest_clip != "" else "idle")
+
+
+func driving_seat() -> bool:
+	var p := get_parent()
+	return p != null and str(p.name).to_lower().contains("driver")
 
 
 func say(topic: String, important := false, vars := {}) -> String:
@@ -261,8 +310,13 @@ func _physics_process(delta: float) -> void:
 		return
 	var now := crew.now()
 	mind.tick(delta, now, crew.mind_context(self))
+	_presentation(delta)
 	if talking_until > now and activity in ["idle", "fell", "buck", "pick", "move"]:
 		body_char.set_locomotion(0.0)
+		# Delivery differs, knowledge does not: someone who actually saw
+		# something firsthand talks guarded; a skeptic talks loose.
+		if body_char.action == "":
+			body_char.play("talk_shaken" if witnessed_firsthand() else "talk", 0.3)
 		if Game.player:
 			_face(Vector3(Game.player.global_position.x - global_position.x, 0, Game.player.global_position.z - global_position.z).normalized(), delta)
 		return
@@ -526,7 +580,8 @@ func _do_pick() -> void:
 	if b != null:
 		var res := crew.timber.pick_up_for(id, b, crew.carry_budget(self))
 		if bool(res.ok):
-			body_char.play("idle")
+			# The transaction already happened; the bend is presentation.
+			body_char.play_action("pickup")
 	else:
 		crew.timber.release(sid, id)
 	target["pick"] = list
@@ -544,6 +599,7 @@ func _do_deliver() -> void:
 	if not held.is_empty():
 		var rs := crew.timber.accept(held, "rack:" + id)
 		crew.on_delivered(self, rs)
+		body_char.play_action("setdown")
 	crew.release_rack_slot(self)
 	activity = "idle"
 
@@ -554,6 +610,7 @@ func _do_load_truck() -> void:
 		var n := Game.vehicles.load_from(id, t)
 		if n > 0:
 			crew.on_delivered_to_truck(self, n)
+			body_char.play_action("setdown")
 	activity = "idle"
 	if is_carrying():
 		crew.send_to_rack(self)

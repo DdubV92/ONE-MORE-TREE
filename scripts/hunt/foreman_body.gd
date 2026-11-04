@@ -15,7 +15,11 @@ extends Node3D
 
 const H := 3.0
 
+signal foot_contact(side: int, heavy: bool)
+
 var pose := "idle"            # idle / walk / sprint / listen / search / fold / reach
+var _prev_swing := [0.0, 0.0]
+var contacts := 0
 var speed := 0.0
 var head_target := Vector3.INF
 var tags_silent := false
@@ -129,6 +133,13 @@ func _process(delta: float) -> void:
 		var thigh: Node3D = _b["Thigh" + sn]
 		var shin: Node3D = _b["Shin" + sn]
 		var swing := sin(ph + off)
+		# Foot plant = the swing crossing from forward to back: the step
+		# sound is emitted by the motion itself (no free-running timer).
+		var si := 0 if s < 0 else 1
+		if moving and amp > 0.0 and float(_prev_swing[si]) > 0.0 and swing <= 0.0:
+			contacts += 1
+			foot_contact.emit(si, pose == "sprint")
+		_prev_swing[si] = swing if moving else 0.0
 		thigh.rotation.x = -swing * amp - _search * 1.3 - _fold * 0.9
 		shin.rotation.x = maxf(0.0, cos(ph + off)) * amp * 1.2 + _search * 2.0 + _fold * 1.2
 	var hips: Node3D = _b["Hips"]

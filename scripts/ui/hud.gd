@@ -362,6 +362,17 @@ func _build_tour() -> void:
 	for s7 in [["Audit overlay", "__p7_overlay"], ["East bridge", "__p7_bridge_e"], ["South bridge", "__p7_bridge_s"], ["Truck height", "__p7_truck"], ["Locate work", "__p7_locate"], ["Dock & hides", "__p7_dock"]]:
 		p7.add_child(UITheme.button(s7[0], func() -> void: _phase7_stop(s7[1]), 130))
 	v.add_child(p7)
+	v.add_child(UITheme.label("Phase 8 review stations (preview fixtures)", 16, UITheme.MUTED))
+	var p8 := GridContainer.new()
+	p8.columns = 2
+	for s8 in ReviewStations.STATIONS:
+		p8.add_child(UITheme.button(s8[0], func() -> void:
+			var msg := ReviewStations.go(self, s8[1])
+			if msg != "":
+				show_message(msg, 9.0)
+			tour_panel.visible = false
+			_capture_mouse(), 130))
+	v.add_child(p8)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))
