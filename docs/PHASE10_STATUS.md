@@ -47,7 +47,11 @@ Source revision: branch `phase-10-stabilization` (from `phase-9-onboarding-ui`).
 
 ## Performance (honest)
 
-Unmeasured on real hardware. Measured: the new-campaign manifest selection runs once at world start (time printed by the test, in the hundreds of milliseconds headless); thinning 2,000 trees reduces MultiMesh instances by about 17 %. Draw-call counts from Phase 8 still apply. The 60 FPS at 1080p target remains unverified.
+Unmeasured on real hardware. Measured: the new-campaign manifest selection runs once at world start (157 ms headless in the test run); thinning 2,000 trees reduces MultiMesh instances by about 17 %. Draw-call counts from Phase 8 still apply. The 60 FPS at 1080p target remains unverified.
+
+## Verification
+
+52/52 automated tests (`tests/test_runner.tscn`), smoke test 0 errors / 0 warnings, island audit 0 issues. The 2-worker and 3-worker workday sims re-measured identically to Phase 7 (3.00 and 4.22 tree-eq).
 
 ## Next
 
