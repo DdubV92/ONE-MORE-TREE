@@ -1,5 +1,5 @@
 {
-	"elapsed_ms": 12299,
+	"elapsed_ms": 12872,
 	"engine": "4.5.1-stable (official)",
 	"facilities": {
 		"arcade_spot:Cabin/Arcade_1": {
@@ -141,7 +141,7 @@
 			"component_cells": 127715,
 			"remaining": 9000,
 			"remaining_within_25m_of_truck_route": 8899,
-			"removal_ms": 764,
+			"removal_ms": 851,
 			"removed": 3000,
 			"truck_cells": 52826,
 			"unreachable_remaining": 0
@@ -150,7 +150,7 @@
 			"component_cells": 127715,
 			"remaining": 6000,
 			"remaining_within_25m_of_truck_route": 5899,
-			"removal_ms": 899,
+			"removal_ms": 987,
 			"removed": 6000,
 			"truck_cells": 57279,
 			"unreachable_remaining": 0
@@ -159,7 +159,7 @@
 			"component_cells": 127715,
 			"remaining": 1200,
 			"remaining_within_25m_of_truck_route": 1200,
-			"removal_ms": 1278,
+			"removal_ms": 1498,
 			"removed": 10800,
 			"truck_cells": 64162,
 			"unreachable_remaining": 0
@@ -168,7 +168,7 @@
 			"component_cells": 127715,
 			"remaining": 120,
 			"remaining_within_25m_of_truck_route": 120,
-			"removal_ms": 307,
+			"removal_ms": 306,
 			"removed": 11880,
 			"truck_cells": 65631,
 			"unreachable_remaining": 0
