@@ -17,10 +17,16 @@ Status key: ✅ implemented and observed (audit run, test or headless sim) · �
 | Clearing fixtures through the real removal signal (nav refresh), vegetation chunks rebuilt, tree collision cells rebuilt from cleared data | ✅ | 0 tree colliders after a full clear |
 | Island Audit review route in the Preview Tour (overlay of support samples, walkable and drivable cells; bridges; truck height; locator; dock and hides) | ✅ / 🟡 | Dev only, off by default |
 | Measured workload through the real task rules (`tools/workload_sim.tscn`) | ✅ | See FEASIBILITY.md |
-| **30-day feasibility of the 12,000-tree island under the fixed terms** | ⬜ | **Not feasible as measured.** The required island change (fewer native trees, which needs a world regeneration) is a design decision for you; see FEASIBILITY.md |
+| **30-day feasibility of the 12,000-tree island** | 🟡 (decided, re-measure later) | Not feasible with today's tuning (best day ≈ 7 tree-eq; ceiling ≈ 1,700 trees in 30 days). Owner decision: keep 12,000. Faster cutting methods and a longer day (about double) are planned; re-measure with `tools/workload_sim.tscn` then. See FEASIBILITY.md |
 | Dynamic obstruction: displacement-based stuck detection, bounded escape/repath, claim release, unreachable marking, door/rack reservations (Phase 4/5 systems) | ✅ / 🟡 | Stuck events per measured day are listed in FEASIBILITY.md; queues not stress-tested with five workers on one rack |
 
-WORKLOAD_PLACEHOLDER
+### Phase 7 known limits (honest)
+
+- With today's tuning the contract is not completable on the current island; faster cutting and a longer day are planned (owner). Income stays below full-crew wages in every measured configuration.
+- Workload numbers come from single simulated days at 60 Hz through the real rules. They are not human play and have not been averaged over many seeds.
+- Queues with five workers on one rack, two trucks arriving together at the drop-off, and a player deliberately blocking doorways were not stress-tested.
+- Visual checks of the new 3.6 m bridges were done on a software renderer only; driving across them was verified as a route, not by physically driving the truck.
+- The overlay and review route are development aids; they have not been reviewed on real hardware.
 
 ## Phase 6: The Terror director, living nights, the dog rescue and the Foreman's hunt
 

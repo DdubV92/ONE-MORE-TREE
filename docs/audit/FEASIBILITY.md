@@ -49,4 +49,8 @@ Changing the island is a world regeneration (new generation version, frozen data
 2. **Logistics efficiency** (also unfixed): truck teams fell and buck beside the parked truck and load directly, with loaders cycling short distances; queue/claim tuning at the rack; fewer, larger log sections per tree (same $100 and tree-equivalent per tree). The goal is **15–25 tree-eq per truck team per day**.
 3. Both together give a hard but finishable contract: for example ~600 trees needs ~20 per day, reachable with two efficient truck teams by mid-campaign.
 
-Until one of these is chosen and measured, **feasibility is reported as NOT met for the current island**, not as balanced.
+## Decision (owner, Phase 7)
+
+**Keep the 12,000-tree island.** No world regeneration or save migration. With today's tuning the contract cannot be finished in 30 days: the best measured day is about 7 tree-equivalents against 400 needed.
+
+**Planned (owner):** much faster cutting methods and a longer day, eventually about double the time of day. When they land, re-measure with `tools/workload_sim.tscn` (scenarios `hand2`, `mixed3`, `full5`, `far5`) and update this table. Note that hauling, not cutting, is the measured bottleneck: walking is about 90 % of worker time, and each truck carries 3 tree-eq per load. Faster cutting alone will not close the gap. A longer day raises everything roughly in proportion; faster loading, unloading and hauling methods would matter most.

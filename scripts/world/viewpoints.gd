@@ -67,6 +67,14 @@ static func all() -> Dictionary:
 	vp["dog_alcove"] = _v(c + Vector3(4.6, 0.0, 97.6), c + Vector3(8.8, -0.4, 95.0), 1.3, "The dog's dry alcove beside the utility building")
 	vp["utility_inside"] = _v(c + Vector3(10.2, 0.45, 92.6), c + Vector3(12.0, 0.0, 96.2), eye, "Inside the utility building: shelves, panel, radio and beacon")
 	vp["dock_end"] = _v(c + Vector3(6.0, 0.0, 112.0), c + Vector3(6.0, -0.6, 126.0), eye, "Along the dock deck to the ladder and lamp")
+	# Phase 7: the trail bridges (truck-capable) from their ramp approach.
+	var bl: Array = World.bridges()
+	for bi in bl.size():
+		var b: Dictionary = bl[bi]
+		var acr := Vector2(float(b.ax), float(b.az)).normalized()
+		var foot := Vector2(b.x, b.z) + acr * (float(b.half_span) + 12.0)
+		var far := Vector2(b.x, b.z) - acr * float(b.half_span)
+		vp["bridge_%d" % bi] = _v(Vector3(foot.x + acr.y * 3.0, 0.0, foot.y - acr.x * 3.0), Vector3(far.x, 0.0, far.y), 1.65, "Trail bridge %d (3.6 m, truck-capable)" % bi)
 	_cache = vp
 	return vp
 

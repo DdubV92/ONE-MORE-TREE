@@ -187,7 +187,7 @@ func _journal_contract() -> Control:
 			ContractLocator.mark(Game.world_root, best)
 		hud.show_message("\n".join(lines) if not lines.is_empty() else "Nothing left to do for the contract.", 8.0)
 		close_panel(), 320))
-	_text(v, "To finish on time you would need about %.0f trees a day from here. The island has %d trees (a provisional count); one person cannot clear it alone. The crew (Phase 4) and trucks (Phase 5) are what make it possible." % [svc.contract.required_per_day(), c.total_trees], 15, UITheme.MUTED)
+	_text(v, "To finish on time you need about %.0f trees a day from here. The island has %d trees. If night falls on day 30 with the job unfinished, the company leaves you behind." % [svc.contract.required_per_day(), c.total_trees], 15, UITheme.MUTED)
 	return s[0]
 
 
