@@ -405,13 +405,13 @@ func _phase5_stop(which: String) -> void:
 				var rs := ReviewSubject.new()
 				rs.name = "ReviewSubject"
 				w.add_child(rs)
-			var seats := get_tree().get_nodes_in_group("couch_seat")
+			var seats := WorldGroups.of(self, "couch_seat")
 			w.teleport_to("camper_lounge")
 			if not seats.is_empty():
 				p.sit_on_couch.call_deferred(seats[0])
 			show_message("Surveillance: a preview surveyor in hi-vis walks past CAM-03 and the north fence so you can check the feeds are live.", 8.0)
 		"__p5_arcade":
-			var spots := get_tree().get_nodes_in_group("arcade_spot")
+			var spots := WorldGroups.of(self, "arcade_spot")
 			if not spots.is_empty():
 				var s: Node3D = spots[0]
 				p.teleport_feet(s.global_position, s.global_rotation.y)

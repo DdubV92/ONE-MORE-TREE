@@ -16,15 +16,15 @@ func setup() -> void:
 	camper = Game.world_root.find_child("Camper", true, false) if Game.world_root else null
 	if camper == null:
 		return
-	for m in get_tree().get_nodes_in_group("couch_seat"):
+	for m in WorldGroups.of(self, "couch_seat"):
 		var seat := m as Node3D
 		Hotspot.make(seat, "SitSpot", Vector3(0.62, 0.35, 0.6), Vector3(0, 0.05, 0), func() -> String: return "Sit on the couch", func(by: Node) -> void: _sit(by, seat))
-	var tvs := get_tree().get_nodes_in_group("camper_tv")
+	var tvs := WorldGroups.of(self, "camper_tv")
 	if not tvs.is_empty():
 		Hotspot.make(tvs[0], "PowerSpot", Vector3(1.24, 0.72, 0.1), Vector3(0, 0, 0.03), func() -> String: return ("Turn the TV off" if Game.tv and Game.tv.powered else "Turn the TV on"), func(_by: Node) -> void: toggle_tv())
-	for sw in get_tree().get_nodes_in_group("camper_switch"):
+	for sw in WorldGroups.of(self, "camper_switch"):
 		Hotspot.make(sw, "SwitchSpot", Vector3(0.12, 0.2, 0.16), Vector3.ZERO, func() -> String: return ("Lights off" if lights_on else "Lights on"), func(_by: Node) -> void: set_lights(not lights_on))
-	for c in get_tree().get_nodes_in_group("camper_curtain"):
+	for c in WorldGroups.of(self, "camper_curtain"):
 		var cur := c as Curtain
 		curtains.append(cur)
 		var mid: float = cur._panels[0].get_meta("mid")
@@ -34,7 +34,7 @@ func setup() -> void:
 		var W := CampLayout.CAMPER_SIZE.x * 0.5
 		var F := CampLayout.CAMPER_FLOOR
 		Hotspot.make(k, "DrinkSpot", Vector3(0.25, 0.3, 0.25), Vector3(-W + 0.18, F + 1.05, 2.6), func() -> String: return "Pour a hot drink", func(by: Node) -> void: pour_drink(by))
-	for b in get_tree().get_nodes_in_group("camper_bulb"):
+	for b in WorldGroups.of(self, "camper_bulb"):
 		var mi := b as MeshInstance3D
 		if _bulb_mat == null:
 			var src: Material = mi.material_override if mi.material_override else mi.get_active_material(0)

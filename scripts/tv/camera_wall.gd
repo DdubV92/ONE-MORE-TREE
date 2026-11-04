@@ -78,10 +78,12 @@ var last_relay := {}
 
 func setup() -> void:
 	_rng.seed = 5150
+	var root := get_parent()
 	for c in get_tree().get_nodes_in_group("security_camera"):
-		cams.append(c)
+		if root == null or root.is_ancestor_of(c):   # only this world's cameras
+			cams.append(c)
 	cams.sort_custom(func(a: Node3D, b: Node3D) -> bool: return str(a.get_meta("camera_id")) < str(b.get_meta("camera_id")))
-	var tvs := get_tree().get_nodes_in_group("camper_tv")
+	var tvs := get_tree().get_nodes_in_group("camper_tv").filter(func(n: Node) -> bool: return root == null or root.is_ancestor_of(n))
 	if tvs.is_empty() or cams.size() < 4:
 		return
 	var tv: Node3D = tvs[0]

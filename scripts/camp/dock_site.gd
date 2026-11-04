@@ -29,7 +29,7 @@ func build(crew: CrewService) -> void:
 		return
 	_detail_dock(crew)
 	var ub := Vector3.INF
-	for f in get_tree().get_nodes_in_group("reserved_footprint"):
+	for f in WorldGroups.of(self, "reserved_footprint"):
 		if f.name == "Reserved_UtilityBuilding":
 			ub = (f as Node3D).global_position
 	if ub != Vector3.INF:
@@ -303,7 +303,7 @@ func _dog_alcove(b: Node3D) -> void:
 	refuge_point = al.global_position + Vector3(0.15, 0.1, 0.15)
 	var gfront := al.global_position + Vector3(-1.5, 0, 0)
 	refuge_approach = Vector3(gfront.x, World.height_at(gfront.x, gfront.z), gfront.z)
-	for n in get_tree().get_nodes_in_group("dog_refuge"):
+	for n in WorldGroups.of(self, "dog_refuge"):
 		(n as Node3D).global_position = refuge_point
 	var ap := Marker3D.new()
 	ap.name = "DogRefugeApproach"

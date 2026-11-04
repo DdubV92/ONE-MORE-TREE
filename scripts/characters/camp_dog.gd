@@ -148,7 +148,7 @@ func _camper_route() -> Array[Vector3]:
 	out.append(c.global_transform * Vector3(W + t + 0.15, F, 1.85))
 	out.append(c.global_transform * Vector3(W + t * 0.5, F, 1.85))
 	out.append(c.global_transform * Vector3(W - 0.55, F, 1.85))
-	var beds := get_tree().get_nodes_in_group("dog_bed")
+	var beds := WorldGroups.of(self, "dog_bed")
 	var bed := (beds[0] as Node3D).global_position if not beds.is_empty() else c.global_transform * Vector3(0.85, F, 0.8)
 	bed.y = c.global_position.y + F
 	out.append(bed)
@@ -165,7 +165,7 @@ func inside_camper() -> bool:
 
 func _fire_points() -> Array[Vector3]:
 	var out: Array[Vector3] = []
-	for f in get_tree().get_nodes_in_group("interactable_fire"):
+	for f in WorldGroups.of(self, "interactable_fire"):
 		out.append((f as Node3D).global_position)
 	return out
 
@@ -595,13 +595,13 @@ func pet(by: Node) -> void:
 
 ## Sends the dog to the dry dock-side alcove and keeps it there.
 func enter_refuge() -> bool:
-	var anchors := get_tree().get_nodes_in_group("dog_refuge")
+	var anchors := WorldGroups.of(self, "dog_refuge")
 	if anchors.is_empty() or routine == "boarded":
 		return false
 	routine = "refuge"
 	var a := (anchors[0] as Node3D).global_position
 	# Walk to the ground in front of the alcove, then up its little ramp.
-	var app := get_tree().get_nodes_in_group("dog_refuge_approach")
+	var app := WorldGroups.of(self, "dog_refuge_approach")
 	var near := (app[0] as Node3D).global_position if not app.is_empty() else a
 	if inside_camper():
 		_leave_camper()
@@ -637,7 +637,7 @@ func leave_refuge() -> void:
 func board_ship() -> bool:
 	if boarded_once or routine != "refuge":
 		return false
-	var anchors := get_tree().get_nodes_in_group("ship_boarding")
+	var anchors := WorldGroups.of(self, "ship_boarding")
 	if anchors.is_empty():
 		return false
 	boarded_once = true
@@ -687,7 +687,7 @@ func restore(d: Dictionary) -> void:
 			hotspot.collision_layer = 0
 			return
 		"refuge":
-			var anchors := get_tree().get_nodes_in_group("dog_refuge")
+			var anchors := WorldGroups.of(self, "dog_refuge")
 			if not anchors.is_empty() and s != "TO_REFUGE":
 				global_position = (anchors[0] as Node3D).global_position
 			state = State.REFUGE
