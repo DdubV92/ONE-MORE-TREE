@@ -77,10 +77,11 @@ func open(index: int) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_game = LogStacker.new() if index == 0 else FlapjackFlip.new()
 	_game.high = int(highs.get(_key(index), 0))
-	_game.custom_minimum_size = Vector2(900, 620)
-	_game.size = Vector2(900, 620)
 	_game.set_anchors_preset(Control.PRESET_CENTER)
-	_game.position = -_game.size * 0.5
+	_game.offset_left = -450
+	_game.offset_right = 450
+	_game.offset_top = -300
+	_game.offset_bottom = 320
 	_game.finished.connect(_on_finished)
 	_root.add_child(_game)
 	_root.visible = true
