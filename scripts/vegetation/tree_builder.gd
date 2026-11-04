@@ -86,7 +86,8 @@ func _tube(points: Array[Vector3], radii: Array[float], sides: int, uv_u_scale: 
 				var a1: Array = prev_ring[s + 1]
 				var b0: Array = ring[s]
 				var b1: Array = ring[s + 1]
-				for vtx in [a0, b0, b1, a0, b1, a1]:
+				# Godot front faces are clockwise seen from outside.
+				for vtx in [a0, b1, b0, a0, a1, b1]:
 					_bark.set_normal(vtx[1])
 					_bark.set_uv(vtx[2])
 					_bark.add_vertex(vtx[0])
@@ -317,7 +318,7 @@ func _far_cone(st: SurfaceTool, base: Vector3, r0: float, r1: float, h: float, s
 		var b1 := base + Vector3(cos(a1) * r0, 0, sin(a1) * r0)
 		var t0 := base + Vector3(cos(a0) * r1, h, sin(a0) * r1)
 		var t1 := base + Vector3(cos(a1) * r1, h, sin(a1) * r1)
-		for p in [b0, t0, t1, b0, t1, b1]:
+		for p in [b0, t1, t0, b0, b1, t1]:
 			st.set_color(col)
 			st.add_vertex(p)
 

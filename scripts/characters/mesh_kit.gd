@@ -35,7 +35,8 @@ static func tapered_capsule(r0: float, r1: float, length: float, seg := 14, cap_
 				var n2: Vector2 = p[2]
 				return [Vector3(cos(a) * p[0], p[1], sin(a) * p[0]), Vector3(cos(a) * n2.x, n2.y, sin(a) * n2.x).normalized()]
 			var q := [v.call(p0, a0), v.call(p1, a0), v.call(p1, a1), v.call(p0, a1)]
-			for idx in [0, 2, 1, 0, 3, 2]:
+			# Clockwise seen from outside (Godot front faces).
+			for idx in [0, 1, 2, 0, 2, 3]:
 				st.set_normal(q[idx][1])
 				st.add_vertex(q[idx][0])
 	var m := st.commit()
