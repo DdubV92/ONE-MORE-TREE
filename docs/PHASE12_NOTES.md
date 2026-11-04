@@ -117,11 +117,11 @@ Distances to hard cover are measured from rocks, landforms and structures, exclu
 
 | Measure | Value |
 |---|---|
-| Work cells | 10,924 |
-| Max distance to a hard sightline break | 90.8 m (open shore edges) |
-| 95th percentile | 39.3 m |
-| Within 50 m | 99.0 % |
-| Hide: max distance / 95th percentile | 113.8 m / ~90 m |
+| Work cells | 10,916 |
+| Max distance to a hard sightline break | 75.3 m (open shore edges) |
+| 95th percentile | 39.6 m |
+| Within 50 m | 99.1 % |
+| Hide: max distance / 95th percentile | 119.8 m / 90.8 m |
 
 Clearing fixtures at 25, 50, 90, 99, 99.9 and 100 % (nearest-first, through the real removal signal):
 - 0 remaining trees are unreachable at any level;
@@ -208,6 +208,14 @@ Lavapipe captures at 1280×720 (CPU rasteriser, *not* representative of a GPU):
 
 - **Load:** island r2 loads in about 0.5 s; vegetation builds in 1.3 s and undergrowth in 1.6 s (headless).
 - **Gap:** 60 FPS at 1080p on a midrange GPU is not measured. Run the benchmark route on real hardware. The undergrowth's alpha overdraw is the most likely cost; the Low and Medium presets thin decorative plants only.
+
+## Checks run (observed)
+
+- **Automated tests:** 54/54 pass, including the new Phase 12 test and the updated walk test, which now checks both walks: the procedural one by phase and the captured one by its own foot-plant windows, with no skating.
+- **Smoke test:** 0 errors, 0 warnings.
+- **Island audits:** r1 (legacy) 0 issues; r2 0 issues.
+- **Determinism:** r2 and base-world determinism checks pass.
+- **Captures:** `docs/screenshots/phase12_*` (software renderer).
 
 ## Honest gaps
 

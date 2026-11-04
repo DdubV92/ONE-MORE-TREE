@@ -2602,7 +2602,7 @@ func _p8_animation(world: IslandWorld) -> String:
 	if hc.current != "pickup":
 		return "standing locomotion cut a short action"
 	hc.set_locomotion(1.2)
-	if hc.action != "" or hc.current != "walk":
+	if hc.action != "" or not hc.current.begins_with("walk"):
 		return "moving did not interrupt an action"
 	hc.play_action("listen")
 	for i in 200:
