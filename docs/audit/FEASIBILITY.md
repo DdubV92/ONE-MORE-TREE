@@ -23,12 +23,13 @@ All numbers below were **measured** through the real game rules: worker AI, navi
 |---|---|---|---|---|---|---|---|---|---|
 | Early, hand hauling (`hand2`) | 2 workers, small axes | 6 | 4 | **3.00** | $300 | $600 | 1,929 / 209 | 5 | 2 / 2 |
 | First truck (`mixed3`) | 3 workers, medium axes, 1 truck team + 1 by hand | 6 | 5 | **4.22** (2.89 by truck) | $421 | $900 | 2,772 / 165 | 7 | 1 / 3 |
-| Full operation (`full5`) | 5 workers, large axes, 2 truck teams | 5 | 0 | **3.37** (all by truck) | $336 | $1,500 | 1,973 / 66 | 1 | 0 / 5 (see below) |
+| Full operation (`full5`), before the Phase 7 logistics fixes | 5 workers, large axes, 2 truck teams | 5 | 0 | 3.37 (all by truck) | $336 | $1,500 | 1,973 / 66 | 1 | 5 / 5 (home by 1,140 s) |
+| **Full operation (`full5`), after the fixes** (truck waypoint progress guard; team members who miss departure go back to work) | 5 workers, large axes, 2 truck teams | 11 | 9 | **7.01** (5.18 by truck) | $701 | $1,500 | 4,920 / 169 | 9 | 5 / 5 |
 | Late distant cleanup (`far5`) | as `full5`, ~270 m from camp | 5 | 0 | **0.00** | $0 | $1,500 | 559 / 31 | 0 | 0 / 5 |
 | Phase 4 hand crew (`crew_sim`) | 5 workers, small axes, hand | 9 | — | 4.65 | $464 | $1,500 | 4,751 / 252 | 11 | 5 / 5 |
 | Phase 5 single team (`truck_sim`, two runs) | 2 workers, 1 truck | — | — | 3.07 / 2.90 | $306 / $300 | $600 | — | 6 / 9 | home |
 
-**Best measured day: about 4–5 tree-equivalents.** At that rate a 30-day contract clears about **120–150 trees**, roughly 1 % of the current island. Wages exceed income in every measured configuration.
+**Best measured day: about 7 tree-equivalents** (full crew, two trucks, after the fixes). At that rate a 30-day contract clears about **150–210 trees** once the early hand-hauling days are counted, under 2 % of the current island. Wages still exceed income in every measured configuration.
 
 ## Why (from the traces)
 

@@ -1,9 +1,9 @@
 # One More Tree: Phase 6 test build
 
-**Download (Windows, about 231 MB zip):**
-https://github.com/DdubV92/ONE-MORE-TREE/actions/runs/41776948834/artifacts/13297103353
+**ONE MORE TREE LATEST BUILD PHASE 6 - build 29 (Windows)**
+https://github.com/DdubV92/ONE-MORE-TREE/actions/runs/41786366497/artifacts/13302060223
 
-(You need to be signed in to GitHub. The file is `OneMoreTree-windows-x86_64-phase-6-terror-foreman-23.zip`.)
+(Sign in to GitHub. The title screen footer also shows "ONE MORE TREE LATEST BUILD PHASE 6 - build 29".)
 
 1. Download the zip and extract it to a new folder. This replaces the previous build.
 2. Run `OneMoreTree.exe`. Windows SmartScreen may warn because the build is unsigned: More info, then Run anyway.
