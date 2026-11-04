@@ -93,16 +93,22 @@ func _build_island() -> void:
 					grid.set_point_weight_scale(Vector2i(i, j), 1.0 + (1.0 - n.y) * 6.0)
 			grid.set_point_solid(Vector2i(i, j), solid)
 	# Bridges are walkable decks across the water.
+	# Phase 7: deck/ramp heights are recorded so walkers stay ON the bridge
+	# (before, they followed the riverbed height under it).
 	for b in World.bridges():
 		var across := Vector2(float(b.ax), float(b.az)).normalized()
 		var half: float = b.half_span
-		var d := -half - 3.0
-		while d <= half + 3.0:
+		var d := -half - BridgeBuilder.ramp_length(b, -1.0)
+		var d_end := half + BridgeBuilder.ramp_length(b, 1.0)
+		while d <= d_end:
 			var p := Vector2(b.x, b.z) + across * d
 			var k := to_cell(p)
 			if _in_island(k):
 				grid.set_point_solid(k, false)
 				grid.set_point_weight_scale(k, 1.0)
+				var y := BridgeBuilder.surface_at_distance(b, d)
+				if y > World.height_at(p.x, p.y) + 0.05:
+					deck[k] = maxf(float(deck.get(k, -INF)), y)
 			d += 1.0
 	# Rocks are solid; trees cost more (steering avoids the trunks).
 	for r in (World.rocks.x as PackedFloat32Array).size():

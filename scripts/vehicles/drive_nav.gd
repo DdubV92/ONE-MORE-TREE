@@ -37,6 +37,27 @@ func build(cn: CrewNav) -> void:
 	for j in dims.y:
 		for i in dims.x:
 			_eval(Vector2i(i, j))
+	_open_bridges()
+
+
+## Phase 7: the trail bridges carry pickups. Cells along each bridge axis
+## (deck plus ramps) are drivable; heights come from the crew grid's deck.
+var bridge_cells := {}
+
+
+func _open_bridges() -> void:
+	for b in World.bridges():
+		var across := Vector2(float(b.ax), float(b.az)).normalized()
+		var half: float = b.half_span
+		var d := -half - BridgeBuilder.ramp_length(b, -1.0) - 2.0
+		var d_end := half + BridgeBuilder.ramp_length(b, 1.0) + 2.0
+		while d <= d_end:
+			var k := to_cell(Vector2(b.x, b.z) + across * d)
+			if in_grid(k):
+				bridge_cells[k] = true
+				grid.set_point_solid(k, false)
+				grid.set_point_weight_scale(k, 1.0)
+			d += 1.0
 
 
 func to_cell(p: Vector2) -> Vector2i:
@@ -53,6 +74,8 @@ func in_grid(k: Vector2i) -> bool:
 
 ## Re-evaluates one cell from the current world (trees, logs, ground).
 func _eval(k: Vector2i) -> void:
+	if bridge_cells.has(k):
+		return
 	var c := center(k)
 	var solid := not _drivable_point(c)
 	grid.set_point_solid(k, solid)

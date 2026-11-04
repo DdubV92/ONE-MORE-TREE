@@ -1,0 +1,461 @@
+{
+	"elapsed_ms": 3851,
+	"engine": "4.5.1-stable (official)",
+	"facilities": {
+		"arcade_spot:Cabin/Arcade_1": {
+			"ok": true,
+			"points": 7
+		},
+		"arcade_spot:Cabin/Arcade_2": {
+			"ok": true,
+			"points": 6
+		},
+		"delivery_rack": {
+			"ok": true,
+			"points": 6
+		},
+		"dock_end (gangway)": {
+			"ok": true,
+			"points": 8
+		},
+		"dog_camper_route_points": {
+			"ok": true
+		},
+		"dog_refuge_approach": {
+			"ok": true,
+			"points": 8
+		},
+		"dog_rescue_spot": {
+			"distance_m": 145.0,
+			"ok": true
+		},
+		"hide:Hide_CamperWardrobe": {
+			"ok": true
+		},
+		"hide:Hide_DockHide_Under": {
+			"ok": true
+		},
+		"hide:Hide_UnderCamperBed": {
+			"ok": true
+		},
+		"hide:Hide_UnderWorkerBed_1": {
+			"ok": true
+		},
+		"hide:Hide_UnderWorkerBed_2": {
+			"ok": true
+		},
+		"hide:Hide_UnderWorkerBed_3": {
+			"ok": true
+		},
+		"hide:Hide_UnderWorkerBed_4": {
+			"ok": true
+		},
+		"hide:Hide_UnderWorkerBed_5": {
+			"ok": true
+		},
+		"hide:Hide_UnderWorkerBed_6": {
+			"ok": true
+		},
+		"hide:Hide_UtilityHide_Shelves": {
+			"ok": true
+		},
+		"hide:Hide_UtilityHide_UnderDesk": {
+			"ok": true
+		},
+		"worker_bed:WorkerBed_1/SleepPoint": {
+			"ok": true,
+			"points": 7
+		},
+		"worker_bed:WorkerBed_2/SleepPoint": {
+			"ok": true,
+			"points": 6
+		},
+		"worker_bed:WorkerBed_3/SleepPoint": {
+			"ok": true,
+			"points": 5
+		},
+		"worker_bed:WorkerBed_4/SleepPoint": {
+			"ok": true,
+			"points": 5
+		},
+		"worker_bed:WorkerBed_5/SleepPoint": {
+			"ok": true,
+			"points": 8
+		},
+		"worker_bed:WorkerBed_6/SleepPoint": {
+			"ok": true,
+			"points": 8
+		},
+		"worker_seat:Cabin/WorkerSeat_1": {
+			"ok": true,
+			"points": 5
+		},
+		"worker_seat:Cabin/WorkerSeat_2": {
+			"ok": true,
+			"points": 4
+		},
+		"worker_seat:Cabin/WorkerSeat_3": {
+			"ok": true,
+			"points": 7
+		},
+		"worker_seat:Cabin/WorkerSeat_4": {
+			"ok": true,
+			"points": 7
+		},
+		"worker_storage:Cabin/Footlocker_1": {
+			"ok": true,
+			"points": 6
+		},
+		"worker_storage:Cabin/Footlocker_2": {
+			"ok": true,
+			"points": 7
+		},
+		"worker_storage:Cabin/Footlocker_3": {
+			"ok": true,
+			"points": 5
+		},
+		"worker_storage:Cabin/Footlocker_4": {
+			"ok": true,
+			"points": 5
+		},
+		"worker_storage:CabinExtension/Footlocker_5": {
+			"ok": true,
+			"points": 8
+		},
+		"worker_storage:CabinExtension/Footlocker_6": {
+			"ok": true,
+			"points": 7
+		}
+	},
+	"issues": [
+		{
+			"category": "foliage_floating",
+			"disposition": "open",
+			"id": "P7-0001",
+			"proposed_fix": "sample terrain at instance position",
+			"reason": "11 instances > 15 cm above terrain",
+			"severity": "minor",
+			"where": "ground cover near camp"
+		}
+	],
+	"placement": {
+		"anchors": {
+			"bad": [],
+			"checked": 42
+		},
+		"bridges": {
+			"bad": [],
+			"checked": 2
+		},
+		"cameras": {
+			"bad": [],
+			"checked": 10
+		},
+		"ground_cover_near_camp": {
+			"floating": 11,
+			"floating_samples": [
+				{
+					"kind": "@MultiMeshInstance3D@6282",
+					"parent": "Cover_-5_14",
+					"pos": [
+						-144.0,
+						0.0,
+						464.0
+					],
+					"terrain": -0.18
+				},
+				{
+					"kind": "@MultiMeshInstance3D@6282",
+					"parent": "Cover_-5_14",
+					"pos": [
+						-144.0,
+						0.0,
+						464.0
+					],
+					"terrain": -0.18
+				},
+				{
+					"kind": "@MultiMeshInstance3D@6282",
+					"parent": "Cover_-5_14",
+					"pos": [
+						-144.0,
+						0.0,
+						464.0
+					],
+					"terrain": -0.18
+				},
+				{
+					"kind": "@MultiMeshInstance3D@6282",
+					"parent": "Cover_-5_14",
+					"pos": [
+						-144.0,
+						0.0,
+						464.0
+					],
+					"terrain": -0.18
+				},
+				{
+					"kind": "@MultiMeshInstance3D@6282",
+					"parent": "Cover_-5_14",
+					"pos": [
+						-144.0,
+						0.0,
+						464.0
+					],
+					"terrain": -0.18
+				},
+				{
+					"kind": "@MultiMeshInstance3D@6282",
+					"parent": "Cover_-5_14",
+					"pos": [
+						-144.0,
+						0.0,
+						464.0
+					],
+					"terrain": -0.18
+				}
+			],
+			"in_buildings": 0,
+			"in_water": 0,
+			"instances": 10731
+		},
+		"rocks": {
+			"checked": 598,
+			"floating": 0,
+			"max_gap": 0.0
+		},
+		"summary": {
+			"anchors_bad": 0,
+			"cameras_bad": 0,
+			"cover_floating": 11,
+			"cover_in_buildings": 0,
+			"rock_floating": 0,
+			"tree_floating": 0,
+			"tree_in_water": 0,
+			"tree_no_stand": 0
+		},
+		"trees": {
+			"checked": 12000,
+			"floating": 0,
+			"in_water": 0,
+			"max_gap": 0.0,
+			"no_cut_stand": 0,
+			"on_rock": 0,
+			"overburied": 0
+		}
+	},
+	"reach_original": {
+		"checked": 12000,
+		"component_cells": 127715,
+		"label": "original",
+		"path_samples": [
+			{
+				"length_m": 884.0,
+				"path_points": 12,
+				"region": "outer north-west",
+				"tree": 0
+			},
+			{
+				"length_m": 594.0,
+				"path_points": 10,
+				"region": "outer west",
+				"tree": 4000
+			},
+			{
+				"length_m": 538.0,
+				"path_points": 11,
+				"region": "outer west",
+				"tree": 6000
+			},
+			{
+				"length_m": 542.0,
+				"path_points": 10,
+				"region": "outer west",
+				"tree": 8000
+			},
+			{
+				"length_m": 696.0,
+				"path_points": 13,
+				"region": "outer south-east",
+				"tree": 11999
+			}
+		],
+		"per_region": {
+			"camp surroundings": {
+				"reachable": 67,
+				"targets": 67
+			},
+			"inner east": {
+				"reachable": 545,
+				"targets": 545
+			},
+			"inner north": {
+				"reachable": 645,
+				"targets": 645
+			},
+			"inner north-east": {
+				"reachable": 485,
+				"targets": 485
+			},
+			"inner north-west": {
+				"reachable": 787,
+				"targets": 787
+			},
+			"inner south": {
+				"reachable": 583,
+				"targets": 583
+			},
+			"inner south-east": {
+				"reachable": 667,
+				"targets": 667
+			},
+			"inner south-west": {
+				"reachable": 651,
+				"targets": 651
+			},
+			"inner west": {
+				"reachable": 719,
+				"targets": 719
+			},
+			"outer east": {
+				"reachable": 1537,
+				"targets": 1537
+			},
+			"outer north": {
+				"reachable": 454,
+				"targets": 454
+			},
+			"outer north-east": {
+				"reachable": 703,
+				"targets": 703
+			},
+			"outer north-west": {
+				"reachable": 882,
+				"targets": 882
+			},
+			"outer south": {
+				"reachable": 343,
+				"targets": 343
+			},
+			"outer south-east": {
+				"reachable": 904,
+				"targets": 904
+			},
+			"outer south-west": {
+				"reachable": 671,
+				"targets": 671
+			},
+			"outer west": {
+				"reachable": 1357,
+				"targets": 1357
+			}
+		},
+		"unreachable": 0
+	},
+	"regions": {
+		"centre": [
+			2.25716304779053,
+			-23.1783046722412
+		],
+		"trees_per_region": {
+			"camp surroundings": 67,
+			"inner east": 545,
+			"inner north": 645,
+			"inner north-east": 485,
+			"inner north-west": 787,
+			"inner south": 583,
+			"inner south-east": 667,
+			"inner south-west": 651,
+			"inner west": 719,
+			"outer east": 1537,
+			"outer north": 454,
+			"outer north-east": 703,
+			"outer north-west": 882,
+			"outer south": 343,
+			"outer south-east": 904,
+			"outer south-west": 671,
+			"outer west": 1357
+		}
+	},
+	"trucks_original": {
+		"drivable_cells_from_bays": 48381,
+		"per_region": {
+			"camp surroundings": {
+				"targets": 67,
+				"within_25m_of_truck_route": 67
+			},
+			"inner east": {
+				"targets": 545,
+				"within_25m_of_truck_route": 545
+			},
+			"inner north": {
+				"targets": 645,
+				"within_25m_of_truck_route": 645
+			},
+			"inner north-east": {
+				"targets": 485,
+				"within_25m_of_truck_route": 452
+			},
+			"inner north-west": {
+				"targets": 787,
+				"within_25m_of_truck_route": 787
+			},
+			"inner south": {
+				"targets": 583,
+				"within_25m_of_truck_route": 583
+			},
+			"inner south-east": {
+				"targets": 667,
+				"within_25m_of_truck_route": 667
+			},
+			"inner south-west": {
+				"targets": 651,
+				"within_25m_of_truck_route": 651
+			},
+			"inner west": {
+				"targets": 719,
+				"within_25m_of_truck_route": 719
+			},
+			"outer east": {
+				"targets": 1537,
+				"within_25m_of_truck_route": 1537
+			},
+			"outer north": {
+				"targets": 454,
+				"within_25m_of_truck_route": 454
+			},
+			"outer north-east": {
+				"targets": 703,
+				"within_25m_of_truck_route": 641
+			},
+			"outer north-west": {
+				"targets": 882,
+				"within_25m_of_truck_route": 882
+			},
+			"outer south": {
+				"targets": 343,
+				"within_25m_of_truck_route": 342
+			},
+			"outer south-east": {
+				"targets": 904,
+				"within_25m_of_truck_route": 904
+			},
+			"outer south-west": {
+				"targets": 671,
+				"within_25m_of_truck_route": 671
+			},
+			"outer west": {
+				"targets": 1357,
+				"within_25m_of_truck_route": 1351
+			}
+		},
+		"targets": 12000,
+		"within_25m": 11898
+	},
+	"world": {
+		"generation_version": 1.0,
+		"rocks": 598,
+		"seed": 20261103.0,
+		"trees": 12000
+	}
+}

@@ -1,10 +1,41 @@
 class_name BridgeBuilder
 extends Node3D
-## Timber footbridges at the reserved crossing sites (data/world/layout.json).
+## Timber bridges at the reserved crossing sites (data/world/layout.json).
 ## Walkable deck with rails and ramp collision onto both banks, so every part
-## of the island stays reachable on foot without swimming.
+## of the island stays reachable on foot without swimming. Phase 7: wide
+## enough for a pickup (3.6 m between rails) with ramps no steeper than
+## MAX_RAMP_SLOPE; the same ramp geometry feeds the crew and truck grids.
 
-const WIDTH := 2.4
+const WIDTH := 3.6
+const MAX_RAMP_SLOPE := 0.22
+
+
+## Ramp length on side s (+1/-1): long enough that rise/run <= MAX slope.
+static func ramp_length(b: Dictionary, s: float) -> float:
+	var across := Vector2(float(b.ax), float(b.az)).normalized()
+	var half: float = b.half_span
+	var L := 3.0
+	while L < 16.0:
+		var foot := Vector2(b.x, b.z) + across * s * (half + L)
+		var rise := absf(float(b.deck) - World.height_at(foot.x, foot.y))
+		if rise / L <= MAX_RAMP_SLOPE:
+			break
+		L += 0.5
+	return L
+
+
+## Walking/driving surface height along a bridge at signed distance d from
+## its centre (deck between the abutments, linear ramps beyond).
+static func surface_at_distance(b: Dictionary, d: float) -> float:
+	var half: float = b.half_span
+	if absf(d) <= half:
+		return float(b.deck)
+	var s := signf(d)
+	var L := ramp_length(b, s)
+	var across := Vector2(float(b.ax), float(b.az)).normalized()
+	var foot := Vector2(b.x, b.z) + across * s * (half + L)
+	var g := World.height_at(foot.x, foot.y)
+	return lerpf(float(b.deck), g, clampf((absf(d) - half) / L, 0.0, 1.0))
 
 
 func build() -> void:
@@ -35,15 +66,15 @@ func _bridge(i: int, b: Dictionary) -> void:
 	# Support piers into the river bed
 	for z in [-half * 0.45, half * 0.45]:
 		for s in [-1.0, 1.0]:
-			var world_p := root.global_transform * Vector3(s * 0.9, 0, z)
+			var world_p := root.global_transform * Vector3(s * (WIDTH * 0.5 - 0.3), 0, z)
 			var bed := World.height_at(world_p.x, world_p.z)
 			var hgt := float(b.deck) - bed + 0.3
-			BuildKit.cylinder(root, 0.12, hgt, Vector3(s * 0.9, -hgt * 0.5, z), "dark_wood", true, 8)
+			BuildKit.cylinder(root, 0.14, hgt, Vector3(s * (WIDTH * 0.5 - 0.3), -hgt * 0.5, z), "dark_wood", true, 8)
 	# Ramps from each bank up to the deck (visual planks + walkable collision)
 	for s in [-1.0, 1.0]:
 		var end_local := Vector3(0, 0, s * half)
 		var end_world := root.global_transform * end_local
-		var out_world := root.global_transform * Vector3(0, 0, s * (half + 3.0))
+		var out_world := root.global_transform * Vector3(0, 0, s * (half + ramp_length(b, -s)))
 		var ground := World.height_at(out_world.x, out_world.z)
 		var from := Vector3(out_world.x, ground, out_world.z)
 		var to := Vector3(end_world.x, float(b.deck), end_world.z)

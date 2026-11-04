@@ -172,6 +172,21 @@ func _journal_contract() -> Control:
 	_text(v, "State: %s%s" % [svc.contract.state.replace("_", " ").to_lower(), ("  (" + svc.contract.outcome_id + ")") if svc.contract.outcome_id != "" else ""])
 	_text(v, "Original trees standing: %d of %d\nFelled trunks still to buck: %d\nStumps to remove: %d\nTimber not yet delivered: %.2f tree-equivalents\nDelivered and accepted: %.2f tree-equivalents (waiting in the pit queue: %.2f)\nFinal ash cleanup: %s (not required for the contract)" % [c.standing, c.total_trees, c.trunks_to_buck, c.stumps, c.undelivered_mte / 1000.0, c.accepted_mte / 1000.0, c.backlog_mte / 1000.0, "clean" if c.ash_clean else "fire still burning"])
 	_text(v, "Pay: exactly $100 per original tree, split across its logs and credited when each log is accepted at the camp rack. Felling alone pays nothing.", 15, UITheme.MUTED)
+	v.add_child(UITheme.button("Locate the nearest remaining work", func() -> void:
+		var from: Vector3 = Game.player.global_position
+		var near := ContractLocator.nearest(from)
+		var lines := PackedStringArray()
+		var names := {"tree": "standing tree", "stump": "stump to chop out", "log": "undelivered log"}
+		var best := Vector3.INF
+		for k in ["log", "stump", "tree"]:
+			if near.has(k):
+				lines.append("Nearest %s: %s" % [names[k], ContractLocator.describe(from, near[k])])
+				if best == Vector3.INF:
+					best = near[k]
+		if best != Vector3.INF and Game.world_root:
+			ContractLocator.mark(Game.world_root, best)
+		hud.show_message("\n".join(lines) if not lines.is_empty() else "Nothing left to do for the contract.", 8.0)
+		close_panel(), 320))
 	_text(v, "To finish on time you would need about %.0f trees a day from here. The island has %d trees (a provisional count); one person cannot clear it alone. The crew (Phase 4) and trucks (Phase 5) are what make it possible." % [svc.contract.required_per_day(), c.total_trees], 15, UITheme.MUTED)
 	return s[0]
 

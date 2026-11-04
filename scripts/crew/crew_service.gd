@@ -612,7 +612,8 @@ func decide(w: Worker) -> void:
 		"felling":
 			_try_fell(w)
 		"processing":
-			_try_buck(w)
+			if not _try_buck(w):
+				_try_stump(w)
 		"hauling":
 			_try_haul(w)
 		_:
@@ -630,6 +631,9 @@ func _auto(w: Worker) -> void:
 	if trunks > 0 and axe_ok(w) and _try_buck(w):
 		return
 	if loose > 0 and _try_haul(w):
+		return
+	# Phase 7: stumps are contract targets - chop them out before felling more.
+	if axe_ok(w) and _try_stump(w):
 		return
 	# Never fell more while trunks wait to be bucked or logs wait to be
 	# carried (the bottleneck rule); only fell into a clear area.
@@ -800,6 +804,55 @@ func _trunks(focus: Vector3, w: Worker) -> Array:
 			continue
 		out.append(b)
 	return out
+
+
+## Phase 7: stumps left by sectioned trees (required contract targets)
+## within reach of the work focus, unclaimed.
+func _stumps(focus: Vector3, w: Worker) -> Array:
+	var out := []
+	var rad := search_radius(w)
+	var idx: Dictionary = Game.vegetation.get("tree_index_by_id") if Game.vegetation else {}
+	for id in trees.records:
+		if int(trees.records[id].state) != TreeService.State.SECTIONED:
+			continue
+		if claims.has("stump:%d" % int(id)):
+			continue
+		var i: int = idx.get(int(id), -1)
+		if i < 0:
+			continue
+		var p := World.tree_position(i)
+		if p.distance_to(focus) > rad + 20.0:
+			continue
+		out.append(i)
+	return out
+
+
+func _try_stump(w: Worker) -> bool:
+	var best := -1
+	var best_d := INF
+	for i in _stumps(work_focus(w), w):
+		var d := World.tree_position(i).distance_to(w.global_position)
+		if d < best_d:
+			best_d = d
+			best = i
+	if best < 0:
+		return false
+	var id := int(World.trees.id[best])
+	var stands := PlacementValidator.cut_stands(best)
+	if stands.is_empty() or not claim("stump:%d" % id, w):
+		return false
+	var stand := stands[0]
+	for s in stands:
+		if s.distance_to(w.global_position) < stand.distance_to(w.global_position):
+			stand = s
+	if not w.start_stump(id, World.tree_position(best), stand):
+		claims.erase("stump:%d" % id)
+		return false
+	return true
+
+
+func on_stump_removed(w: Worker) -> void:
+	stats[w.id]["stumps"] = int(stats[w.id].get("stumps", 0)) + 1
 
 
 func _try_buck(w: Worker) -> bool:

@@ -103,6 +103,9 @@ func activity_words() -> String:
 		"fell": return "felling"
 		"retreat": return "stepping clear of a fall"
 		"buck": return "bucking a trunk"
+		"stump": return "chopping out a stump"
+		"hidden": return "hiding"
+		"dead": return "dead"
 		"pick", "deliver", "load_truck": return "hauling"
 		"seated": return "riding in a truck"
 		"follow": return "following you"
@@ -269,7 +272,7 @@ func _physics_process(delta: float) -> void:
 	_time_check -= delta
 	if _time_check <= 0.0:
 		_time_check = 3.0
-		if activity in ["fell", "buck", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver", "hide_enter", "board"]):
+		if activity in ["fell", "buck", "stump", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver", "hide_enter", "board"]):
 			crew.check_time(self)
 	match activity:
 		"move":
@@ -280,6 +283,8 @@ func _physics_process(delta: float) -> void:
 			_do_retreat_wait(delta)
 		"buck":
 			_do_buck(delta)
+		"stump":
+			_do_stump(delta)
 		"pick":
 			_do_pick()
 		"deliver":
@@ -445,6 +450,36 @@ func _do_buck(delta: float) -> void:
 		if bool(res.get("separated", false)):
 			crew.on_bucked(self)
 			abandon("cut done")
+
+
+## Phase 7: chop out a stump (shared claims; same swing and work rate).
+func start_stump(tree_id: int, base: Vector3, stand: Vector3) -> bool:
+	target["tree"] = tree_id
+	target["stump_at"] = base
+	target["stand"] = stand
+	target["label"] = "a stump"
+	if global_position.distance_to(stand) > 0.6:
+		return go_to(stand, "stump", "a stump")
+	activity = "stump"
+	return true
+
+
+func _do_stump(delta: float) -> void:
+	var tid: int = target.get("tree", -1)
+	var at: Vector3 = target.get("stump_at", global_position)
+	_face(Vector3(at.x - global_position.x, 0, at.z - global_position.z).normalized(), delta * 3.0)
+	if global_position.distance_to(at) > 2.8:
+		abandon("moved away")
+		return
+	if _swing(delta):
+		var res := crew.trees.apply_stump_work(tid, crew.work_per_contact(self))
+		if not bool(res.get("accepted", false)):
+			abandon("no stump there")
+			return
+		LoggingFX.play(LoggingFX.Sound.CHOP, at + Vector3(0, 0.3, 0), -8.0)
+		if bool(res.get("removed", false)):
+			crew.on_stump_removed(self)
+			abandon("stump out")
 
 
 # --------------------------------------------------------- hauling actions
