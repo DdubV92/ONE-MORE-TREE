@@ -211,7 +211,9 @@ func can_sleep() -> Dictionary:
 	if _sleeping:
 		return {"ok": false, "reason": ""}
 	if Game.dog_rescue and Game.dog_rescue.blocks_sleep():
-		return {"ok": false, "reason": "Find your dog first."}
+		var dr: DogRescue = Game.dog_rescue
+		var left := maxf(DogRescue.ASSIST_AFTER - dr.t, 0.0) if dr.state == "SEARCH" else -1.0
+		return {"ok": false, "reason": "Find your dog first: Biscuit is unhurt, nearby and whining - follow the sound, then walk home together.%s" % ((" If you can't find Biscuit, the dog finds the way home on its own in about %s." % fmt_time(left)) if left >= 0.0 else "")}
 	if clock.phase() == WorkdayClock.Phase.DAYLIGHT:
 		return {"ok": false, "reason": "Too early to sleep. The workday runs until dusk (%s left)." % fmt_time(clock.time_until_dusk())}
 	return {"ok": true}

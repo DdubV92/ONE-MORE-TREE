@@ -123,7 +123,7 @@ func _show_transition_card() -> void:
 	if _info_shown or Game.end_screen == null:
 		return
 	_info_shown = true
-	Game.end_screen.show_info("The company has left", "Night fell on day 30 with the island not cleared. The last company boat is gone.\n\nThe emergency radio in the utility building answered: a rescue ship will reach the dock at dawn on day 36. Five days.\n\nSomething tall is out there now, and it is not like the others. It is physical, and it can kill.\n- Lamps, closed doors and the camper NO LONGER keep you safe from it. They only hide or slow you.\n- Hide (E) under beds, in closets, behind the utility shelves or under the dock. If it saw you go in, it may look.\n- Break its line of sight and move quietly. It can outrun you for a few seconds, not forever.\n\nBiscuit is safe at the dock alcove and will board the ship with you.", "I understand")
+	Game.end_screen.show_info("The company has left", "Night fell on day 30 with the island not cleared. The last company boat is gone.\n\nThe emergency radio in the utility building answered: a rescue ship will reach the dock at dawn on day 36. Five days.\n\nSomething tall is out there now, and it is not like the others. It is physical, and it can kill.\n- Lamps, closed doors and the camper NO LONGER keep you safe from it. They only hide or slow you.\n- Hide (" + Keys.label("interact") + ") under beds, in closets, behind the utility shelves or under the dock. If it saw you go in, it may look.\n- Break its line of sight and move quietly. It can outrun you for a few seconds, not forever.\n- The five days are continuous: lying in a bed does not skip time. Company hiring and boats are closed.\n- At dawn on day 36 get yourself and your surviving crew to the dock; boarding stays open for %d minutes.\n\nBiscuit is safe at the dock alcove the whole time and boards the ship automatically. Do not go back for the dog.\n\nThe game is paused until you continue." % int(BOARDING_WINDOW / 60.0), "I understand")
 
 
 func _spawn_foreman() -> void:
@@ -583,7 +583,7 @@ func request_board(_by: Node) -> void:
 		if worker_alive(wk) and not escaped.has(wk.id):
 			ashore.append(str(wk.emp.name))
 	if not ashore.is_empty() and Game.end_screen:
-		Game.end_screen.confirm("Leave now?", "%s %s still on the island." % [", ".join(ashore), "is" if ashore.size() == 1 else "are"], "Board and leave", func() -> void: _board_player(), "Wait for them", func() -> void: pass)
+		Game.end_screen.confirm("Leave them behind?", "%s %s still on the island. If you board now, the ship leaves and they stay behind.\nBoarding is open for another %s. The game is paused while you decide." % [", ".join(ashore), "is" if ashore.size() == 1 else "are", CampaignService.fmt_time(maxf(BOARDING_WINDOW - ship_t, 0.0))], "Board and leave without %s" % ", ".join(ashore), func() -> void: _board_player(), "Wait for them", func() -> void: pass)
 	else:
 		_board_player()
 
@@ -602,6 +602,7 @@ func _finish(kind: String) -> void:
 		lines.append("You reached the rescue ship at dawn on day 36.")
 	else:
 		lines.append("The ship waited, then left without you.")
+	lines.append("The contract failed on day 30; these five days were survival, not a finished job.")
 	lines.append("")
 	if Game.dog and Game.dog.boarded_once:
 		lines.append("Biscuit: aboard, safe.")

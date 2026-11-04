@@ -1,5 +1,38 @@
 # Phase checklist
 
+## Phase 9: Onboarding, UI, crew management, accessibility, balance and endings
+
+Status key: ✅ implemented and observed (automated test or capture) · 🟡 implemented, not yet run by a person / partial · ⬜ absent. Player guide: [PLAYER_GUIDE.md](PLAYER_GUIDE.md). Time/pause/state: [TIME_AND_STATE.md](TIME_AND_STATE.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Title: Continue / New Campaign / Load / Settings / Help & Controls / Preview Tour / Character Preview / Credits / Quit; disabled Continue explains why | ✅ / 🟡 | Keyboard focus and Esc back. Summaries tested (completed, hunt, escaped = finished, too-new, legacy). Buttons not clicked by a person yet |
+| New Campaign brief (30 days, real delivery pay, two workers, $300 wages, sleep rule, content note); overwrite confirmation for occupied slots | ✅ / 🟡 | Only the standard campaign is offered; no fake difficulty choice |
+| Continue never picks a finished (escaped/dead/stranded) run or a too-new save | ✅ | `SaveService.continue_slot` |
+| Prioritized notification queue (critical > warning > info > minor), coalescing, reviewable log | ✅ | A minor message can't bury the dusk warning (tested) |
+| Live key names in prompts and help; rebinding with conflict swap, reset, persistence; Esc always cancels, Pause can't be lost | ✅ / 🟡 | Tested at the logic level; the rebinding UI hasn't been used by a person |
+| Accessibility: text/UI size, captions, subtitles, hints, highlight strength, flash reduction, horror intensity, bob/shake strength, DOF/CA/grain/vignette | ✅ / 🟡 | Captions/subtitles toggles are stored; per-source caption styling remains as in Phase 6/8. No controller support is advertised |
+| First-day guide from real results (walk, journal, crew/dog, rack, fell, section, carry, real delivery credit, money, night rules, sleep); any order, any keys, hold-to-chop, save/load; skip step, skip guide with rules summary, replay as help (never touches world/money) | ✅ / 🟡 | Detection tested; a full newcomer playthrough has not been run |
+| Night rules shown before the first night (paused card) and **no ordinary catch until acknowledged** | ✅ | Tested |
+| Journal: Help & log tab; contract counts incl. stumps, undelivered shares, logs on ground / in hands / in trucks, burning (already paid) | ✅ | |
+| Last-tree assist (Phase 7 locator) + once-only final-tree milestone that is not completion and says what's left | ✅ | Tested |
+| Success: completes immediately when all done; saved at once; summary from the ledger; Return to Menu or post-contract exploring (no clock/wages/night/hunt), saved distinctly | ✅ / 🟡 | Summary content tested; the full completion run needs a prepared fixture |
+| Hunt: rules card (paused, Continue) incl. continuous days, closed hiring/boats, boarding window, dog safe; status line shows survival day, ship and boarding time, dog status; sleep and hiring refusals explain the hunt | ✅ / 🟡 | |
+| Leave-behind requires a named, deliberate choice; escape summary lists dog, escaped, dead, departed and left-behind people and notes the failed contract | ✅ | |
+| Dog rescue: objective line, sleep refusal explains the dog is unhurt and when it will come home by itself | ✅ | Phase 6 rescue rules unchanged |
+| True pause freezes clock, night escalation and director | ✅ | Tested |
+| Crew roster, shop, hiring, firing, wages by due day, trucks | ✅ (Phases 3–5) | Reused; wage example added; stale Phase-4 wording removed |
+| Worker conversation reflects their own evidence | ✅ (Phase 4/8) | Unchanged |
+| Measured campaign balance | 🟡 | See [audit/FEASIBILITY.md](audit/FEASIBILITY.md) Phase 9 section. The standard 12,000-tree configuration stays **unverified/infeasible at today's tuning**, by owner decision |
+| Gamepad | ⬜ | Not supported, not advertised |
+
+### Phase 9 known limits (honest)
+
+- No person has played the new menus, guide or endings; checks are automated state tests and software-renderer captures.
+- The first-day guide teaches with text plus real detection; there are no animated arrows or world markers beyond the Phase 7 locator.
+- Captions follow the existing Phase 6/8 system (TV and Terror captions); there is no separate per-speaker caption styling yet.
+- The 30-day contract on the 12,000-tree island is still not completable at the current work rates. The owner has planned faster cutting and longer days.
+
 ## Phase 8: Animation, water, lighting, weather, camera and spatial sound
 
 Status key: ✅ implemented and observed (test, headless run or software-renderer screenshot) · 🟡 implemented, needs live review on real hardware/ears · ⬜ not done. Reference: [docs/PRESENTATION.md](PRESENTATION.md). Coverage: [docs/coverage/phase8_sensory_matrix.md](coverage/phase8_sensory_matrix.md).
