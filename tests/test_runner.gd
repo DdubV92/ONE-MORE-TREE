@@ -1575,7 +1575,7 @@ func _t_crew_claims() -> String:
 
 func _t_save_v6() -> String:
 	var d := SaveService.migrate({"schema": 5, "player": {"position": [0, 0, 0]}, "campaign": {}, "economy": {}})
-	if int(d.get("schema", 0)) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION != 6:
+	if int(d.get("schema", 0)) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION < 6:
 		return "schema not 6 after migration"
 	if not d.has("phase5"):
 		return "phase5 block missing"

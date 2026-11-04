@@ -356,6 +356,11 @@ func show_rules_choice() -> void:
 
 
 func show_outcome(state: String, outcome_id: String) -> void:
+	if state == ContractService.ABANDONMENT and Game.hunt and Game.mode == Game.Mode.CAMPAIGN and not svc.legacy:
+		# Phase 6: the failure becomes the survival hunt (rules card shown there).
+		if Game.hunt.mode == "none":
+			Game.hunt.begin_abandonment()
+		return
 	var f := _frame("Contract fulfilled" if state == ContractService.FULFILLED else "The contract has ended", 640)
 	var p: PanelContainer = f[0]
 	var v: VBoxContainer = f[1]

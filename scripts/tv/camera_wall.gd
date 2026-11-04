@@ -516,7 +516,13 @@ func _process(delta: float) -> void:
 			_focus_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
 			_rps_count += 1
 	else:
+		if _freeze_t > 0.0:
+			_freeze_t -= delta
+			if _freeze_t <= 0.0:
+				_frozen_tile = -1
 		for i in 4:
+			if i == _frozen_tile:
+				continue
 			_render_t[i] = float(_render_t[i]) + delta
 			if float(_render_t[i]) >= 1.0 / QUAD_HZ:
 				_render_t[i] = 0.0
@@ -671,6 +677,68 @@ func set_volume(v: float) -> void:
 func set_mic_muted(m: bool) -> void:
 	mic_muted = m
 	_update_ambience()
+
+
+# ----------------------------------------------------------- anomalies
+
+## "The Live Feed That Lies" (rare, camera-only illusion layer). The world
+## video underneath stays live and input keeps working; these are flagged
+## intentional anomalies (anomaly_log), separate from real render faults.
+## Kinds: freeze (one tile holds its frame), static (noise burst), label
+## (wrong camera text flickers), phantom (a figure drawn on the feed only).
+var anomaly_log: Array[Dictionary] = []
+var _frozen_tile := -1
+var _freeze_t := 0.0
+var _overlay: Control
+
+
+func anomaly(kind: String, sec := 1.5) -> void:
+	if screen == null or not _active or mode == "entertainment":
+		return
+	var tile := randi() % 4 if mode == "quad" else 0
+	anomaly_log.append({"kind": kind, "tile": tile, "t": Game.world_time})
+	if anomaly_log.size() > 50:
+		anomaly_log.pop_front()
+	match kind:
+		"freeze":
+			_frozen_tile = tile
+			_freeze_t = sec
+		"static", "phantom", "label":
+			if _overlay == null:
+				_overlay = Control.new()
+				_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				composite.add_child(_overlay)
+			var r := ColorRect.new()
+			var rect := Rect2(Vector2.ZERO, Vector2(960, 540)) if mode == "focus" else Rect2(_tile_rects[tile].position, _tile_rects[tile].size)
+			r.position = rect.position
+			r.size = rect.size
+			r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			if kind == "static":
+				r.color = Color(0.8, 0.8, 0.8, 0.35)
+			elif kind == "label":
+				r.color = Color(0, 0, 0, 0)
+				var l := Label.new()
+				l.text = "CAM-%02d" % (1 + randi() % 10)
+				l.position = Vector2(8, 4)
+				l.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
+				r.add_child(l)
+			else:
+				r.color = Color(0, 0, 0, 0)
+				var fig := ColorRect.new()
+				fig.color = Color(0.03, 0.03, 0.03, 0.75)
+				fig.size = Vector2(rect.size.x * 0.04, rect.size.y * 0.45)
+				fig.position = Vector2(rect.size.x * randf_range(0.3, 0.7), rect.size.y * 0.35)
+				r.add_child(fig)
+			_overlay.add_child(r)
+			get_tree().create_timer(sec, false).timeout.connect(r.queue_free)
+			if kind == "static" and speaker:
+				var p := AudioStreamPlayer3D.new()
+				p.stream = load("res://audio/generated/t_static.wav")
+				p.bus = "TV"
+				p.volume_db = -14.0 + linear_to_db(maxf(tv_volume, 0.001))
+				speaker.add_child(p)
+				p.play()
+				p.finished.connect(p.queue_free)
 
 
 func capture() -> Dictionary:

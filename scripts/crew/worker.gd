@@ -269,7 +269,7 @@ func _physics_process(delta: float) -> void:
 	_time_check -= delta
 	if _time_check <= 0.0:
 		_time_check = 3.0
-		if activity in ["fell", "buck", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver"]):
+		if activity in ["fell", "buck", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver", "hide_enter", "board"]):
 			crew.check_time(self)
 	match activity:
 		"move":
@@ -288,8 +288,10 @@ func _physics_process(delta: float) -> void:
 			_do_load_truck()
 		"follow":
 			_do_follow(delta)
-		"sleep", "sit", "departed", "aboard", "seated":
+		"sleep", "sit", "departed", "aboard", "seated", "hidden", "dead", "board":
 			pass
+		"hide_enter":
+			_enter_hide()
 		"depart_wait":
 			body_char.set_locomotion(0.0)
 		"home_arrived":
@@ -533,6 +535,56 @@ func board_seat(seat: Marker3D) -> void:
 	transform = Transform3D(Basis(), Vector3(0, -0.47, 0.12))
 	body_char.play("sit", 0.3)
 	body_char.set_locomotion(0.0)
+
+
+# ------------------------------------------------------ hunt (Phase 6)
+
+var _hide_spot: Node3D
+
+
+## Runs to a free hiding place (claimed) and gets in.
+func go_hide(spot: HideSpot) -> void:
+	abandon("hiding")
+	spot.set_meta("claimed", id)
+	_hide_spot = spot
+	if not go_to(spot.approach, "hide_enter", "hiding"):
+		spot.set_meta("claimed", "")
+		_hide_spot = null
+		return
+	_speed = 3.6
+
+
+func _enter_hide() -> void:
+	var spot := _hide_spot as HideSpot
+	if spot == null or spot.occupant != null:
+		activity = "idle"
+		return
+	spot.set_meta("claimed", "")
+	global_position = spot.marker.global_position
+	body_char.visible = false
+	col.collision_layer = 0
+	activity = "hidden"
+	Game.hunt.on_enter_hide(self, spot)
+
+
+func leave_hide(at: Vector3) -> void:
+	_hide_spot = null
+	body_char.visible = true
+	col.collision_layer = 1
+	global_position = Vector3(at.x, crew.nav.surface_at(at), at.z)
+	activity = "idle"
+
+
+## Killed by the Foreman: persistent life state; the body stays where it fell.
+func die() -> void:
+	abandon("dead")
+	activity = "dead"
+	body_char.visible = true
+	col.collision_layer = 0
+	body_char.set_locomotion(0.0)
+	body_char.rotation = Vector3(-PI * 0.5, body_char.rotation.y, 0)
+	body_char.position.y = 0.25
+	body_char.process_mode = Node.PROCESS_MODE_DISABLED
 
 
 func leave_seat(at: Vector3) -> void:

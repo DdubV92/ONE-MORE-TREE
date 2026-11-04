@@ -100,6 +100,15 @@ func _detail_dock(crew: CrewService) -> void:
 	BuildKit.box(d, Vector3(0.07, 0.07, length - 1.0), Vector3(x - 1.02, deck_y + 1.04, mid_z), "dark_wood", true, 0.0, "TopRail")
 	BuildKit.box(d, Vector3(0.05, 0.05, length - 1.0), Vector3(x - 1.02, deck_y + 0.6, mid_z), "dark_wood", false)
 	# Lamp at the end (practical light only: never a safety source).
+	# A hiding place under the dock's shore end, on dry sand (Phase 6).
+	var hz := shore.z + 1.6
+	var hm := Marker3D.new()
+	hm.name = "DockHide_Under"
+	hm.add_to_group("hiding_spot")
+	hm.set_meta("hide_kind", "under_dock")
+	d.add_child(hm)
+	hm.global_position = Vector3(x + 0.3, World.height_at(x + 0.3, hz) + 0.02, hz)
+	hm.rotation.y = PI * 0.5
 	var lp := Vector3(x - 0.95, deck_y, end.z + 0.2)
 	BuildKit.box(d, Vector3(0.09, 2.3, 0.09), lp + Vector3(0, 1.15, 0), "black", false, 0.0, "LampPost")
 	BuildKit.box(d, Vector3(0.45, 0.05, 0.05), lp + Vector3(0.2, 2.28, 0), "black", false)

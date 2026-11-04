@@ -22,7 +22,7 @@ extends Node3D
 
 signal boarded
 
-enum State { IDLE, WANDER, SIT, NAP, APPROACH, PET, ALERT, RETREAT, GO_HOME, SLEEP, WAKE, TO_REFUGE, REFUGE, BOARDING, BOARDED }
+enum State { IDLE, WANDER, SIT, NAP, APPROACH, PET, ALERT, RETREAT, GO_HOME, SLEEP, WAKE, TO_REFUGE, REFUGE, BOARDING, BOARDED, RESCUE_RUN, RESCUE_WAIT, FOLLOW }
 
 const DOG_ID := "dog_biscuit"
 const DOG_NAME := "Biscuit"
@@ -56,6 +56,9 @@ var _pet_t := 0.0
 var voice: AudioStreamPlayer3D
 var hotspot: Hotspot
 var _streams := {}
+var pets := 0
+var _rescue_whine_t := 5.0
+var _follow_t := 0.0
 
 
 func _ready() -> void:
@@ -283,13 +286,22 @@ func _process(delta: float) -> void:
 	var hour: float = Game.environment.hour if Game.environment else 12.0
 	var night := hour >= DUSK_HOUR or hour < WAKE_HOUR
 	if routine == "camp":
-		if night and not state in [State.GO_HOME, State.SLEEP]:
+		if night and not state in [State.GO_HOME, State.SLEEP, State.FOLLOW]:
 			go_home()
 		elif not night and state == State.SLEEP:
 			_leave_camper()
 	match state:
-		State.WANDER, State.APPROACH, State.RETREAT, State.GO_HOME, State.WAKE, State.TO_REFUGE, State.BOARDING:
+		State.WANDER, State.APPROACH, State.RETREAT, State.GO_HOME, State.WAKE, State.TO_REFUGE, State.BOARDING, State.RESCUE_RUN:
 			_follow(delta)
+		State.RESCUE_WAIT:
+			_brake(delta)
+			_rescue_whine_t -= delta
+			if _rescue_whine_t <= 0.0:
+				_rescue_whine_t = _rng.randf_range(16.0, 30.0)
+				_play("dog_whine_%d" % (_rng.randi() % 2), -6.0)
+				events.append("rescue_whine")
+		State.FOLLOW:
+			_follow_owner(delta)
 			_check_t -= delta
 			if _check_t <= 0.0 and state in [State.WANDER, State.APPROACH]:
 				_check_t = 0.4
@@ -327,6 +339,8 @@ func _process(delta: float) -> void:
 			_rest_clip = "sit"
 		State.NAP, State.SLEEP:
 			_rest_clip = "lie"
+		State.RESCUE_WAIT:
+			_rest_clip = "alert" if fmod(Time.get_ticks_msec() / 1000.0, 20.0) < 12.0 else "lie"
 		State.REFUGE:
 			_rest_clip = "lie"
 		State.ALERT:
@@ -448,6 +462,11 @@ func _arrive() -> void:
 		State.REFUGE:
 			state = State.REFUGE
 			events.append("in_refuge")
+		State.RESCUE_WAIT:
+			state = State.RESCUE_WAIT
+			events.append("rescue_waiting")
+		State.FOLLOW:
+			state = State.FOLLOW
 		State.BOARDED:
 			state = State.BOARDED
 			visible = false
@@ -498,7 +517,7 @@ func _avoid_vehicles() -> void:
 ## Ears/head turn toward it; big crashes close by cause an alert or a
 ## retreat. Calm cooldowns; it does not bark at every noise.
 func hear(_stream: AudioStream, pos: Vector3, _volume_db: float, category := "world", label := "") -> void:
-	if state in [State.SLEEP, State.BOARDED, State.PET, State.GO_HOME, State.WAKE, State.BOARDING]:
+	if state in [State.SLEEP, State.BOARDED, State.PET, State.GO_HOME, State.WAKE, State.BOARDING, State.RESCUE_RUN, State.RESCUE_WAIT, State.FOLLOW]:
 		return
 	var d := pos.distance_to(global_position)
 	var crash := label in ["a tree falling", "trunk cracking"]
@@ -576,6 +595,11 @@ func _pet_text() -> String:
 func pet(by: Node) -> void:
 	if state == State.BOARDED:
 		return
+	TerrorDirector.remember_voice("you", "Good dog, %s." % DOG_NAME, global_position)
+	pets += 1
+	if state == State.RESCUE_WAIT and Game.dog_rescue:
+		Game.dog_rescue.reunite(by)
+		return
 	if state == State.SLEEP or state == State.REFUGE:
 		if by and by.has_method("show_message"):
 			by.show_message("%s's tail thumps on the bed." % DOG_NAME)
@@ -589,6 +613,82 @@ func pet(by: Node) -> void:
 	events.append("petted")
 	if by and by.has_method("show_message"):
 		by.show_message("Good dog, %s." % DOG_NAME)
+
+
+# ------------------------------------------- once-only rescue (Phase 6)
+
+## The wind forced the door: run out through the open door along a
+## validated route to `to` and wait there (never deeper, never into water).
+func rescue_run(to: Vector3) -> bool:
+	routine = "rescue"
+	path.clear()
+	authored.clear()
+	_flap_points.clear()
+	_pi = 0
+	if inside_camper():
+		_append_camper(false)
+	var n := _nav()
+	if n:
+		var from := path[path.size() - 1] if not path.is_empty() else global_position
+		var leg := n.find_path(from, to)
+		if leg.is_empty():
+			return false
+		for q in leg:
+			path.append(q)
+			authored.append(false)
+	path.append(to)
+	authored.append(false)
+	_after = State.RESCUE_WAIT
+	want_speed = 3.0
+	state = State.RESCUE_RUN
+	events.append("rescue_run")
+	return true
+
+
+## Walks behind the boss (reunion); goes in to bed once home.
+func follow_owner() -> void:
+	routine = "rescue"
+	state = State.FOLLOW
+	path.clear()
+	authored.clear()
+	_follow_t = 0.0
+	events.append("follow")
+
+
+func _follow_owner(delta: float) -> void:
+	var p := Game.player as Node3D
+	if p == null:
+		return
+	_follow_t -= delta
+	if _pi < path.size():
+		_follow(delta)
+		if state != State.FOLLOW:
+			state = State.FOLLOW
+	else:
+		_brake(delta)
+	if _follow_t <= 0.0:
+		_follow_t = 0.8
+		var d := p.global_position.distance_to(global_position)
+		if d > 3.0:
+			var behind := p.global_position + (global_position - p.global_position).normalized() * 1.8
+			var n := _nav()
+			if n:
+				var leg := n.find_path(global_position, behind)
+				if not leg.is_empty():
+					path = leg
+					authored.clear()
+					for q in leg:
+						authored.append(false)
+					_pi = 0
+					_after = State.FOLLOW
+					want_speed = clampf(d * 0.6, 1.4, 3.2)
+
+
+## Rescue resolved: ordinary routine again (home to bed if it is night).
+func rescue_home() -> void:
+	routine = "camp"
+	state = State.IDLE
+	go_home()
 
 
 # ---------------------------------------------- survival interface (P6)
@@ -663,15 +763,23 @@ func reserve_wind_door_escape() -> bool:
 # ----------------------------------------------------------- persistence
 
 func capture() -> Dictionary:
-	return {"id": DOG_ID, "name": DOG_NAME, "routine": routine, "state": State.keys()[state], "pos": [global_position.x, global_position.y, global_position.z], "yaw": rotation.y, "boarded_once": boarded_once}
+	return {"id": DOG_ID, "name": DOG_NAME, "pets": pets, "routine": routine, "state": State.keys()[state], "pos": [global_position.x, global_position.y, global_position.z], "yaw": rotation.y, "boarded_once": boarded_once}
 
 
 ## Restores a valid pose: mid-route states resolve to the nearest legal one
 ## (in bed if it was inside at night, in the yard by day, at the refuge).
 func restore(d: Dictionary) -> void:
 	routine = str(d.get("routine", "camp"))
-	if not routine in ["camp", "refuge", "boarded"]:
+	pets = int(d.get("pets", 0))
+	if not routine in ["camp", "refuge", "boarded", "rescue"]:
 		routine = "camp"
+	if routine == "rescue":
+		# DogRescue restores the rescue pose/state itself (never replays the door).
+		var pr: Array = d.get("pos", [])
+		if pr.size() == 3:
+			global_position = Vector3(float(pr[0]), float(pr[1]), float(pr[2]))
+		visible = true
+		return
 	boarded_once = bool(d.get("boarded_once", false))
 	var pa: Array = d.get("pos", [])
 	if pa.size() == 3:

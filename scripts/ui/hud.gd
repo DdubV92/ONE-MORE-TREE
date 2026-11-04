@@ -641,6 +641,8 @@ func _process(delta: float) -> void:
 			hint_label.text = "Wading (%.1f m)" % p.wading_depth
 		else:
 			hint_label.text = ""
+	if Game.objective != "":
+		hint_label.text = "> " + Game.objective + ("\n" + hint_label.text if hint_label.text != "" else "")
 	if debug_label.visible:
 		debug_label.text = _debug_text()
 	if p and p.get("carry"):

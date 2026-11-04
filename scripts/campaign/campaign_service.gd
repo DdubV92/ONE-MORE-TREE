@@ -171,6 +171,8 @@ func can_sleep() -> Dictionary:
 		return {"ok": false, "reason": "The contract has ended."}
 	if _sleeping:
 		return {"ok": false, "reason": ""}
+	if Game.dog_rescue and Game.dog_rescue.blocks_sleep():
+		return {"ok": false, "reason": "Find your dog first."}
 	if clock.phase() == WorkdayClock.Phase.DAYLIGHT:
 		return {"ok": false, "reason": "Too early to sleep. The workday runs until dusk (%s left)." % fmt_time(clock.time_until_dusk())}
 	return {"ok": true}
@@ -200,8 +202,13 @@ func sleep() -> Dictionary:
 	clock.start_next_day()
 	_begin_day_stats()
 	_wake_player()
+	if Game.director:
+		Game.director.morning_cleanup()
+	if Game.threat:
+		Game.threat.on_morning()
 	if Game.world_root and Game.world_root.has_method("save_campaign"):
 		Game.world_root.save_campaign()
+		Game.world_root.save_checkpoint("morning")
 	report_ready.emit(report)
 	_sleeping = false
 	return {"ok": true, "report": report}

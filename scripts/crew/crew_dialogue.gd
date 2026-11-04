@@ -104,6 +104,19 @@ const LINES := {
 		"We'll need to head back soon, boss.", "Light's going. A few more minutes, then I'm walking in.",
 	],
 	"dusk_reminder_timid": ["It's getting dark. I'm going in early, if that's alright."],
+	"hunt_warning": [
+		"It's here - get down!",
+		"Quiet. It's by the fence.",
+		"I see it. Hide!",
+		"Don't move. It's listening.",
+	],
+	"hunt_warning_timid": [
+		"Oh god, oh god - it's right there -",
+	],
+	"hunt_regroup": [
+		"The ship! Get to the dock!",
+		"That's the horn - go, go!",
+	],
 	"dusk_return": [
 		"That's it, I'm heading back to camp.", "Walking in now. Don't stay out late.",
 	],

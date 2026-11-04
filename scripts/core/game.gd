@@ -32,11 +32,20 @@ var crew: CrewService
 var vehicles: VehicleService
 var tv: CameraWall
 var dog: CampDog
+var director: TerrorDirector
+var threat: NightThreat
+var dog_rescue: DogRescue
+var hunt: HuntService
+var end_screen: EndScreen
+## Current objective line shown by the HUD ("" = none).
+var objective := ""
 var arcade: ArcadeService
 var dock_site: DockSite
 var comfort: Node
 var campaign_ui: CampaignUI
 var new_game := false              # start a fresh contract in SaveService.slot
+## Set while a death/catch screen is up: nothing may save that state.
+var block_saves := false
 
 var pending_teleport := ""
 var startup_ms := 0
@@ -86,6 +95,7 @@ func return_to_menu() -> void:
 
 func _change(path: String) -> void:
 	get_tree().paused = false
+	block_saves = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	world_root = null
 	water = null
@@ -100,6 +110,12 @@ func _change(path: String) -> void:
 	vehicles = null
 	tv = null
 	dog = null
+	director = null
+	threat = null
+	dog_rescue = null
+	hunt = null
+	end_screen = null
+	objective = ""
 	arcade = null
 	dock_site = null
 	comfort = null

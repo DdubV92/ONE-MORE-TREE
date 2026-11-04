@@ -57,6 +57,8 @@ func interact(_by: Node) -> void:
 
 
 func set_open(v: bool, instant := false) -> void:
+	if v != is_open and not instant and Game.hunt:
+		Game.hunt.noise(global_position, 18.0, "door", "door")
 	is_open = v
 	var target := deg_to_rad(open_angle if v else 0.0)
 	if _tween:

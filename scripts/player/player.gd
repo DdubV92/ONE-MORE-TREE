@@ -44,6 +44,10 @@ var axe: AxeController
 var carry: CarryController
 var vehicle: Node3D = null          # Phase 5: the truck we sit in
 var couch: Node3D = null            # Phase 5: couch seat marker while seated
+var hiding: HideSpot = null         # Phase 6: hiding place while hidden
+var _hide_blend := 1.0
+var _hide_from := Vector3.ZERO
+var _hide_yaw := 0.0
 var _couch_yaw := 0.0
 var _sit_blend := 1.0
 var _sit_from := Vector3.ZERO
@@ -140,6 +144,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if couch != null:
 		_couch_input(event)
+		return
+	if hiding != null:
+		_hide_input(event)
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
@@ -396,6 +403,71 @@ func _couch_process(delta: float) -> void:
 	velocity = Vector3.ZERO
 
 
+# ----------------------------------------------------------- hiding (P6)
+
+## Gets into a hiding place: a short readable move, then a low/limited
+## view from inside. Concealment only - see HuntService.
+func hide_in(spot: HideSpot) -> void:
+	if vehicle != null or couch != null or hiding != null:
+		return
+	if carry.is_carrying():
+		show_message("Drop what you're carrying first (X).")
+		return
+	hiding = spot
+	_hide_blend = 0.0
+	_hide_from = global_position + Vector3(0, head.position.y, 0)
+	_hide_yaw = 0.0
+	collision_layer = 0
+	collision_mask = 0
+	velocity = Vector3.ZERO
+	_interact_target = null
+	interact_target_changed.emit("")
+	if Game.hunt:
+		Game.hunt.on_enter_hide(self, spot)
+	show_message("Hidden (%s). Stay still. E to get out." % spot.kind.replace("_", " "))
+
+
+func leave_hide() -> void:
+	if hiding == null:
+		return
+	var spot := hiding
+	var out := Vector3.INF
+	var fwd := spot.look_dir
+	for c in [spot.exit_point, spot.exit_point + fwd.cross(Vector3.UP) * 0.5, spot.exit_point - fwd.cross(Vector3.UP) * 0.5, spot.marker.global_position - fwd * 0.9]:
+		if _stand_clear(c):
+			out = c
+			break
+	if out == Vector3.INF:
+		show_message("No room to get out here yet.")
+		return
+	hiding = null
+	collision_layer = 2
+	collision_mask = 1
+	if Game.hunt:
+		Game.hunt.on_exit_hide(self, spot)
+	teleport_feet(out, atan2(-fwd.x, -fwd.z))
+
+
+func _hide_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
+		var inv := -1.0 if Settings.get_v("invert_y") else 1.0
+		_hide_yaw = clampf(_hide_yaw - event.relative.x * s, deg_to_rad(-70.0), deg_to_rad(70.0))
+		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-25.0), deg_to_rad(30.0))
+	elif event.is_action_pressed("interact"):
+		leave_hide()
+
+
+func _hide_process(delta: float) -> void:
+	_hide_blend = minf(_hide_blend + delta / 0.7, 1.0)
+	var e := smoothstep(0.0, 1.0, _hide_blend)
+	global_position = _hide_from.lerp(hiding.eye, e) - Vector3(0, head.position.y, 0)
+	var dir := hiding.look_dir
+	rotation = Vector3(0, atan2(-dir.x, -dir.z) + _hide_yaw, 0)
+	head.rotation = Vector3(_pitch, 0, 0)
+	velocity = Vector3.ZERO
+
+
 func refresh_interaction() -> void:
 	_interact_target = null
 
@@ -420,6 +492,9 @@ func _physics_process(delta: float) -> void:
 		return
 	if couch != null:
 		_couch_process(delta)
+		return
+	if hiding != null:
+		_hide_process(delta)
 		return
 	if fly_mode:
 		_fly(delta)

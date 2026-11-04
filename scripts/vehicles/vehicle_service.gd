@@ -31,7 +31,8 @@ var teams := {}                # truck id -> team dict
 var dropoff_claim := ""        # truck id currently unloading
 var built := false
 var _counter := 0
-var dev_unlock := false        # development fixture only (never saved)
+var dev_unlock := false
+var _engine_t := 0.0        # development fixture only (never saved)
 var _pending: Array[Callable] = []
 
 
@@ -503,6 +504,17 @@ func _physics_process(delta: float) -> void:
 	for id in teams.keys():
 		_step_team(teams[id], delta)
 	_check_passenger_dusk()
+	# Engines are loud: during the hunt a running truck is real evidence.
+	if Game.hunt and Game.hunt.hunt_active():
+		_engine_t -= delta
+		if _engine_t <= 0.0:
+			_engine_t = 1.0
+			for t in trucks.values():
+				var tr := t as Truck
+				if tr.mode != "parked":
+					Game.hunt.noise(tr.global_position, 75.0, "engine", "truck")
+					if absf(tr.speed()) > 3.0:
+						Game.hunt.truck_use += 1
 
 
 func _step_team(tm: Dictionary, delta: float) -> void:

@@ -47,7 +47,7 @@ func input_allowed() -> bool:
 	# Hands full: the axe is stowed while carrying timber.
 	if player.carry and player.carry.is_carrying():
 		return false
-	if player.vehicle != null or player.couch != null:
+	if player.vehicle != null or player.couch != null or player.hiding != null:
 		return false
 	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not player.get_tree().paused and not player.fly_mode
 
@@ -99,7 +99,7 @@ func begin_swing_for_test() -> void:
 
 
 func _process_visual(delta: float, speed: float) -> void:
-	view.visible = player.vehicle == null and player.couch == null
+	view.visible = player.vehicle == null and player.couch == null and player.hiding == null
 	if speed > 0.5 and not swinging:
 		_walk_bob += delta * speed * 1.6
 	if player.carry and player.carry.is_carrying():

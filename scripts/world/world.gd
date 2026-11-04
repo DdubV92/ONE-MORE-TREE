@@ -20,6 +20,11 @@ var vehicles: VehicleService
 var tv: CameraWall
 var comfort: CamperComfort
 var dog: CampDog
+var director: TerrorDirector
+var threat: NightThreat
+var dog_rescue: DogRescue
+var hunt: HuntService
+var end_screen: EndScreen
 var arcade: ArcadeService
 var dock_site: DockSite
 var ground_cover: Node3D
@@ -93,6 +98,27 @@ func _ready() -> void:
 	arcade.name = "Arcade"
 	add_child(arcade)
 	Game.arcade = arcade
+	director = TerrorDirector.new()
+	director.name = "TerrorDirector"
+	add_child(director)
+	Game.director = director
+	threat = NightThreat.new()
+	threat.name = "NightThreat"
+	add_child(threat)
+	Game.threat = threat
+	dog_rescue = DogRescue.new()
+	dog_rescue.name = "DogRescue"
+	add_child(dog_rescue)
+	Game.dog_rescue = dog_rescue
+	end_screen = EndScreen.new()
+	end_screen.name = "EndScreen"
+	add_child(end_screen)
+	Game.end_screen = end_screen
+	threat.caught.connect(end_screen.show_caught)
+	hunt = HuntService.new()
+	hunt.name = "Hunt"
+	add_child(hunt)
+	Game.hunt = hunt
 	comfort = CamperComfort.new()
 	comfort.name = "CamperComfort"
 	add_child(comfort)
@@ -166,6 +192,8 @@ func _build_crew_world() -> void:
 	tv.setup()
 	comfort.setup()
 	arcade.hook_cabinets()
+	if campaign and campaign.contract.state == ContractService.ABANDONMENT and hunt.mode == "none":
+		campaign.contract.outcome.emit.call_deferred(campaign.contract.state, campaign.contract.outcome_id)
 	systems_ready = true
 	for f in _ready_queue:
 		f.call()
@@ -224,6 +252,7 @@ func _place_player() -> void:
 		campaign.new_campaign()
 		teleport_to(spot)
 		save_campaign()
+		save_checkpoint("morning")
 		return
 	teleport_to(spot)
 
@@ -243,9 +272,15 @@ func teleport_to(name: String) -> void:
 
 
 func save_campaign() -> void:
-	if not Game.can_write_campaign_save() or player == null:
+	if not Game.can_write_campaign_save() or player == null or Game.block_saves:
 		return
 	SaveService.save_campaign(SaveService.capture_state(self))
+
+
+func save_checkpoint(kind: String) -> void:
+	if not Game.can_write_campaign_save() or player == null or Game.block_saves:
+		return
+	SaveService.write_checkpoint(kind, SaveService.capture_state(self))
 
 
 func load_campaign() -> bool:

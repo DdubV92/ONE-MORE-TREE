@@ -562,6 +562,9 @@ func decide(w: Worker) -> void:
 	var c := campaign.clock
 	if w.seated:
 		return
+	if Game.hunt and Game.hunt.hunt_active():
+		Game.hunt.worker_decide(w)
+		return
 	if Game.vehicles and str(e.status) == Payroll.ACTIVE and Game.vehicles.team_decide(w):
 		return
 	match str(e.status):
@@ -1061,6 +1064,7 @@ func _close_doors() -> void:
 # --------------------------------------------------------------- feedback
 
 func _on_said(w: Worker, text: String, important: bool) -> void:
+	TerrorDirector.remember_voice(str(w.emp.name), text, w.global_position)
 	var near := Game.player != null and (Game.player as Node3D).global_position.distance_to(w.global_position) < 25.0
 	if important or near:
 		notice.emit("%s: \"%s\"" % [w.emp.name, text], 5.0 if important else 3.5)
