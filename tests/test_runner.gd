@@ -13,6 +13,12 @@ var _log: PackedStringArray = []
 func _ready() -> void:
 	await get_tree().process_frame
 	World.ensure_loaded()
+	if OS.has_environment("ONLY_P9"):
+		_run("phase 9 units", _t_phase9_units)
+		await _run_async("phase 9 world", _t_phase9_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P8"):
 		await _run_async("phase 8 presentation", _t_phase8_presentation)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -76,6 +82,8 @@ func _ready() -> void:
 	_run("phase 6 bank: 26 families, 1300 events, 312 startles, 36 Foreman patterns, valid executors", _t_terror_bank)
 	await _run_async("phase 7: bridge decks for walkers and trucks, east truck route, worker stump removal, locator", _t_phase7_world)
 	await _run_async("phase 8: deterministic weather + save, rain shelter/remote views, safety unchanged by weather/lightning, winding, presentation", _t_phase8_presentation)
+	_run("phase 9 units: notification priority/coalescing, key rebinding swap/reset/labels, save summaries (completed/hunt/too new/legacy), help text uses live keys", _t_phase9_units)
+	await _run_async("phase 9 world: guide detects real results, night-rules gate, legacy saves skip the guide, final-tree milestone once, success summary from ledger, truthful sleep/hire reasons, true pause freezes timers", _t_phase9_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -2584,3 +2592,191 @@ func _p8_animation(world: IslandWorld) -> String:
 	if listen_contacts != 0:
 		return "Foreman 'stepped' %d times while standing still" % listen_contacts
 	return ""
+
+
+# ---------------------------------------------------------------- Phase 9
+
+func _t_phase9_units() -> String:
+	# Notifications: a minor message never replaces a critical one being read.
+	var n := Notifications.new()
+	n.push("Dusk. Head back to camp: night falls in 5 minutes.", 6.0)
+	n.push("Chop!", 1.0, Notifications.P.MINOR)
+	var line := n.tick(0.5)
+	if not line.contains("Dusk"):
+		return "minor message replaced the dusk warning: " + line
+	n.push("Dusk. Head back to camp: night falls in 5 minutes.", 6.0)
+	if not n.tick(0.1).contains("(x2)"):
+		return "repeat not coalesced"
+	n.push("Kofi is leaving: unpaid wages", 4.0)
+	for i in 80:
+		n.tick(0.1)
+	if not n.tick(0.1).contains("leaving") and n.log.filter(func(e: Dictionary) -> bool: return str(e.text).contains("leaving")).is_empty():
+		return "queued warning lost"
+	if n.log.size() < 3:
+		return "log missing entries"
+	# Key rebinding: swap on conflict, live labels, reset.
+	Keys.remember_defaults()
+	var jump_before := Keys.label("jump")
+	var ev := InputEventKey.new()
+	ev.physical_keycode = KEY_SPACE
+	var swapped := Keys.rebind("interact", ev)
+	var err := ""
+	if Keys.label("interact") != "Space":
+		err = "interact label after rebind: %s" % Keys.label("interact")
+	elif swapped != "jump" or Keys.label("jump") == "Space":
+		err = "conflict not swapped (swapped=%s, jump=%s)" % [swapped, Keys.label("jump")]
+	elif not HelpText.controls().contains("Interact / use / pick up / talk: Space"):
+		err = "help text does not use the live binding"
+	var saved := Keys.capture()
+	Keys.reset_defaults()
+	if err == "" and (Keys.label("jump") != jump_before or Keys.label("interact") == "Space"):
+		err = "reset did not restore defaults"
+	Keys.apply_saved(saved)
+	if err == "" and Keys.label("interact") != "Space":
+		err = "saved bindings not re-applied"
+	Keys.reset_defaults()
+	if err != "":
+		return err
+	# Save summaries tell the truth.
+	var done := SaveService.summarize({"schema": SaveService.SCHEMA_VERSION, "campaign": {"phase3": true, "state": "FULFILLED", "day": 24, "contract": {"outcome_at": {"day": 24}}, "post_contract": true}, "timber": {"receipts": [{"mte": 1000}, {"mte": 500}]}})
+	if not str(done.status).contains("completed on day 24") or absf(float(done.accepted_trees) - 1.5) > 0.001 or not bool(done.post_contract):
+		return "completed summary wrong: %s" % str(done)
+	var hunt := SaveService.summarize({"schema": SaveService.SCHEMA_VERSION, "campaign": {"phase3": true, "state": "ABANDONMENT_PENDING", "day": 30}, "phase6": {"hunt": {"mode": "hunt", "hunt_day": 33}}})
+	if not str(hunt.status).contains("day 33") or bool(hunt.finished):
+		return "hunt summary wrong: %s" % str(hunt)
+	var esc := SaveService.summarize({"schema": SaveService.SCHEMA_VERSION, "campaign": {"phase3": true}, "phase6": {"hunt": {"mode": "escaped"}}})
+	if not bool(esc.finished):
+		return "escaped run not marked finished (Continue would offer it)"
+	var future := SaveService.summarize({"schema": SaveService.SCHEMA_VERSION + 3})
+	if not bool(future.get("too_new", false)) or not str(future.status).contains("newer version"):
+		return "future save not reported as too new"
+	var legacy := SaveService.summarize({"schema": 7, "campaign": {"phase3": true, "legacy": true, "day": 40, "rule_set": "legacy_untimed"}})
+	if not str(legacy.status).begins_with("Legacy"):
+		return "legacy summary wrong: %s" % str(legacy.status)
+	return ""
+
+
+func _t_phase9_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 600:
+		await get_tree().physics_frame
+		guard += 1
+	var err := ""
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(false)
+	var ob := cs.onboarding
+	ob.start_new()
+	# Legacy (pre-Phase 9) saves: the guide is already finished and the
+	# night rules count as known.
+	var probe := Onboarding.new()
+	probe.restore({})
+	if probe.active() or not probe.night_rules_ack:
+		err = "an old save would start the tutorial"
+	probe.free()
+	# Real-result detection.
+	var p: Player = world.player
+	if err == "" and ob.current() != "move":
+		err = "guide does not start at 'move' (%s)" % ob.current()
+	if err == "":
+		ob._check("move", cs)
+		p.teleport_feet(p.global_position + Vector3(5, 0, 0), 0.0)
+		if not ob._check("move", cs):
+			err = "walking 5 m not detected"
+	if err == "":
+		ob._check("journal", cs)
+		ob.journal_opened += 1
+		if not ob._check("journal", cs):
+			err = "journal open not detected"
+	if err == "" and ob._check("deliver", cs):
+		err = "delivery detected with nothing accepted"
+	if err == "" and ob._check("fell", cs):
+		err = "felling detected with nothing felled"
+	if err == "":
+		ob._base.clear()
+		ob._check("sleep", cs)
+		cs.clock.day += 1
+		if not ob._check("sleep", cs):
+			err = "a slept night not detected"
+		cs.clock.day -= 1
+	# Skip a step / replay never touches money or trees.
+	var cash0 := cs.wallet.cash
+	var felled0 := int(cs.contract.counts().felled)
+	ob.done = ["move", "journal"]
+	ob.skip_step()
+	if err == "" and ob.current() != "rack":
+		err = "skip step did not advance (now %s)" % ob.current()
+	ob.replay()
+	if err == "" and (cs.wallet.cash != cash0 or int(cs.contract.counts().felled) != felled0):
+		err = "replaying the guide changed money or trees"
+	# Night gate: before the rules are acknowledged no catch builds up.
+	var threat: NightThreat = world.threat
+	ob.night_rules_ack = false
+	cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+	p.teleport_feet(world.camp.global_position + Vector3(0, 0, 90.0), 0.0)
+	threat.exposure = 0.0
+	for i in 240:
+		await get_tree().process_frame
+	if err == "" and threat.exposure > 0.0:
+		err = "night exposure grew before the night rules were acknowledged"
+	if world.end_screen.visible:
+		world.end_screen._resume()
+	ob.night_rules_ack = true
+	threat.outside_t = 10.0
+	for i in 120:
+		await get_tree().process_frame
+	if err == "" and threat.exposure <= 0.0:
+		err = "night exposure stays off after acknowledgement"
+	threat.exposure = 0.0
+	# True pause freezes the clock, night escalation and the director.
+	var t0 := cs.clock.t
+	var nt0 := threat.night_awake_t
+	var dir_next: float = world.director.next_in
+	get_tree().paused = true
+	for i in 30:
+		await get_tree().process_frame
+	await get_tree().physics_frame
+	if err == "" and (cs.clock.t != t0 or threat.night_awake_t != nt0 or float(world.director.next_in) != dir_next):
+		err = "pause did not freeze clock/threat/director (%.2f->%.2f, %.2f->%.2f, %.2f->%.2f)" % [t0, cs.clock.t, nt0, threat.night_awake_t, dir_next, float(world.director.next_in)]
+	get_tree().paused = false
+	# Truthful refusals.
+	if err == "" and not str(cs.can_sleep().get("reason", "ok")).is_empty() and cs.can_sleep().ok == false and cs.clock.phase() == WorkdayClock.Phase.NIGHT:
+		err = "sleep refused at night: %s" % str(cs.can_sleep().reason)
+	# Final-tree milestone once; it is not completion while stumps/logs remain.
+	var notices: Array = []
+	var cb := func(t: String, _s: float) -> void: notices.append(t)
+	cs.notice.connect(cb)
+	cs.contract.scope_override = int(cs.contract.counts().felled)
+	cs.test_route = false
+	cs._check_final_tree()
+	cs._check_final_tree()
+	cs.test_route = true
+	cs.notice.disconnect(cb)
+	if err == "" and not ob.milestones.has("final_tree"):
+		err = "final-tree milestone not recorded"
+	if err == "" and notices.filter(func(t: String) -> bool: return t.contains("last standing tree")).size() > 1:
+		err = "final-tree message repeated"
+	cs.contract.scope_override = -1
+	# Success summary comes from the ledger.
+	var lines := world.get_node_or_null("HUD")
+	var sum := CampaignUI.new()
+	sum.svc = cs
+	var out := sum.success_summary()
+	sum.free()
+	if err == "" and (out.size() < 4 or not str(out[2]).contains("Earned from deliveries")):
+		err = "success summary incomplete: %s" % str(out)
+	# Contract fulfilled: sleeping explains there are no more workdays.
+	var st0 := cs.contract.state
+	cs.contract.state = ContractService.FULFILLED
+	if err == "" and not str(cs.can_sleep().reason).contains("no more workdays"):
+		err = "fulfilled sleep reason: %s" % str(cs.can_sleep().reason)
+	cs.contract.state = st0
+	cs.test_route = false
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err

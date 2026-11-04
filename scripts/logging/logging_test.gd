@@ -90,7 +90,7 @@ static var _snapshot := {}
 static func loop(world: Node) -> String:
 	_case_i = CASES.find("camp_edge") - 1
 	var msg := next(world, false)
-	return msg.replace("Logging test", "Logging Loop") + ". Fell it, buck it at the orange marks, carry logs to the rack by the fire (E)."
+	return msg.replace("Logging test", "Logging Loop") + ". Fell it, buck it at the orange marks, carry logs to the rack by the fire (" + Keys.label("interact") + ")."
 
 
 ## Preview-only reset of everything the logging loop changed (trees,

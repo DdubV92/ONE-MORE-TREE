@@ -78,7 +78,7 @@ func _ready() -> void:
 	root.add_child(axe_label)
 	var p: Node = Game.player
 	if p:
-		p.interact_target_changed.connect(func(t: String) -> void: prompt_label.text = ("[E] " + t) if t != "" else "")
+		p.interact_target_changed.connect(func(t: String) -> void: prompt_label.text = (Keys.tag("interact") + " " + t) if t != "" else "")
 		p.message.connect(show_message)
 		if p.get("axe"):
 			p.axe.target_changed.connect(_on_chop_target)
@@ -96,6 +96,7 @@ func _ready() -> void:
 		campaign_ui.setup(self, Game.campaign)
 		Game.campaign_ui = campaign_ui
 		Game.campaign.notice.connect(func(t: String, secs: float) -> void: show_message(t, secs))
+		_build_guide()
 		if Game.crew:
 			Game.crew.notice.connect(func(t: String, secs: float) -> void: show_message(t, secs))
 		Game.campaign.request_pause.connect(func() -> void:
@@ -109,6 +110,39 @@ func _ready() -> void:
 		show_message("Preview Tour: Tab toggles the tour panel, F1 shows controls")
 	else:
 		show_message("Welcome to the island. F1 for controls.")
+
+
+## Phase 9 first-day guide line (top centre-right, behind a soft panel).
+var guide_panel: PanelContainer
+var guide_label: Label
+
+
+func _build_guide() -> void:
+	guide_panel = PanelContainer.new()
+	guide_panel.anchor_left = 1.0
+	guide_panel.anchor_right = 1.0
+	guide_panel.offset_left = -470
+	guide_panel.offset_right = -16
+	guide_panel.offset_top = 64
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.06, 0.07, 0.06, 0.72)
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 8
+	sb.content_margin_bottom = 8
+	guide_panel.add_theme_stylebox_override("panel", sb)
+	guide_label = UITheme.label("", 16, Color(0.92, 0.96, 0.88))
+	guide_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	guide_label.custom_minimum_size = Vector2(440, 0)
+	guide_panel.add_child(guide_label)
+	guide_panel.visible = false
+	root.add_child(guide_panel)
+	var ob: Onboarding = Game.campaign.onboarding
+	if ob:
+		ob.hint_changed.connect(func(t: String) -> void:
+			guide_label.text = t + ("\n(Journal → Help & log: skip or replay)" if t != "" else "")
+			guide_panel.visible = t != "")
 
 
 func _anchored_label(anchor: Vector2, size: int) -> Label:
@@ -426,7 +460,7 @@ func _phase5_stop(which: String) -> void:
 					break
 			var t: Truck = vs.trucks.values()[0]
 			p.teleport_feet(t.door_point(-1.0), t.global_rotation.y)
-			show_message("Two pickups in the bays (preview fixture). E at the driver's door to drive; the Journal (J) Crew tab sends a team. Load logs at the tailgate, unload at the drop-off by the rack.", 9.0)
+			show_message("Two pickups in the bays (preview fixture). " + Keys.label("interact") + " at the driver's door to drive; the Journal (" + Keys.label("toggle_journal") + ") Crew tab sends a team. Load logs at the tailgate, unload at the drop-off by the rack.", 9.0)
 		"__p5_dock":
 			w.teleport_to("dock")
 			show_message("Service dock, utility building (beacon console inside) and Biscuit's alcove.", 6.0)
@@ -453,7 +487,7 @@ func _phase5_stop(which: String) -> void:
 			if not spots.is_empty():
 				var s: Node3D = spots[0]
 				p.teleport_feet(s.global_position, s.global_rotation.y)
-			show_message("Two original cabinets: Log Stacker and Flapjack Flip. E to play - the world pauses while you do.", 7.0)
+			show_message("Two original cabinets: Log Stacker and Flapjack Flip. " + Keys.label("interact") + " to play - the world pauses while you do.", 7.0)
 	tour_panel.visible = false
 	_capture_mouse()
 
@@ -488,7 +522,7 @@ func _phase7_stop(which: String) -> void:
 			if Game.vehicles and not Game.vehicles.trucks.is_empty():
 				var t: Truck = Game.vehicles.trucks.values()[0]
 				p.teleport_feet(t.door_point(-1.0), t.global_rotation.y)
-				show_message("Get in (E) for the driving-height view.")
+				show_message("Get in (%s) for the driving-height view." % Keys.label("interact"))
 			else:
 				_phase5_stop("__p5_drive")
 		"__p7_locate":
@@ -657,9 +691,14 @@ func _update_aid() -> void:
 		_aid.global_position.y = World.height_at(start.x, start.z) + 0.06
 
 
-func show_message(text: String, seconds := 4.0) -> void:
-	message_label.text = text
-	_msg_t = seconds
+## Every on-screen message goes through the prioritized queue (Phase 9).
+var notes := Notifications.new()
+
+
+func show_message(text: String, seconds := 4.0, priority := -1) -> void:
+	notes.push(text, seconds, priority)
+	message_label.text = notes.tick(0.0)
+	_msg_t = 0.1
 
 
 func _write_diag() -> void:
@@ -761,10 +800,8 @@ func _inspect_tree() -> void:
 
 
 func _process(delta: float) -> void:
-	if _msg_t > 0.0:
-		_msg_t -= delta
-		if _msg_t <= 0.0:
-			message_label.text = ""
+	# Notification queue (real time; it keeps showing while paused).
+	message_label.text = notes.tick(delta)
 	_update_aid()
 	var p: Node = Game.player
 	if p and p.get("axe"):

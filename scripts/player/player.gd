@@ -206,7 +206,8 @@ func enter_vehicle(t: Node3D, seat: String) -> void:
 		_crouching = false
 	_interact_target = null
 	interact_target_changed.emit("")
-	show_message("Driving: W/S throttle and brake/reverse, A/D steer, Space parking brake, H lights, E get out." if seat == "driver" else "Riding as a passenger. E to get out when the truck has stopped.")
+	var ik := Keys.label("interact")
+	show_message(("Driving: %s/%s throttle and brake/reverse, %s/%s steer, %s parking brake, %s lights, %s get out." % [Keys.label("move_forward"), Keys.label("move_back"), Keys.label("move_left"), Keys.label("move_right"), Keys.label("jump"), Keys.label("headlights"), ik]) if seat == "driver" else "Riding as a passenger. %s to get out when the truck has stopped." % ik)
 
 
 func exit_vehicle(at: Vector3) -> void:
@@ -290,7 +291,7 @@ func sit_on_couch(marker: Node3D) -> void:
 		_crouching = false
 	_interact_target = null
 	interact_target_changed.emit("")
-	show_message("On the couch: click a camera tile to focus it, right-click back to the wall, A/D or wheel switch camera in focus, C channel, [ ] swap speed / freeze, M mute cameras, -/+ volume, P TV power, E or Space stand up.")
+	show_message("On the couch: click a camera tile to focus it, right-click back to the wall, %s/%s or wheel switch camera in focus, C channel, [ ] swap speed / freeze, M mute cameras, -/+ volume, P TV power, %s or %s stand up. The TV is live: time keeps running." % [Keys.label("move_left"), Keys.label("move_right"), Keys.label("interact"), Keys.label("jump")])
 
 
 func stand_from_couch() -> void:
@@ -424,7 +425,7 @@ func hide_in(spot: HideSpot) -> void:
 	interact_target_changed.emit("")
 	if Game.hunt:
 		Game.hunt.on_enter_hide(self, spot)
-	show_message("Hidden (%s). Stay still. E to get out." % spot.kind.replace("_", " "))
+	show_message("Hidden (%s). Stay still. %s to get out. Hiding is not invulnerability: a place you were seen entering can be searched." % [spot.kind.replace("_", " "), Keys.label("interact")])
 
 
 func leave_hide() -> void:

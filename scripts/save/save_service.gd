@@ -29,12 +29,64 @@ static func slot_summary(n: int) -> Dictionary:
 		path = DEFAULT_PATH
 	if not FileAccess.file_exists(path):
 		return {}
-	var d := read_file(path)
-	if d.is_empty():
-		return {"corrupt": true}
+	var raw := read_file_raw(path)
+	if raw.is_empty():
+		return {"corrupt": true, "has_backup": FileAccess.file_exists(path + ".bak")}
+	return summarize(raw, path)
+
+
+## Menu summary of one save's data (pure; tested without touching slots).
+static func summarize(raw: Dictionary, path := "") -> Dictionary:
+	if int(raw.get("schema", 0)) > SCHEMA_VERSION:
+		return {"too_new": true, "schema": int(raw.get("schema", 0)), "status": "Made by a newer version of the game (save format %d, this build reads up to %d). Kept untouched." % [int(raw.get("schema", 0)), SCHEMA_VERSION]}
+	var d := migrate(raw)
 	var c: Dictionary = d.get("campaign", {})
 	var cash := int(d.get("economy", {}).get("wallet", {}).get("cash", 0))
-	return {"day": int(c.get("day", 1)), "rule_set": str(c.get("rule_set", "?")), "state": str(c.get("state", "")), "cash": cash, "pre_contract": not bool(c.get("phase3", false)), "legacy_file": path == DEFAULT_PATH}
+	var schema := int(d.get("schema", 0))
+	var hunt: Dictionary = (d.get("phase6", {}) as Dictionary).get("hunt", {})
+	var accepted := 0
+	for r in (d.get("timber", {}) as Dictionary).get("receipts", []):
+		accepted += int((r as Dictionary).get("mte", 0))
+	var checkpoints: Array = []
+	var base := path.get_basename()
+	for k in ["morning", "survival", "rescue"]:
+		if path != "" and FileAccess.file_exists(base + ".%s.json" % k):
+			checkpoints.append(k)
+	var mode := str(hunt.get("mode", "none"))
+	var state := str(c.get("state", ""))
+	# Phase 9: one truthful label for menus (Continue/Load).
+	var status := "Contract, day %d" % int(c.get("day", 1))
+	if str(c.get("rule_set", "")).begins_with("legacy") or bool(c.get("legacy", false)):
+		status = "Legacy island (no deadline), day %d" % int(c.get("day", 1))
+	if state == "FULFILLED":
+		status = "Contract completed on day %d%s" % [int((c.get("contract", {}) as Dictionary).get("outcome_at", {}).get("day", c.get("day", 30))), " (exploring afterwards)" if bool(c.get("post_contract", false)) else ""]
+	elif mode in ["hunt", "rescue", "transition"]:
+		status = "Survival: day %d of the hunt" % int(hunt.get("hunt_day", 31))
+	elif mode == "escaped":
+		status = "Escaped on the rescue ship (finished)"
+	elif mode in ["dead", "stranded"]:
+		status = "Hunt ended (%s)" % mode
+	elif state == "ABANDONMENT_PENDING":
+		status = "Contract failed: the company is leaving"
+	return {"day": int(c.get("day", 1)), "rule_set": str(c.get("rule_set", "?")), "state": state, "cash": cash, "pre_contract": not bool(c.get("phase3", false)), "legacy_file": path == DEFAULT_PATH and path != "",
+		"schema": schema, "too_new": schema > SCHEMA_VERSION, "hunt_mode": mode, "accepted_trees": accepted / 1000.0, "saved_unix": FileAccess.get_modified_time(path) if path != "" else 0,
+		"build": str(d.get("build", "")), "checkpoints": checkpoints, "status": status, "finished": mode == "escaped" or mode in ["dead", "stranded"],
+		"post_contract": bool(c.get("post_contract", false))}
+
+
+## The slot to Continue: the most recently saved readable, compatible,
+## unfinished campaign (or a completed one kept for exploring). -1 = none.
+static func continue_slot() -> int:
+	var best := -1
+	var best_t := -1
+	for n in range(1, SLOTS + 1):
+		var s := slot_summary(n)
+		if s.is_empty() or bool(s.get("corrupt", false)) or bool(s.get("too_new", false)) or bool(s.get("finished", false)):
+			continue
+		if int(s.saved_unix) > best_t:
+			best_t = int(s.saved_unix)
+			best = n
+	return best
 
 
 ## Where the player's body is saved: a seated player is saved standing

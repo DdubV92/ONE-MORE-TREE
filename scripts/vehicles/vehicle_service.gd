@@ -17,7 +17,13 @@ signal notice(text: String, seconds: float)
 
 const MAX_TRUCKS := 2
 const TUTORIAL := ["enter", "drive", "reverse", "load", "deliver", "park"]
-const TUTORIAL_TEXT := {"enter": "Get in at the driver's door (E)", "drive": "Drive: W/S, steer A/D", "reverse": "Stop, then hold S to reverse", "load": "Carry logs to the tailgate and load them (E)", "deliver": "Back up to the delivery bay by the rack and unload (E at the tailgate)", "park": "Park in a bay, stop and get out (E)"}
+## Truck tutorial lines; {interact}/{fwd}/{back}/{left}/{right} are filled
+## with the player's current bindings when shown (tutorial_text()).
+const TUTORIAL_TEXT := {"enter": "Get in at the driver's door ({interact})", "drive": "Drive: {fwd}/{back}, steer {left}/{right}", "reverse": "Stop, then hold {back} to reverse", "load": "Carry logs to the tailgate and load them ({interact})", "deliver": "Back up to the delivery bay by the rack and unload ({interact} at the tailgate)", "park": "Park in a bay, stop and get out ({interact})"}
+
+
+static func tutorial_text(step: String) -> String:
+	return str(TUTORIAL_TEXT.get(step, "")).format({"interact": Keys.label("interact"), "fwd": Keys.label("move_forward"), "back": Keys.label("move_back"), "left": Keys.label("move_left"), "right": Keys.label("move_right")})
 
 var crew: CrewService
 var campaign: CampaignService
@@ -113,7 +119,7 @@ func buy() -> Dictionary:
 	var bay := free_bay()
 	var t := _spawn(id, bay_pose(bay))
 	purchases.append({"id": id, "tx": tx.id, "day": campaign.clock.day, "bay": bay})
-	notice.emit("Your pickup is parked in bay %d. %s" % [bay + 1, "" if tutorial_complete else "Driving introduction: " + str(TUTORIAL_TEXT[next_tutorial_step()])], 7.0)
+	notice.emit("Your pickup is parked in bay %d. %s" % [bay + 1, "" if tutorial_complete else "Driving introduction: " + tutorial_text(next_tutorial_step())], 7.0)
 	changed.emit()
 	return {"ok": true, "id": t.truck_id, "tx": tx.id}
 
@@ -184,7 +190,7 @@ func tutorial_mark(step: String) -> void:
 		tutorial_complete = true
 		notice.emit("Driving introduction complete.", 4.0)
 	else:
-		notice.emit("Truck: %s" % TUTORIAL_TEXT[nxt], 6.0)
+		notice.emit("Truck: %s" % tutorial_text(nxt), 6.0)
 
 
 # ------------------------------------------------------- player hotspots

@@ -17,6 +17,13 @@ func _ready() -> void:
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(v)
 	v.add_child(UITheme.label("Settings", 26, UITheme.ACCENT))
+	v.add_child(UITheme.label("Esc closes. Changes save immediately and apply everywhere.", 14, UITheme.MUTED))
+	_section(v, "Accessibility and text")
+	_slider(v, "Text and UI size", "ui_scale", 0.85, 1.6, 0.05)
+	_toggle(v, "Captions for important sounds", "captions")
+	_toggle(v, "Subtitles for crew speech", "subtitles")
+	_toggle(v, "Tutorial and contextual hints", "hints")
+	_slider(v, "Interaction highlight strength", "highlight", 0.0, 1.0, 0.05)
 	_section(v, "Controls")
 	_slider(v, "Mouse sensitivity", "mouse_sensitivity", 0.02, 1.5, 0.01)
 	_toggle(v, "Invert mouse Y", "invert_y")
@@ -49,6 +56,8 @@ func _ready() -> void:
 	_toggle(v, "Daytime music (sparse)", "music")
 	for b in Settings.BUSES:
 		_slider(v, "%s volume" % b, "vol_" + b, 0.0, 1.0, 0.01)
+	_section(v, "Key bindings (click, then press a key or mouse button)")
+	_bindings(v)
 	_section(v, "Camera TV")
 	_slider(v, "Seconds per camera swap (0 = frozen)", "tv_interval", 0.0, 40.0, 5.0)
 	var row := HBoxContainer.new()
@@ -57,6 +66,67 @@ func _ready() -> void:
 		_rebuild(), 220))
 	row.add_child(UITheme.button("Close", func() -> void: closed.emit(), 160))
 	v.add_child(row)
+
+
+var _waiting := ""
+var _bind_buttons := {}
+var _bind_note: Label
+
+
+func _bindings(v: VBoxContainer) -> void:
+	_bind_buttons.clear()
+	for a in Keys.REMAPPABLE:
+		var h := _row(v, a[1])
+		var b := UITheme.button(Keys.label(a[0]), func() -> void: _begin_bind(a[0]), 220)
+		_bind_buttons[a[0]] = b
+		h.add_child(b)
+	_bind_note = UITheme.label("", 15, UITheme.MUTED)
+	_bind_note.autowrap_mode = TextServer.AUTOWRAP_WORD
+	v.add_child(_bind_note)
+	v.add_child(UITheme.button("Reset key bindings", func() -> void:
+		Settings.reset_bindings()
+		_refresh_binds()
+		_bind_note.text = "Key bindings reset to the defaults.", 220))
+
+
+func _begin_bind(action: String) -> void:
+	_waiting = action
+	(_bind_buttons[action] as Button).text = "Press a key... (Esc cancels)"
+
+
+func _refresh_binds() -> void:
+	for a in _bind_buttons:
+		(_bind_buttons[a] as Button).text = Keys.label(a)
+
+
+## Captures the next key/mouse button while waiting. Esc always cancels
+## (and Pause can never be left unbound), so the menu can always be closed.
+func _input(event: InputEvent) -> void:
+	if _waiting == "" or not visible:
+		return
+	var ok := (event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo) \
+		or (event is InputEventMouseButton and (event as InputEventMouseButton).pressed)
+	if not ok:
+		return
+	get_viewport().set_input_as_handled()
+	var action := _waiting
+	_waiting = ""
+	if event is InputEventKey and (event as InputEventKey).keycode == KEY_ESCAPE:
+		_refresh_binds()
+		_bind_note.text = "Cancelled."
+		return
+	var ev: InputEvent
+	if event is InputEventKey:
+		var k := InputEventKey.new()
+		k.physical_keycode = (event as InputEventKey).physical_keycode if (event as InputEventKey).physical_keycode != 0 else (event as InputEventKey).keycode
+		ev = k
+	else:
+		var m := InputEventMouseButton.new()
+		m.button_index = (event as InputEventMouseButton).button_index
+		ev = m
+	var swapped := Settings.rebind(action, ev)
+	_refresh_binds()
+	_bind_note.text = "%s is now %s." % [action.replace("_", " ").capitalize(), Keys.label(action)] + (("  It was in use: %s now uses the old key." % swapped.replace("_", " ").capitalize()) if swapped != "" else "")
 
 
 func _rebuild() -> void:

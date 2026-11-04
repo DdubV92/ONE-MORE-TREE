@@ -227,6 +227,8 @@ func refresh_candidates(force := false) -> void:
 
 
 func can_hire() -> Dictionary:
+	if Game.hunt and Game.hunt.hunt_active():
+		return {"ok": false, "reason": "The company has left the island: no hiring and no boats until the rescue ship."}
 	if campaign.contract.is_closed():
 		return {"ok": false, "reason": "The company's service has ended with the contract."}
 	if slots_used() >= MAX_EMPLOYEES:

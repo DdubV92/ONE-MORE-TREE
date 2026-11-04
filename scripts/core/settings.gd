@@ -43,6 +43,13 @@ var values := {
 	"bob_strength": 1.0,            # 0..1 head-bob scale
 	"horror_intensity": 1.0,        # 0.4..1 startle/peak loudness & flash scale (never changes event count or rules)
 	"music": true,                  # sparse daytime phrases
+	# Phase 9 accessibility / input
+	"ui_scale": 1.0,                # text and UI size, 0.85..1.6
+	"captions": true,               # captions for meaningful sounds and remote mic cues
+	"subtitles": true,              # worker speech text
+	"highlight": 1.0,               # interaction target highlight strength 0..1
+	"hints": true,                  # tutorial / contextual hints
+	"binds": {},                    # remapped actions (Keys.capture())
 }
 
 var defaults := {}
@@ -53,6 +60,8 @@ func _ready() -> void:
 	defaults = values.duplicate()
 	_ensure_buses()
 	load_settings()
+	Keys.remember_defaults()
+	Keys.apply_saved(values.binds)
 	apply()
 
 
@@ -152,6 +161,10 @@ func sanitize() -> void:
 	values.shake_strength = clampf(float(values.shake_strength), 0.0, 1.0)
 	values.bob_strength = clampf(float(values.bob_strength), 0.0, 1.0)
 	values.horror_intensity = clampf(float(values.horror_intensity), 0.4, 1.0)
+	values.ui_scale = clampf(float(values.ui_scale), 0.85, 1.6)
+	values.highlight = clampf(float(values.highlight), 0.0, 1.0)
+	if typeof(values.binds) != TYPE_DICTIONARY:
+		values.binds = {}
 
 
 func save_settings() -> void:
@@ -161,8 +174,25 @@ func save_settings() -> void:
 	cf.save(PATH)
 
 
+## Rebinds an action, persists all bindings and refreshes every prompt.
+func rebind(action: String, ev: InputEvent) -> String:
+	var swapped := Keys.rebind(action, ev)
+	values.binds = Keys.capture()
+	save_settings()
+	changed.emit()
+	return swapped
+
+
+func reset_bindings() -> void:
+	Keys.reset_defaults()
+	values.binds = {}
+	save_settings()
+	changed.emit()
+
+
 func reset_defaults() -> void:
 	values = defaults.duplicate()
+	Keys.reset_defaults()
 	apply()
 	save_settings()
 
@@ -182,6 +212,7 @@ func apply() -> void:
 		if want_fs != is_fs:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if want_fs else DisplayServer.WINDOW_MODE_WINDOWED)
 	if get_tree() and get_tree().root:
+		get_tree().root.content_scale_factor = float(values.ui_scale)
 		get_tree().root.scaling_3d_scale = values.render_scale
 		# FSR 2 is temporal upscaling (also anti-aliases); FSR 1 is spatial.
 		var mode := Viewport.SCALING_3D_MODE_BILINEAR

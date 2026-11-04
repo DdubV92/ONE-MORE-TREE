@@ -83,12 +83,15 @@ func _offer_reload(kind: String, text: String) -> void:
 
 
 ## Information card that resumes play (e.g. the abandonment rules).
-func show_info(title: String, body: String, button := "Continue") -> void:
+func show_info(title: String, body: String, button := "Continue", on_ok := Callable()) -> void:
 	showing = "info"
 	_build(title, body, Color(0.0, 0.0, 0.0, 0.85))
-	_panel.offset_top = -280
-	_panel.offset_bottom = 280
-	_button(button, func() -> void: _resume())
+	_panel.offset_top = -300
+	_panel.offset_bottom = 300
+	_button(button, func() -> void:
+		_resume()
+		if on_ok.is_valid():
+			on_ok.call())
 
 
 ## Two-choice confirmation (e.g. boarding with crew still ashore).

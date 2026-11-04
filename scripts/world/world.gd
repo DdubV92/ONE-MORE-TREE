@@ -169,6 +169,10 @@ func _ready() -> void:
 	Settings.changed.connect(_apply_quality)
 	_apply_quality()
 	campaign.setup()
+	# Phase 9: a fulfilled contract is saved at once as a safe completed state.
+	campaign.outcome_ready.connect(func(s: String, _o: String) -> void:
+		if s == ContractService.FULFILLED:
+			save_campaign.call_deferred())
 	crew.setup(campaign)
 	vehicles.setup(campaign, crew)
 	_place_player()

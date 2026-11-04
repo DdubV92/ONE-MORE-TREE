@@ -36,6 +36,12 @@ func _process(delta: float) -> void:
 		_warned = 0
 		return
 	night_awake_t += delta
+	# Phase 9: no ordinary catch before the night rules were shown and
+	# acknowledged (or the guide was skipped with its rules summary).
+	var c0: CampaignService = Game.campaign
+	if c0 and c0.onboarding and not c0.onboarding.night_rules_ack:
+		exposure = 0.0
+		return
 	var p := Game.player as Node3D
 	if p == null or Game.safety == null:
 		return

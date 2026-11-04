@@ -56,7 +56,14 @@ func _ready() -> void:
 	add_child(contract)
 
 
+## Phase 9 first-day guide (per save).
+var onboarding: Onboarding = Onboarding.new()
+
+
 func setup() -> void:
+	if onboarding.get_parent() == null:
+		onboarding.name = "Onboarding"
+		add_child(onboarding)
 	wallet.setup(Game.timber, clock)
 	payroll.setup(wallet, config)
 	equipment.setup(wallet, config)
@@ -64,6 +71,7 @@ func setup() -> void:
 	clock.warning.connect(_on_warning)
 	clock.night_started.connect(func(_d: int) -> void: notice.emit("Night. Camp lamps and the camper are safe; sleep in the camper bed to end the day.", 6.0))
 	contract.outcome.connect(func(s: String, oid: String) -> void: outcome_ready.emit(s, oid))
+	contract.progress_changed.connect(_check_final_tree)
 	wallet.transaction.connect(_on_tx)
 	payroll.quit_due_to_arrears.connect(func(eid: String) -> void: notice.emit("%s has quit over unpaid wages (leaves when crew arrive in Phase 4)." % payroll.employee(eid).get("name", eid), 6.0))
 	if Game.trees:
@@ -91,6 +99,9 @@ func new_campaign() -> void:
 		ids.append(e.id)
 	equipment.init_new(ids)
 	contract.restore({"state": ContractService.ACTIVE})
+	if onboarding:
+		onboarding.start_new()
+	post_contract = false
 	reports.clear()
 	phase2_migrated = true
 	_begin_day_stats()
@@ -105,6 +116,9 @@ func start_test_route(with_fixtures := true, with_crew := true) -> void:
 	spawn_crew = with_crew
 	new_campaign()
 	test_route = true
+	# Development sessions skip the first-day guide (rules count as known).
+	if onboarding:
+		onboarding.restore({})
 	wallet.enabled = true
 	if with_fixtures:
 		for e in payroll.employees:
@@ -127,7 +141,28 @@ func _on_tx(tx: Dictionary) -> void:
 		notice.emit("+$%s delivery credited" % Money.format_cents(int(tx.amount)), 2.5)
 
 
+## Once-only milestone: the last original standing tree is down. It is
+## NOT completion if stumps or logs remain; the message says what is left.
+func _check_final_tree() -> void:
+	if not active or test_route or onboarding == null or onboarding.milestones.has("final_tree"):
+		return
+	var c := contract.counts()
+	if int(c.standing) != 0:
+		return
+	onboarding.milestone("final_tree")
+	if contract.complete(c):
+		return
+	notice.emit("The last standing tree is down! Still to finish the contract: %d stump(s) and %.1f tree-equivalents of logs to deliver. Journal → Contract → Locate the nearest remaining work." % [int(c.stumps), float(c.undelivered_mte) / 1000.0], 10.0)
+
+
+## Completed contract kept for exploring (Phase 9): no clock, no workdays,
+## no wages, no hunt; saved as its own mode.
+var post_contract := false
+
+
 func _on_warning(kind: String, left: float) -> void:
+	if kind == "dusk" and onboarding and not test_route:
+		onboarding.on_dusk()
 	var mins := int(ceil(left / 60.0))
 	match kind:
 		"dusk":
@@ -167,6 +202,10 @@ func _notification(what: int) -> void:
 func can_sleep() -> Dictionary:
 	if not active:
 		return {"ok": false, "reason": "Sleeping only advances days in the campaign."}
+	if Game.hunt and Game.hunt.hunt_active():
+		return {"ok": false, "reason": "Survival days are continuous: lying down does not skip time. Rest only matters as a hiding place."}
+	if contract.state == ContractService.FULFILLED:
+		return {"ok": false, "reason": "The contract is complete: there are no more workdays to sleep through. Explore as long as you like."}
 	if contract.is_closed():
 		return {"ok": false, "reason": "The contract has ended."}
 	if _sleeping:
@@ -315,7 +354,7 @@ func _restore_crew(data: Dictionary) -> void:
 
 
 func capture_campaign() -> Dictionary:
-	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}}
+	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}, "onboarding": onboarding.capture() if onboarding else {}, "post_contract": post_contract}
 
 
 func capture_economy() -> Dictionary:
@@ -345,6 +384,9 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 		wallet.reconcile_receipts()
 	rule_set = str(campaign.get("rule_set", RULE_SET))
 	legacy = bool(campaign.get("legacy", false))
+	post_contract = bool(campaign.get("post_contract", false))
+	if onboarding:
+		onboarding.restore(campaign.get("onboarding", {}))
 	reports.clear()
 	for r in campaign.get("reports", []):
 		reports.append(r)

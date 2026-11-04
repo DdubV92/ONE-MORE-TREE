@@ -94,7 +94,7 @@ func interact(by: Node) -> void:
 	if by.get("carry") and by.carry.is_carrying():
 		deliver_from(by)
 	elif by.has_method("show_message"):
-		by.show_message("Delivery rack: %s. Carry cut logs here and press E." % _status_short())
+		by.show_message("Delivery rack: %s. Carry cut logs here and press %s." % [_status_short(), Keys.label("interact")])
 
 
 func deliver_from(by: Node) -> void:

@@ -60,6 +60,22 @@ func _process(_delta: float) -> void:
 		return
 	var c := svc.clock
 	var txt := ""
+	# Phase 9: the status line tells the truth about the current mode.
+	var hunt: HuntService = Game.hunt
+	if hunt and hunt.hunt_active():
+		var ph := hunt.phase_name()
+		txt = "Survival day %d of 35  ·  %s  ·  rescue ship at dawn on day 36  ·  Biscuit: safe in the dock alcove" % [hunt.hunt_day if hunt.hunt_day > 30 else 31, ph.capitalize()]
+		if hunt.ship_state == "approaching":
+			txt = "Day 36 dawn  ·  the rescue ship is coming in to the dock"
+		elif hunt.ship_state == "docked":
+			txt = "RESCUE SHIP AT THE DOCK  ·  boarding closes in %s  ·  Biscuit boards automatically" % CampaignService.fmt_time(maxf(HuntService.BOARDING_WINDOW - hunt.ship_t, 0.0))
+		clock_label.text = txt
+		cash_label.text = "Company services closed: no hiring, boats or wages until rescue."
+		return
+	if svc.contract.state == ContractService.FULFILLED:
+		clock_label.text = "Contract complete (day %d)  ·  exploring: no clock, no wages, no night" % int(svc.contract.outcome_at.get("day", c.day))
+		cash_label.text = "$%s" % Money.format_cents(svc.wallet.cash)
+		return
 	match c.phase():
 		WorkdayClock.Phase.DAYLIGHT:
 			txt = "Day %d of %d  ·  Daylight  ·  dusk in %s" % [c.day, WorkdayClock.CONTRACT_DAYS, CampaignService.fmt_time(c.time_until_dusk())]
@@ -134,10 +150,12 @@ func _text(v: VBoxContainer, s: String, size := 16, color := UITheme.TEXT) -> La
 # ------------------------------------------------------------------ journal
 
 func toggle_journal(tab := 0) -> void:
+	if svc and svc.onboarding:
+		svc.onboarding.journal_opened += 1
 	if is_open():
 		close_panel()
 		return
-	var f := _frame("Journal  (J)", 700)
+	var f := _frame("Journal  (%s)" % Keys.label("toggle_journal"), 700)
 	var p: PanelContainer = f[0]
 	var v: VBoxContainer = f[1]
 	var tabs := TabContainer.new()
@@ -149,6 +167,7 @@ func toggle_journal(tab := 0) -> void:
 	tabs.add_child(_journal_payroll())
 	tabs.add_child(_journal_ledger())
 	tabs.add_child(_journal_reports())
+	tabs.add_child(_journal_help())
 	tabs.current_tab = tab
 	v.add_child(UITheme.button("Close", close_panel, 200))
 	_open(p)
@@ -171,6 +190,14 @@ func _journal_contract() -> Control:
 	_text(v, "Island clearance for the theme park. %s" % ("LEGACY continuation: no deadline." if svc.legacy else "Day %d of %d. The contract closes at the END of day 30's dusk (when night falls on day 30). Sleep is not required for it to close." % [clk.day, WorkdayClock.CONTRACT_DAYS]))
 	_text(v, "State: %s%s" % [svc.contract.state.replace("_", " ").to_lower(), ("  (" + svc.contract.outcome_id + ")") if svc.contract.outcome_id != "" else ""])
 	_text(v, "Original trees standing: %d of %d\nFelled trunks still to buck: %d\nStumps to remove: %d\nTimber not yet delivered: %.2f tree-equivalents\nDelivered and accepted: %.2f tree-equivalents (waiting in the pit queue: %.2f)\nFinal ash cleanup: %s (not required for the contract)" % [c.standing, c.total_trees, c.trunks_to_buck, c.stumps, c.undelivered_mte / 1000.0, c.accepted_mte / 1000.0, c.backlog_mte / 1000.0, "clean" if c.ash_clean else "fire still burning"])
+	var where := _log_whereabouts()
+	_text(v, "Undelivered logs: %d on the ground · %d in hands (yours or crew) · %d loaded in trucks. Burning now in the pit: %d (already paid)." % [where.world, where.carried, where.truck, where.burning])
+	if svc.contract.state == ContractService.FULFILLED:
+		_text(v, "CONTRACT COMPLETE", 18, UITheme.ACCENT)
+		for line in success_summary():
+			_text(v, line, 15)
+	if svc.onboarding and svc.onboarding.milestones.has("final_tree"):
+		_text(v, "Every original tree is down. What is left is cleanup: the stumps and logs above.", 15, UITheme.ACCENT)
 	_text(v, "Pay: exactly $100 per original tree, split across its logs and credited when each log is accepted at the camp rack. Felling alone pays nothing.", 15, UITheme.MUTED)
 	v.add_child(UITheme.button("Locate the nearest remaining work", func() -> void:
 		var from: Vector3 = Game.player.global_position
@@ -191,21 +218,79 @@ func _journal_contract() -> Control:
 	return s[0]
 
 
+func _log_whereabouts() -> Dictionary:
+	var out := {"world": 0, "carried": 0, "truck": 0, "burning": 0}
+	if Game.timber == null:
+		return out
+	for id in Game.timber.records:
+		for sg in Game.timber.records[id].segments:
+			match int(sg.state):
+				TimberService.Seg.WORLD: out.world += 1
+				TimberService.Seg.CARRIED: out.carried += 1
+				TimberService.Seg.VEHICLE_RESERVED: out.truck += 1
+				TimberService.Seg.BURNING: out.burning += 1
+	return out
+
+
+## Phase 9: guide controls, rules, pause semantics and the message log.
+func _journal_help() -> Control:
+	var s := _scroll("Help & log")
+	var v: VBoxContainer = s[1]
+	var ob := svc.onboarding
+	if ob:
+		var cur := ob.current()
+		_text(v, "First-day guide: %s" % ("finished" if cur == "" else ("skipped" if ob.skipped else "step %d of %d" % [ob.step_index() + 1, Onboarding.STEPS.size()])), 17, UITheme.ACCENT)
+		if ob.active():
+			_text(v, Onboarding.fill(str(Onboarding.STEPS[ob.step_index()][1])), 15)
+		var row := HBoxContainer.new()
+		if ob.active():
+			row.add_child(UITheme.button("Skip this step", func() -> void:
+				close_panel()
+				ob.skip_step(), 180))
+			row.add_child(UITheme.button("Skip the guide", func() -> void:
+				close_panel()
+				ob.skip_all(), 180))
+		else:
+			row.add_child(UITheme.button("Replay the guide's hints", func() -> void:
+				close_panel()
+				ob.replay(), 240))
+		row.add_child(UITheme.button("Show the night rules", func() -> void:
+			close_panel()
+			ob.show_night_rules(), 220))
+		v.add_child(row)
+		_text(v, "Optional: " + "  ".join(Onboarding.OPTIONAL), 14, UITheme.MUTED)
+	if Game.hunt and Game.hunt.hunt_active():
+		_text(v, "SURVIVAL\n" + HelpText.hunt(), 15)
+	_text(v, "CONTROLS\n" + HelpText.controls(), 14)
+	_text(v, "THE CONTRACT\n" + HelpText.contract(), 14)
+	_text(v, "NIGHTS\n" + HelpText.night(), 14)
+	_text(v, "WHAT PAUSES\n" + HelpText.time_rules(), 14)
+	_text(v, "RECENT MESSAGES", 16, UITheme.ACCENT)
+	var notes: Notifications = hud.get("notes") if hud else null
+	if notes:
+		var rec := notes.recent(30)
+		rec.reverse()
+		for e in rec:
+			_text(v, "%sDay %d, %s into the day: %s%s" % [Notifications.TAGS[int(e.p)], int(e.day), CampaignService.fmt_time(float(e.t)), str(e.text), (" (x%d)" % int(e.count)) if int(e.count) > 1 else ""], 13)
+	return s[0]
+
+
 func _journal_payroll() -> Control:
 	var s := _scroll("Payroll")
 	var v: VBoxContainer = s[1]
 	_text(v, "Wages: $300 per employee per active working day, settled when you sleep. Unpaid wages must be cleared by the end of the following workday (including that day's wage) or the employee quits. Cash never goes negative; unpaid wages stay owed.", 15, UITheme.MUTED)
+	_text(v, "Example: two working employees cost $600 a day. Delivering five whole trees that day earns $500, so that day is $100 short on wages alone. More crew only pays off if they deliver more than $300 of logs each per day.", 14, UITheme.MUTED)
 	_text(v, "Cash $%s  ·  tonight's payroll $%s  ·  owed now $%s" % [Money.format_cents(svc.wallet.cash), Money.format_cents(svc.payroll.todays_estimate()), Money.format_cents(svc.payroll.owed_total())])
 	for e in svc.payroll.employees:
 		var status := str(e.status)
 		var note := ""
 		match status:
 			Payroll.PENDING:
-				note = "arrives with the crew in Phase 4 - not working, no wages yet"
+				note = "on the way by boat - not working yet, no wages yet"
 			Payroll.ACTIVE:
 				note = "working" + ("  (development fixture)" if e.get("fixture", false) else "")
 			Payroll.QUIT_REQUESTED:
-				note = "QUIT over unpaid wages (leaves in Phase 4); still owed what they earned"
+				note = "QUIT over unpaid wages: leaves on the next boat; still owed what they earned"
 			_:
 				note = status
 		var owed := svc.payroll.owed_for(str(e.id))
@@ -277,7 +362,7 @@ func open_shop() -> void:
 	var te := 0.0
 	if Game.timber:
 		te = int(Game.timber.totals().accepted_mte) / 1000.0
-	_text(v, "Hiring: Journal (J) -> Crew.", 14, UITheme.MUTED)
+	_text(v, "Hiring: Journal (%s) -> Crew." % Keys.label("toggle_journal"), 14, UITheme.MUTED)
 	if Game.vehicles:
 		var vs: VehicleService = Game.vehicles
 		var u := vs.unlock_state()
@@ -376,18 +461,62 @@ func show_outcome(state: String, outcome_id: String) -> void:
 		if Game.hunt.mode == "none":
 			Game.hunt.begin_abandonment()
 		return
-	var f := _frame("Contract fulfilled" if state == ContractService.FULFILLED else "The contract has ended", 640)
+	if state == ContractService.FULFILLED and svc.post_contract:
+		hud.show_message("Contract complete. You are exploring the cleared island (Journal → Contract shows the summary).", 6.0)
+		return
+	var f := _frame("Contract fulfilled" if state == ContractService.FULFILLED else "The contract has ended", 680)
 	var p: PanelContainer = f[0]
 	var v: VBoxContainer = f[1]
 	if state == ContractService.FULFILLED:
-		_text(v, "Every original tree is down, every stump is out and every log was delivered before the deadline. (%s)\nThe fire may keep burning the backlog - that is not part of the contract." % outcome_id)
+		_text(v, "The island is clear. Every original tree is down, every stump is out and every log is delivered. (%s)\nThe camp is quiet; the fire can finish the backlog in its own time." % outcome_id)
+		for line in success_summary():
+			_text(v, line, 15)
 	else:
 		_text(v, "Night fell on day 30 with the island not cleared. (%s)\nIn the finished game the boats leave you behind: days 31-35 become a survival hunt and rescue comes at dawn on day 36, while the dog waits safely at the dock refuge.\n\nDevelopment build: that survival mode arrives in Phase 6. Your save is kept at this outcome; nothing has been lost or changed." % outcome_id)
-	v.add_child(UITheme.button("Back to the title screen", func() -> void:
+	v.add_child(UITheme.button("Back to the title screen (the completed save is kept)", func() -> void:
 		close_panel()
-		Game.return_to_menu(), 300))
-	v.add_child(UITheme.button("Keep looking around (no more workdays)", close_panel, 300))
+		Game.return_to_menu(), 460))
+	v.add_child(UITheme.button("Keep exploring the cleared island (no clock, wages or night)", func() -> void:
+		svc.post_contract = true
+		close_panel()
+		if Game.world_root and Game.world_root.has_method("save_campaign"):
+			Game.world_root.save_campaign(), 460))
 	_open(p)
+
+
+## Real numbers only (ledger, payroll, contract, crew, trucks).
+func success_summary() -> PackedStringArray:
+	var out := PackedStringArray()
+	var c := svc.contract.counts()
+	var earned := 0
+	var wages := 0
+	var spent := 0
+	for tx in svc.wallet.transactions:
+		var a := int(tx.amount)
+		match str(tx.kind):
+			"delivery": earned += a
+			"wage": wages += -a
+		if a < 0 and str(tx.kind) != "wage":
+			spent += -a
+	var day := int(svc.contract.outcome_at.get("day", svc.clock.day))
+	out.append("Finished on day %d of 30 (%d day%s to spare)." % [day, 30 - day, "" if 30 - day == 1 else "s"])
+	out.append("Trees cleared: %d original trees · %.1f tree-equivalents of logs accepted at camp." % [int(c.total_trees), float(c.accepted_mte) / 1000.0])
+	out.append("Earned from deliveries: $%s · wages paid: $%s · other spending (axes, trucks, hires): $%s · cash now: $%s" % [Money.format_cents(earned), Money.format_cents(wages), Money.format_cents(spent), Money.format_cents(svc.wallet.cash)])
+	var active: Array = []
+	var gone: Array = []
+	for e in svc.payroll.employees:
+		if str(e.status) == Payroll.ACTIVE:
+			active.append(str(e.name))
+		elif str(e.status) in [Payroll.DEPARTED, Payroll.QUIT_REQUESTED]:
+			gone.append(str(e.name))
+	out.append("Crew at the finish: %s.%s" % [", ".join(active) if not active.is_empty() else "nobody", ("  Left during the contract: " + ", ".join(gone) + ".") if not gone.is_empty() else ""])
+	if Game.vehicles:
+		out.append("Trucks owned: %d." % Game.vehicles.trucks.size())
+	var owed := svc.payroll.owed_total()
+	if owed > 0:
+		out.append("Wages still owed: $%s (the contract does not cancel them)." % Money.format_cents(owed))
+	out.append("Biscuit is home, asleep by the camper door.")
+	return out
 
 
 
