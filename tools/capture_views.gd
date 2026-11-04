@@ -65,6 +65,9 @@ func _ready() -> void:
 				world.tv.set_mode("quad")
 		elif world.tv:
 			world.tv.force_active = false
+		if Game.tv_set:
+			Game.tv_set.force_active = vp_name == "couch_tv"
+			Game.tv_set.set_power(vp_name == "couch_tv")
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue
@@ -79,7 +82,7 @@ func _ready() -> void:
 		world.vegetation.update_collision_around(vp.pos)
 		if world.ground_cover and world.ground_cover.has_method("force_build_around"):
 			world.ground_cover.force_build_around(vp.pos)
-		for i in (40 if vp_name == "tv_wall" or weather != "" else 12):
+		for i in (40 if vp_name in ["tv_wall", "couch_tv"] or weather != "" else 12):
 			if at >= 0.0:
 				Game.world_time = at
 			await get_tree().process_frame

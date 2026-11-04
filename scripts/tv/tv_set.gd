@@ -17,6 +17,8 @@ var mat: ShaderMaterial
 var powered := false
 var volume := 0.7
 var _active := false
+## Capture tools have no player: render as if someone were nearby.
+var force_active := false
 
 
 func setup() -> void:
@@ -63,7 +65,7 @@ func _process(_delta: float) -> void:
 	if tv == null:
 		return
 	var p := Game.player
-	var near := p != null and p.global_position.distance_to(tv.global_position) < RANGE
+	var near := force_active or (p != null and p.global_position.distance_to(tv.global_position) < RANGE)
 	var on := powered and near and not get_tree().paused
 	if on != _active:
 		_active = on

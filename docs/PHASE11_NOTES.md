@@ -40,6 +40,7 @@ Usable floor = the interior floor inside the walls (furniture included, wall thi
 | Mail, News, Forums, Recordings | **Labelled placeholders** for Phases 14, 17 and 19. No fake content, orders or recordings. |
 
 - **TV:** the camper TV is entertainment only. It shows the original procedural channel in its own small viewport (renders only when switched on and you are near) with its own speaker. There is no hidden surveillance on the TV.
+- **Blank-screen fix (after build 50):** `BuildKit.batch_static` merges static meshes that share a material. Phase 11 made the TV and the monitor share the "screen" material, so both quads were merged into a plain glossy mesh and the live displays vanished (headless tests only checked materials). Both quads are now `no_batch`, the Phase 11 test asserts each display keeps its own mesh and live material, and the desk/couch captures were re-taken with the TV on.
 - **Saves:** a desk session saves as standing behind the chair. A legacy couch seat still restores on the couch.
 
 ## The five employees (authored looks by persistent ID)

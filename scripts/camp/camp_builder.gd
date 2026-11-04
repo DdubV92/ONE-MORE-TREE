@@ -271,6 +271,9 @@ func _build_camper() -> void:
 	sq.size = Vector2(0.96, 0.54)
 	screen.mesh = sq
 	screen.material_override = BuildKit.mat("screen")
+	# Live display: never merged by BuildKit.batch_static (it would blank the
+	# quad the TV/desk viewport draws on).
+	screen.set_meta("no_batch", true)
 	screen.position = Vector3(0, 0, 0.032)
 	tv.add_child(screen)
 	tv.add_to_group("camper_tv")
@@ -393,6 +396,7 @@ func _build_desk(c: Node3D, W: float, F: float, zs: float) -> void:
 	mq.size = Vector2(0.62, 0.35)
 	ms.mesh = mq
 	ms.material_override = BuildKit.mat("screen")
+	ms.set_meta("no_batch", true)
 	ms.position = Vector3(0, 0, 0.019)
 	mon.add_child(ms)
 	mon.add_to_group("camper_monitor")

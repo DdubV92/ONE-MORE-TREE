@@ -3017,6 +3017,12 @@ func _t_phase11_world() -> String:
 	var desk := world.desk
 	if err == "" and (desk == null or desk.monitor == null):
 		err = "desk computer missing"
+	# Both live displays keep their own quad (static batching must not merge
+	# them into a plain mesh, which renders a blank glossy panel).
+	if err == "" and (desk.screen.mesh == null or world.tv_set.screen.mesh == null):
+		err = "a display quad was batched away (blank screen)"
+	if err == "" and not (desk.screen.material_override is ShaderMaterial and world.tv_set.screen.material_override is ShaderMaterial):
+		err = "display quad lost its live material"
 	# Sit, glance, click a tile, stand behind the chair.
 	var p: Player = world.player
 	var seat := WorldGroups.of(world, "desk_seat")[0] as Node3D
