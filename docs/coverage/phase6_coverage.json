@@ -1,12 +1,11 @@
 {
 	"counts": {
-		"completed": 1236,
-		"peak": 295,
-		"quiet_no_place": 19,
+		"completed": 1250,
+		"peak": 300,
 		"rescue_quest": 62
 	},
 	"foreman_patterns": 36,
-	"generated_ms": 73761,
+	"generated_ms": 75088,
 	"per_family": {
 		"1": {
 			"error": 0,
@@ -20,8 +19,8 @@
 		"2": {
 			"error": 0,
 			"events": 50,
-			"observed": 48,
-			"quiet": 2,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -29,8 +28,8 @@
 		"3": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 1,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -65,8 +64,8 @@
 		"7": {
 			"error": 0,
 			"events": 50,
-			"observed": 48,
-			"quiet": 2,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -75,34 +74,34 @@
 			"error": 0,
 			"events": 50,
 			"observed": 50,
-			"quiet": 1,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
-			"startles_observed": 11
+			"startles_observed": 12
 		},
 		"9": {
 			"error": 0,
 			"events": 50,
 			"observed": 50,
-			"quiet": 1,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
-			"startles_observed": 11
+			"startles_observed": 12
 		},
 		"10": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 2,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
-			"startles_observed": 11
+			"startles_observed": 12
 		},
 		"11": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 1,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -110,8 +109,8 @@
 		"12": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 1,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -137,8 +136,8 @@
 		"15": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 1,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -146,8 +145,8 @@
 		"16": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 1,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -200,8 +199,8 @@
 		"22": {
 			"error": 0,
 			"events": 50,
-			"observed": 48,
-			"quiet": 2,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -209,8 +208,8 @@
 		"23": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 1,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
 			"startles_observed": 12
@@ -227,11 +226,11 @@
 		"25": {
 			"error": 0,
 			"events": 50,
-			"observed": 49,
-			"quiet": 3,
+			"observed": 50,
+			"quiet": 0,
 			"rescue": 0,
 			"startles": 12,
-			"startles_observed": 10
+			"startles_observed": 12
 		},
 		"26": {
 			"error": 0,
@@ -351,8 +350,8 @@
 		"T02-E043": "completed",
 		"T02-E044": "completed",
 		"T02-E045": "completed",
-		"T02-E046": "quiet_no_place",
-		"T02-E047": "quiet_no_place",
+		"T02-E046": "completed",
+		"T02-E047": "completed",
 		"T02-E048": "completed",
 		"T02-E049": "completed",
 		"T02-E050": "completed",
@@ -416,7 +415,7 @@
 		"T03-E046": "completed",
 		"T03-E047": "completed",
 		"T03-E048": "completed",
-		"T03-E049": "quiet_no_place",
+		"T03-E049": "completed",
 		"T03-E050": "completed",
 		"T03-J01": "peak",
 		"T03-J02": "peak",
@@ -662,8 +661,8 @@
 		"T07-E044": "completed",
 		"T07-E045": "completed",
 		"T07-E046": "completed",
-		"T07-E047": "quiet_no_place",
-		"T07-E048": "quiet_no_place",
+		"T07-E047": "completed",
+		"T07-E048": "completed",
 		"T07-E049": "completed",
 		"T07-E050": "completed",
 		"T07-J01": "peak",
@@ -731,7 +730,7 @@
 		"T08-J01": "peak",
 		"T08-J02": "peak",
 		"T08-J03": "peak",
-		"T08-J04": "quiet_no_place",
+		"T08-J04": "peak",
 		"T08-J05": "peak",
 		"T08-J06": "peak",
 		"T08-J07": "peak",
@@ -796,7 +795,7 @@
 		"T09-J04": "peak",
 		"T09-J05": "peak",
 		"T09-J06": "peak",
-		"T09-J07": "quiet_no_place",
+		"T09-J07": "peak",
 		"T09-J08": "peak",
 		"T09-J09": "peak",
 		"T09-J10": "peak",
@@ -826,7 +825,7 @@
 		"T10-E022": "completed",
 		"T10-E023": "completed",
 		"T10-E024": "completed",
-		"T10-E025": "quiet_no_place",
+		"T10-E025": "completed",
 		"T10-E026": "completed",
 		"T10-E027": "completed",
 		"T10-E028": "completed",
@@ -852,7 +851,7 @@
 		"T10-E048": "completed",
 		"T10-E049": "completed",
 		"T10-E050": "completed",
-		"T10-J01": "quiet_no_place",
+		"T10-J01": "peak",
 		"T10-J02": "peak",
 		"T10-J03": "peak",
 		"T10-J04": "peak",
@@ -888,7 +887,7 @@
 		"T11-E022": "completed",
 		"T11-E023": "completed",
 		"T11-E024": "completed",
-		"T11-E025": "quiet_no_place",
+		"T11-E025": "completed",
 		"T11-E026": "completed",
 		"T11-E027": "completed",
 		"T11-E028": "completed",
@@ -949,7 +948,7 @@
 		"T12-E021": "completed",
 		"T12-E022": "completed",
 		"T12-E023": "completed",
-		"T12-E024": "quiet_no_place",
+		"T12-E024": "completed",
 		"T12-E025": "completed",
 		"T12-E026": "completed",
 		"T12-E027": "completed",
@@ -1132,7 +1131,7 @@
 		"T15-E018": "completed",
 		"T15-E019": "completed",
 		"T15-E020": "completed",
-		"T15-E021": "quiet_no_place",
+		"T15-E021": "completed",
 		"T15-E022": "completed",
 		"T15-E023": "completed",
 		"T15-E024": "completed",
@@ -1194,7 +1193,7 @@
 		"T16-E018": "completed",
 		"T16-E019": "completed",
 		"T16-E020": "completed",
-		"T16-E021": "quiet_no_place",
+		"T16-E021": "completed",
 		"T16-E022": "completed",
 		"T16-E023": "completed",
 		"T16-E024": "completed",
@@ -1570,7 +1569,7 @@
 		"T22-E022": "completed",
 		"T22-E023": "completed",
 		"T22-E024": "completed",
-		"T22-E025": "quiet_no_place",
+		"T22-E025": "completed",
 		"T22-E026": "completed",
 		"T22-E027": "completed",
 		"T22-E028": "completed",
@@ -1594,7 +1593,7 @@
 		"T22-E046": "completed",
 		"T22-E047": "completed",
 		"T22-E048": "completed",
-		"T22-E049": "quiet_no_place",
+		"T22-E049": "completed",
 		"T22-E050": "completed",
 		"T22-J01": "peak",
 		"T22-J02": "peak",
@@ -1629,7 +1628,7 @@
 		"T23-E019": "completed",
 		"T23-E020": "completed",
 		"T23-E021": "completed",
-		"T23-E022": "quiet_no_place",
+		"T23-E022": "completed",
 		"T23-E023": "completed",
 		"T23-E024": "completed",
 		"T23-E025": "completed",
@@ -1752,7 +1751,7 @@
 		"T25-E018": "completed",
 		"T25-E019": "completed",
 		"T25-E020": "completed",
-		"T25-E021": "quiet_no_place",
+		"T25-E021": "completed",
 		"T25-E022": "completed",
 		"T25-E023": "completed",
 		"T25-E024": "completed",
@@ -1788,8 +1787,8 @@
 		"T25-J04": "peak",
 		"T25-J05": "peak",
 		"T25-J06": "peak",
-		"T25-J07": "quiet_no_place",
-		"T25-J08": "quiet_no_place",
+		"T25-J07": "peak",
+		"T25-J08": "peak",
 		"T25-J09": "peak",
 		"T25-J10": "peak",
 		"T25-J11": "peak",

@@ -78,8 +78,8 @@ func _process(delta: float) -> void:
 				_beat("T26-E018")
 				_beat("T26-E019")
 				Game.objective = "Find your dog - Biscuit ran out. Follow the whining."
-			elif t > 45.0:
-				_recover()
+			elif t > 150.0:
+				_recover()     # only if the run genuinely failed to arrive
 		"SEARCH":
 			if t > ASSIST_AFTER:
 				# Technical/stalled search: the dog finds its own way home.
@@ -100,7 +100,9 @@ func _process(delta: float) -> void:
 			var p := Game.player as Node3D
 			# Home: the boss is in the camper (or near its door) - the dog goes
 			# in through the flap and settles; sleep is restored.
-			if dog.routine == "rescue" and p and _near_camper(p.global_position, 4.0) and _near_camper(dog.global_position, 9.0):
+			# Once the boss is home the dog goes in on its own real route (it
+			# never teleports; if it fell behind it trots the rest of the way).
+			if dog.routine == "rescue" and p and _near_camper(p.global_position, 4.0):
 				dog.rescue_home()
 			if dog.routine == "camp" and (dog.state == CampDog.State.SLEEP or (dog.inside_camper() and dog.state != CampDog.State.GO_HOME)):
 				_resolve()

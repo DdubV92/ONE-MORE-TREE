@@ -56,7 +56,7 @@ func _rescue() -> void:
 			break
 	r.force_start()
 	var states := []
-	for i in 2400:
+	for i in 6000:
 		await get_tree().physics_frame
 		if states.is_empty() or states[states.size() - 1] != r.state:
 			states.append(r.state)
@@ -69,8 +69,8 @@ func _rescue() -> void:
 	out["rescue_grace_until"] = w.threat.grace_until
 	out["sleep_blocked"] = not bool(cs.can_sleep().ok) and str(cs.can_sleep().reason) == "Find your dog first."
 	# Reload mid-search: the door scare must not replay.
-	var snap := JSON.parse_string(JSON.stringify(r.capture()))
-	var dsnap := JSON.parse_string(JSON.stringify(dog.capture()))
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(r.capture()))
+	var dsnap: Dictionary = JSON.parse_string(JSON.stringify(dog.capture()))
 	dog.restore(dsnap)
 	r.restore(snap)
 	out["reload_state"] = r.state
@@ -87,13 +87,16 @@ func _rescue() -> void:
 	var home := CampLayout.world(CampLayout.CAMPER_POS + Vector3(2.4, 0, 1.85))
 	var path: Array[Vector3] = w.crew.nav.find_path(p.global_position, home)
 	var max_gap := 0.0
+	# Walk at a real 4 m/s along the path (not teleporting ahead).
+	var cur := p.global_position
 	for q in path:
-		p.teleport_feet(q, 0.0)
-		for k in 25:
+		while cur.distance_to(q) > 0.3:
+			cur = cur.move_toward(q, 4.0 / 60.0)
+			p.teleport_feet(Vector3(cur.x, World.height_at(cur.x, cur.z), cur.z), 0.0)
 			await get_tree().physics_frame
-		max_gap = maxf(max_gap, dog.global_position.distance_to(p.global_position))
+			max_gap = maxf(max_gap, dog.global_position.distance_to(p.global_position))
 	w.teleport_to("camper")
-	for i in 3600:
+	for i in 7200:
 		await get_tree().physics_frame
 		if r.state == "RESOLVED":
 			break
@@ -121,7 +124,7 @@ func _abandon() -> void:
 	out["hire_blocked"] = not bool(w.crew.can_hire().ok)
 	out["hide_spots"] = get_tree().get_nodes_in_group("hide_spot").size()
 	out["sleep_blocked_in_hunt"] = not bool(cs.can_sleep().ok)
-	for i in 1800:
+	for i in 9000:
 		await get_tree().physics_frame
 		if w.dog.state == CampDog.State.REFUGE:
 			break

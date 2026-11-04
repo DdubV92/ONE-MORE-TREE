@@ -681,7 +681,7 @@ func _follow_owner(delta: float) -> void:
 						authored.append(false)
 					_pi = 0
 					_after = State.FOLLOW
-					want_speed = clampf(d * 0.6, 1.4, 3.2)
+					want_speed = clampf(d * 0.6, 1.4, 5.5)   # dogs can run; it keeps up
 
 
 ## Rescue resolved: ordinary routine again (home to bed if it is night).

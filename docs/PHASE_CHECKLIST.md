@@ -11,7 +11,7 @@ Status key: ✅ implemented and observed (automated test or headless sim) · �
 | Packet preserved verbatim (`docs/design/phase6_packet.md`) and compiled by `tools/compile_terror_bank.py` into `data/terror/bank.json` | ✅ | 26 families, 1,300 events (T01-E001…T26-E050), 312 startle types (T01-J01…T26-J12), 36 Foreman patterns (F-H01…F-H36); unique ids, source text kept per entry |
 | Every event has an executor plan made of real runtime primitives (sound, voice, figure, shadow, lantern lights, interior warmth, starless sky patch, props: red thread/footprints/stakes, camera feed watch/anomaly, dog reaction, worker witness, startle peak) | ✅ | Schema/reference validation test; the mapping is keyword-derived and traceable |
 | **Implemented** (has a valid executor) | 1,300 / 1,300 events, 312 / 312 startles | T26 events map to beats of the single rescue quest |
-| **RuntimeObserved** (executed headless in its context through the real director to cleanup, no script errors) | COV_OBSERVED | See the coverage table; quiet = no valid place in that fixture (a legal outcome) |
+| **RuntimeObserved** (executed headless in its context through the real director to cleanup, no script errors) | 1550 / 1,550 non-rescue ids (1250 ran to cleanup, 300 with a sharp peak); 0 quiet; 62 T26 ids are rescue-quest beats (11 observed in the rescue run) | See the coverage table; quiet = no valid place in that fixture (a legal outcome) |
 | **Missing / art gaps** | 🟡 | Apparition bodies are stylised procedural silhouettes (tall woman, surveyor, worker-like, low crawler, antlered wing, backward walker, wrong dog, drowned walker, hanging shapes, afterimage, extra person). Several authored beats are approximated by the shared primitives (e.g. "two cameras catch different portions", "flashlight passes beneath her shoulders"): the cue plays, the exact staging is simplified. Voices are original synthesized murmurs with captions of lines the crew really said (no recorded voices). |
 
 ### Ordinary nights
@@ -54,7 +54,22 @@ Status key: ✅ implemented and observed (automated test or headless sim) · �
 | Rescue ship approaches the real dock at dawn of day 36, 8-minute boarding window, workers board at the dock end, the dog boards automatically exactly once, boss boards (confirmation if crew still ashore); outcome lists escaped / departed / dead / left behind | ✅ | Sim |
 | 36 Foreman patterns as conditional plans in the one agent (pattern ids recorded when their situation occurs) | ✅ / 🟡 | Observed ids in the sim are listed below |
 
-HUNT_SIM_PLACEHOLDER
+### Headless scenario evidence (`tools/hunt_sim.tscn`, Preview, in memory)
+
+- **Dog rescue:** IDLE → ELIGIBLE → ARMED → WINDDOOR → ESCAPE → SEARCH. The real dog ran out through the open camper door along a nav route to cover 145 m from camp and waited there, whining. "Find your dog first." replaced sleep, and the protected grace ran to 306 s of night time. A capture/restore mid-search resumed SEARCH, and the door did not replay. Petting led to RETURN_HOME: the dog followed a boss walking at 4 m/s (largest gap 24.6 m), then went in through the flap to its bed (SLEEP inside the camper). The rescue ended RESOLVED and does not retrigger. Beats observed: T26-E003, E005, E006, E007, E008, E009, E010, E017, E018, E019, E020.
+- **Abandonment:** hunt mode on, the Foreman revealed 143 m away, hiring blocked, sleep unavailable, 11 hiding places built, and the dog walked to the dock refuge.
+- **Open ground:** a boss standing still in front of it went through CONFIRM → CHASE → LOST_CONTACT (×2) → CHASE → ATTACK and was killed. Preview showed the death card.
+- **Hidden probes (20 trials each):** found 7/20 after an unseen entry and 16/20 after a seen entry. A hidden, unfound target is never killed by a stored attack (unit test).
+- **Clock:** days 31, 32, 33, 34 and 35 in hunt mode, then 36 → rescue. The ship docked, the dog boarded exactly once (a second attempt was refused), a worker at the dock end escaped, the boss boarded, and the outcome card listed everyone.
+- **Foreman patterns observed in this run:** F-H10, F-H13, F-H23, F-H24, F-H28, F-H31, F-H36 (7 of 36). The others are wired to their situations in the agent (door folds, closet/bed probes, truck inspection, engine listener, wrong sector, false departure/return, voice fragments, etc.) but were **not observed** in this scripted headless run; they need live play-testing.
+
+### Phase 6 known limits (honest)
+
+- Nothing was play-tested on a real GPU or with real speakers. Apparitions and the Foreman are stylised procedural bodies; the close-up grotesque face/skin, cloth and hand contact are Phase 8 art work.
+- Event staging is approximated by shared primitives. The coverage run proves every id executes and cleans up, not that each reads exactly as written.
+- Pacing numbers (quiet gaps, refractory, startle weights, exposure rates, hunt night length, probe chances) are first values from the packet, not tuned by play.
+- Workers in the hunt use simple hide/regroup behaviour and are not ordered individually. Crew radio is not implemented.
+- The ship approach is a straight run to the dock; boarding is per person at the dock end.
 
 ## Phase 5: Two logging pickups, a living camp, dock and dog, couch television, and ten live cameras
 
