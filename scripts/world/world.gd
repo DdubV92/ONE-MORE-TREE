@@ -29,6 +29,7 @@ var arcade: ArcadeService
 var dock_site: DockSite
 var ground_cover: Node3D
 var environment: EnvironmentController
+var weather: WeatherService
 var camp: Node3D
 var audio: Node3D
 var safety: Node
@@ -49,6 +50,10 @@ func _ready() -> void:
 	build_ms["world_data"] = Time.get_ticks_msec() - t0
 	environment = _timed("environment", func() -> Node: var e := EnvironmentController.new(); e.name = "Environment"; add_child(e); e.build(); return e)
 	Game.environment = environment
+	weather = WeatherService.new()
+	weather.name = "Weather"
+	add_child(weather)
+	Game.weather = weather
 	terrain = _timed("terrain", func() -> Node: var t := TerrainSystem.new(); t.name = "Terrain"; add_child(t); t.build(); return t)
 	water = _timed("water", func() -> Node: var w := WaterSystem.new(); w.name = "Water"; add_child(w); w.build(_ocean_grid()); return w)
 	Game.water = water

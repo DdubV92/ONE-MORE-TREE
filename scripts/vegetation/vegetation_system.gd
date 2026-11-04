@@ -99,6 +99,29 @@ func _index_trees() -> void:
 	chunk_trees = tmp
 
 
+## Original trees still standing within `radius` of p (removed trees are
+## excluded). Presentation uses it so cleared ground stops sounding and
+## looking like forest (wind in leaves, bird perches, ambience).
+func standing_trees_near(p: Vector3, radius: float, limit := 64) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	var c0 := _cell_of(p.x - radius, p.z - radius)
+	var c1 := _cell_of(p.x + radius, p.z + radius)
+	var r2 := radius * radius
+	for cx in range(c0.x, c1.x + 1):
+		for cz in range(c0.y, c1.y + 1):
+			var cell := Vector2i(cx, cz)
+			if not _tree_cells.has(cell):
+				continue
+			for i in (_tree_cells[cell] as Array):
+				var dx: float = World.trees.x[i] - p.x
+				var dz: float = World.trees.z[i] - p.z
+				if dx * dx + dz * dz <= r2 and not World.removed_trees.has(int(World.trees.id[i])):
+					out.append(i)
+					if out.size() >= limit:
+						return out
+	return out
+
+
 func _cell_of(x: float, z: float) -> Vector2i:
 	return Vector2i(int(floor(x / COLLISION_CELL)), int(floor(z / COLLISION_CELL)))
 

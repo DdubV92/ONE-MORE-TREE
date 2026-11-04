@@ -22,6 +22,7 @@ var time_scale := 1.0
 var world_root: Node3D
 var water: WaterSystem
 var environment: Node
+var weather: Node
 var safety: Node
 var player: Node3D
 var vegetation: Node

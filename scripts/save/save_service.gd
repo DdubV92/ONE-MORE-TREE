@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 7
+const SCHEMA_VERSION := 8
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -105,6 +105,9 @@ static func capture_state(world: Node) -> Dictionary:
 		# continuous clock, dead/escaped people, Foreman pose/state/evidence,
 		# ship). Dog identity/refuge lives in phase5.dog; worker life in payroll.
 		"phase6": _phase6_record(world),
+		# Phase 8: weather is a pure function of seed + day + clock; only the
+		# seed and the smoothed cosmetic wetness are stored (no reroll on load).
+		"phase8": {"weather": (world.get("weather") as Node).call("capture") if world.get("weather") else {}},
 		"time_of_day": env.get("hour") if env else 12.0,
 		# Modified original trees only, keyed by stable ID (state, notch work,
 		# cut side, fall intent, felled guard, trunk pose/velocity).
@@ -264,6 +267,12 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# (rules card first), exactly once.
 		data["phase6"] = {}
 		data["schema"] = 7
+		v = 7
+	if v == 7:
+		# Phase 7 saves: no weather block; the schedule is reconstructed from
+		# the world seed and the restored clock, surfaces start dry.
+		data["phase8"] = {}
+		data["schema"] = 8
 	return data
 
 
@@ -308,6 +317,7 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 	# Phase 5/6 systems restore once they exist (crew/dock/TV/comfort/arcade).
 	var p5: Dictionary = data.get("phase5", {})
 	var p6: Dictionary = data.get("phase6", {})
+	var p8: Dictionary = data.get("phase8", {})
 	var hunt_n: Object = world.get("hunt")
 	if hunt_n and str((p6.get("hunt", {}) as Dictionary).get("mode", "none")) != "none":
 		hunt_n.set("pending_restore", true)
@@ -323,6 +333,9 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 				var n6: Object = world.get(k)
 				if n6 and n6.has_method("restore") and p6.has(k):
 					n6.call("restore", p6[k])
+			var wn: Object = world.get("weather")
+			if wn and p8.has("weather"):
+				wn.call("restore", p8["weather"])
 			if seat == "couch" and p and p.has_method("sit_on_couch"):
 				var seats := world.get_tree().get_nodes_in_group("couch_seat")
 				if seat_index >= 0 and seat_index < seats.size():

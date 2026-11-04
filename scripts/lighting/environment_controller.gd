@@ -27,6 +27,16 @@ var interior := 0.0          # 0 outside .. 1 deep inside camper/cabin
 var _interior_target := 0.0
 var lamp_level := 0.0        # 0..1 exterior lamp intensity factor
 var current := LightingPreset.new()
+## Phase 8 weather inputs (WeatherService decides, this node applies).
+var weather_cloud := 0.0
+var weather_rain := 0.0
+var weather_wind := 1.0
+var weather_wind_dir := Vector2(0.8, 0.6)
+var weather_wetness := 0.0
+var weather_flash := 0.0
+## Effective wind strength actually written to the shared shader globals
+## (trees, grass, water detail, rain and the wind-in-leaves audio read it).
+var wind_now := 0.5
 
 var sun: DirectionalLight3D
 var moon: DirectionalLight3D
@@ -124,7 +134,7 @@ static func moon_phase_for_day(day: int) -> float:
 
 
 func describe() -> String:
-	return "%02d:%02d, overcast %.2f, moon %.0f%% lit, interior %.2f, preset near '%s'" % [int(hour), int(fmod(hour, 1.0) * 60.0), overcast, moon_illumination() * 100.0, interior, current.label]
+	return "%02d:%02d, overcast %.2f (weather %.2f, rain %.2f), moon %.0f%% lit, interior %.2f, preset near '%s'" % [int(hour), int(fmod(hour, 1.0) * 60.0), overcast, weather_cloud, weather_rain, moon_illumination() * 100.0, interior, current.label]
 
 
 ## Named review presets used by the Preview Tour.
@@ -142,6 +152,25 @@ func apply_named(preset: String) -> void:
 func set_overcast(v: float) -> void:
 	overcast = clampf(v, 0.0, 1.0)
 	set_time_of_day(hour)
+
+
+## Called by WeatherService (throttled). `force` re-applies immediately.
+func set_weather(cloud: float, rain: float, wind_mult: float, wind_dir: Vector2, wetness: float, flash: float, force := false) -> void:
+	var changed := absf(cloud - weather_cloud) > 0.002 or absf(rain - weather_rain) > 0.002 or absf(wetness - weather_wetness) > 0.002 \
+		or absf(wind_mult - weather_wind) > 0.002 or wind_dir.distance_to(weather_wind_dir) > 0.002 or absf(flash - weather_flash) > 0.0005
+	weather_cloud = clampf(cloud, 0.0, 1.0)
+	weather_rain = clampf(rain, 0.0, 1.0)
+	weather_wind = maxf(wind_mult, 0.0)
+	weather_wind_dir = wind_dir.normalized() if wind_dir.length() > 0.01 else Vector2(0.8, 0.6)
+	weather_wetness = clampf(wetness, 0.0, 1.0)
+	weather_flash = clampf(flash, 0.0, 1.0)
+	if changed or force:
+		_blend_presets()
+		_apply()
+
+
+func effective_overcast() -> float:
+	return maxf(overcast, weather_cloud)
 
 
 func set_interior_target(v: float) -> void:
@@ -176,7 +205,7 @@ func _blend_presets() -> void:
 	var t := clampf((hh - ha) / maxf(hb - ha, 0.001), 0.0, 1.0)
 	t = t * t * (3.0 - 2.0 * t)
 	var mixed := _lerp_preset(a, b, t)
-	var oc := overcast * (1.0 - _night_factor() * 0.7)
+	var oc := effective_overcast() * (1.0 - _night_factor() * 0.7)
 	current = _lerp_preset(mixed, _overcast_at(mixed), oc)
 	current.label = a.label if t < 0.5 else b.label
 
@@ -265,12 +294,17 @@ func _apply() -> void:
 	var interior_k := interior
 	# Night ambient follows the moon: on a dark night only lamps, fire and
 	# the moon's silhouette light remain.
-	env.ambient_light_energy = p.ambient_energy * lerpf(1.0, 0.6 + 0.4 * illum, nf) * lerpf(1.0, 0.35, interior_k)
+	# Lightning (distant storm) briefly lifts sky and ambient only; never
+	# lamps or anything SafetyService reads. Level already follows the
+	# flash-reduction comfort setting.
+	var fl := weather_flash * (1.0 - interior_k * 0.6)
+	env.ambient_light_energy = p.ambient_energy * lerpf(1.0, 0.6 + 0.4 * illum, nf) * lerpf(1.0, 0.35, interior_k) * (1.0 + fl * 2.0 * nf + fl * 0.4)
+	env.background_energy_multiplier = 1.0 + fl * (0.6 + 2.4 * nf)
 	env.ambient_light_sky_contribution = 1.0
 	env.fog_light_color = p.fog_color
 	# Night mist: thicker and darker on moonless nights so the forest fades
 	# to black within a few dozen metres; a full moon thins it.
-	env.fog_density = p.fog_density * lerpf(1.0, lerpf(1.6, 0.55, illum), nf)
+	env.fog_density = p.fog_density * lerpf(1.0, lerpf(1.6, 0.55, illum), nf) * (1.0 + weather_rain * 0.9)
 	env.fog_height = _ground_fog_y + 2.5
 	env.fog_height_density = lerpf(p.fog_height_density, 0.05, nf)
 	env.volumetric_fog_enabled = quality in ["high", "ultra"] and p.volumetric > 0.0005
@@ -289,10 +323,17 @@ func _apply() -> void:
 	env.tonemap_exposure = p.exposure * lerpf(1.0, 1.35, interior_k) * (1.12 if agx else 1.0)
 	RenderingServer.global_shader_parameter_set("sun_dir_world", sd if sd.y > -0.1 else md)
 	RenderingServer.global_shader_parameter_set("daylight", clampf(sun_up * clampf(p.sun_energy, 0.0, 1.4) / 1.4 + 0.15 * moon_up * (1.0 - sun_up), 0.0, 1.0))
-	var wd := Vector2(0.8, 0.6)
-	RenderingServer.global_shader_parameter_set("wind_dir", wd)
-	RenderingServer.global_shader_parameter_set("wind_strength", p.wind)
-	RenderingServer.global_shader_parameter_set("haze_strength", p.heat_haze * (1.0 if Settings.get_v("heat_haze") else 0.0))
+	# One shared wind field: prevailing direction and strength from the
+	# weather, local variation comes from the gust function in the shaders.
+	wind_now = p.wind * weather_wind
+	RenderingServer.global_shader_parameter_set("wind_dir", weather_wind_dir)
+	RenderingServer.global_shader_parameter_set("wind_strength", wind_now)
+	RenderingServer.global_shader_parameter_set("wetness", weather_wetness)
+	RenderingServer.global_shader_parameter_set("rain_amount", weather_rain)
+	RenderingServer.global_shader_parameter_set("sun_clarity", clampf(1.0 - effective_overcast() * 0.85, 0.0, 1.0))
+	# Heat shimmer only over sunny dry sand: cloud, rain and wet ground calm it.
+	var haze_k := (1.0 - effective_overcast()) * (1.0 - weather_wetness) * (1.0 - weather_rain)
+	RenderingServer.global_shader_parameter_set("haze_strength", p.heat_haze * haze_k * (1.0 if Settings.get_v("heat_haze") else 0.0))
 	lamp_level = p.lamps
 	get_tree().call_group("camp_lamps", "set_level", lamp_level)
 	get_tree().call_group("post_fx", "set_grade", p.warmth, grade)
@@ -320,7 +361,7 @@ func _process(delta: float) -> void:
 	_cloud_timer += delta
 	if _cloud_timer > 3.0:
 		_cloud_timer = 0.0
-		_cloud_offset += 0.02 * (0.3 + current.wind)
+		_cloud_offset += 0.02 * (0.3 + wind_now)
 		sky_mat.set_shader_parameter("cloud_offset", _cloud_offset)
 
 

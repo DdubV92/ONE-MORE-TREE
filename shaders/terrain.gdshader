@@ -215,6 +215,9 @@ void fragment() {
 		float lvl_prev = swash_level(xz, world_time - 1.2, beachiness);
 		fresh = smoothstep(h - 0.01, h + 0.04, lvl_prev) * (1.0 - smoothstep(h - 0.01, h + 0.03, lvl_now));
 	}
+	// Rain soaks the whole exterior: darker, smoother, glossier (Phase 8).
+	float rw = rain_wet(xz, wn.y, forest * (1.0 - sand));
+	wet = max(wet, rw * 0.8);
 	alb *= mix(1.0, 0.58, wet);
 	float rough = mix(clamp(arm.g, 0.35, 1.0), 0.12, wet * 0.75);
 	rough = mix(rough, 0.04, fresh * sand);
@@ -226,7 +229,9 @@ void fragment() {
 		float c = caustics(xz * 0.9, world_time) * caustic_strength;
 		float att = exp(-depth * 0.32) * smoothstep(0.0, 0.25, depth);
 		float sun_up = clamp(sun_dir_world.y * 2.5, 0.0, 1.0);
-		emit = alb * c * att * sun_up * daylight * 1.4;
+		// Caustics need direct sun: they fade under cloud and rain and are
+		// absent at night (daylight) and in the dark ocean deeps (att).
+		emit = alb * c * att * sun_up * daylight * sun_clarity * (1.0 - rain_amount * 0.6) * 1.4;
 		alb *= mix(1.0, 0.85, smoothstep(0.0, 2.0, depth));
 	}
 

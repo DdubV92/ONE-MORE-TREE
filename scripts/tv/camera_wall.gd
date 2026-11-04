@@ -442,6 +442,20 @@ func _update_anchors() -> void:
 		for ci in shown:
 			pts.append(cams[ci].global_transform * Vector3(0, 0, -30.0))
 	gc.call("set_anchors", pts)
+	_update_remote_weather()
+
+
+## Remote feeds see the same weather: each camera the TV is actually
+## rendering gets a small rain volume at its own mount (not the player's).
+func _update_remote_weather() -> void:
+	var w: Node = Game.weather
+	if w == null or not w.has_method("set_remote_views"):
+		return
+	var nodes: Array = []
+	if _active:
+		for ci in shown_cameras():
+			nodes.append(cams[ci])
+	w.call("set_remote_views", nodes)
 
 
 func _apply_tiles() -> void:

@@ -194,9 +194,14 @@ func _place_river(lp: Vector3) -> void:
 
 
 func _update_wind(lp: Vector3) -> void:
-	var m := World.masks_at(lp.x, lp.z)
-	var ws: float = Game.environment.current.wind if Game.environment else 0.5
-	var forest := clampf(m.y * 1.3, 0.15, 1.0)
+	var ws: float = Game.environment.wind_now if Game.environment else 0.5
+	# Leaf noise follows the trees actually left standing nearby, re-counted
+	# every update (cleared ground keeps only open-air wind).
+	var standing := 0
+	var veg: Node = Game.vegetation
+	if veg and veg.has_method("standing_trees_near"):
+		standing = (veg.call("standing_trees_near", lp, 22.0, 24) as PackedInt32Array).size()
+	var forest := clampf(float(standing) / 18.0, 0.15, 1.0)
 	_wind.volume_db = linear_to_db(maxf(0.05 + ws * 0.6 * forest, 0.001)) - 8.0
 
 
@@ -205,14 +210,19 @@ func _chirp(lp: Vector3) -> void:
 		return
 	if _rng.randf() < 0.25:
 		return   # leave occasional silence
-	var idx: int = (World.trees.x as PackedFloat32Array).size()
-	if idx == 0:
+	# Birds perch only in trees that are still standing (no phantom song
+	# from a cleared hillside). Rain keeps most of them quiet.
+	if Game.weather and float(Game.weather.get("rain")) > 0.3 and _rng.randf() < 0.8:
 		return
-	# Pick a random tree within ~45 m: sample a few candidates.
-	for attempt in 12:
-		var i: int = _rng.randi() % idx
-		var tp := Vector3(World.trees.x[i], 0, World.trees.z[i])
-		if Vector2(tp.x - lp.x, tp.z - lp.z).length() < 45.0:
+	var veg: Node = Game.vegetation
+	if veg == null or not veg.has_method("standing_trees_near"):
+		return
+	var near: PackedInt32Array = veg.call("standing_trees_near", lp, 45.0, 48)
+	if near.is_empty():
+		return
+	for attempt in 1:
+		var i: int = near[_rng.randi() % near.size()]
+		if true:
 			var b: AudioStreamPlayer3D = _birds.pop_front()
 			_birds.append(b)
 			b.stream = _stream("bird_%d" % (_rng.randi() % 5), false)

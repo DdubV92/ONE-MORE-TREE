@@ -9,6 +9,10 @@ global uniform float sea_level;
 global uniform vec3 sun_dir_world;
 global uniform float daylight;
 global uniform float haze_strength;
+// Phase 8 weather (EnvironmentController writes these from WeatherService).
+global uniform float wetness;       // smoothed exterior surface wetness 0..1
+global uniform float rain_amount;   // current rainfall 0..1
+global uniform float sun_clarity;   // 1 clear sun .. ~0.15 full overcast
 
 float global_haze_level() {
 	return haze_strength;
@@ -124,4 +128,34 @@ float foam_lace(vec2 xz, float t, float coverage) {
 	float mask = smoothstep(0.55 - coverage * 0.5, 0.8 - coverage * 0.4, fbm2(xz * 0.4 + w * 0.3));
 	float patch = smoothstep(1.02 - coverage, 1.32 - coverage, fbm2(xz * 0.65 - w * 0.25) + 0.12 * vnoise(xz * 3.3));
 	return clamp(max(web * mask, patch), 0.0, 1.0);
+}
+
+// Rain wetness for an exterior surface: upward-facing surfaces soak first,
+// low hollows pool slightly more, dense canopy keeps the floor drier.
+float rain_wet(vec2 xz, float up, float canopy) {
+	float pool = smoothstep(0.35, 0.75, 1.0 - vnoise(xz * 0.17));
+	float k = wetness * mix(0.55, 1.0, clamp(up, 0.0, 1.0)) * (1.0 - canopy * 0.45);
+	return clamp(k * (0.75 + 0.35 * pool), 0.0, 1.0);
+}
+
+// Rain ripple rings on still water: one ring per 0.7 m cell, each cell with
+// its own phase, bounded inside the cell (no neighbour loop). XZ slope.
+vec2 rain_ripples(vec2 xz, float t) {
+	if (rain_amount < 0.02) return vec2(0.0);
+	vec2 s = vec2(0.0);
+	for (int layer = 0; layer < 2; layer++) {
+		float cs = layer == 0 ? 0.7 : 0.45;
+		vec2 p = xz / cs + float(layer) * 13.7;
+		vec2 c = floor(p);
+		float h = hash12(c);
+		if (h > rain_amount * 1.1) continue;
+		vec2 ctr = c + 0.25 + 0.5 * vec2(hash12(c + 3.1), hash12(c + 7.7));
+		float ph = fract(t * (0.9 + h * 0.5) + h * 7.0);
+		vec2 d = p - ctr;
+		float dist = length(d) + 1e-4;
+		float x = dist - ph * 0.45;
+		float env = exp(-x * x * 160.0) * (1.0 - ph) * (1.0 - ph);
+		s += (d / dist) * cos(x * 60.0) * env * 0.35;
+	}
+	return s * rain_amount;
 }

@@ -37,6 +37,13 @@ var values := {
 	"vol_UI": 0.7,
 	"vol_TV": 0.8,
 	"tv_interval": 5.0,             # camera wall: seconds per tile swap (0 = frozen)
+	# Phase 8 comfort / presentation
+	"flash_reduction": "reduced",   # full / reduced / off (distant lightning, bright cues)
+	"shake_strength": 1.0,          # 0..1 camera shake scale (camera_shake toggle still applies)
+	"bob_strength": 1.0,            # 0..1 head-bob scale
+	"auto_exposure": true,          # gentle eye adaptation (bounded; no severe pumping)
+	"horror_intensity": 1.0,        # 0.4..1 startle/peak loudness & flash scale (never changes event count or rules)
+	"music": true,                  # sparse daytime phrases
 }
 
 var defaults := {}
@@ -130,6 +137,11 @@ func sanitize() -> void:
 	for b in BUSES:
 		values["vol_" + b] = clampf(float(values["vol_" + b]), 0.0, 1.0)
 	values.tv_interval = clampf(float(values.get("tv_interval", 5.0)), 0.0, 60.0)
+	if not values.flash_reduction in ["full", "reduced", "off"]:
+		values.flash_reduction = "reduced"
+	values.shake_strength = clampf(float(values.shake_strength), 0.0, 1.0)
+	values.bob_strength = clampf(float(values.bob_strength), 0.0, 1.0)
+	values.horror_intensity = clampf(float(values.horror_intensity), 0.4, 1.0)
 
 
 func save_settings() -> void:

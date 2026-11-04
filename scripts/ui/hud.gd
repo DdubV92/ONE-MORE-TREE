@@ -219,6 +219,19 @@ func _build_time_panel() -> void:
 	mo.add_child(UITheme.button("New", func() -> void: moon_slider.value = 0.0, 60))
 	mo.add_child(UITheme.button("Full", func() -> void: moon_slider.value = 0.5, 60))
 	v.add_child(mo)
+	# Phase 8 weather (preview override; campaigns follow the seeded schedule).
+	var wr := HBoxContainer.new()
+	wr.add_child(UITheme.label("Weather", 16))
+	for st in ["clear", "light_cloud", "overcast", "light_rain", "storm"]:
+		wr.add_child(UITheme.button(st.replace("_", " ").capitalize(), func() -> void:
+			if Game.weather:
+				Game.weather.call("set_override", st)
+			_update_time_label(), 82))
+	wr.add_child(UITheme.button("Schedule", func() -> void:
+		if Game.weather:
+			Game.weather.call("set_override", "")
+		_update_time_label(), 82))
+	v.add_child(wr)
 
 
 func _apply_preset(p: String) -> void:
@@ -232,6 +245,8 @@ func _apply_preset(p: String) -> void:
 func _update_time_label() -> void:
 	if Game.environment:
 		_time_label.text = "Time %s" % Game.environment.describe()
+		if Game.weather:
+			_time_label.text += "\nWeather %s" % Game.weather.call("describe")
 
 
 func _build_timber_panel() -> void:
@@ -790,5 +805,7 @@ func _debug_text() -> String:
 			lines.append("Night safety here: %s (%s)" % ["SAFE" if q.safe else "unsafe", SafetyService.Reason.keys()[q.reason]])
 	if Game.environment:
 		lines.append("Lighting: %s" % Game.environment.describe())
+	if Game.weather:
+		lines.append("Weather: %s" % Game.weather.call("describe"))
 	lines.append("Quality %s  Mode %s  %s" % [Settings.get_v("quality"), Game.Mode.keys()[Game.mode], Diag.version_string()])
 	return "\n".join(lines)

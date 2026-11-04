@@ -116,6 +116,7 @@ void fragment() {
 	vec2 slope = (na.xy + nb.xy * 0.6) * detail_strength * (0.5 + 0.5 * wind_strength);
 	slope *= 1.0 - smoothstep(150.0, 600.0, v_dist) * 0.7;
 	slope += ripple_slope(xz, t);
+	slope += rain_ripples(xz, t) * 0.5;
 	vec3 nmap = normalize(vec3(slope.x, slope.y, 1.0));
 	NORMAL_MAP = nmap * 0.5 + 0.5;
 

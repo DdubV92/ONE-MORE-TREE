@@ -13,6 +13,11 @@ var _log: PackedStringArray = []
 func _ready() -> void:
 	await get_tree().process_frame
 	World.ensure_loaded()
+	if OS.has_environment("ONLY_P8"):
+		await _run_async("phase 8 presentation", _t_phase8_presentation)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P5"):
 		# Dev shortcut: just the Phase 5 checks.
 		_run("save v5 -> v6 migration adds the Phase 5 block", _t_save_v6)
@@ -70,6 +75,7 @@ func _ready() -> void:
 	await _run_async("phase 5: trucks, seats, cargo once, TV rotation/focus/pool, mics, arcade pause, dog door route, refuge, couch, saves", _t_phase5_world)
 	_run("phase 6 bank: 26 families, 1300 events, 312 startles, 36 Foreman patterns, valid executors", _t_terror_bank)
 	await _run_async("phase 7: bridge decks for walkers and trucks, east truck route, worker stump removal, locator", _t_phase7_world)
+	await _run_async("phase 8: deterministic weather + save, rain shelter/remote views, safety unchanged by weather/lightning, winding, presentation", _t_phase8_presentation)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -2255,6 +2261,186 @@ func _t_phase7_world() -> String:
 		err = "locator found no standing tree"
 	world.timber.clear_all()
 	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+# ---------------------------------------------------------------- Phase 8
+
+func _t_phase8_presentation() -> String:
+	var err := ""
+	# Face winding: every procedural tree/limb surface is clockwise from
+	# outside (cull_back must never hide the near half of a trunk).
+	var tb := TreeBuilder.new()
+	for sp in 3:
+		for m in [tb.build(sp, 0, true), tb.build_far(sp)]:
+			var arr := (m as ArrayMesh).surface_get_arrays(0)
+			var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var nn: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+			for i in range(0, v.size(), 3):
+				var cr := (v[i + 1] - v[i]).cross(v[i + 2] - v[i])
+				if cr.length() > 1e-9 and cr.dot(nn[i] + nn[i + 1] + nn[i + 2]) > 0.0:
+					return "tree species %d surface wound inside-out" % sp
+	var cap := CharMeshKit.tapered_capsule(0.05, 0.04, 0.3)
+	var ca := cap.surface_get_arrays(0)
+	var cv: PackedVector3Array = ca[Mesh.ARRAY_VERTEX]
+	var cn: PackedVector3Array = ca[Mesh.ARRAY_NORMAL]
+	if (cv[1] - cv[0]).cross(cv[2] - cv[0]).dot(cn[0] + cn[1] + cn[2]) > 0.0:
+		return "character limb capsule wound inside-out"
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 600:
+		await get_tree().physics_frame
+		guard += 1
+	var w: WeatherService = world.weather
+	# Deterministic schedule: same seed/day/time -> same weather, any instance.
+	var w2 := WeatherService.new()
+	w2.seed_value = w.seed_value
+	var rainy := 0
+	for day in range(1, 36):
+		var a := w.sample(day, 610.0)
+		var b := w2.sample(day, 610.0)
+		if err == "" and (absf(float(a.rain) - float(b.rain)) > 1e-6 or str(a.name) != str(b.name)):
+			err = "weather not deterministic on day %d" % day
+		var any_rain := false
+		for tt in range(0, 1200, 60):
+			if float(w.sample(day, float(tt)).rain) > 0.3:
+				any_rain = true
+		if any_rain:
+			rainy += 1
+	w2.free()
+	if err == "" and float(w.sample(1, 300.0).rain) > 0.0:
+		err = "day 1 should be fair"
+	if err == "" and (rainy < 3 or rainy > 18):
+		err = "rain days out of a restrained range (%d of 35)" % rainy
+	# Continuity: no instant jumps between neighbouring seconds.
+	for day in [4, 9, 17]:
+		var prev := w.sample(day, 0.0)
+		for tt in range(1, 1200, 1):
+			var cur := w.sample(day, float(tt))
+			if err == "" and absf(float(cur.cloud) - float(prev.cloud)) > 0.05:
+				err = "weather jumps on day %d at %d s" % [day, tt]
+			prev = cur
+	# Campaign clock drives it; save/load reconstructs without a reroll.
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(false)
+	var target_day := -1
+	var target_t := 0.0
+	for day in range(2, 30):
+		for tt in range(60, 1140, 30):
+			if target_day < 0 and float(w.sample(day, float(tt)).rain) > 0.3:
+				target_day = day
+				target_t = float(tt)
+	if err == "" and target_day < 0:
+		err = "no rainy day found in the schedule"
+	if err == "":
+		cs.clock.day = target_day
+		cs.clock.t = 0.0
+		cs.clock.advance(target_t)
+		w.set_override("")
+		for i in 30:
+			await get_tree().process_frame
+		var before := w.sample(cs.clock.day, cs.clock.t)
+		if absf(w.rain - float(before.rain)) > 0.02:
+			err = "service rain %.2f does not follow the clock (%.2f)" % [w.rain, float(before.rain)]
+		var saved := w.capture()
+		w.wetness = 0.0
+		w.restore(saved)
+		if err == "" and absf(w.wetness - float(saved.wetness)) > 0.002:
+			err = "wetness not restored"
+		if err == "" and absf(w.rain - float(before.rain)) > 0.02:
+			err = "weather rerolled on restore"
+		var st := SaveService.capture_state(world)
+		if err == "" and not (st.get("phase8", {}) as Dictionary).has("weather"):
+			err = "save lacks the phase8 weather block"
+		var mig := SaveService.migrate({"schema": 7, "phase6": {}, "phase5": {}})
+		if err == "" and (int(mig.get("schema", 0)) != 8 or not mig.has("phase8")):
+			err = "v7 -> v8 migration missing"
+	cs.test_route = false
+	# Weather never changes safety: lamp/camper answers identical in a storm,
+	# and lightning emits no AI evidence (SoundEvents) and never touches lamps.
+	var probes: Array[Vector3] = []
+	for lamp in get_tree().get_nodes_in_group("camp_lamps"):
+		if world.is_ancestor_of(lamp):
+			probes.append((lamp as Node3D).global_position + Vector3(1.0, -1.5, 0.5))
+	probes.append(world.camp.global_position + CampLayout.CAMPER_POS + Vector3(0, 1.2, 0))
+	probes.append(world.camp.global_position + Vector3(0, 1.0, 60.0))
+	w.set_override("clear", true)
+	await get_tree().process_frame
+	var clear_answers: Array = []
+	for p in probes:
+		clear_answers.append(world.safety.query(p).safe)
+	var lamp_levels: Array = []
+	for lamp in get_tree().get_nodes_in_group("camp_lamps"):
+		lamp_levels.append(lamp.get("working"))
+	Settings.set_v("flash_reduction", "full", false)
+	w.set_override("storm", true)
+	var events_before := SoundEvents.recent.size()
+	w._next_flash = 0.0
+	for i in 90:
+		await get_tree().process_frame
+	w._thunder_due = 0.001
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if err == "" and w.flashes < 1:
+		err = "storm produced no lightning"
+	if err == "" and SoundEvents.recent.size() != events_before:
+		err = "lightning/thunder emitted world sound events (AI evidence)"
+	for i in probes.size():
+		if err == "" and world.safety.query(probes[i]).safe != clear_answers[i]:
+			err = "storm changed safety at probe %d" % i
+	var k := 0
+	for lamp in get_tree().get_nodes_in_group("camp_lamps"):
+		if err == "" and lamp.get("working") != lamp_levels[k]:
+			err = "weather changed a lamp's working state"
+		k += 1
+	# Flash reduction "off": no flash at all.
+	Settings.set_v("flash_reduction", "off", false)
+	w._flash_t = 0.0
+	await get_tree().process_frame
+	if err == "" and w.flash > 0.0:
+		err = "flash shown with flash reduction off"
+	Settings.set_v("flash_reduction", "reduced", false)
+	# Shared wind/wetness reach the environment (single writer).
+	if err == "" and absf(world.environment.weather_rain - w.rain) > 0.05:
+		err = "environment did not receive the weather"
+	if err == "" and world.environment.wind_now <= world.environment.current.wind:
+		err = "storm wind not applied to the shared wind field"
+	# Rain views: player view + one bounded view per rendered remote camera.
+	var cams := world.tv.cams
+	w.set_remote_views([cams[0], cams[1], cams[2], cams[3]])
+	if err == "" and w.views.size() != 5:
+		err = "expected 5 rain views, got %d" % w.views.size()
+	for v in w.views:
+		if err == "" and v != w.player_view and int(v.amount_cap) > RainView.remote_budget(4):
+			err = "remote rain over budget"
+	w.set_remote_views([cams[5]])
+	await get_tree().process_frame
+	if err == "" and w.views.size() != 2:
+		err = "remote rain views not released (%d)" % w.views.size()
+	w.set_remote_views([])
+	# Shelter: a ray from inside the camper hits its roof.
+	var inside := world.camp.global_position + CampLayout.CAMPER_POS + Vector3(0, CampLayout.CAMPER_FLOOR + 0.5, 0)
+	if err == "" and w.shelter_at(inside) < 0.4:
+		err = "camper roof does not shelter from rain"
+	if err == "" and w.shelter_at(world.camp.global_position + Vector3(0, 0.2, 75.0)) > 0.0:
+		err = "open ground reported sheltered"
+	# Cleared ground: no standing trees means no leaf/bird presentation.
+	var spot := World.tree_position(0)
+	var near: PackedInt32Array = world.vegetation.standing_trees_near(spot, 6.0)
+	for i in near:
+		World.removed_trees[int(World.trees.id[i])] = true
+	if err == "" and world.vegetation.standing_trees_near(spot, 6.0).size() != 0:
+		err = "removed trees still counted as standing"
+	for i in near:
+		World.removed_trees.erase(int(World.trees.id[i]))
+	w.set_override("")
 	world.queue_free()
 	await get_tree().process_frame
 	Game.mode = Game.Mode.MENU

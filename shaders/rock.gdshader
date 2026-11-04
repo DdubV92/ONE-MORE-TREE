@@ -36,12 +36,13 @@ void fragment() {
 	vec3 arm = tri(arm_array, v_wpos, w, 7.0);
 	// Wet near the sea
 	float wet = 1.0 - smoothstep(sea_level + 0.1, sea_level + 0.9, v_wpos.y);
+	wet = max(wet, rain_wet(v_wpos.xz, v_wn.y, 0.0) * 0.85);
 	alb *= mix(1.0, 0.6, wet);
 	ALBEDO = alb;
 	ROUGHNESS = mix(clamp(arm.g, 0.5, 1.0), 0.25, wet);
 	AO = arm.r;
 	if (v_wpos.y < sea_level) {
 		float c = caustics(v_wpos.xz * 0.9, world_time);
-		EMISSION = alb * c * exp(-(sea_level - v_wpos.y) * 0.35) * daylight * clamp(sun_dir_world.y * 2.5, 0.0, 1.0) * 1.2;
+		EMISSION = alb * c * exp(-(sea_level - v_wpos.y) * 0.35) * daylight * sun_clarity * clamp(sun_dir_world.y * 2.5, 0.0, 1.0) * 1.2;
 	}
 }

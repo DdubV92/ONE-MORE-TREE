@@ -70,6 +70,8 @@ void fragment() {
 		slope = (na.xy + nb.xy * 0.5) * 0.12 * (0.3 + wind_strength);
 	}
 	slope += ripple_slope(xz, t);
+	// Rain rings: clear on ponds, mostly swept away on the moving river.
+	slope += rain_ripples(xz, t) * (is_river ? 0.35 : 1.0);
 	vec3 nmap = normalize(vec3(slope, 1.0));
 	NORMAL_MAP = nmap * 0.5 + 0.5;
 	vec3 n_view = normalize(TANGENT * nmap.x + BINORMAL * nmap.y + NORMAL * nmap.z);

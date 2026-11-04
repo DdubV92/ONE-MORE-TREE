@@ -78,4 +78,9 @@ void fragment() {
 		NORMAL_MAP = texture(bark_normal, uv).rgb;
 		NORMAL_MAP_DEPTH = 1.4;
 	}
+	// Rain darkens bark (streaking more on the windward side) and makes it
+	// a little glossier; canopy keeps the lower trunk drier.
+	float bw = wetness * mix(0.55, 0.9, clamp(v_local.y / 6.0, 0.0, 1.0));
+	ALBEDO *= mix(1.0, 0.62, bw);
+	ROUGHNESS = mix(ROUGHNESS, 0.35, bw * 0.7);
 }

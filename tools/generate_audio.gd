@@ -74,6 +74,16 @@ func _init() -> void:
 	_save("f_intake", _f_intake(), false)
 	_save("f_drag", _fabric(2.0), false)
 	_save("ship_horn", _horn(), false)
+	# Weather, music and Phase 8 detail - separate seed, earlier sounds unchanged.
+	rng.seed = 808
+	_save("rain_open", _rain_open(8.0), true)
+	_save("rain_roof", _rain_roof(8.0), true)
+	_save("thunder_far_0", _thunder(0), false)
+	_save("thunder_far_1", _thunder(1), false)
+	for v in 3:
+		_save("music_day_%d" % v, _phrase(v), false)
+	_save("music_dusk", _dusk_pad(), false)
+	_save("log_settle", _log_settle(), false)
 	print("audio generated")
 	quit()
 
@@ -837,4 +847,123 @@ func _horn() -> PackedFloat32Array:
 		var ts := float(i) / RATE
 		var x := signf(sin(TAU * 98.0 * ts)) * 0.4 + sin(TAU * 196.0 * ts) * 0.3 + sin(TAU * 147.0 * ts) * 0.2
 		d.append(lp.run(x) * _env(t, 0.08, 0.2))
+	return d
+
+
+# ---------------------------------------------------------------- Phase 8
+
+## Open-air rain: dense soft hiss with a few nearby larger drops.
+func _rain_open(sec: float) -> PackedFloat32Array:
+	var n := int(sec * RATE) + RATE
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var hp := _bq("hp", 900.0, 0.6)
+	var lp := _bq("lp", 6500.0, 0.6)
+	var drop_bp := _bq("bp", 2400.0, 3.0)
+	var drop_env := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var swell := 0.85 + 0.15 * sin(TAU * t / sec * 2.0)
+		if rng.randf() < 0.0012:
+			drop_env = rng.randf_range(0.3, 0.9)
+		drop_env *= 0.992
+		d[i] = lp.run(hp.run(_white())) * 0.55 * swell + drop_bp.run(_white()) * drop_env * 0.5
+	return _loopify(d, RATE)
+
+
+## Rain on a roof: drumming taps over a low muffled wash (heard indoors).
+func _rain_roof(sec: float) -> PackedFloat32Array:
+	var n := int(sec * RATE) + RATE
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var wash := _bq("lp", 700.0, 0.7)
+	var tap := _bq("bp", 1300.0, 4.0)
+	var tap_env := 0.0
+	for i in n:
+		if rng.randf() < 0.004:
+			tap_env = rng.randf_range(0.2, 1.0)
+		tap_env *= 0.985
+		d[i] = wash.run(_white()) * 0.7 + tap.run(_white()) * tap_env * 0.9
+	return _loopify(d, RATE)
+
+
+## Distant thunder: a slow low rumble with a soft crackle onset.
+func _thunder(v: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 120.0 + v * 30.0, 0.9)
+	var lp2 := _bq("lp", 400.0, 0.7)
+	var n := int((5.0 + v) * RATE)
+	for i in n:
+		var t := float(i) / n
+		var roll := 0.6 + 0.4 * sin(TAU * t * (3.0 + v)) * sin(TAU * t * 1.3)
+		var crack := lp2.run(_white()) * exp(-t * 18.0) * 0.6
+		d.append(lp.run(_white()) * 4.0 * _env(t, 0.04, 0.6) * roll + crack)
+	return d
+
+
+## Karplus-Strong plucked string (warm, wooden).
+func _pluck(freq: float, dur: float, amp: float) -> PackedFloat32Array:
+	var period := maxi(int(RATE / freq), 2)
+	var buf := PackedFloat32Array()
+	buf.resize(period)
+	for i in period:
+		buf[i] = _white() * 0.5
+	var out := PackedFloat32Array()
+	var n := int(dur * RATE)
+	out.resize(n)
+	var idx := 0
+	for i in n:
+		var nxt := (idx + 1) % period
+		var v := (buf[idx] + buf[nxt]) * 0.5 * 0.996
+		out[i] = buf[idx] * amp
+		buf[idx] = v
+		idx = nxt
+	return out
+
+
+## A short, sparse daytime phrase (major pentatonic, ~12 s with long rests).
+func _phrase(v: int) -> PackedFloat32Array:
+	var scale := [196.0, 220.0, 246.9, 293.7, 329.6, 392.0, 440.0]
+	var patterns := [
+		[[0.0, 2], [0.6, 4], [1.2, 5], [2.4, 4], [3.0, 3], [4.8, 2], [6.6, 0], [7.2, 2]],
+		[[0.0, 5], [0.45, 4], [0.9, 2], [2.1, 3], [2.7, 4], [4.2, 1], [5.4, 2]],
+		[[0.0, 0], [0.8, 2], [1.6, 4], [2.4, 6], [4.0, 5], [4.6, 4], [6.2, 2], [7.8, 4]],
+	]
+	var total := int(12.0 * RATE)
+	var d := PackedFloat32Array()
+	d.resize(total)
+	for note in patterns[v]:
+		var start := int(float(note[0]) * RATE)
+		var f: float = scale[int(note[1])]
+		var p := _pluck(f, 3.2, 0.5)
+		var low := _pluck(f * 0.5, 3.2, 0.18) if int(note[1]) % 2 == 0 else PackedFloat32Array()
+		for i in p.size():
+			if start + i < total:
+				d[start + i] += p[i] + (low[i] if i < low.size() else 0.0)
+	var lp := _bq("lp", 3200.0, 0.7)
+	for i in total:
+		d[i] = lp.run(d[i])
+	return d
+
+
+## Dusk: one soft, slowly fading open fifth (eases the day music out).
+func _dusk_pad() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var n := int(9.0 * RATE)
+	var lp := _bq("lp", 900.0, 0.6)
+	for i in n:
+		var t := float(i) / n
+		var ts := float(i) / RATE
+		var x := sin(TAU * 146.8 * ts) * 0.5 + sin(TAU * 220.0 * ts) * 0.35 + sin(TAU * 293.7 * ts + 0.3 * sin(ts)) * 0.15
+		d.append(lp.run(x) * _env(t, 0.25, 0.55) * 0.8)
+	return d
+
+
+## A settling log: short dull thud (debounced per body at runtime).
+func _log_settle() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var lp := _bq("lp", 380.0, 1.0)
+	for i in int(0.3 * RATE):
+		var t := float(i) / RATE
+		d.append(lp.run(_white()) * 2.2 * exp(-t * 16.0) + sin(TAU * 85.0 * t) * exp(-t * 14.0) * 0.5)
 	return d
