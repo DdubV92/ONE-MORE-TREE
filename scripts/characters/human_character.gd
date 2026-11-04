@@ -97,9 +97,9 @@ func _build_rig() -> void:
 	var iris := CharMeshKit.mat(Color(0.12, 0.09, 0.07), 0.2)
 	var lip := CharMeshKit.mat(a.skin.darkened(0.35).lerp(Color(0.5, 0.2, 0.2), 0.3), 0.6)
 	var glove_cuff := CharMeshKit.mat(a.gloves.darkened(0.3), 0.85)
-	var knee := CharMeshKit.mat(a.pants.darkened(0.22), 0.95)
+	var knee := CharMeshKit.mat(a.pants.darkened(0.12), 0.95)
 	var accent := CharMeshKit.mat(a.accent, 0.6)
-	var stitch := CharMeshKit.mat(a.jacket.lightened(0.25), 0.9)
+	var stitch := CharMeshKit.mat(a.jacket.darkened(0.28), 0.9)
 	rig = Node3D.new()
 	rig.name = "Rig"
 	add_child(rig)
@@ -107,19 +107,32 @@ func _build_rig() -> void:
 	CharMeshKit.blob(hips, pants, Vector3(0, -0.005 * H, 0.004 * H), Vector3(0.21 * H * B, 0.12 * H, 0.14 * H * B), Vector3.ZERO, "Pelvis")
 	CharMeshKit.blob(hips, belt, Vector3(0, 0.035 * H, 0), Vector3(0.222 * H * B, 0.028 * H, 0.152 * H * B), Vector3.ZERO, "Belt")
 	var spine := _bone("Spine", hips, Vector3(0, 0.05 * H, 0))
-	CharMeshKit.blob(spine, jacket, Vector3(0, 0.055 * H, 0.002 * H), Vector3(0.205 * H * B, 0.16 * H, 0.145 * H * B), Vector3.ZERO, "Abdomen")
+	# Phase 11: the trunk is two overlapping tapered capsules (ribcage and
+	# waist), flattened front-to-back - one continuous jacket silhouette
+	# instead of stacked balloons.
+	var waist := Node3D.new()
+	# Span: spine +0.13 H (overlapping the ribcage) down to the belt line.
+	waist.position = Vector3(0, 0.081 * H, 0.002 * H)
+	waist.scale = Vector3(1.0, 0.497, 0.68)
+	spine.add_child(waist)
+	CharMeshKit.limb(waist, jacket, 0.098 * H * B, 0.094 * H * B, 0.15 * H)
 	var chest := _bone("Chest", spine, Vector3(0, 0.11 * H, 0))
-	CharMeshKit.blob(chest, jacket, Vector3(0, 0.07 * H, 0.004 * H), Vector3(0.235 * H * B, 0.2 * H, 0.15 * H * B), Vector3.ZERO, "Torso")
+	var ribs := Node3D.new()
+	# Span: the shoulder line (chest +0.17 H) down to just above the waist.
+	ribs.position = Vector3(0, 0.112 * H, 0.004 * H)
+	ribs.scale = Vector3(1.0, 0.526, 0.64)
+	chest.add_child(ribs)
+	CharMeshKit.limb(ribs, jacket, 0.11 * H * B, 0.1 * H * B, 0.17 * H)
 	CharMeshKit.blob(chest, shirt, Vector3(0, 0.148 * H, -0.058 * H * B), Vector3(0.05 * H, 0.035 * H, 0.016 * H), Vector3(0.5, 0, 0), "ShirtV")
 	CharMeshKit.blob(chest, jacket_dark, Vector3(0, 0.152 * H, 0.004 * H), Vector3(0.115 * H, 0.035 * H, 0.105 * H), Vector3.ZERO, "Collar")
 	# Phase 11 workwear read: zip placket, hem over the belt, hi-vis band
 	# on the shoulders (restrained accent), shoulder seams.
-	CharMeshKit.blob(chest, stitch, Vector3(0, 0.06 * H, -0.075 * H * B), Vector3(0.008 * H, 0.17 * H, 0.006 * H), Vector3.ZERO, "Placket")
+	CharMeshKit.blob(chest, stitch, Vector3(0, 0.07 * H, -0.071 * H * B), Vector3(0.006 * H, 0.15 * H, 0.006 * H), Vector3.ZERO, "Placket")
 	CharMeshKit.blob(spine, jacket, Vector3(0, -0.012 * H, 0.003 * H), Vector3(0.214 * H * B, 0.05 * H, 0.152 * H * B), Vector3.ZERO, "Hem")
 	CharMeshKit.blob(spine, jacket_dark, Vector3(0, -0.034 * H, 0.003 * H), Vector3(0.216 * H * B, 0.012 * H, 0.154 * H * B), Vector3.ZERO, "HemBand")
 	CharMeshKit.blob(chest, accent, Vector3(0, 0.118 * H, 0.068 * H * B), Vector3(0.2 * H * B, 0.012 * H, 0.012 * H), Vector3.ZERO, "BackBand")
 	for s in [-1.0, 1.0]:
-		CharMeshKit.blob(chest, jacket, Vector3(s * 0.098 * H * B, 0.128 * H, 0.004 * H), Vector3(0.068 * H * B, 0.05 * H, 0.078 * H * B), Vector3.ZERO, "Shoulder%s" % ("L" if s < 0 else "R"))
+		CharMeshKit.blob(chest, jacket, Vector3(s * 0.098 * H * B, 0.13 * H, 0.004 * H), Vector3(0.056 * H * B, 0.04 * H, 0.066 * H * B), Vector3.ZERO, "Shoulder%s" % ("L" if s < 0 else "R"))
 		# Pocket flaps for a workwear read
 		CharMeshKit.blob(chest, jacket_dark, Vector3(s * 0.055 * H * B, 0.085 * H, -0.076 * H * B), Vector3(0.05 * H, 0.012 * H, 0.012 * H), Vector3.ZERO)
 	var neck := _bone("Neck", chest, Vector3(0, 0.155 * H, 0))
@@ -144,12 +157,12 @@ func _build_rig() -> void:
 		var shin := _bone("Shin" + side, thigh, Vector3(0, -thigh_len, 0))
 		CharMeshKit.limb(shin, pants, 0.038 * H * B, 0.031 * H * B, shin_len - 0.03 * H)
 		CharMeshKit.blob(shin, boots, Vector3(0, -shin_len + 0.035 * H, 0), Vector3(0.075 * H, 0.08 * H, 0.08 * H), Vector3.ZERO, "BootTop")
-		CharMeshKit.blob(shin, knee, Vector3(0, -0.01 * H, -0.03 * H * B), Vector3(0.06 * H * B, 0.07 * H, 0.025 * H), Vector3.ZERO, "KneePatch")
+		CharMeshKit.blob(shin, knee, Vector3(0, -0.012 * H, -0.03 * H * B), Vector3(0.066 * H * B, 0.08 * H, 0.012 * H), Vector3.ZERO, "KneePatch")
 		var foot := _bone("Foot" + side, shin, Vector3(0, -shin_len, 0))
 		CharMeshKit.blob(foot, boots, Vector3(0, -ankle_h * 0.42, -0.035 * H), Vector3(0.068 * H, ankle_h * 1.15, 0.16 * H), Vector3.ZERO, "Boot")
 		CharMeshKit.blob(foot, sole, Vector3(0, -ankle_h * 0.92, -0.035 * H), Vector3(0.072 * H, ankle_h * 0.3, 0.165 * H), Vector3.ZERO, "Sole")
 		CharMeshKit.blob(foot, sole, Vector3(0, -ankle_h * 0.35, -0.1 * H), Vector3(0.06 * H, ankle_h * 0.8, 0.05 * H), Vector3.ZERO, "ToeCap")
-		CharMeshKit.blob(foot, glove_cuff, Vector3(0, ankle_h * 0.2, -0.05 * H), Vector3(0.02 * H, ankle_h * 0.9, 0.06 * H), Vector3(0.35, 0, 0), "Laces")
+		CharMeshKit.blob(foot, sole, Vector3(0, ankle_h * 0.05, -0.045 * H), Vector3(0.016 * H, ankle_h * 0.5, 0.05 * H), Vector3(0.45, 0, 0), "Laces")
 	var carry := Marker3D.new()
 	carry.name = "LogCarry"
 	carry.position = Vector3(0, 0.1 * H, -0.18 * H)

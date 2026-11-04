@@ -21,6 +21,22 @@ const STATIONS := [
 ]
 
 
+## Phase 11 cast / dog / camper stations.
+const STATIONS11 := [
+	["Cast lineup (preview)", "p11_cast"],
+	["Clean / pixel style", "p11_style"],
+	["Work loop", "p11_work"],
+	["Truck seats", "p11_truck"],
+	["Dog close-up", "p11_dog"],
+	["Camper +25 % tour", "p11_camper"],
+	["Sit at the desk", "p11_desk"],
+	["Cast on the cameras", "p11_feeds"],
+	["Light: day/dusk/night", "p11_light"],
+	["Hide & camper search", "p11_hide"],
+]
+static var _light_i := 0
+
+
 static func go(hud: Node, which: String) -> String:
 	var w: IslandWorld = Game.world_root
 	var p: Player = Game.player
@@ -82,6 +98,44 @@ static func go(hud: Node, which: String) -> String:
 			hud.call("_phase6_stop", "__p6_hunt")
 			wx.set_override("overcast", true)
 			return "Station 10 - FORCED hunt fixture (dev): doorway fold, listening stop (tags fall silent), search, hiding, loss of contact; Biscuit stays at the dock alcove."
+		"p11_cast":
+			Game.open_character_preview.call_deferred()
+			return "Character Preview: the five employees (Marta, Dale, Priya, Tomas, Joan) and Biscuit. Use its buttons to cycle looks, walk, swing and orbit."
+		"p11_style":
+			var nxt := "pixel" if str(Settings.get_v("character_style")) == "clean" else "clean"
+			Settings.set_v("character_style", nxt)
+			return "Character style: %s (characters only; water, light and fog unchanged). Press again to compare. Strength in Settings." % nxt
+		"p11_work":
+			busy_camp_fixture()
+			w.teleport_to("forest")
+			return "Work loop: preview crew heading to the woods. Watch grips, swings, pickups (bend and lift), carrying and set-downs at the rack."
+		"p11_truck":
+			hud.call("_phase5_stop", "__p5_drive")
+			return "Two pickups: get in (driver pose) and send a crew team from the Journal to see two different body sizes seated."
+		"p11_dog":
+			if Game.dog:
+				p.teleport_feet(Game.dog.global_position + Vector3(1.6, 0, 1.2), atan2(1.6, 1.2))
+			return "Biscuit up close: deep chest, shoulder blades, tucked waist, hocks, toes, collar and tag. Pet with %s." % Keys.label("interact")
+		"p11_camper":
+			w.teleport_to("camper_lounge")
+			env.apply_named("day")
+			return "Camper: %.2f x %.2f m interior = %.1f m^2 (was %.1f m^2, x%.2f). Bedroom, bathroom, kitchen and entrance unchanged; the lounge gained the desk." % [CampLayout.CAMPER_SIZE.x, CampLayout.CAMPER_SIZE.z, CampLayout.camper_usable_area(), CampLayout.CAMPER_V1_SIZE.x * CampLayout.CAMPER_V1_SIZE.z, CampLayout.camper_usable_area() / (CampLayout.CAMPER_V1_SIZE.x * CampLayout.CAMPER_V1_SIZE.z)]
+		"p11_desk", "p11_feeds":
+			if which == "p11_feeds":
+				busy_camp_fixture()
+			var seats := WorldGroups.of(w, "desk_seat")
+			w.teleport_to("camper_lounge")
+			if not seats.is_empty():
+				p.sit_on_couch.call_deferred(seats[0])
+			return "At the desk: Cameras app (click a feed to focus), Shop (real orders). %s glances right out of the window, %s looks back, %s stands." % [Keys.label("move_right"), Keys.label("move_left"), Keys.label("interact")]
+		"p11_light":
+			var presets := ["day", "sunset", "night_full", "night_new"]
+			_light_i = (_light_i + 1) % presets.size()
+			env.apply_named(presets[_light_i])
+			return "Lighting: %s (press again to cycle sun / dusk / moonlit night / dark night)." % presets[_light_i]
+		"p11_hide":
+			hud.call("_phase6_stop", "__p6_hunt")
+			return "FORCED hunt fixture (dev): hide under the camper bed or in the wardrobe; the Foreman searches by evidence and can look there."
 		"cleared":
 			var n := clear_near_camp(0.9)
 			w.teleport_to("ridge")

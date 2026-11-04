@@ -79,11 +79,13 @@ func _build_rig() -> void:
 	# Scruffy tufts (deterministic)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 4242
-	for k in 22:
-		var a := rng.randf_range(-1.2, 1.2)
-		var z := rng.randf_range(-0.26, 0.26)
-		var p := Vector3(sin(a) * 0.12, cos(a) * 0.12, z)
-		CharMeshKit.blob(body, dk if a > -0.5 and a < 0.5 else f, p, Vector3(0.07, 0.045, 0.09) * rng.randf_range(0.7, 1.2), Vector3(rng.randf_range(-0.5, 0.5), 0, a), "Tuft")
+	# Scruff: a few low, flat fur groups hugging the coat (silhouette breakup,
+	# not bubbles).
+	for k in 10:
+		var a := rng.randf_range(-0.9, 0.9)
+		var z := rng.randf_range(-0.24, 0.24)
+		var p := Vector3(sin(a) * 0.105, cos(a) * 0.105, z)
+		CharMeshKit.blob(body, dk if absf(a) < 0.45 else f, p, Vector3(0.06, 0.022, 0.1) * rng.randf_range(0.8, 1.1), Vector3(rng.randf_range(-0.3, 0.3), 0, a), "Tuft")
 	var chest := _bone("Chest", body, Vector3(0, 0.02, -0.2))
 	CharMeshKit.blob(chest, f, Vector3(0, 0.0, 0.0), Vector3(0.27, 0.3, 0.28), Vector3.ZERO, "ChestMass")
 	CharMeshKit.blob(chest, cr, Vector3(0, -0.04, -0.1), Vector3(0.17, 0.22, 0.12), Vector3.ZERO, "Bib")
@@ -136,7 +138,7 @@ func _build_rig() -> void:
 		CharMeshKit.limb(fu, f, 0.05, 0.036, upper_f)
 		var fl := _bone("FrontLower" + sn, fu, Vector3(0, -upper_f, 0))
 		CharMeshKit.limb(fl, cr if s > 0 else f, 0.034, 0.03, lower_f)
-		CharMeshKit.blob(fu, f, Vector3(0, -0.03, 0.0), Vector3(0.1, 0.16, 0.12), Vector3.ZERO, "Upperarm")
+		CharMeshKit.blob(fu, f, Vector3(0, -0.05, 0.0), Vector3(0.08, 0.17, 0.1), Vector3.ZERO, "Upperarm")
 		# Pastern: a slight forward angle just above the paw.
 		CharMeshKit.blob(fl, cr if s > 0 else f, Vector3(0, -lower_f + 0.03, -0.012), Vector3(0.045, 0.06, 0.05), Vector3(-0.35, 0, 0), "Pastern")
 		var fp := _bone("FrontPaw" + sn, fl, Vector3(0, -lower_f, 0))
@@ -148,8 +150,8 @@ func _build_rig() -> void:
 		CharMeshKit.limb(hl, f, 0.034, 0.028, lower_h)
 		# Hock: the visible heel bend with the long metatarsal below it, so
 		# the hind leg reads canine (not a human knee) at any gait phase.
-		CharMeshKit.blob(hl, dk, Vector3(0, -lower_h * 0.55, 0.035), Vector3(0.05, 0.06, 0.06), Vector3.ZERO, "Hock")
-		CharMeshKit.blob(hl, f, Vector3(0, -lower_h * 0.25, 0.02), Vector3(0.07, 0.12, 0.09), Vector3(-0.2, 0, 0), "Gaskin")
+		CharMeshKit.blob(hl, f, Vector3(0, -lower_h * 0.6, 0.03), Vector3(0.042, 0.07, 0.05), Vector3(0.3, 0, 0), "Hock")
+		CharMeshKit.blob(hl, f, Vector3(0, -lower_h * 0.18, 0.015), Vector3(0.062, 0.13, 0.075), Vector3(-0.15, 0, 0), "Gaskin")
 		var hp := _bone("HindPaw" + sn, hl, Vector3(0, -lower_h, 0))
 		_paw(hp, cr, black)
 
