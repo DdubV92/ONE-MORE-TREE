@@ -16,22 +16,33 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var center := VBoxContainer.new()
 	center.anchor_left = 0.06
-	center.anchor_top = 0.12
+	center.anchor_top = 0.04
 	center.position = Vector2.ZERO
 	add_child(center)
-	var title := UITheme.label("ONE MORE TREE", 72, Color(0.98, 0.93, 0.82))
+	var title := UITheme.label("ONE MORE TREE", 60, Color(0.98, 0.93, 0.82))
 	title.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.04))
 	title.add_theme_constant_override("outline_size", 10)
 	center.add_child(title)
 	center.add_child(UITheme.label("Thirty days to clear an island. Keep the crew paid. Be inside by night.", 20, Color(0.9, 0.88, 0.8)))
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 20)
+	spacer.custom_minimum_size = Vector2(0, 8)
 	center.add_child(spacer)
 	_menu = VBoxContainer.new()
 	center.add_child(_menu)
+	# Pages sit on a soft dark card so text stays readable over the scenery.
+	_card = PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.04, 0.05, 0.04, 0.78)
+	sb.set_corner_radius_all(8)
+	sb.content_margin_left = 16
+	sb.content_margin_right = 16
+	sb.content_margin_top = 10
+	sb.content_margin_bottom = 10
+	_card.add_theme_stylebox_override("panel", sb)
+	_card.visible = false
+	center.add_child(_card)
 	_page = VBoxContainer.new()
-	_page.visible = false
-	center.add_child(_page)
+	_card.add_child(_page)
 	_status = UITheme.label("", 16, Color(0.85, 0.9, 0.85))
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_status.custom_minimum_size = Vector2(620, 0)
@@ -55,6 +66,7 @@ func _ready() -> void:
 
 ## Main menu (Phase 9). Every entry works or is disabled with its reason.
 var _page: VBoxContainer
+var _card: PanelContainer
 
 func _build_menu() -> void:
 	for c in _menu.get_children():
@@ -74,11 +86,14 @@ func _build_menu() -> void:
 		_settings.visible = true
 		_menu.visible = false, 340))
 	_menu.add_child(UITheme.button("Help & Controls", _show_help, 340))
-	_menu.add_child(UITheme.button("Preview Tour (sandbox, never saves)", func() -> void: _go(func() -> void: Game.start_preview("camp")), 340))
-	_menu.add_child(UITheme.button("Character Preview", func() -> void: _go(func() -> void: Game.open_character_preview()), 340))
-	_menu.add_child(UITheme.button("Credits", _show_credits, 340))
-	_menu.add_child(UITheme.button("Write diagnostic report", func() -> void:
-		_status.text = "Report written: " + Diag.sanitize(Diag.write_report()), 340))
+	var extra := HFlowContainer.new()
+	extra.custom_minimum_size = Vector2(720, 0)
+	extra.add_child(UITheme.button("Preview Tour (sandbox)", func() -> void: _go(func() -> void: Game.start_preview("camp")), 230))
+	extra.add_child(UITheme.button("Character Preview", func() -> void: _go(func() -> void: Game.open_character_preview()), 200))
+	extra.add_child(UITheme.button("Credits", _show_credits, 120))
+	extra.add_child(UITheme.button("Diagnostic report", func() -> void:
+		_status.text = "Report written: " + Diag.sanitize(Diag.write_report()), 190))
+	_menu.add_child(extra)
 	_menu.add_child(UITheme.button("Quit", func() -> void: get_tree().quit(), 340))
 	if not cb.disabled:
 		cb.call_deferred("grab_focus")
@@ -104,13 +119,13 @@ func _open_page(title: String) -> VBoxContainer:
 	_menu.visible = false
 	for c in _page.get_children():
 		c.queue_free()
-	_page.visible = true
+	_card.visible = true
 	_page.add_child(UITheme.label(title, 26, UITheme.ACCENT))
 	return _page
 
 
 func _back() -> void:
-	_page.visible = false
+	_card.visible = false
 	_menu.visible = true
 	_build_menu()
 
@@ -162,7 +177,7 @@ func _new_campaign() -> void:
 		"• Content: night-time horror with sudden sounds and unsettling figures, and a dangerous outcome if the contract fails. Settings → Comfort has horror intensity and flash reduction.",
 		"• A short first-day guide teaches the basics with real trees. You can skip it at any time (Journal → Help).",
 		"Standard campaign only: the full island, 12,000 trees. (Smaller workloads are not offered until they have been measured.)",
-	]), 230)
+	]), 200)
 	v.add_child(UITheme.label("Choose a slot:", 18, UITheme.ACCENT))
 	var first: Button = null
 	for n in range(1, SaveService.SLOTS + 1):
@@ -255,14 +270,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
 		if _settings.visible:
 			return
-		if _page.visible:
+		if _card.visible:
 			_back()
 			get_viewport().set_input_as_handled()
 
 
 func _go(action: Callable) -> void:
 	_menu.visible = false
-	_page.visible = false
+	_card.visible = false
 	_status.text = "Building the island..."
 	await get_tree().process_frame
 	await get_tree().process_frame
