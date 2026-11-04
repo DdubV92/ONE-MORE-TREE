@@ -21,7 +21,15 @@ func setup() -> void:
 		Hotspot.make(seat, "SitSpot", Vector3(0.62, 0.35, 0.6), Vector3(0, 0.05, 0), func() -> String: return "Sit on the couch", func(by: Node) -> void: _sit(by, seat))
 	var tvs := WorldGroups.of(self, "camper_tv")
 	if not tvs.is_empty():
-		Hotspot.make(tvs[0], "PowerSpot", Vector3(1.24, 0.72, 0.1), Vector3(0, 0, 0.03), func() -> String: return ("Turn the TV off" if Game.tv and Game.tv.powered else "Turn the TV on"), func(_by: Node) -> void: toggle_tv())
+		Hotspot.make(tvs[0], "PowerSpot", Vector3(1.04, 0.62, 0.1), Vector3(0, 0, 0.03), func() -> String: return ("Turn the TV off" if Game.tv_set and Game.tv_set.powered else "Turn the TV on"), func(_by: Node) -> void: toggle_tv())
+	# Phase 11: the desk computer (live cameras, supply orders).
+	for d in WorldGroups.of(self, "desk_seat"):
+		var dseat := d as Node3D
+		Hotspot.make(dseat, "DeskSitSpot", Vector3(0.6, 0.5, 0.6), Vector3(0, -0.05, 0), func() -> String: return "Sit at the computer (cameras, supply orders)", func(by: Node) -> void: _sit(by, dseat))
+	for mon in WorldGroups.of(self, "camper_monitor"):
+		Hotspot.make(mon, "MonitorPowerSpot", Vector3(0.7, 0.45, 0.1), Vector3(0, 0, 0.03), func() -> String: return ("Switch the monitor off" if Game.desk and Game.desk.powered else "Switch the monitor on"), func(_by: Node) -> void:
+			if Game.desk:
+				Game.desk.set_power(not Game.desk.powered))
 	for sw in WorldGroups.of(self, "camper_switch"):
 		Hotspot.make(sw, "SwitchSpot", Vector3(0.12, 0.2, 0.16), Vector3.ZERO, func() -> String: return ("Lights off" if lights_on else "Lights on"), func(_by: Node) -> void: set_lights(not lights_on))
 	for c in WorldGroups.of(self, "camper_curtain"):
@@ -48,8 +56,8 @@ func _sit(by: Node, seat: Node3D) -> void:
 
 
 func toggle_tv() -> void:
-	if Game.tv:
-		Game.tv.set_power(not Game.tv.powered)
+	if Game.tv_set:
+		Game.tv_set.set_power(not Game.tv_set.powered)
 
 
 func set_lights(on: bool) -> void:

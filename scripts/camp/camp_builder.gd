@@ -153,25 +153,33 @@ func _build_camper() -> void:
 	c.position = _ground(L.CAMPER_POS)
 	add_child(c)
 	var F := L.CAMPER_FLOOR
-	var W := L.CAMPER_SIZE.x * 0.5      # 1.5
-	var Lz := L.CAMPER_SIZE.z * 0.5     # 4.7
+	var W := L.CAMPER_SIZE.x * 0.5      # 1.63 (Phase 11, was 1.5)
+	var zn := L.CAMPER_NORTH_Z          # -4.7 (bedroom end, unchanged)
+	var zs := L.CAMPER_SOUTH_Z          # 6.11 (lounge end, was 4.7)
+	var zc := (zn + zs) * 0.5
+	var Lz := (zs - zn) * 0.5
 	var H := L.CAMPER_SIZE.y            # 2.3
 	var t := 0.08
+	var ext := zs - 4.7                 # lounge extension (1.41 m)
 	# Shell
-	BuildKit.box(c, Vector3(W * 2 + t * 2, 0.12, Lz * 2 + t * 2), Vector3(0, F - 0.06, 0), "floor", true, 0.0, "Floor")
-	BuildKit.box(c, Vector3(W * 2 + 0.3, 0.12, Lz * 2 + 0.3), Vector3(0, F + H + 0.06, 0), "camper_paint", true, 0.0, "Roof")
-	BuildKit.box(c, Vector3(W * 2 + 0.36, 0.05, Lz * 2 + 0.36), Vector3(0, F + H + 0.14, 0), "camper_trim", false)
-	var door_open := [2.44, 3.34, 0.0, 2.0]
-	var east := [door_open, [0.44, 1.54, 1.0, 1.8], [7.34, 8.54, 1.1, 1.8], [5.04, 5.64, 1.6, 1.95]]
-	var west := [[5.54, 6.94, 1.25, 1.85], [0.84, 2.34, 0.95, 1.8], [8.14, 9.14, 1.0, 1.8]]
-	var east_o := Vector3(W + t * 0.5, F, Lz + t)
-	var west_o := Vector3(-W - t * 0.5, F, -Lz - t)
+	BuildKit.box(c, Vector3(W * 2 + t * 2, 0.12, Lz * 2 + t * 2), Vector3(0, F - 0.06, zc), "floor", true, 0.0, "Floor")
+	BuildKit.box(c, Vector3(W * 2 + 0.3, 0.12, Lz * 2 + 0.3), Vector3(0, F + H + 0.06, zc), "camper_paint", true, 0.0, "Roof")
+	BuildKit.box(c, Vector3(W * 2 + 0.36, 0.05, Lz * 2 + 0.36), Vector3(0, F + H + 0.14, zc), "camper_trim", false)
+	# Openings are measured along each wall from its start; east starts at
+	# the lounge end, so every east opening keeps its world spot (+ext).
+	var door_open := [2.44 + ext, 3.34 + ext, 0.0, 2.0]
+	var east := [door_open, [0.44 + ext, 1.54 + ext, 1.0, 1.8], [7.34 + ext, 8.54 + ext, 1.1, 1.8], [5.04 + ext, 5.64 + ext, 1.6, 1.95], [0.3, 1.2, 1.0, 1.8]]
+	# West starts at the bedroom end (unchanged). [9.4, 10.6] is the new
+	# desk window: to the RIGHT of a player seated at the desk.
+	var west := [[5.54, 6.94, 1.25, 1.85], [0.84, 2.34, 0.95, 1.8], [8.14, 9.14, 1.0, 1.8], [9.4, 10.6, 0.95, 1.85]]
+	var east_o := Vector3(W + t * 0.5, F, zs + t)
+	var west_o := Vector3(-W - t * 0.5, F, zn - t)
 	BuildKit.wall(c, east_o, PI * 0.5, Lz * 2 + t * 2, H, t, east, "camper_paint")
 	BuildKit.wall(c, west_o, -PI * 0.5, Lz * 2 + t * 2, H, t, west, "camper_paint")
-	var north := [[0.88, 2.28, 1.2, 1.85]]
-	var south: Array = []   # front wall holds the TV (Prompt 5 camera wall)
-	BuildKit.wall(c, Vector3(-W - t, F, -Lz - t * 0.5), 0.0, W * 2 + t * 2, H, t, north, "camper_paint")
-	BuildKit.wall(c, Vector3(W + t, F, Lz + t * 0.5), PI, W * 2 + t * 2, H, t, south, "camper_paint")
+	var north := [[W + t - 0.7, W + t + 0.7, 1.2, 1.85]]
+	var south: Array = []   # front wall: desk monitor (west) and entertainment TV (east)
+	BuildKit.wall(c, Vector3(-W - t, F, zn - t * 0.5), 0.0, W * 2 + t * 2, H, t, north, "camper_paint")
+	BuildKit.wall(c, Vector3(W + t, F, zs + t * 0.5), PI, W * 2 + t * 2, H, t, south, "camper_paint")
 	for o in east:
 		if o != door_open:
 			BuildKit.window_glass(c, east_o, PI * 0.5, o, t)
@@ -179,25 +187,29 @@ func _build_camper() -> void:
 	for o in west:
 		BuildKit.window_glass(c, west_o, -PI * 0.5, o, t)
 		Curtain.make(c, west_o, -PI * 0.5, o, -0.08)
-	BuildKit.window_glass(c, Vector3(-W - t, F, -Lz - t * 0.5), 0.0, north[0], t)
-	Curtain.make(c, Vector3(-W - t, F, -Lz - t * 0.5), 0.0, north[0], 0.08)
+	BuildKit.window_glass(c, Vector3(-W - t, F, zn - t * 0.5), 0.0, north[0], t)
+	Curtain.make(c, Vector3(-W - t, F, zn - t * 0.5), 0.0, north[0], 0.08)
 
-	# Teal stripe below the windows (split around the door)
-	BuildKit.box(c, Vector3(0.012, 0.16, 2.3), Vector3(W + t + 0.006, F + 0.62, 3.55), "camper_stripe", false)
-	BuildKit.box(c, Vector3(0.012, 0.16, 6.0), Vector3(W + t + 0.006, F + 0.62, -1.75), "camper_stripe", false)
-	BuildKit.box(c, Vector3(0.012, 0.16, Lz * 2), Vector3(-W - t - 0.006, F + 0.62, 0), "camper_stripe", false)
+	# Teal stripe below the windows (split around the door: z 1.44..2.34)
+	BuildKit.box(c, Vector3(0.012, 0.16, zs - 2.34), Vector3(W + t + 0.006, F + 0.62, (zs + 2.34) * 0.5), "camper_stripe", false)
+	BuildKit.box(c, Vector3(0.012, 0.16, 1.44 - zn), Vector3(W + t + 0.006, F + 0.62, (1.44 + zn) * 0.5), "camper_stripe", false)
+	BuildKit.box(c, Vector3(0.012, 0.16, Lz * 2), Vector3(-W - t - 0.006, F + 0.62, zc), "camper_stripe", false)
 	# Chassis, wheels, hitch, propane
-	BuildKit.box(c, Vector3(W * 2 - 0.3, 0.3, Lz * 2 - 0.6), Vector3(0, F - 0.3, 0), "steel", true)
+	BuildKit.box(c, Vector3(W * 2 - 0.3, 0.3, Lz * 2 - 0.6), Vector3(0, F - 0.3, zc), "steel", true)
 	for sx in [-1.0, 1.0]:
-		for z in [-0.45, 0.45]:
+		for z in [zc - 0.45, zc + 0.45]:
 			var wheel := BuildKit.cylinder(c, 0.36, 0.22, Vector3(sx * (W - 0.02), 0.36, z), "rubber", false, 16)
 			wheel.rotation.z = PI * 0.5
 			var hub := BuildKit.cylinder(c, 0.17, 0.24, wheel.position, "camper_trim", false, 12)
 			hub.rotation.z = PI * 0.5
-	BuildKit.box(c, Vector3(0.12, 0.12, 1.4), Vector3(0, 0.45, Lz + 0.75), "steel", true)
-	BuildKit.box(c, Vector3(0.5, 0.25, 0.25), Vector3(0, 0.4, Lz + 1.5), "steel", false)
-	BuildKit.prop(c, "propane_tank", Vector3(0.0, 0.52, Lz + 0.65), 0.0, 1.0)
-	BuildKit.cylinder(c, 0.04, 0.45, Vector3(0, 0.22, Lz + 1.35), "steel", false, 6)
+	# Stabilizer jacks under both ends (the longer body is supported).
+	for jz in [zn + 0.5, zs - 0.5]:
+		for sx in [-1.0, 1.0]:
+			BuildKit.box(c, Vector3(0.08, F - 0.15, 0.08), Vector3(sx * (W - 0.25), (F - 0.15) * 0.5, jz), "steel", false)
+	BuildKit.box(c, Vector3(0.12, 0.12, 1.4), Vector3(0, 0.45, zs + 0.75), "steel", true)
+	BuildKit.box(c, Vector3(0.5, 0.25, 0.25), Vector3(0, 0.4, zs + 1.5), "steel", false)
+	BuildKit.prop(c, "propane_tank", Vector3(0.0, 0.52, zs + 0.65), 0.0, 1.0)
+	BuildKit.cylinder(c, 0.04, 0.45, Vector3(0, 0.22, zs + 1.35), "steel", false, 6)
 	# Entrance: door, steps, ramp collision, boots on a mat
 	var door := Door.new()
 	door.name = "CamperDoor"
@@ -215,7 +227,7 @@ func _build_camper() -> void:
 	BuildKit.ramp(c, Vector3(W + 1.4, 0.0, 1.85), Vector3(W + t, F, 1.85), 1.0)
 	BuildKit.box(c, Vector3(0.9, 0.02, 0.6), Vector3(W + 1.6, 0.01, 1.85), "dog_bed", false)
 	BuildKit.prop(c, "rubber_boots", Vector3(W + 1.75, 0.02, 2.55), -PI * 0.3, 0.75)
-	# --- Kitchen (west wall, z 0.4..2.9)
+	# --- Kitchen (west wall, z 0.4..2.9) - unchanged spot
 	var k := Node3D.new()
 	k.name = "Kitchen"
 	c.add_child(k)
@@ -234,39 +246,39 @@ func _build_camper() -> void:
 	BuildKit.prop(k, "russian_food_cans_01", Vector3(-W + 0.2, F + 2.13, 2.5), 0.0, 1.0)
 	BuildKit.box(k, Vector3(0.6, 1.6, 0.62), Vector3(-W + 0.3, F + 0.8, 3.28), "white", true, 0.0, "Fridge")
 	BuildKit.box(k, Vector3(0.02, 0.5, 0.03), Vector3(-W + 0.61, F + 1.1, 3.05), "steel", false)
-	# --- Lounge (front): couch facing a large wall TV (Prompt 5 drives the
-	# live 2x2 camera wall; Phase 1 reserves the physical screen and seats).
+	# --- Lounge (front, east half): couch facing the entertainment TV.
 	var couch := Node3D.new()
 	couch.name = "Couch"
-	couch.position = Vector3(0.3, F, Lz - 1.75)
+	couch.position = Vector3(W - 0.88, F, zs - 2.1)
 	c.add_child(couch)
-	BuildKit.box(couch, Vector3(2.2, 0.42, 0.78), Vector3(0, 0.21, 0), "dark_wood", true, 0.0, "CouchBase")
-	BuildKit.box(couch, Vector3(2.1, 0.14, 0.7), Vector3(0, 0.49, 0.02), "denim", false, 0.0, "SeatCushion")
-	BuildKit.box(couch, Vector3(2.2, 0.5, 0.18), Vector3(0, 0.72, -0.33), "denim", false, 0.0, "Backrest")
+	BuildKit.box(couch, Vector3(1.7, 0.42, 0.78), Vector3(0, 0.21, 0), "dark_wood", true, 0.0, "CouchBase")
+	BuildKit.box(couch, Vector3(1.6, 0.14, 0.7), Vector3(0, 0.49, 0.02), "denim", false, 0.0, "SeatCushion")
+	BuildKit.box(couch, Vector3(1.7, 0.5, 0.18), Vector3(0, 0.72, -0.33), "denim", false, 0.0, "Backrest")
 	for sx in [-1.0, 1.0]:
-		BuildKit.box(couch, Vector3(0.16, 0.3, 0.74), Vector3(sx * 1.05, 0.6, 0.0), "denim", false, 0.0, "Arm")
-	BuildKit.marker(couch, "CouchSeat_1", Vector3(-0.5, 0.55, 0.05), PI, "couch_seat")
-	BuildKit.marker(couch, "CouchSeat_2", Vector3(0.5, 0.55, 0.05), PI, "couch_seat")
-	BuildKit.prop(c, "throw_pillows_01", Vector3(0.9, F + 0.55, Lz - 1.85), PI, 0.7)
+		BuildKit.box(couch, Vector3(0.16, 0.3, 0.74), Vector3(sx * 0.8, 0.6, 0.0), "denim", false, 0.0, "Arm")
+	BuildKit.marker(couch, "CouchSeat_1", Vector3(-0.38, 0.55, 0.05), PI, "couch_seat")
+	BuildKit.marker(couch, "CouchSeat_2", Vector3(0.38, 0.55, 0.05), PI, "couch_seat")
+	BuildKit.prop(c, "throw_pillows_01", Vector3(W - 0.35, F + 0.55, zs - 2.2), PI, 0.6)
 	var tv := Node3D.new()
 	tv.name = "CamperTV"
-	tv.position = Vector3(0.3, F + 1.32, Lz - 0.06)
+	tv.position = Vector3(W - 0.88, F + 1.32, zs - 0.06)
 	tv.rotation.y = PI
 	c.add_child(tv)
-	BuildKit.box(tv, Vector3(1.24, 0.72, 0.06), Vector3.ZERO, "black", false, 0.0, "Bezel")
+	BuildKit.box(tv, Vector3(1.04, 0.62, 0.06), Vector3.ZERO, "black", false, 0.0, "Bezel")
 	var screen := MeshInstance3D.new()
 	screen.name = "Screen"
 	var sq := QuadMesh.new()
-	sq.size = Vector2(1.16, 0.65)
+	sq.size = Vector2(0.96, 0.54)
 	screen.mesh = sq
 	screen.material_override = BuildKit.mat("screen")
 	screen.position = Vector3(0, 0, 0.032)
 	tv.add_child(screen)
 	tv.add_to_group("camper_tv")
-	BuildKit.box(c, Vector3(0.6, 0.06, 0.42), Vector3(0.3, F + 0.42, Lz - 0.75), "dark_wood", true, 0.0, "CoffeeTable")
-	for lx in [0.05, 0.55]:
-		BuildKit.box(c, Vector3(0.05, 0.4, 0.38), Vector3(lx, F + 0.2, Lz - 0.75), "dark_wood", false)
-	BuildKit.prop(c, "carved_wooden_plate", Vector3(0.2, F + 0.46, Lz - 0.75), 0.0, 1.0)
+	BuildKit.box(c, Vector3(0.6, 0.06, 0.4), Vector3(W - 0.88, F + 0.42, zs - 1.05), "dark_wood", true, 0.0, "CoffeeTable")
+	for lx in [-0.25, 0.25]:
+		BuildKit.box(c, Vector3(0.05, 0.4, 0.36), Vector3(W - 0.88 + lx, F + 0.2, zs - 1.05), "dark_wood", false)
+	BuildKit.prop(c, "carved_wooden_plate", Vector3(W - 0.95, F + 0.46, zs - 1.05), 0.0, 1.0)
+	_build_desk(c, W, F, zs)
 	# --- Dog bed by the door
 	var dog_bed := Node3D.new()
 	dog_bed.name = "DogBed"
@@ -310,7 +322,7 @@ func _build_camper() -> void:
 	BuildKit.wall(c, Vector3(-W, F, -1.4), 0.0, W * 2, H, 0.06, [[0.05, 0.9, 0.0, 2.0]], "camper_paint")
 	var bed := Node3D.new()
 	bed.name = "PlayerBed"
-	bed.position = Vector3(0.0, F, -Lz + 1.0)
+	bed.position = Vector3(0.0, F, zn + 1.0)
 	c.add_child(bed)
 	BuildKit.box(bed, Vector3(1.45, 0.35, 2.0), Vector3(0, 0.175, 0), "dark_wood", true)
 	BuildKit.box(bed, Vector3(1.38, 0.2, 1.95), Vector3(0, 0.45, 0.02), "mattress", false)
@@ -329,11 +341,11 @@ func _build_camper() -> void:
 	sleep.add_child(scs)
 	bed.add_child(sleep)
 	_hide_spot(bed, "UnderCamperBed", Vector3(0, 0.12, 0.2), "under_bed")
-	BuildKit.prop(c, "painted_wooden_nightstand", Vector3(1.15, F, -Lz + 0.35), PI, 0.85)
+	BuildKit.prop(c, "painted_wooden_nightstand", Vector3(1.15, F, zn + 0.35), PI, 0.85)
 	BuildKit.box(c, Vector3(0.6, 2.0, 0.85), Vector3(W - 0.3, F + 1.0, -1.95), "panel", true, 0.0, "Wardrobe")
 	_hide_spot(c, "CamperWardrobe", Vector3(W - 0.3, F + 0.05, -1.95), "closet")
 	# --- Interior lights (warm, no shadows: cheap and stable)
-	for lz in [2.0, -3.0, -0.6]:
+	for lz in [2.0, -3.0, -0.6, zs - 1.4]:
 		var li := OmniLight3D.new()
 		li.position = Vector3(0.0 if lz != -0.6 else 0.85, F + H - 0.15, lz)
 		li.omni_range = 3.6 if lz != -0.6 else 1.6
@@ -346,7 +358,70 @@ func _build_camper() -> void:
 	# Light switch beside the door (Phase 5 comfort) and a reading lamp.
 	BuildKit.box(c, Vector3(0.02, 0.12, 0.08), Vector3(W - 0.01, F + 1.25, 1.2), "white", false, 0.0, "LightSwitch")
 	BuildKit.marker(c, "LightSwitchPoint", Vector3(W - 0.03, F + 1.25, 1.2), 0.0, "camper_switch")
-	_interior_zone(c, "camper", Vector3(0, F + H * 0.5, 0), Vector3(W * 2, H, Lz * 2), true)
+	# Phase 11: future event staging spots outside the desk window (validated
+	# ground support at build; reserved, never populated by themselves).
+	for k2 in 3:
+		var sz := zs - 0.9 - k2 * 0.8
+		var mk := BuildKit.marker(c, "DeskWindowStage_%d" % k2, Vector3(-W - 3.0 - k2 * 1.2, 0.0, sz), PI * 0.5, "desk_window_stage")
+		mk.position.y = World.height_at((c.global_transform * mk.position).x, (c.global_transform * mk.position).z) - c.global_position.y
+	_interior_zone(c, "camper", Vector3(0, F + H * 0.5, zc), Vector3(W * 2, H, Lz * 2), true)
+
+
+## Phase 11 computer station in the lounge's west corner. Seated, the
+## monitor is straight ahead and the new west window is on the RIGHT.
+func _build_desk(c: Node3D, W: float, F: float, zs: float) -> void:
+	var desk := Node3D.new()
+	desk.name = "Desk"
+	desk.position = Vector3(-W + 0.68, F, zs - 0.34)
+	c.add_child(desk)
+	BuildKit.box(desk, Vector3(1.3, 0.04, 0.66), Vector3(0, 0.74, 0), "dark_wood", true, 0.0, "DeskTop")
+	for sx in [-0.6, 0.6]:
+		BuildKit.box(desk, Vector3(0.05, 0.72, 0.6), Vector3(sx, 0.36, 0), "dark_wood", true)
+	BuildKit.box(desk, Vector3(0.4, 0.5, 0.58), Vector3(0.38, 0.47, 0), "panel", false, 0.0, "Drawers")
+	# Monitor on a short stand, slightly toward the window side.
+	var mon := Node3D.new()
+	mon.name = "Monitor"
+	mon.position = Vector3(-0.05, 1.08, 0.12)
+	mon.rotation.y = PI
+	desk.add_child(mon)
+	BuildKit.box(mon, Vector3(0.66, 0.4, 0.035), Vector3.ZERO, "black", false, 0.0, "MonitorBezel")
+	BuildKit.box(desk, Vector3(0.06, 0.26, 0.05), Vector3(-0.05, 0.88, 0.16), "black", false)
+	BuildKit.box(desk, Vector3(0.24, 0.015, 0.16), Vector3(-0.05, 0.765, 0.16), "black", false)
+	var ms := MeshInstance3D.new()
+	ms.name = "Screen"
+	var mq := QuadMesh.new()
+	mq.size = Vector2(0.62, 0.35)
+	ms.mesh = mq
+	ms.material_override = BuildKit.mat("screen")
+	ms.position = Vector3(0, 0, 0.019)
+	mon.add_child(ms)
+	mon.add_to_group("camper_monitor")
+	# Keyboard, mouse, two small speakers (the camera relay plays from them).
+	BuildKit.box(desk, Vector3(0.44, 0.02, 0.15), Vector3(-0.05, 0.77, -0.12), "black", false, 0.0, "Keyboard")
+	BuildKit.box(desk, Vector3(0.06, 0.025, 0.1), Vector3(0.27, 0.77, -0.12), "black", false, 0.0, "Mouse")
+	for sx in [-0.46, 0.36]:
+		var spk := BuildKit.box(desk, Vector3(0.1, 0.17, 0.1), Vector3(sx, 0.845, 0.16), "black", false, 0.0, "Speaker")
+		spk.add_to_group("desk_speaker")
+	BuildKit.prop(desk, "plastic_thermos", Vector3(0.5, 0.76, 0.12), 0.0, 0.7)
+	# Screen glow: small, cosmetic (never a safety source).
+	var glow := OmniLight3D.new()
+	glow.name = "ScreenGlow"
+	glow.position = Vector3(-0.05, 1.0, -0.15)
+	glow.omni_range = 1.3
+	glow.light_energy = 0.18
+	glow.light_color = Color(0.75, 0.85, 1.0)
+	glow.shadow_enabled = false
+	desk.add_child(glow)
+	# Chair (pulled back 0.55 m, clear of the couch and fridge routes).
+	var chair := Node3D.new()
+	chair.name = "DeskChair"
+	chair.position = Vector3(-W + 0.62, F, zs - 1.12)
+	c.add_child(chair)
+	BuildKit.box(chair, Vector3(0.48, 0.07, 0.46), Vector3(0, 0.46, 0), "denim", true, 0.0, "ChairSeat")
+	BuildKit.box(chair, Vector3(0.46, 0.5, 0.06), Vector3(0, 0.76, -0.22), "denim", false, 0.0, "ChairBack")
+	BuildKit.cylinder(chair, 0.03, 0.42, Vector3(0, 0.22, 0), "steel", false, 8)
+	BuildKit.cylinder(chair, 0.26, 0.03, Vector3(0, 0.03, 0), "steel", false, 10)
+	BuildKit.marker(chair, "DeskSeat", Vector3(0, 0.55, 0.05), PI, "desk_seat")
 
 
 # ------------------------------------------------------------------ cabin

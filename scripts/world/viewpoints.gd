@@ -17,7 +17,7 @@ static func all() -> Dictionary:
 	vp["camp_sunset"] = _v(c + Vector3(-20, 0, 15), c + Vector3(4, 0, -6), eye, "Camp at sunset", "sunset")
 	var camper := c + CampLayout.CAMPER_POS
 	vp["camper"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, 2.0), camper + Vector3(-0.4, CampLayout.CAMPER_FLOOR, -3.0), eye, "Camper interior (kitchen toward bedroom)")
-	vp["camper_lounge"] = _v(camper + Vector3(-0.9, CampLayout.CAMPER_FLOOR, 1.6), camper + Vector3(0.4, CampLayout.CAMPER_FLOOR + 0.3, 4.6), eye, "Camper lounge: couch and TV (camera wall arrives in Prompt 5)")
+	vp["camper_lounge"] = _v(camper + Vector3(-0.6, CampLayout.CAMPER_FLOOR, 2.9), camper + Vector3(-0.2, CampLayout.CAMPER_FLOOR + 0.4, 6.0), eye, "Camper lounge (Phase 11, +25 % floor): desk station left, couch and TV right")
 	vp["camper_night"] = _v(camper + Vector3(0.9, CampLayout.CAMPER_FLOOR, -2.0), camper + Vector3(-1.5, CampLayout.CAMPER_FLOOR + 0.1, -3.2), eye, "Camper bedroom at night: window to the woods", "night")
 	var rack := c + CampLayout.DELIVERY_RACK_POS
 	vp["delivery"] = _v(rack + Vector3(1.5, 0, 5.5), c + CampLayout.BURN_PIT_POS + Vector3(1.5, 0, 0), eye, "Delivery rack and burn pit")
@@ -61,8 +61,12 @@ static func all() -> Dictionary:
 	vp["fire_close"] = _v(fire + Vector3(0.0, 0.0, 4.2), fire + Vector3(0.0, 0.6, 0.0), 0.2, "Campfire close-up", "night")
 	# Phase 5: TV from the couch, dock + utility building, dog alcove.
 	var F := CampLayout.CAMPER_FLOOR
-	var Lz := CampLayout.CAMPER_SIZE.z * 0.5
-	vp["tv_wall"] = _v(camper + Vector3(0.3, F, Lz - 1.62), camper + Vector3(0.3, F + 0.32, Lz), 1.17, "Couch view of the 2x2 camera wall")
+	var zs := CampLayout.CAMPER_SOUTH_Z
+	var W := CampLayout.CAMPER_SIZE.x * 0.5
+	# Phase 11: surveillance lives on the desk computer; the TV is entertainment.
+	vp["tv_wall"] = _v(camper + Vector3(-W + 0.62, F, zs - 1.07), camper + Vector3(-W + 0.63, F + 0.1, zs), 1.17, "Seated at the desk: monitor with the camera wall")
+	vp["desk_window"] = _v(camper + Vector3(-W + 0.62, F, zs - 1.07), camper + Vector3(-W - 3.0, F + 0.2, zs - 1.2), 1.17, "Seated at the desk, glancing right through the window")
+	vp["couch_tv"] = _v(camper + Vector3(W - 0.88, F, zs - 2.05), camper + Vector3(W - 0.88, F + 0.32, zs), 1.17, "Couch view of the entertainment TV")
 	vp["dock"] = _v(c + Vector3(-7.0, 0.0, 121.0), c + Vector3(8.0, 0.0, 100.0), eye, "Service dock, utility building and beacon hut")
 	vp["dog_alcove"] = _v(c + Vector3(4.6, 0.0, 97.6), c + Vector3(8.8, -0.4, 95.0), 1.3, "The dog's dry alcove beside the utility building")
 	vp["utility_inside"] = _v(c + Vector3(10.2, 0.45, 92.6), c + Vector3(12.0, 0.0, 96.2), eye, "Inside the utility building: shelves, panel, radio and beacon")

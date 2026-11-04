@@ -88,6 +88,11 @@ var focus_size := FOCUS_SIZE
 var quad_hz := QUAD_HZ
 var focus_hz := FOCUS_HZ
 var _screen_mat: ShaderMaterial
+## Phase 11: true when the wall is hosted by the desk computer (its desktop
+## draws the composite; the relay speaker is the desk speakers).
+var hosted := false
+## Desk: the cameras only render while someone is at the computer area.
+const HOSTED_RANGE := 6.0
 var _gain := 0.0          # smoothed relay gain (quad ~0.25 -> focus 1.0)
 var _recent := {}         # dedupe: stream id -> last replay time
 var _caption_t := -10.0
@@ -106,10 +111,14 @@ func setup() -> void:
 		if root == null or root.is_ancestor_of(c):   # only this world's cameras
 			cams.append(c)
 	cams.sort_custom(func(a: Node3D, b: Node3D) -> bool: return str(a.get_meta("camera_id")) < str(b.get_meta("camera_id")))
+	# Phase 11: the live cameras live on the desk computer's monitor (the TV
+	# is entertainment only). Older layouts without a desk keep the TV.
+	var mons := get_tree().get_nodes_in_group("camper_monitor").filter(func(n: Node) -> bool: return root == null or root.is_ancestor_of(n))
 	var tvs := get_tree().get_nodes_in_group("camper_tv").filter(func(n: Node) -> bool: return root == null or root.is_ancestor_of(n))
-	if tvs.is_empty() or cams.size() < 4:
+	hosted = not mons.is_empty()
+	if (mons.is_empty() and tvs.is_empty()) or cams.size() < 4:
 		return
-	var tv: Node3D = tvs[0]
+	var tv: Node3D = mons[0] if hosted else tvs[0]
 	screen = tv.get_node("Screen")
 	screen.layers = 1 << (LAYER_TV - 1)
 	var w := get_viewport().world_3d
@@ -123,12 +132,13 @@ func setup() -> void:
 	_focus_cam = _focus_vp.get_child(0)
 	_sync_env()
 	_build_composite()
-	_screen_mat = ShaderMaterial.new()
-	_screen_mat.shader = load("res://shaders/tv_screen.gdshader")
-	_screen_mat.set_shader_parameter("feed", composite.get_texture())
-	_screen_mat.set_shader_parameter("gain", SCREEN_GAIN)
-	_screen_mat.set_shader_parameter("powered", 1.0)
-	screen.material_override = _screen_mat
+	if not hosted:
+		_screen_mat = ShaderMaterial.new()
+		_screen_mat.shader = load("res://shaders/tv_screen.gdshader")
+		_screen_mat.set_shader_parameter("feed", composite.get_texture())
+		_screen_mat.set_shader_parameter("gain", SCREEN_GAIN)
+		_screen_mat.set_shader_parameter("powered", 1.0)
+		screen.material_override = _screen_mat
 	speaker = AudioStreamPlayer3D.new()
 	speaker.name = "TVSpeaker"
 	speaker.bus = "TV"
@@ -553,7 +563,7 @@ func is_active() -> bool:
 	var p := Game.player
 	if p == null:
 		return false
-	return p.global_position.distance_to(screen.global_position) < 14.0
+	return p.global_position.distance_to(screen.global_position) < (HOSTED_RANGE if hosted else 14.0)
 
 
 var _tagged: Node = null

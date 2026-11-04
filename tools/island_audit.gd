@@ -206,8 +206,9 @@ func _building_rects() -> Array:
 	var out := []
 	var cr := CampLayout.CABIN_POS
 	out.append(Rect2(Vector2(o.x + cr.x - 3.4, o.z + cr.z - 10.2), Vector2(6.8, 15.2)))
-	var mp := CampLayout.CAMPER_POS
-	out.append(Rect2(Vector2(o.x + mp.x - 1.5, o.z + mp.z - 4.7), Vector2(3.0, 9.4)))
+	var mp := CampLayout.CAMPER_POS + CampLayout.camper_box_offset()
+	var cs := CampLayout.CAMPER_SIZE
+	out.append(Rect2(Vector2(o.x + mp.x - cs.x * 0.5, o.z + mp.z - cs.z * 0.5), Vector2(cs.x, cs.z)))
 	if w.dock_site and w.dock_site.building:
 		var b := w.dock_site.building.global_position
 		out.append(Rect2(Vector2(b.x - DockSite.BW, b.z - DockSite.BD), Vector2(DockSite.BW * 2, DockSite.BD * 2)))

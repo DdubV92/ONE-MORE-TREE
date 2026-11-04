@@ -164,7 +164,7 @@ func inside_camper() -> bool:
 	if c == null:
 		return false
 	var l := c.global_transform.affine_inverse() * global_position
-	return absf(l.x) < CampLayout.CAMPER_SIZE.x * 0.5 + 0.06 and absf(l.z) < CampLayout.CAMPER_SIZE.z * 0.5 and l.y > CampLayout.CAMPER_FLOOR - 0.2
+	return CampLayout.camper_local_inside(l, 0.06)
 
 
 func _fire_points() -> Array[Vector3]:

@@ -52,7 +52,7 @@ func _build_cameras(camp: Node3D) -> void:
 	# id, category, mount position (camp-local, y above ground), look target
 	var specs := [
 		["CAM_01", "cabin_to_camper", cabin + Vector3(-3.74 - 0.14 - 2.1, 2.35, 1.6), camper],
-		["CAM_02", "camper_to_cabin", camper + Vector3(1.62, 2.75, 4.2), cabin],
+		["CAM_02", "camper_to_cabin", camper + Vector3(L.CAMPER_SIZE.x * 0.5 + 0.12, 2.75, 4.2), cabin],
 		["CAM_03", "forest_entrance", Vector3(0.0, 2.8, -hz + 0.2), Vector3(0, 0, -hz - 25.0)],
 		["CAM_04", "perimeter_nw", Vector3(-hx, 2.3, -hz), Vector3(0, 0, 0)],
 		["CAM_05", "perimeter_ne", Vector3(hx, 2.3, -hz), Vector3(0, 0, 0)],

@@ -291,8 +291,9 @@ func _building_floors() -> Array:
 	var cy := World.height_at(o.x + cr.x, o.z + cr.z) + CampLayout.CABIN_FLOOR
 	out.append({"rect": Rect2(Vector2(o.x + cr.x - 3.6, o.z + cr.z - 5.2), Vector2(7.2, 10.4)), "floor": cy, "private": false})
 	out.append({"rect": Rect2(Vector2(o.x + cr.x - 3.6, o.z + cr.z - 10.36), Vector2(7.2, 5.02)), "floor": cy, "private": false})
-	var mp := CampLayout.CAMPER_POS
-	out.append({"rect": Rect2(Vector2(o.x + mp.x - 1.7, o.z + mp.z - 4.9), Vector2(3.4, 9.8)), "floor": World.height_at(o.x + mp.x, o.z + mp.z) + CampLayout.CAMPER_FLOOR, "private": true})
+	var mp := CampLayout.CAMPER_POS + CampLayout.camper_box_offset()
+	var cs := CampLayout.CAMPER_SIZE
+	out.append({"rect": Rect2(Vector2(o.x + mp.x - cs.x * 0.5 - 0.2, o.z + mp.z - cs.z * 0.5 - 0.2), Vector2(cs.x + 0.4, cs.z + 0.4)), "floor": World.height_at(o.x + mp.x, o.z + mp.z) + CampLayout.CAMPER_FLOOR, "private": true})
 	return out
 
 

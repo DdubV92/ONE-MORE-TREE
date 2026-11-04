@@ -111,6 +111,12 @@ static func _player_record(p: Node3D) -> Dictionary:
 		var hs: HideSpot = p.get("hiding")
 		pos = hs.exit_point
 		seat = "hide"
+	elif couch and couch.is_in_group("desk_seat"):
+		# Phase 11: a desk session is saved standing behind the chair.
+		var dfwd := -couch.global_basis.z
+		dfwd.y = 0.0
+		pos = couch.global_position - dfwd.normalized() * 0.75
+		pos.y = couch.global_position.y - 0.55
 	elif couch:
 		var fwd := -couch.global_basis.z
 		fwd.y = 0.0

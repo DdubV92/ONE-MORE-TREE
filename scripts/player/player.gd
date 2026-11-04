@@ -291,7 +291,14 @@ func sit_on_couch(marker: Node3D) -> void:
 		_crouching = false
 	_interact_target = null
 	interact_target_changed.emit("")
-	show_message("On the couch: click a camera tile to focus it, right-click back to the wall, %s/%s or wheel switch camera in focus, C channel, [ ] swap speed / freeze, M mute cameras, -/+ volume, P TV power, %s or %s stand up. The TV is live: time keeps running." % [Keys.label("move_left"), Keys.label("move_right"), Keys.label("interact"), Keys.label("jump")])
+	at_desk = marker.is_in_group("desk_seat")
+	if at_desk:
+		_pitch = deg_to_rad(-9.0)
+		if Game.desk:
+			Game.desk.sit(true)
+		show_message("At the computer: use the mouse on the screen. %s glances right out of the window, %s looks back. %s or %s stands up at once. Time keeps running here." % [Keys.label("move_right"), Keys.label("move_left"), Keys.label("interact"), Keys.label("jump")])
+	else:
+		show_message("On the couch: the TV is entertainment (the cameras are on the desk computer). P power, -/+ volume, %s or %s stand up. Time keeps running." % [Keys.label("interact"), Keys.label("jump")])
 
 
 func stand_from_couch() -> void:
@@ -316,6 +323,17 @@ func stand_from_couch() -> void:
 		show_message("No room to stand here.")
 		return
 	var yaw := couch.global_rotation.y + _couch_yaw
+	if at_desk:
+		# The chair pushes back: stand up behind it, never into the desk.
+		var back := base - fwd * 0.75
+		back.y = couch.global_position.y - 0.55
+		if _stand_clear(back):
+			spot = back
+		yaw = couch.global_rotation.y
+		if Game.desk:
+			Game.desk.sit(false)
+		at_desk = false
+		_glance = false
 	couch = null
 	collision_layer = 2
 	collision_mask = 1
@@ -332,8 +350,37 @@ func _stand_clear(feet: Vector3) -> bool:
 	return get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
 
 
+## Phase 11: seated at the desk computer (the desktop UI takes the mouse;
+## the glance looks right through the window and back).
+var at_desk := false
+var _glance := false
+var _glance_t := 0.0
+
+
+func _desk_input(event: InputEvent) -> void:
+	if event.is_action_pressed("interact") or event.is_action_pressed("jump"):
+		stand_from_couch()
+	elif event.is_action_pressed("move_right"):
+		_glance = not _glance
+		_glance_t = 0.5
+		if Game.desk:
+			Game.desk.set_glance(_glance)
+	elif event.is_action_pressed("move_left") and _glance:
+		_glance = false
+		if Game.desk:
+			Game.desk.set_glance(false)
+	elif _glance and event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
+		var inv := -1.0 if Settings.get_v("invert_y") else 1.0
+		_couch_yaw = clampf(_couch_yaw - event.relative.x * s, deg_to_rad(-125.0), deg_to_rad(60.0))
+		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-45.0), deg_to_rad(45.0))
+
+
 func _couch_input(event: InputEvent) -> void:
-	var tv: CameraWall = Game.tv
+	if at_desk:
+		_desk_input(event)
+		return
+	var tvs: TVSet = Game.tv_set
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
 		var inv := -1.0 if Settings.get_v("invert_y") else 1.0
@@ -341,57 +388,18 @@ func _couch_input(event: InputEvent) -> void:
 		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-55.0), deg_to_rad(60.0))
 	elif event.is_action_pressed("interact") or event.is_action_pressed("jump"):
 		stand_from_couch()
-	elif tv == null:
+	elif tvs == null:
 		return
-	elif event.is_action_pressed("attack"):
-		if tv.mode == "quad":
-			var tile := tv.tile_under_ray(camera.global_position, -camera.global_basis.z)
-			if tile >= 0:
-				tv.focus_tile(tile)
-	elif event is InputEventMouseButton and event.pressed:
-		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_RIGHT and tv.mode == "focus":
-			tv.back_to_quad()
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and tv.mode == "focus":
-			tv.focus_step(-1)
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and tv.mode == "focus":
-			tv.focus_step(1)
 	elif event is InputEventKey and event.pressed and not event.echo:
-		var k := (event as InputEventKey).physical_keycode
-		match k:
-			KEY_A, KEY_LEFT:
-				if tv.mode == "focus":
-					tv.focus_step(-1)
-			KEY_D, KEY_RIGHT:
-				if tv.mode == "focus":
-					tv.focus_step(1)
-			KEY_BACKSPACE:
-				if tv.mode == "focus":
-					tv.back_to_quad()
-			KEY_C:
-				tv.cycle_mode()
-			KEY_BRACKETLEFT, KEY_BRACKETRIGHT:
-				# Accessibility: slower swaps or freeze (0 = frozen); saved in Settings.
-				var steps := [0.0, 5.0, 10.0, 20.0, 40.0]
-				var i := maxi(steps.find(tv.interval), 1)
-				i = clampi(i + (1 if k == KEY_BRACKETRIGHT else -1), 0, steps.size() - 1)
-				tv.set_interval(steps[i])
-				Settings.set_v("tv_interval", steps[i])
-				show_message("Camera wall: " + ("frozen (no automatic swaps)" if steps[i] == 0.0 else "one tile every %d s" % int(steps[i])))
-			KEY_M:
-				tv.set_mic_muted(not tv.mic_muted)
-				show_message("Camera microphones %s (the room still sounds normal)." % ("muted" if tv.mic_muted else "on"))
+		match (event as InputEventKey).physical_keycode:
 			KEY_MINUS, KEY_KP_SUBTRACT:
-				tv.set_volume(tv.tv_volume - 0.1)
-				show_message("TV volume %d%%" % roundi(tv.tv_volume * 100.0))
+				tvs.set_volume(tvs.volume - 0.1)
+				show_message("TV volume %d%%" % roundi(tvs.volume * 100.0))
 			KEY_EQUAL, KEY_KP_ADD:
-				tv.set_volume(tv.tv_volume + 0.1)
-				show_message("TV volume %d%%" % roundi(tv.tv_volume * 100.0))
+				tvs.set_volume(tvs.volume + 0.1)
+				show_message("TV volume %d%%" % roundi(tvs.volume * 100.0))
 			KEY_P:
-				tv.set_power(not tv.powered)
-			KEY_1, KEY_2, KEY_3, KEY_4:
-				if tv.mode == "quad":
-					tv.focus_tile(k - KEY_1)
+				tvs.set_power(not tvs.powered)
 
 
 func _couch_process(delta: float) -> void:
@@ -399,6 +407,15 @@ func _couch_process(delta: float) -> void:
 	var eye := couch.global_transform * Vector3(0, 0.62, 0.12)
 	var e := smoothstep(0.0, 1.0, _sit_blend)
 	global_position = _sit_from.lerp(eye, e) - Vector3(0, head.position.y, 0)
+	if at_desk:
+		# Glance: ease the head toward the right-hand window and back.
+		var want := deg_to_rad(-78.0) if _glance else 0.0
+		if not _glance:
+			_couch_yaw = lerp_angle(_couch_yaw, 0.0, minf(delta * 6.0, 1.0))
+			_pitch = lerpf(_pitch, deg_to_rad(-9.0), minf(delta * 6.0, 1.0))
+		elif _glance_t > 0.0:
+			_glance_t -= delta
+			_couch_yaw = lerp_angle(_couch_yaw, want, minf(delta * 8.0, 1.0))
 	rotation = Vector3(0, couch.global_rotation.y + _couch_yaw, 0)
 	head.rotation = Vector3(_pitch, 0, 0)
 	velocity = Vector3.ZERO

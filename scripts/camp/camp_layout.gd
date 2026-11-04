@@ -10,8 +10,15 @@ const FENCE_HEIGHT := 2.0
 const ENTRANCE_HALF_WIDTH := 6.5        # north opening (logging entrance)
 const BEACH_GATE_HALF_WIDTH := 1.8      # small south opening to the beach path
 
-const CAMPER_POS := Vector3(-15.0, 0.0, 3.0)    # center of footprint at ground
-const CAMPER_SIZE := Vector3(3.0, 2.3, 9.4)     # interior box (x width, y height, z length)
+const CAMPER_POS := Vector3(-15.0, 0.0, 3.0)    # camper origin (unchanged since Phase 0)
+## Phase 11: +25 % usable floor. Width 3.0 -> 3.26 m (+8.7 %), length
+## 9.4 -> 10.81 m (+15 %): 28.2 -> 35.24 m^2 (x1.2496). The north
+## (bedroom) end, the entrance and the kitchen/bathroom stay where they
+## were; all extra length goes to the lounge, where the desk station is.
+const CAMPER_SIZE := Vector3(3.26, 2.3, 10.81)  # interior box (x width, y height, z length)
+const CAMPER_V1_SIZE := Vector3(3.0, 2.3, 9.4)  # pre-Phase-11 interior (for reports/migration)
+const CAMPER_NORTH_Z := -4.7                    # interior north wall (local), fixed
+const CAMPER_SOUTH_Z := 6.11                    # interior south (lounge) wall (local)
 const CAMPER_FLOOR := 0.62                      # floor height above ground
 const CABIN_POS := Vector3(14.0, 0.0, -1.0)
 const CABIN_SIZE := Vector3(7.2, 2.7, 10.4)
@@ -52,6 +59,21 @@ const LAMPS := [
 	{"pos": Vector3(19.0, 0.0, 12.0), "radius": 8.0},
 	{"pos": Vector3(0.0, 0.0, 1.0), "radius": 10.0},
 ]
+
+
+## Interior box centre relative to CAMPER_POS (the box is no longer centred
+## on the origin after the lounge extension).
+static func camper_box_offset() -> Vector3:
+	return Vector3(0.0, 0.0, (CAMPER_NORTH_Z + CAMPER_SOUTH_Z) * 0.5)
+
+
+## Camper-local point inside the interior box (with a margin).
+static func camper_local_inside(l: Vector3, margin := 0.0) -> bool:
+	return absf(l.x) < CAMPER_SIZE.x * 0.5 + margin and l.z > CAMPER_NORTH_Z - margin and l.z < CAMPER_SOUTH_Z + margin and l.y > CAMPER_FLOOR - 0.2
+
+
+static func camper_usable_area() -> float:
+	return CAMPER_SIZE.x * CAMPER_SIZE.z
 
 
 static func origin() -> Vector3:

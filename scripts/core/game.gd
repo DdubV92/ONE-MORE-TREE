@@ -32,6 +32,8 @@ var campaign: CampaignService
 var crew: CrewService
 var vehicles: VehicleService
 var tv: CameraWall
+var desk: Node                      # Phase 11 DeskComputer
+var tv_set: Node                    # Phase 11 entertainment TV
 var dog: CampDog
 var director: TerrorDirector
 var threat: NightThreat

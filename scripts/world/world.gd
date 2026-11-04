@@ -18,6 +18,8 @@ var campaign: CampaignService
 var crew: CrewService
 var vehicles: VehicleService
 var tv: CameraWall
+var desk: DeskComputer
+var tv_set: TVSet
 var comfort: CamperComfort
 var dog: CampDog
 var director: TerrorDirector
@@ -202,6 +204,17 @@ func _build_crew_world() -> void:
 	vehicles.build_world()
 	build_ms["drive_nav"] = Time.get_ticks_msec() - t2
 	tv.setup()
+	# Phase 11: desk computer hosts the cameras; the TV is entertainment.
+	desk = DeskComputer.new()
+	desk.name = "DeskComputer"
+	add_child(desk)
+	desk.setup()
+	Game.desk = desk
+	tv_set = TVSet.new()
+	tv_set.name = "TVSet"
+	add_child(tv_set)
+	tv_set.setup()
+	Game.tv_set = tv_set
 	comfort.setup()
 	arcade.hook_cabinets()
 	if campaign and campaign.contract.state == ContractService.ABANDONMENT and hunt.mode == "none":

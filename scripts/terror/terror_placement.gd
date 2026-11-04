@@ -109,7 +109,7 @@ static func beyond_fence(origin: Vector3, dir: Vector3, rng: RandomNumberGenerat
 ## view of a window (beyond the glass, never inside).
 static func outside_building(viewer: Node3D, building: String, rng: RandomNumberGenerator) -> Vector3:
 	var o := World.camp_origin()
-	var pos: Vector3 = CampLayout.CAMPER_POS if building == "camper" else CampLayout.CABIN_POS
+	var pos: Vector3 = (CampLayout.CAMPER_POS + CampLayout.camper_box_offset()) if building == "camper" else CampLayout.CABIN_POS
 	var size: Vector3 = CampLayout.CAMPER_SIZE if building == "camper" else Vector3(7.2, 2.6, 15.6)
 	var centre := Vector3(o.x + pos.x, 0, o.z + pos.z)
 	var look := -viewer.global_basis.z
