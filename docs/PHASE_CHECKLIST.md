@@ -1,5 +1,7 @@
 # Phase checklist
 
+> **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
+
 ## Phase 9: Onboarding, UI, crew management, accessibility, balance and endings
 
 Status key: ✅ implemented and observed (automated test or capture) · 🟡 implemented, not yet run by a person / partial · ⬜ absent. Player guide: [PLAYER_GUIDE.md](PLAYER_GUIDE.md). Time/pause/state: [TIME_AND_STATE.md](TIME_AND_STATE.md).
