@@ -36,12 +36,22 @@ func setup(w: Wallet, cfg: EconomyConfig) -> void:
 	config = cfg
 
 
-static func starting_crew() -> Array[Dictionary]:
-	# Two starting employees (Phase 4 gives them bodies, traits in play,
-	# dialogue). Names/traits are data now.
+## Starting employees for a ruleset (legacy 2; standard 5). The first two
+## keep their established identities so older saves and docs stay true.
+const STARTING_ROSTER := [
+	{"id": "EMP-01", "name": "Marta Kell", "traits": ["hard_working"]},
+	{"id": "EMP-02", "name": "Dale Ostrow", "traits": ["stronger"]},
+	{"id": "EMP-03", "name": "Priya Lund", "traits": ["observant", "level_headed"]},
+	{"id": "EMP-04", "name": "Tomas Reyner", "traits": ["timid", "reliable_driver"]},
+	{"id": "EMP-05", "name": "Joan Abernathy", "traits": ["sociable", "skeptical"]},
+]
+
+
+static func starting_crew(count := 2) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	out.append({"id": "EMP-01", "name": "Marta Kell", "traits": ["hard_working"], "status": PENDING, "hired_day": 1, "active_days": [], "axe": ""})
-	out.append({"id": "EMP-02", "name": "Dale Ostrow", "traits": ["stronger"], "status": PENDING, "hired_day": 1, "active_days": [], "axe": ""})
+	for k in clampi(count, 0, STARTING_ROSTER.size()):
+		var r: Dictionary = STARTING_ROSTER[k]
+		out.append({"id": r.id, "name": r.name, "traits": (r.traits as Array).duplicate(), "status": PENDING, "hired_day": 1, "active_days": [], "axe": ""})
 	return out
 
 

@@ -171,12 +171,12 @@ func _new_campaign() -> void:
 	var v := _open_page("New Campaign")
 	_scroll_text(v, "\n".join([
 		"• Thirty workdays to clear the island: fell every original tree, remove its stump and deliver its logs to camp.",
-		"• You start with two employees and a small axe. $100 per tree, paid as its logs are accepted at camp. Felling alone pays nothing.",
-		"• Each employee costs $300 per workday. Unpaid wages lead to departures.",
+		"• 10,000 original trees. You start with five employees (six of you in all), small axes and $4,500. $100 per tree, paid as its logs are accepted at camp. Felling alone pays nothing.",
+		"• Each employee costs $300 per workday: $1,500 a day for the full crew, settled when you sleep. Unpaid wages lead to departures.",
 		"• Get home by night. The camper is always safe during the contract, and night only ends when you sleep.",
 		"• Content: night-time horror with sudden sounds and unsettling figures, and a dangerous outcome if the contract fails. Settings → Comfort has horror intensity and flash reduction.",
 		"• A short first-day guide teaches the basics with real trees. You can skip it at any time (Journal → Help).",
-		"Standard campaign only: the full island, 12,000 trees. (Smaller workloads are not offered until they have been measured.)",
+		"Standard campaign only (the 10,000-tree contract). Older saves keep the rules they were started with (e.g. the legacy 12,000-tree contract).",
 	]), 200)
 	v.add_child(UITheme.label("Choose a slot:", 18, UITheme.ACCENT))
 	var first: Button = null

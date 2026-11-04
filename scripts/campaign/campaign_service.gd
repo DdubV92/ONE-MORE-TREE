@@ -25,6 +25,8 @@ var equipment: Equipment
 var contract: ContractService
 var config: EconomyConfig
 var rule_set := RULE_SET
+## Phase 10: the campaign's versioned ruleset (kept for the campaign's life).
+var ruleset: Dictionary = Ruleset.get_def(Ruleset.LEGACY)
 var legacy := false
 var reports: Array[Dictionary] = []
 var day_stats := {}                # current day: opening cash, felled, delivered...
@@ -87,13 +89,14 @@ func setup() -> void:
 
 ## Fresh timed campaign (the rules are fixed: 30 days, 15 + 5 minutes).
 func new_campaign() -> void:
-	rule_set = RULE_SET
+	ruleset = Ruleset.get_def(Ruleset.STANDARD) if World.manifest_variant != "full" or Game.mode == Game.Mode.CAMPAIGN else Ruleset.get_def(Ruleset.LEGACY)
+	rule_set = str(ruleset.id)
 	legacy = false
 	clock.restore({"day": 1, "t": 0.0, "running": true, "deadline_enabled": true})
 	wallet.restore({})
-	wallet.grant(config.starting_cash_cents, "start", "NEW-CAMPAIGN", "Starting cash (provisional)")
+	wallet.grant(int(ruleset.start_cash_cents), "start", "NEW-CAMPAIGN", "Starting cash (%s, provisional)" % str(ruleset.label))
 	payroll.restore({})
-	payroll.employees = Payroll.starting_crew()
+	payroll.employees = Payroll.starting_crew(int(ruleset.starting_employees))
 	var ids := []
 	for e in payroll.employees:
 		ids.append(e.id)
@@ -356,7 +359,7 @@ func _restore_crew(data: Dictionary) -> void:
 
 
 func capture_campaign() -> Dictionary:
-	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}, "onboarding": onboarding.capture() if onboarding else {}, "post_contract": post_contract}
+	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}, "onboarding": onboarding.capture() if onboarding else {}, "post_contract": post_contract, "ruleset": ruleset.duplicate(true)}
 
 
 func capture_economy() -> Dictionary:
@@ -387,6 +390,8 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 	rule_set = str(campaign.get("rule_set", RULE_SET))
 	legacy = bool(campaign.get("legacy", false))
 	post_contract = bool(campaign.get("post_contract", false))
+	var rid := Ruleset.id_of_save(campaign)
+	ruleset = (campaign.get("ruleset", {}) as Dictionary).duplicate(true) if Ruleset.known(rid) and campaign.has("ruleset") else Ruleset.get_def(rid)
 	if onboarding:
 		onboarding.restore(campaign.get("onboarding", {}))
 	reports.clear()

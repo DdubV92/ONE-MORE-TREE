@@ -23,7 +23,7 @@ static func contract() -> String:
 	return "\n".join([
 		"The contract: clear the whole island in 30 days. Every original tree must be felled, its stump removed and all of its merchantable logs delivered to the rack at camp.",
 		"Pay: $100 per original tree, paid in shares as each of its logs is accepted at camp. Felling alone pays nothing. Trees never grow back.",
-		"Crew: you start with 2 employees (up to 5). Each active employee costs $300 per workday. Unpaid wages stay owed from their original day; after one more workday unpaid, that worker leaves. Paying part does not restart that grace, and firing does not cancel debt.",
+		"Crew: a standard campaign starts with 5 employees (the maximum; older legacy campaigns started with 2). Each active employee costs $300 per workday ($1,500 for five). Unpaid wages stay owed from their original day; after one more workday unpaid, that worker leaves. Paying part does not restart that grace, and firing does not cancel debt.",
 		"Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate (work per second; swings are slower with heavier axes but each bites deeper). Hard-working: ×1.25 cutting. Stronger: carries more by hand (not more in a truck). Timid: frightens sooner and heads home earlier.",
 		"Trucks: up to 2, each with 3 seats (driver included) and room for 3 trees' worth of logs.",
 		"Finishing: the moment every tree, stump and log is done, the contract completes, even before day 30. Logs still burning in the pit do not count against you.",

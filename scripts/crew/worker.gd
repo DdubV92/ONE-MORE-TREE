@@ -438,6 +438,8 @@ func _do_fell(delta: float) -> void:
 	_face(Vector3(base.x - global_position.x, 0, base.z - global_position.z).normalized(), delta * 3.0)
 	if _swing(delta):
 		var res := Game.trees.apply_contact(tid, global_position, crew.work_per_contact(self))
+		if bool(res.get("accepted", false)):
+			crew.contributions.add_work(id, crew.work_per_contact(self))
 		LoggingFX.play(LoggingFX.Sound.CHOP, base + Vector3(0, 0.8, 0), -6.0)
 		if bool(res.get("felled", false)):
 			crew.on_felled(self, tid)
@@ -531,8 +533,9 @@ func _do_stump(delta: float) -> void:
 			abandon("no stump there")
 			return
 		LoggingFX.play(LoggingFX.Sound.CHOP, at + Vector3(0, 0.3, 0), -8.0)
+		crew.contributions.add_work(id, crew.work_per_contact(self))
 		if bool(res.get("removed", false)):
-			crew.on_stump_removed(self)
+			crew.on_stump_removed(self, tid)
 			abandon("stump out")
 
 

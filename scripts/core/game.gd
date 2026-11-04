@@ -44,6 +44,7 @@ var arcade: ArcadeService
 var dock_site: DockSite
 var comfort: Node
 var campaign_ui: CampaignUI
+var preview_variant := ""          # Phase 10: manifest variant for Preview ("" = full)
 var new_game := false              # start a fresh contract in SaveService.slot
 ## Set while a death/catch screen is up: nothing may save that state.
 var block_saves := false

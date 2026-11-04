@@ -16,7 +16,7 @@ signal hint_changed(text: String)
 const STEPS := [
 	["move", "Look around with the mouse and walk ({move_forward}{move_left}{move_back}{move_right}). Pause any time with {pause}."],
 	["journal", "Open your Journal ({toggle_journal}): the contract is there. Felling pays nothing; logs delivered to camp pay $100 per tree in shares."],
-	["meet", "Meet your crew and Biscuit the dog: walk up to one of them. Your camper is the boss's (and the dog's); the crew sleep in the cabin."],
+	["meet", "Meet your crew (five employees in a standard campaign) and Biscuit the dog: walk up to one of them. Your camper is the boss's (and the dog's); the crew sleep in the cabin."],
 	["rack", "Find the delivery rack beside the burn pit in camp. Logs are paid there."],
 	["fell", "Pick a tree near camp. Chop it with {attack} (hold if 'Hold to keep chopping' is on). When it creaks, step back from the side it leans to."],
 	["section", "Cut the fallen trunk into logs: chop at the marked cut lines along it."],

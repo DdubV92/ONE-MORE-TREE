@@ -187,6 +187,7 @@ func _journal_contract() -> Control:
 	var v: VBoxContainer = s[1]
 	var c := svc.contract.counts()
 	var clk := svc.clock
+	_text(v, "Rules: %s." % str(svc.ruleset.get("label", "?")), 14, UITheme.MUTED)
 	_text(v, "Island clearance for the theme park. %s" % ("LEGACY continuation: no deadline." if svc.legacy else "Day %d of %d. The contract closes at the END of day 30's dusk (when night falls on day 30). Sleep is not required for it to close." % [clk.day, WorkdayClock.CONTRACT_DAYS]))
 	_text(v, "State: %s%s" % [svc.contract.state.replace("_", " ").to_lower(), ("  (" + svc.contract.outcome_id + ")") if svc.contract.outcome_id != "" else ""])
 	_text(v, "Original trees standing: %d of %d\nFelled trunks still to buck: %d\nStumps to remove: %d\nTimber not yet delivered: %.2f tree-equivalents\nDelivered and accepted: %.2f tree-equivalents (waiting in the pit queue: %.2f)\nFinal ash cleanup: %s (not required for the contract)" % [c.standing, c.total_trees, c.trunks_to_buck, c.stumps, c.undelivered_mte / 1000.0, c.accepted_mte / 1000.0, c.backlog_mte / 1000.0, "clean" if c.ash_clean else "fire still burning"])
@@ -279,7 +280,7 @@ func _journal_payroll() -> Control:
 	var s := _scroll("Payroll")
 	var v: VBoxContainer = s[1]
 	_text(v, "Wages: $300 per employee per active working day, settled when you sleep. Unpaid wages must be cleared by the end of the following workday (including that day's wage) or the employee quits. Cash never goes negative; unpaid wages stay owed.", 15, UITheme.MUTED)
-	_text(v, "Example: two working employees cost $600 a day. Delivering five whole trees that day earns $500, so that day is $100 short on wages alone. More crew only pays off if they deliver more than $300 of logs each per day.", 14, UITheme.MUTED)
+	_text(v, "Example: %d working employees cost $%s a day. Delivering %d whole trees that day earns $%s - the break-even. Every employee needs to deliver more than three trees' worth of logs a day to pay for themselves." % [svc.payroll.active_employees().size(), Money.format_cents(svc.payroll.active_employees().size() * 30000), svc.payroll.active_employees().size() * 3, Money.format_cents(svc.payroll.active_employees().size() * 30000)], 14, UITheme.MUTED)
 	_text(v, "Cash $%s  ·  tonight's payroll $%s  ·  owed now $%s" % [Money.format_cents(svc.wallet.cash), Money.format_cents(svc.payroll.todays_estimate()), Money.format_cents(svc.payroll.owed_total())])
 	for e in svc.payroll.employees:
 		var status := str(e.status)

@@ -47,6 +47,9 @@ func _ready() -> void:
 	# Every world starts from the frozen manifest; campaign modifications are
 	# re-applied from the save below. Preview changes never carry over.
 	World.removed_trees.clear()
+	# Phase 10: the campaign's ruleset decides the native manifest (standard
+	# 10,000 subset or the legacy/full 12,000) before anything is spawned.
+	World.apply_variant(Ruleset.variant_for_start())
 	build_ms["world_data"] = Time.get_ticks_msec() - t0
 	environment = _timed("environment", func() -> Node: var e := EnvironmentController.new(); e.name = "Environment"; add_child(e); e.build(); return e)
 	Game.environment = environment

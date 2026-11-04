@@ -62,7 +62,7 @@ func is_closed() -> bool:
 
 ## Progress counters (cheap: only modified trees and timber are walked).
 func counts() -> Dictionary:
-	var total := World.tree_count() if scope_override < 0 else scope_override
+	var total := World.native_total() if scope_override < 0 else scope_override
 	var not_standing := 0
 	var trunks := 0
 	var stumps := 0

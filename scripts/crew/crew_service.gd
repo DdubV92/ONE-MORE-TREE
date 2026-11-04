@@ -853,8 +853,14 @@ func _try_stump(w: Worker) -> bool:
 	return true
 
 
-func on_stump_removed(w: Worker) -> void:
+## Phase 10: unique contribution hooks for later merit (no XP yet).
+var contributions := Contributions.new()
+
+
+func on_stump_removed(w: Worker, tid := -1) -> void:
 	stats[w.id]["stumps"] = int(stats[w.id].get("stumps", 0)) + 1
+	if tid >= 0:
+		contributions.stage(w.id, "stump", str(tid))
 
 
 func _try_buck(w: Worker) -> bool:
@@ -1125,8 +1131,9 @@ func _on_said(w: Worker, text: String, important: bool) -> void:
 		notice.emit("%s: \"%s\"" % [w.emp.name, text], 5.0 if important else 3.5)
 
 
-func on_felled(w: Worker, _tid: int) -> void:
+func on_felled(w: Worker, tid: int) -> void:
 	stats[w.id].felled = int(stats[w.id].felled) + 1
+	contributions.stage(w.id, "felled", str(tid))
 
 
 func on_bucked(w: Worker) -> void:
@@ -1140,6 +1147,7 @@ func on_delivered_to_truck(w: Worker, n: int) -> void:
 func on_delivered(w: Worker, receipts: Array) -> void:
 	for r in receipts:
 		stats[w.id].delivered_mte = int(stats[w.id].delivered_mte) + int(r.mte)
+		contributions.stage(w.id, "accepted", str(r.get("sid", r.get("id", ""))))
 
 
 func _on_log_settled(b: TimberBody, delta: int) -> void:
@@ -1234,7 +1242,7 @@ func capture() -> Dictionary:
 	var ms := {}
 	for id in minds:
 		ms[id] = (minds[id] as WorkerMind).capture()
-	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20)}
+	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture()}
 
 
 ## Restores the crew without duplicating anyone: one Worker per active or
@@ -1252,6 +1260,7 @@ func restore(d: Dictionary) -> void:
 		candidates.append(c)
 	_cand_counter = int(d.get("cand_counter", 0))
 	_emp_counter = int(d.get("emp_counter", 2))
+	contributions.restore(d.get("contributions", {}))
 	stats = (d.get("stats", {}) as Dictionary).duplicate(true)
 	enabled = true
 	var saved: Dictionary = d.get("workers", {})

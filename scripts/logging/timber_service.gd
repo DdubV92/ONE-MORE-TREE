@@ -122,6 +122,14 @@ static func tree_scale(idx: int) -> Vector2:
 	return Vector2(s, s)
 
 
+## Phase 10 interface (inactive until Phase 13 brings the handling path):
+## sections 1.5x longer means proportionally fewer pieces for the same
+## merchantable length, never fewer than one. Existing records keep their
+## pieces; only new trees in a ruleset with section_length_active use it.
+static func section_count_for(base_n: int, length_mult: float) -> int:
+	return maxi(1, int(round(float(base_n) / maxf(length_mult, 0.01))))
+
+
 static func _shares(n: int, cut_h: float, merch_len: float, radius: Callable) -> Dictionary:
 	var starts := PackedFloat32Array()
 	var ends := PackedFloat32Array()

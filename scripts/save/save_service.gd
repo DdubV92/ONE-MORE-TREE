@@ -54,8 +54,12 @@ static func summarize(raw: Dictionary, path := "") -> Dictionary:
 			checkpoints.append(k)
 	var mode := str(hunt.get("mode", "none"))
 	var state := str(c.get("state", ""))
+	var rid := Ruleset.id_of_save(c)
+	if not Ruleset.known(rid):
+		return {"too_new": true, "schema": int(raw.get("schema", 0)), "status": "Uses campaign rules \"%s\" that this version of the game doesn't know. Kept untouched." % rid}
+	var rdef := Ruleset.get_def(rid)
 	# Phase 9: one truthful label for menus (Continue/Load).
-	var status := "Contract, day %d" % int(c.get("day", 1))
+	var status := "%s, day %d" % [str(rdef.label), int(c.get("day", 1))]
 	if str(c.get("rule_set", "")).begins_with("legacy") or bool(c.get("legacy", false)):
 		status = "Legacy island (no deadline), day %d" % int(c.get("day", 1))
 	if state == "FULFILLED":
@@ -71,7 +75,7 @@ static func summarize(raw: Dictionary, path := "") -> Dictionary:
 	return {"day": int(c.get("day", 1)), "rule_set": str(c.get("rule_set", "?")), "state": state, "cash": cash, "pre_contract": not bool(c.get("phase3", false)), "legacy_file": path == DEFAULT_PATH and path != "",
 		"schema": schema, "too_new": schema > SCHEMA_VERSION, "hunt_mode": mode, "accepted_trees": accepted / 1000.0, "saved_unix": FileAccess.get_modified_time(path) if path != "" else 0,
 		"build": str(d.get("build", "")), "checkpoints": checkpoints, "status": status, "finished": mode == "escaped" or mode in ["dead", "stranded"],
-		"post_contract": bool(c.get("post_contract", false))}
+		"post_contract": bool(c.get("post_contract", false)), "ruleset": rid, "ruleset_label": str(rdef.label)}
 
 
 ## The slot to Continue: the most recently saved readable, compatible,

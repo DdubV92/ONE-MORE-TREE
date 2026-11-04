@@ -13,6 +13,12 @@ var _log: PackedStringArray = []
 func _ready() -> void:
 	await get_tree().process_frame
 	World.ensure_loaded()
+	if OS.has_environment("ONLY_P10"):
+		_run("phase 10 units", _t_phase10_units)
+		await _run_async("phase 10 world", _t_phase10_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P9"):
 		_run("phase 9 units", _t_phase9_units)
 		await _run_async("phase 9 world", _t_phase9_world)
@@ -84,6 +90,8 @@ func _ready() -> void:
 	await _run_async("phase 8: deterministic weather + save, rain shelter/remote views, safety unchanged by weather/lightning, winding, presentation", _t_phase8_presentation)
 	_run("phase 9 units: notification priority/coalescing, key rebinding swap/reset/labels, save summaries (completed/hunt/too new/legacy), help text uses live keys", _t_phase9_units)
 	await _run_async("phase 9 world: guide detects real results, night-rules gate, legacy saves skip the guide, final-tree milestone once, success summary from ledger, truthful sleep/hire reasons, true pause freezes timers", _t_phase9_world)
+	_run("phase 10 units: 10,000-tree manifest deterministic/unique/clustered, ruleset labels + unknown rulesets refused, share conservation incl. future 1.5x sections, contribution dedupe, audio event inventory", _t_phase10_units)
+	await _run_async("phase 10 world: standard ruleset = 10,000 natives + 5 employees + $4,500 + $1,500/day once, excluded trees untargetable, legacy load unchanged, deadline race, ruleset saved", _t_phase10_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -2778,5 +2786,182 @@ func _t_phase9_world() -> String:
 	cs.test_route = false
 	world.queue_free()
 	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+# ---------------------------------------------------------------- Phase 10
+
+func _t_phase10_units() -> String:
+	World.ensure_loaded()
+	var ex := Ruleset.excluded_ids("standard_10k")
+	if World.tree_count() - ex.size() != 10000:
+		return "standard manifest has %d natives" % (World.tree_count() - ex.size())
+	var ids := {}
+	for i in World.tree_count():
+		var id := int(World.trees.id[i])
+		if ids.has(id):
+			return "duplicate tree id %d" % id
+		ids[id] = true
+	for id in ex:
+		if not ids.has(int(id)):
+			return "excluded id %d is not an original tree" % int(id)
+	# Deterministic: a fresh computation gives the same set.
+	Ruleset._excluded_cache.clear()
+	var t0 := Time.get_ticks_msec()
+	var ex2 := Ruleset.excluded_ids("standard_10k")
+	print("P10: standard 10,000-tree manifest computed in %d ms" % (Time.get_ticks_msec() - t0))
+	if ex2.size() != ex.size():
+		return "manifest selection not deterministic"
+	for id in ex:
+		if not ex2.has(id):
+			return "manifest selection not deterministic"
+	# Clusters stay dense: kept trees have more neighbours on average than removed ones.
+	var kept_n := 0.0
+	var gone_n := 0.0
+	var kc := 0
+	var gc := 0
+	for i in range(0, World.tree_count(), 7):
+		var p := Vector2(World.trees.x[i], World.trees.z[i])
+		var c := 0
+		for j in range(maxi(i - 400, 0), mini(i + 400, World.tree_count())):
+			if j != i and p.distance_to(Vector2(World.trees.x[j], World.trees.z[j])) < 12.0:
+				c += 1
+		if ex.has(int(World.trees.id[i])):
+			gone_n += c
+			gc += 1
+		else:
+			kept_n += c
+			kc += 1
+	if gc > 0 and kept_n / maxf(kc, 1) <= gone_n / gc:
+		return "thinning removed clustered trees instead of loners"
+	# Rulesets and labels.
+	if not Ruleset.known("expanded_v1") or Ruleset.known("expanded_v99"):
+		return "ruleset registry wrong"
+	var std := Ruleset.get_def(Ruleset.STANDARD)
+	if int(std.native_total) != 10000 or int(std.starting_employees) != 5 or int(std.start_cash_cents) != 450000 or bool(std.section_length_active):
+		return "standard ruleset parameters wrong: %s" % str(std)
+	var old := SaveService.summarize({"schema": SaveService.SCHEMA_VERSION, "campaign": {"phase3": true, "day": 7}})
+	if not str(old.status).begins_with("Legacy 12,000-tree contract"):
+		return "old save not labelled legacy: %s" % str(old.status)
+	var future := SaveService.summarize({"schema": SaveService.SCHEMA_VERSION, "campaign": {"phase3": true, "ruleset": {"id": "expanded_v99"}}})
+	if not bool(future.get("too_new", false)):
+		return "unknown ruleset not refused"
+	# Share conservation for many tree sizes, now and with 1.5x sections.
+	for n in [1, 2, 3, 4, 5, 7, 9, 12]:
+		for mult in [1.0, 1.5]:
+			var k := TimberService.section_count_for(n, mult)
+			var w := PackedFloat64Array()
+			for q in k:
+				w.append(1.0 + 0.37 * q + 0.11 * n)
+			var cents := TimberService.allocate(w, TimberService.TREE_CENTS)
+			var sum := 0
+			for c in cents:
+				sum += c
+			if sum != 10000:
+				return "shares for %d pieces (x%.1f) sum to %d cents" % [k, mult, sum]
+	if TimberService.section_count_for(3, 1.5) != 2 or TimberService.section_count_for(1, 1.5) != 1:
+		return "1.5x section count wrong"
+	# Contributions: one credit per item stage, repeated handling earns nothing.
+	var cb := Contributions.new()
+	cb.stage("EMP-01", "accepted", "T5_S0")
+	cb.stage("EMP-02", "accepted", "T5_S0")
+	cb.stage("EMP-01", "accepted", "T5_S0")
+	if int(cb.per_worker["EMP-01"].accepted) != 1 or cb.per_worker.has("EMP-02") or cb.rejected_repeats != 2:
+		return "contribution dedupe failed"
+	var inv := AudioEvents.inventory()
+	if not (inv.files_missing as Array).is_empty():
+		return "audio events reference missing files: %s" % str(inv.files_missing)
+	if int(inv.get("missing", 0)) < 5:
+		return "reserved (missing) audio events not recorded"
+	return ""
+
+
+func _t_phase10_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "standard_10k"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 600:
+		await get_tree().physics_frame
+		guard += 1
+	var err := ""
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(false)
+	for i in 30:
+		await get_tree().physics_frame
+	if World.native_total() != 10000:
+		err = "native total %d" % World.native_total()
+	var c := cs.contract.counts()
+	if err == "" and (int(c.total_trees) != 10000 or int(c.standing) != 10000):
+		err = "contract counts %s" % str(c)
+	if err == "" and str(cs.ruleset.id) != "expanded_v1":
+		err = "new campaign ruleset %s" % str(cs.ruleset.id)
+	if err == "" and cs.payroll.employees.size() != 5:
+		err = "starting employees %d" % cs.payroll.employees.size()
+	var ids := {}
+	for e in cs.payroll.employees:
+		ids[str(e.id)] = true
+	if err == "" and ids.size() != 5:
+		err = "starting employees not unique"
+	if err == "" and world.crew.workers.size() != 5:
+		err = "worker bodies %d" % world.crew.workers.size()
+	var beds := {}
+	for e in cs.payroll.employees:
+		beds[int(e.get("bed", 0))] = true
+	if err == "" and (beds.size() != 5 or beds.has(0)):
+		err = "beds not unique: %s" % str(beds.keys())
+	var cash_tx := cs.wallet.transactions.filter(func(tx: Dictionary) -> bool: return str(tx.kind) == "start")
+	if err == "" and (cash_tx.is_empty() or int(cash_tx[0].amount) != 450000):
+		err = "starting cash wrong"
+	if err == "" and cs.payroll.todays_estimate() != 150000:
+		err = "full-crew payroll estimate %d" % cs.payroll.todays_estimate()
+	# Wages for five settle once per day, even if settlement is asked twice.
+	var w0 := cs.wallet.cash
+	cs.payroll.settle_day(cs.clock.day)
+	var w1 := cs.wallet.cash
+	cs.payroll.settle_day(cs.clock.day)
+	if err == "" and (w0 - w1 != mini(150000, w0) or cs.wallet.cash != w1):
+		err = "five-worker settlement wrong or repeated (%d -> %d -> %d)" % [w0, w1, cs.wallet.cash]
+	# Excluded trees: never rendered/collidable/targeted/located.
+	var any_ex := -1
+	for id in World.excluded_trees:
+		any_ex = int(id)
+		break
+	if err == "" and not World.removed_trees.has(any_ex):
+		err = "excluded tree still present"
+	var near := ContractLocator.nearest(world.player.global_position)
+	if err == "" and near.has("tree"):
+		for i in World.tree_count():
+			if World.excluded_trees.has(int(World.trees.id[i])) and World.tree_position(i).distance_to(near.tree) < 0.01:
+				err = "locator points at a tree outside the manifest"
+				break
+	# Ruleset travels with the save.
+	var st := SaveService.capture_state(world)
+	if err == "" and str((st.campaign as Dictionary).get("ruleset", {}).get("id", "")) != "expanded_v1":
+		err = "ruleset not saved"
+	# Deadline race: completion at the boundary wins once; close cannot flip it.
+	cs.clock.day = 30
+	cs.clock.t = WorkdayClock.NIGHT_AT - 0.5
+	cs.contract.scope_override = 0
+	var outs: Array = []
+	var cb := func(s: String, _o: String) -> void: outs.append(s)
+	cs.contract.outcome.connect(cb)
+	cs.contract.evaluate()
+	cs.contract._close_deadline()
+	cs.contract.evaluate()
+	cs.contract.outcome.disconnect(cb)
+	if err == "" and (outs != [ContractService.FULFILLED] or cs.contract.state != ContractService.FULFILLED):
+		err = "boundary completion outcomes %s / state %s" % [str(outs), cs.contract.state]
+	cs.contract.scope_override = -1
+	cs.test_route = false
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.excluded_trees.clear()
+	World.manifest_variant = "full"
 	Game.mode = Game.Mode.MENU
 	return err

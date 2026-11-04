@@ -237,6 +237,30 @@ func tree_count() -> int:
 	return (trees.id as PackedInt32Array).size()
 
 
+## Phase 10: trees outside the active campaign's native manifest (e.g. the
+## 2,000 not in the standard 10,000-tree ruleset). They are never spawned,
+## rendered, collided, targeted or counted; legacy campaigns have none.
+var excluded_trees := {}
+var manifest_variant := "full"
+
+
+func native_total() -> int:
+	return tree_count() - excluded_trees.size()
+
+
+func is_native(tree_id: int) -> bool:
+	return not excluded_trees.has(tree_id)
+
+
+## Applies a manifest variant before vegetation is built (no signals: the
+## excluded trees simply never exist in this world).
+func apply_variant(variant: String) -> void:
+	manifest_variant = variant
+	excluded_trees = Ruleset.excluded_ids(variant).duplicate()
+	for id in excluded_trees:
+		removed_trees[id] = true
+
+
 ## Grounded trunk base: the lowest terrain under the flared trunk footprint
 ## minus a small root embed, so the downhill side never floats on slopes.
 ## Deterministic from the frozen record (x, z, radius); shared by rendering,
