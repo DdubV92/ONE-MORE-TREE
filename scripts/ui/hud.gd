@@ -341,6 +341,12 @@ func _build_tour() -> void:
 	for s6 in [["Night director", "__p6_night"], ["Next family event", "__p6_next"], ["Dog rescue", "__p6_rescue"], ["Abandon -> hunt", "__p6_hunt"], ["Hunt: day 35", "__p6_day35"], ["Hunt: ship", "__p6_ship"]]:
 		p6.add_child(UITheme.button(s6[0], func() -> void: _phase6_stop(s6[1]), 130))
 	v.add_child(p6)
+	v.add_child(UITheme.label("Phase 7 island audit (dev)", 16, UITheme.MUTED))
+	var p7 := GridContainer.new()
+	p7.columns = 2
+	for s7 in [["Audit overlay", "__p7_overlay"], ["East bridge", "__p7_bridge_e"], ["South bridge", "__p7_bridge_s"], ["Truck height", "__p7_truck"], ["Locate work", "__p7_locate"], ["Dock & hides", "__p7_dock"]]:
+		p7.add_child(UITheme.button(s7[0], func() -> void: _phase7_stop(s7[1]), 130))
+	v.add_child(p7)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))
@@ -427,6 +433,49 @@ func _phase5_stop(which: String) -> void:
 
 
 var _p6_family := 0
+var _overlay: AuditOverlay
+
+
+## Phase 7 review route (Preview only; read-only diagnostics).
+func _phase7_stop(which: String) -> void:
+	var w: IslandWorld = Game.world_root
+	var p: Player = Game.player
+	if w == null or p == null:
+		return
+	match which:
+		"__p7_overlay":
+			if _overlay and is_instance_valid(_overlay):
+				_overlay.queue_free()
+				_overlay = null
+				show_message("Audit overlay off.")
+			else:
+				_overlay = AuditOverlay.new()
+				w.add_child(_overlay)
+				show_message("Audit overlay: green = support samples, red = gap above tolerance (with labels), blue = crew walkable cells, orange = truck-drivable cells. Within 30 m of you.", 8.0)
+		"__p7_bridge_e", "__p7_bridge_s":
+			var b: Dictionary = World.bridges()[0 if which == "__p7_bridge_e" else 1]
+			var across := Vector2(float(b.ax), float(b.az)).normalized()
+			var foot := Vector2(b.x, b.z) + across * (float(b.half_span) + BridgeBuilder.ramp_length(b, 1.0) + 4.0)
+			p.teleport_feet(Vector3(foot.x, World.height_at(foot.x, foot.y), foot.y), atan2(across.x, across.y))
+			show_message("Trail bridge (3.6 m, truck-capable). Walk across: you stay on the deck; trucks route over it too.", 6.0)
+		"__p7_truck":
+			if Game.vehicles and not Game.vehicles.trucks.is_empty():
+				var t: Truck = Game.vehicles.trucks.values()[0]
+				p.teleport_feet(t.door_point(-1.0), t.global_rotation.y)
+				show_message("Get in (E) for the driving-height view.")
+			else:
+				_phase5_stop("__p5_drive")
+		"__p7_locate":
+			var near := ContractLocator.nearest(p.global_position)
+			for k in ["log", "stump", "tree"]:
+				if near.has(k):
+					ContractLocator.mark(w, near[k])
+					show_message("Nearest %s: %s (light column for 60 s)" % [k, ContractLocator.describe(p.global_position, near[k])])
+					break
+		"__p7_dock":
+			w.teleport_to("dock")
+	tour_panel.visible = false
+	_capture_mouse()
 
 
 ## Preview-only Phase 6 fixtures (never saved; a separate test session).

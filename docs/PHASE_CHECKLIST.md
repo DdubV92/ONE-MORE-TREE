@@ -1,5 +1,27 @@
 # Phase checklist
 
+## Phase 7: Whole-island grounding, reachability, clearing, logistics and the 30-day feasibility audit
+
+Status key: ✅ implemented and observed (audit run, test or headless sim) · 🟡 implemented, needs live review · ⬜ not done / decision needed. Reports: [docs/audit/ISLAND_AUDIT.md](audit/ISLAND_AUDIT.md) (generated), [docs/audit/ISSUE_LEDGER.md](audit/ISSUE_LEDGER.md), [docs/audit/FEASIBILITY.md](audit/FEASIBILITY.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Reproducible whole-island audit (`tools/island_audit.tscn`): tree roots, rocks, ground cover near camp, 43 grounded anchors, camera mounts (mount and rock), bridge ends | ✅ | 0 floating trees/rocks, 0 bad anchors/mounts after fixes; see the ledger for exceptions and false positives |
+| Named regions (camp surroundings, inner/outer compass sectors) for progress and diagnostics | ✅ | 17 regions |
+| Required-target coverage: every original tree has a reachable cutting stand plus a retreat cell connected to camp (stumps share it), in the original forest and at 25/50/90/99/100 % cleared | ✅ | 12,000 / 12,000 at every fixture |
+| Facilities: six cabin beds, arcade spots, table seats, footlockers, rack/drop-off, dock gangway, dog refuge approach, every hiding entry | ✅ | Real A* from the camp yard; authored routes for the private camper/utility |
+| Bridges: walkers now stay on the deck (crew grid deck heights); 3.6 m truck-capable bridges with ≤ 22 % ramps; drivable cells along each bridge | ✅ | **P7-B01, P7-B02** |
+| Truck coverage: trees within 25 m of a drivable route from the bays | ✅ | **11,898 / 12,000** (was 7,995); all remaining by 90 % cleared |
+| Workers chop out stumps (required targets) through shared claims | ✅ | **P7-B03**; workload runs show stumps removed |
+| Final-item assist: Journal → Contract → Locate the nearest remaining work | ✅ | **P7-B04** |
+| Clearing fixtures through the real removal signal (nav refresh), vegetation chunks rebuilt, tree collision cells rebuilt from cleared data | ✅ | 0 tree colliders after a full clear |
+| Island Audit review route in the Preview Tour (overlay of support samples, walkable and drivable cells; bridges; truck height; locator; dock and hides) | ✅ / 🟡 | Dev only, off by default |
+| Measured workload through the real task rules (`tools/workload_sim.tscn`) | ✅ | See FEASIBILITY.md |
+| **30-day feasibility of the 12,000-tree island under the fixed terms** | ⬜ | **Not feasible as measured.** The required island change (fewer native trees, which needs a world regeneration) is a design decision for you; see FEASIBILITY.md |
+| Dynamic obstruction: displacement-based stuck detection, bounded escape/repath, claim release, unreachable marking, door/rack reservations (Phase 4/5 systems) | ✅ / 🟡 | Stuck events per measured day are listed in FEASIBILITY.md; queues not stress-tested with five workers on one rack |
+
+WORKLOAD_PLACEHOLDER
+
 ## Phase 6: The Terror director, living nights, the dog rescue and the Foreman's hunt
 
 Status key: ✅ implemented and observed (automated test or headless sim) · 🟡 implemented, needs live review on real hardware · ⬜ later phase. Separate coverage statuses for the authored bank are in [docs/coverage/phase6_coverage.md](coverage/phase6_coverage.md).

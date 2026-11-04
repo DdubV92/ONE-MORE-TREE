@@ -20,6 +20,7 @@ func _ready() -> void:
 		await _run_async("phase 5 world", _t_phase5_world)
 		_run("phase 6 bank", _t_terror_bank)
 		await _run_async("phase 6 world", _t_phase6_world)
+		await _run_async("phase 7 world", _t_phase7_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
@@ -68,6 +69,7 @@ func _ready() -> void:
 	_run("arcade games: score, failure, restart, high score", _t_arcade_logic)
 	await _run_async("phase 5: trucks, seats, cargo once, TV rotation/focus/pool, mics, arcade pause, dog door route, refuge, couch, saves", _t_phase5_world)
 	_run("phase 6 bank: 26 families, 1300 events, 312 startles, 36 Foreman patterns, valid executors", _t_terror_bank)
+	await _run_async("phase 7: bridge decks for walkers and trucks, east truck route, worker stump removal, locator", _t_phase7_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -2162,5 +2164,102 @@ func _t_phase6_world() -> String:
 	world.queue_free()
 	await get_tree().process_frame
 	Game.block_saves = false
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+# ----------------------------------------------------------------- phase 7
+
+func _t_phase7_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 600:
+		await get_tree().physics_frame
+		guard += 1
+	var err := ""
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(false)
+	# Bridges: walkers stand on the deck, trucks can drive across.
+	for b in World.bridges():
+		var mid := Vector3(float(b.x), 0, float(b.z))
+		var y := world.crew.nav.surface_at(mid)
+		if err == "" and absf(y - float(b.deck)) > 0.35:
+			err = "walk surface on bridge %.2f vs deck %.2f" % [y, float(b.deck)]
+		if err == "" and not world.vehicles.nav.drivable(mid):
+			err = "bridge deck not drivable"
+		var across := Vector2(float(b.ax), float(b.az)).normalized()
+		for sgn in [-1.0, 1.0]:
+			var L := BridgeBuilder.ramp_length(b, sgn)
+			var foot: Vector2 = Vector2(b.x, b.z) + across * sgn * (float(b.half_span) + L)
+			var rise := absf(float(b.deck) - World.height_at(foot.x, foot.y))
+			if err == "" and rise / L > BridgeBuilder.MAX_RAMP_SLOPE + 0.01 and L < 16.0:
+				err = "ramp too steep (%.2f)" % (rise / L)
+	# A truck route reaches the far east side of the river.
+	var east := Vector3.INF
+	for i in World.tree_count():
+		if float(World.trees.x[i]) > 250.0 and world.vehicles.nav.nearest_drivable(World.tree_position(i), 4) != Vector3.INF:
+			east = World.tree_position(i)
+			break
+	if err == "" and east == Vector3.INF:
+		err = "no drivable cell near any tree east of the river"
+	if err == "" and east != Vector3.INF:
+		var r := world.vehicles.nav.route(world.vehicles.bay_pose(0).origin, east)
+		if r.is_empty():
+			err = "no truck route east of the river"
+	# A worker chops out a real stump through the shared claim.
+	if err == "":
+		var tm: TimberService = world.timber
+		var i := LoggingTest.find("small")
+		var id: int = World.trees.id[i]
+		var stand := PlacementValidator.cut_stands(i)[0]
+		world.trees.apply_contact(id, stand, float(world.trees.record(id).required) + 1.0)
+		var w := 0.0
+		while world.trees.state_of(id) < TreeService.State.SECTIONED and w < 40.0:
+			await get_tree().physics_frame
+			w += 1.0 / 60.0
+		# Buck it up so only the stump remains.
+		var g2 := 0
+		while g2 < 100:
+			g2 += 1
+			var tb: TimberBody = null
+			for key in tm.bodies:
+				if not (tm.bodies[key] as TimberBody).is_single_piece():
+					tb = tm.bodies[key]
+			if tb == null:
+				break
+			var yy := float(tm.records[id].merch_top) if tb.crown else float(tm.records[id].segments[tb.ks.max() - 1].b)
+			tm.apply_cut(tb, yy, 100.0)
+			for f in 15:
+				await get_tree().physics_frame
+		if world.trees.state_of(id) != TreeService.State.SECTIONED:
+			err = "fixture tree not sectioned (state %d)" % world.trees.state_of(id)
+		else:
+			var wk: Worker = world.crew.workers.values()[0]
+			wk.abandon("test")
+			wk.emp["job"] = "processing"
+			wk.global_position = stand + Vector3(1.0, 0, 0)
+			wk.emp["focus"] = [stand.x, stand.y, stand.z]
+			var started := world.crew._try_stump(wk)
+			var t := 0.0
+			while started and world.trees.state_of(id) != TreeService.State.DISPOSED and t < 240.0:
+				await get_tree().physics_frame
+				t += 1.0 / 60.0
+			if not started:
+				err = "worker could not take the stump job"
+			elif world.trees.state_of(id) != TreeService.State.DISPOSED:
+				err = "worker did not remove the stump (activity %s)" % wk.activity
+			elif int(world.crew.stats[wk.id].get("stumps", 0)) != 1:
+				err = "stump not counted"
+	# The locator finds remaining work.
+	if err == "" and not ContractLocator.nearest(world.player.global_position).has("tree"):
+		err = "locator found no standing tree"
+	world.timber.clear_all()
+	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
 	Game.mode = Game.Mode.MENU
 	return err
