@@ -1,19 +1,17 @@
-# ONE MORE TREE LATEST BUILD PHASE 7 - build 32 (Windows)
+# ONE MORE TREE LATEST BUILD PHASE 8
 
-**Download:** https://github.com/DdubV92/ONE-MORE-TREE/actions/runs/41789031498/artifacts/13302508628
-(Sign in to GitHub. The title screen footer shows the same label.)
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 8 - build N (Windows)"). The title screen footer shows the same label.
 
-Extract the zip to a new folder (this replaces the Phase 6 build) and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
+Extract the zip to a new folder (it replaces the Phase 7 build) and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 7
+## New in Phase 8
 
-- **Bridges:** both trail bridges are wider (3.6 m), have gentler ramps, and trucks can drive over them. Workers and the dog now walk on the deck instead of the riverbed under it.
-- **Truck coverage:** trucks can now reach 11,898 of the 12,000 trees, including the far east side of the river.
-- **Stumps:** workers chop out stumps on their own.
-- **Locate the nearest remaining work:** a new button in Journal (J), Contract tab, with a light marker on the spot.
-- **Truck teams:** a truck no longer circles a waypoint forever, and loaders who miss the truck go back to work.
-- **Island audit tools:** in Preview Tour (Tab), under "Phase 7 island audit": a support/navigation overlay, the bridges, truck height view, locator, and the dock.
+- **Trees fixed:** trunks, branches, far trees and character limbs no longer look split in half or see-through.
+- **Weather:** clear, light cloud, overcast, light rain and the occasional distant storm, scheduled from the campaign seed and clock (the same after save/load). Rain stops at roofs and truck cabs, soaks the ground, rocks and bark, rings the ponds and sounds different indoors. Wind is shared by trees, grass, water and sound. Lightning is far out at sea and follows Settings → Comfort → Lightning (default: reduced). Weather never changes safety, wages or the contract.
+- **People and animals:** workers pick up and set down logs, drive, talk (guarded if they actually saw something), stand frightened, and have small trait habits (timid glance, hard-working grip, observant listen). Their footsteps are positional. Biscuit sniffs the yard and growls at real threats. The Foreman's footsteps follow its stride, and it goes truly silent when it stops to listen.
+- **TV:** a sharper focus feed (full resolution, never an upscaled tile), cheaper quad tiles, no double tone mapping, rain on the feeds, and no doubled sound when the source is right outside.
+- **Sound:** sparse original daytime music (Settings → Audio toggle), rain on the roof, room response indoors, limiters so peaks can't spike, and no birdsong or leaf rustle where the trees are gone.
+- **Comfort:** head-bob and shake strength, flash reduction, horror intensity (loudness and startle style only).
+- **Review:** Preview Tour (Tab) → "Phase 8 review stations" 1–11, and F4 → Weather buttons.
 
-Checks: 47/47 tests pass, the smoke test is clean, and the CI build succeeded. Nothing has been checked on a real GPU.
-
-The 30-day contract is still out of reach at the current pace (about 7 trees a day against 400). The faster cutting and longer days you're planning will be re-measured with `tools/workload_sim.tscn` once they land.
+Checks: 48/48 tests, smoke clean, island audit 0 issues, Terror coverage 1,612/1,612. Visuals were checked only on a software renderer; nobody has listened to the audio yet; frame rate on a real GPU is unmeasured. Characters are still stylized primitives.

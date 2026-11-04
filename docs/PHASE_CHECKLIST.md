@@ -31,6 +31,8 @@ Status key: ✅ implemented and observed (test, headless run or software-rendere
 | Authored traversal animations (truck entry/exit, door, bed entry/wake) | ⬜ | Blended cuts |
 | Real-GPU performance at 1080p | ⬜ | Unmeasured; counts only |
 
+Verification: 48/48 tests (`tests/test_runner.tscn`), smoke 0 errors / 0 warnings, island audit 0 issues, Terror coverage 1,612 observed / 0 errors. Screenshots (software renderer): `docs/screenshots/phase8_*.png`.
+
 ### Phase 8 known limits (honest)
 
 - Everything visual was checked on a CPU software renderer (lavapipe) at a few frames per second. Shader look, rain density in motion, TAA behaviour and frame rate need a real-GPU review.
