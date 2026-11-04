@@ -64,7 +64,7 @@
 | F1 | Controls overlay |
 | F2 | Timber ledger: carried / queued / burning, accepted tree-equivalents, delivery entitlement, per-tree reconciliation, last recovery |
 | F3 | Debug stats: FPS and frame-time percentiles, draw calls, physics, VRAM, position, surface, water depth, night-safety status, lighting |
-| F4 | Time-of-day and moon-phase sliders (Preview only; in the campaign the sun and moon follow the workday clock), Dawn/Day/Sunset/Night/Overcast presets, overcast amount |
+| F4 | Time-of-day and moon-phase sliders (Preview only; in the campaign the sun and moon follow the workday clock), Dawn/Day/Sunset/Night/Overcast presets, overcast amount, and (Phase 8) Weather buttons: clear, light cloud, overcast, light rain, storm, back to schedule |
 | F6 | Inspect the harvestable tree under the crosshair (stable ID, species, size, log budget) |
 | F7 | Ripple test: disturb the water 3 m ahead |
 | F8 | Reset to a safe camp position |

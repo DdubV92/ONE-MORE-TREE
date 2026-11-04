@@ -30,10 +30,10 @@ var _placed := false
 
 static func quality_amount() -> int:
 	match str(Settings.get_v("quality")):
-		"low": return 700
-		"medium": return 1400
-		"ultra": return 3200
-	return 2400
+		"low": return 1000
+		"medium": return 2000
+		"ultra": return 4200
+	return 3200
 
 
 ## Remote feeds are cheap: one focused feed gets more drops than a quad tile.
@@ -74,7 +74,7 @@ func _ready() -> void:
 	_pm.scale_max = 1.2
 	drops.process_material = _pm
 	var q := QuadMesh.new()
-	q.size = Vector2(0.03, 0.6)
+	q.size = Vector2(0.035, 0.7)
 	var m := ShaderMaterial.new()
 	m.shader = load("res://shaders/rain.gdshader")
 	q.material = m

@@ -134,10 +134,16 @@ func begin(viewer: Node3D) -> void:
 			actor.present(spot, look_at, 3.0 if watched else 0.0)
 			if has_step("shadow"):
 				actor.scale = Vector3.ONE * 1.12
-	if has_step("lights"):
+	# Families without a body model carry a "figure" beat through their own
+	# visual vocabulary (Phase 8): the procession's lights, the starless
+	# patch, the room's lost warmth. Never a borrowed generic silhouette.
+	var fig_beat := has_step("figure") and _figure_kind() == ""
+	if has_step("lights") or (fig_beat and family == 12):
 		_procession(viewer)
-	if has_step("sky"):
+	if has_step("sky") or (fig_beat and family == 23):
 		_sky_patch(viewer)
+	if fig_beat and family == 16 and not has_step("warmth"):
+		_warmth(true)
 	var pk := step_kind("prop")
 	if pk != "":
 		_prop(pk, viewer)

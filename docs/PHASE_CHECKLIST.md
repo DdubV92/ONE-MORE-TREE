@@ -1,5 +1,43 @@
 # Phase checklist
 
+## Phase 8: Animation, water, lighting, weather, camera and spatial sound
+
+Status key: ✅ implemented and observed (test, headless run or software-renderer screenshot) · 🟡 implemented, needs live review on real hardware/ears · ⬜ not done. Reference: [docs/PRESENTATION.md](PRESENTATION.md). Coverage: [docs/coverage/phase8_sensory_matrix.md](coverage/phase8_sensory_matrix.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| **Fix: trees looked split in half / see-through** (owner report) | ✅ | Trunk/branch tubes, far-LOD cones and character limb capsules were wound inside-out, so `cull_back` removed the near half. A world-wide probe now finds no culled surface wound against its normals. A test guards it. Also shipped as Phase 7 build 34. |
+| Presentation ownership: weather decides, EnvironmentController is the single writer of sky/fog/ambient/shared shader globals | ✅ | No other script writes those properties per frame |
+| Seeded, restrained weather (clear, light cloud, overcast, light rain, distant storm) blended over 90 s from the authoritative clock (campaign or hunt) | ✅ | Deterministic, no reroll on load (tested); schema v8 stores seed + cosmetic wetness only |
+| Shared wind field for trees, grass, water detail, rain, clouds and leaf audio | ✅ / 🟡 | Per-day prevailing direction with drift; local gusts |
+| Rain: bounded per-view GPU rain, roof/cab/canopy shelter mask, splashes (High+), wetness on terrain/rock/bark, rain rings on water, open vs roof audio | ✅ / 🟡 | Software-renderer screenshots; streaks are fixed-Y billboards (documented) |
+| Remote cameras see the same weather (own rain volume per rendered feed) | ✅ | Bounded budget per feed; released when the feed stops |
+| Distant lightning follows flash reduction (full/reduced/off); thunder delayed by distance; no AI evidence, lamp or safety change | ✅ | Tested: safety answers and lamp states identical in a storm, zero SoundEvents |
+| Heat haze only over sunny dry sand/pit; caustics fade with cloud/rain/depth/night; sun/moon discs hidden by cloud; milder rain fog | ✅ / 🟡 | |
+| Comfort: flash reduction, shake and bob strength, horror intensity (playback only), music toggle; DOF off by default; CA 0 by default; no fake motion blur/auto-exposure setting | ✅ | Settings → Comfort |
+| Peak control: Horror and Master limiters; TV limiter | ✅ / 🟡 | Not listened to on real speakers |
+| TV: per-profile feed resolution/refresh published by `pipeline_info()`; focus 1:1 at composite resolution; quad genuinely cheaper; single tone map (HDR linear feeds); pooled viewports, no growth (tested 200 toggles) | ✅ / 🟡 | Colour look on real GPUs not reviewed |
+| TV relay steps back when the source is naturally audible nearby (no doubling) | ✅ | |
+| Human animation: pickup, setdown, talk, talk_shaken, fear, listen, glance, grip, drive, hide + existing idle/walk/swing/sit/lie; interruptible one-shots; planted feet; bounded head yaw | ✅ / 🟡 | Procedural keyframes + IK; tested |
+| Work/animation sync: one contact per swing under frame skips (no duplicated work); pickups/set-downs play after the real transaction | ✅ | Tested |
+| Trait idles (timid glance, hard-working grip, observant listen), fear stance, guarded vs loose talk by firsthand evidence | ✅ / 🟡 | Cosmetic only |
+| Dog: sniff and growl postures; attention tracks sensed sound positions only | ✅ | |
+| Foreman: footsteps from foot plants; tags only while moving and cut off when listening; head offset bounded | ✅ | Tested (no steps while still) |
+| Worker footsteps by surface (6-voice pool, 28 m), timber impact debounce, leaf wind and birds follow standing trees only, rocky-hollow echo, sparse original daytime music + dusk pad | ✅ / 🟡 | |
+| Ordinary Terror sensory matrix (1,300 events + 312 startles): assets, state, trigger, observed result, missing | ✅ | 1,607 implemented-observed, 5 partial (audio-first families' figure beats); figure beats for T12/T23/T16 now use the family's own visual |
+| Review tour: 11 named Phase 8 stations + F4 weather buttons | ✅ / 🟡 | Stations that need no HUD are exercised by the test |
+| Phase 7 support/path checks re-run after the changes | ✅ | Island audit: 0 issues (see below) |
+| Final production art for humans, dog and Foreman (skinned, face-rigged) | ⬜ | Still stylized rigid-part primitives; see PRESENTATION.md "Assets" |
+| Authored traversal animations (truck entry/exit, door, bed entry/wake) | ⬜ | Blended cuts |
+| Real-GPU performance at 1080p | ⬜ | Unmeasured; counts only |
+
+### Phase 8 known limits (honest)
+
+- Everything visual was checked on a CPU software renderer (lavapipe) at a few frames per second. Shader look, rain density in motion, TAA behaviour and frame rate need a real-GPU review.
+- No one has listened to the mix on speakers or headphones. Stereo direction, limiter behaviour and music balance are unreviewed.
+- Characters remain stylized primitives with procedural animation. The Mixamo/licensed-rig question is still open.
+- Weather is cosmetic by design. Rain doesn't slow work, wet logs or change any rule.
+
 ## Phase 7: Whole-island grounding, reachability, clearing, logistics and the 30-day feasibility audit
 
 Status key: ✅ implemented and observed (audit run, test or headless sim) · 🟡 implemented, needs live review · ⬜ not done / decision needed. Reports: [docs/audit/ISLAND_AUDIT.md](audit/ISLAND_AUDIT.md) (generated), [docs/audit/ISSUE_LEDGER.md](audit/ISSUE_LEDGER.md), [docs/audit/FEASIBILITY.md](audit/FEASIBILITY.md).

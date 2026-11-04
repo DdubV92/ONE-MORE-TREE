@@ -1,5 +1,5 @@
 {
-	"elapsed_ms": 12982,
+	"elapsed_ms": 16063,
 	"engine": "4.5.1-stable (official)",
 	"facilities": {
 		"arcade_spot:Cabin/Arcade_1": {
@@ -132,7 +132,7 @@
 			"component_cells": 127715,
 			"remaining": 0,
 			"remaining_within_25m_of_truck_route": 0,
-			"removal_ms": 29,
+			"removal_ms": 32,
 			"removed": 12000,
 			"truck_cells": 65785,
 			"unreachable_remaining": 0
@@ -141,7 +141,7 @@
 			"component_cells": 127715,
 			"remaining": 9000,
 			"remaining_within_25m_of_truck_route": 8899,
-			"removal_ms": 860,
+			"removal_ms": 1148,
 			"removed": 3000,
 			"truck_cells": 52827,
 			"unreachable_remaining": 0
@@ -150,7 +150,7 @@
 			"component_cells": 127715,
 			"remaining": 6000,
 			"remaining_within_25m_of_truck_route": 5899,
-			"removal_ms": 1036,
+			"removal_ms": 984,
 			"removed": 6000,
 			"truck_cells": 57280,
 			"unreachable_remaining": 0
@@ -159,7 +159,7 @@
 			"component_cells": 127715,
 			"remaining": 1200,
 			"remaining_within_25m_of_truck_route": 1200,
-			"removal_ms": 1425,
+			"removal_ms": 1536,
 			"removed": 10800,
 			"truck_cells": 64163,
 			"unreachable_remaining": 0
@@ -168,12 +168,12 @@
 			"component_cells": 127715,
 			"remaining": 120,
 			"remaining_within_25m_of_truck_route": 120,
-			"removal_ms": 346,
+			"removal_ms": 458,
 			"removed": 11880,
 			"truck_cells": 65632,
 			"unreachable_remaining": 0
 		},
-		"rebuild_all_chunks_ms": 12,
+		"rebuild_all_chunks_ms": 11,
 		"tree_colliders_after_full_clear": 0
 	},
 	"issues": [],

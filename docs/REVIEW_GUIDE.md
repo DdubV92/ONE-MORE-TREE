@@ -1,5 +1,7 @@
 # Review guide (Phases 0-6, about 55 minutes)
 
+> **Phase 8:** the Tour panel now ends with **Phase 8 review stations** (1–11): morning camper, busy camp, dense forest, river and pond, beach at noon, sunset return, rainy night camper, TV, forced horror previews, forced hunt fixture and cleared overlook. F4 has Weather buttons. What to look and listen for at each station is in [PRESENTATION.md](PRESENTATION.md).
+
 Start a test build (README → "Play a test build"), then choose **Preview Tour** on the title screen.
 
 - The **Tour panel** opens on the left. Press **Tab** to toggle it, and click in the world to recapture the mouse.

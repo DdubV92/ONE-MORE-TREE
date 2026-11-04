@@ -2444,6 +2444,37 @@ func _t_phase8_presentation() -> String:
 	# ---- Animation coverage and contact sync (Phase 8)
 	if err == "":
 		err = _p8_animation(world)
+	# ---- Bounded presentation: TV mode toggles and weather changes do not
+	# grow nodes/objects (pooled viewports, pooled rain views).
+	if err == "":
+		var tv := world.tv
+		tv.force_active = true
+		for i in 5:
+			await get_tree().process_frame
+		for i in 20:
+			tv.set_mode("focus" if i % 2 == 0 else "quad")
+			w.set_override(["clear", "light_rain", "storm", "overcast"][i % 4], true)
+			await get_tree().process_frame
+		var nodes0 := Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+		var objs0 := Performance.get_monitor(Performance.OBJECT_COUNT)
+		for i in 200:
+			tv.set_mode(["focus", "quad", "entertainment"][i % 3])
+			if i % 4 == 0:
+				w.set_override(["clear", "light_rain", "storm", "overcast"][(i / 4) % 4], true)
+			if i % 10 == 0:
+				await get_tree().process_frame
+		for i in 10:
+			await get_tree().process_frame
+		var dn := Performance.get_monitor(Performance.OBJECT_NODE_COUNT) - nodes0
+		var dobj := Performance.get_monitor(Performance.OBJECT_COUNT) - objs0
+		if dn > 8 or dobj > 200:
+			err = "TV/weather toggles grew nodes by %d and objects by %d" % [int(dn), int(dobj)]
+		var info := tv.pipeline_info()
+		if err == "" and (int(info.focus_px[0]) <= int(info.quad_px[0]) * 2 or float(info.focus_hz) <= float(info.quad_hz)):
+			err = "focus is not a real resolution/refresh step up from quad: %s" % str(info)
+		tv.set_mode("quad")
+		tv.force_active = false
+		w.set_override("")
 	# ---- Review stations that need no HUD: they apply, write nothing.
 	if err == "":
 		var saves_before := Game.can_write_campaign_save()

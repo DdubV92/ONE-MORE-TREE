@@ -182,6 +182,7 @@ func _process(delta: float) -> void:
 		_place_river(lp)
 		_update_wind(lp)
 		_update_fire()
+		_update_hollow(lp)
 	_t_bird -= delta
 	if _t_bird <= 0.0:
 		_t_bird = _rng.randf_range(1.5, 7.0)
@@ -200,11 +201,42 @@ func _process(delta: float) -> void:
 	var chars := AudioServer.get_bus_index("Characters")
 	var rv := AudioServer.get_bus_effect(chars, 0) as AudioEffectReverb
 	if rv:
-		rv.wet = lerpf(rv.wet, 0.18 if _interior else 0.0, clampf(delta * 3.0, 0.0, 1.0))
+		# Modest room response indoors (camper small, cabin larger), a
+		# restrained echo only in an enclosed rocky hollow, dry woodland and
+		# shore everywhere else. A zone/filter model, not simulated acoustics.
+		var want_wet := 0.0
+		var want_room := 0.25
+		if _interior:
+			want_wet = 0.16 if _zone_name.begins_with("camper") else 0.2
+			want_room = 0.18 if _zone_name.begins_with("camper") else 0.34
+		elif _hollow > 0.5:
+			want_wet = 0.07
+			want_room = 0.62
+		var k := clampf(delta * 3.0, 0.0, 1.0)
+		rv.wet = lerpf(rv.wet, want_wet, k)
+		rv.room_size = lerpf(rv.room_size, want_room, k)
 
 
-func set_interior(inside: bool, _zone: String) -> void:
+var _zone_name := ""
+var _hollow := 0.0
+
+
+## 1 when the listener stands in a rocky, enclosed hollow (terrain rising
+## > 3 m on most sides within 14 m), sampled with the slow update.
+func _update_hollow(lp: Vector3) -> void:
+	var h0 := World.height_at(lp.x, lp.z)
+	var rising := 0
+	for k in 8:
+		var a := TAU * k / 8.0
+		if World.height_at(lp.x + cos(a) * 14.0, lp.z + sin(a) * 14.0) - h0 > 3.0:
+			rising += 1
+	var rocky := World.surface_at(lp.x, lp.z) == World.Surface.ROCK
+	_hollow = 1.0 if rising >= 6 and rocky else 0.0
+
+
+func set_interior(inside: bool, zone: String) -> void:
 	_interior = inside
+	_zone_name = zone
 
 
 func _place_ocean(lp: Vector3) -> void:

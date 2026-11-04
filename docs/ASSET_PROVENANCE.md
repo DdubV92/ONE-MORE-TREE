@@ -38,7 +38,9 @@ Every asset in this repository is either **CC0 from Poly Haven** or **original t
 | Buildings (camper, cabin, fence, lean-to, bridges, notice board, arcade cabinets) | `camp_builder.gd`, `bridge_builder.gd`, `build_kit.gd` |
 | Human and dog characters plus all animation clips | `scripts/characters/*` |
 | Sky, water, foam, caustics, fire, smoke, heat haze, chain-link, arcade screens, post grade | `shaders/*` |
-| **All sounds** in `audio/generated/` (surf, river, pond, wind in leaves, fire crackle, room tone, 5 bird calls, metal creak, footsteps on 7 surfaces, UI click) | `tools/generate_audio.gd` (filtered noise, FM synthesis) |
+| **All sounds** in `audio/generated/` (surf, river, pond, wind in leaves, fire crackle, room tone, 5 bird calls, metal creak, footsteps on 7 surfaces, UI click; Phase 8: `rain_open`, `rain_roof`, `thunder_far_0/1`, `music_day_0..2` (Karplus-Strong plucked phrases, original melodies), `music_dusk`, `log_settle`) | `tools/generate_audio.gd` (filtered noise, FM and Karplus-Strong synthesis, seed 808 for Phase 8) |
+| Rain streaks, TV screen, sky cloud occlusion (Phase 8) | `shaders/rain.gdshader`, `shaders/tv_screen.gdshader`, `shaders/sky.gdshader` |
+| Phase 8 animation clips (pickup, setdown, talk, talk_shaken, fear, listen, glance, grip, drive, hide; dog sniff/growl) | `HumanCharacter.CLIPS` / `DogCharacter._make_head_pose` (procedural keyframes + IK) |
 
 ## Known asset gaps (deliberate temporary substitutes)
 
