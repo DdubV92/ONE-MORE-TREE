@@ -2198,18 +2198,14 @@ func _t_phase7_world() -> String:
 			var rise := absf(float(b.deck) - World.height_at(foot.x, foot.y))
 			if err == "" and rise / L > BridgeBuilder.MAX_RAMP_SLOPE + 0.01 and L < 16.0:
 				err = "ramp too steep (%.2f)" % (rise / L)
-	# A truck route reaches the far east side of the river.
-	var east := Vector3.INF
-	for i in World.tree_count():
-		if float(World.trees.x[i]) > 250.0 and world.vehicles.nav.nearest_drivable(World.tree_position(i), 4) != Vector3.INF:
-			east = World.tree_position(i)
-			break
-	if err == "" and east == Vector3.INF:
-		err = "no drivable cell near any tree east of the river"
-	if err == "" and east != Vector3.INF:
-		var r := world.vehicles.nav.route(world.vehicles.bay_pose(0).origin, east)
-		if r.is_empty():
-			err = "no truck route east of the river"
+	# A truck route crosses each bridge: bays -> the ramp foot on both sides.
+	for bb in World.bridges():
+		var acr := Vector2(float(bb.ax), float(bb.az)).normalized()
+		for sg in [-1.0, 1.0]:
+			var ft: Vector2 = Vector2(bb.x, bb.z) + acr * sg * (float(bb.half_span) + BridgeBuilder.ramp_length(bb, sg) + 2.0)
+			var r := world.vehicles.nav.route(world.vehicles.bay_pose(0).origin, Vector3(ft.x, World.height_at(ft.x, ft.y), ft.y))
+			if err == "" and r.is_empty():
+				err = "no truck route to the %s side of a bridge" % ("far" if sg > 0.0 else "near")
 	# A worker chops out a real stump through the shared claim.
 	if err == "":
 		var tm: TimberService = world.timber

@@ -40,6 +40,10 @@ var mode := "parked"               # parked / player / auto
 var route: Array[Vector3] = []
 var _ri := 0
 var _auto_speed := 0.0
+var _wp_index := -1
+var _wp_best := INF
+var _wp_t := 0.0
+var progress_skips := 0
 var blocked_for := 0.0
 var status_reason := ""
 var odometer := 0.0
@@ -367,11 +371,29 @@ func _drive_auto(delta: float) -> void:
 	if to.length() < 2.0:
 		_ri += 1
 		return
+	# Progress guard (Phase 7): a waypoint inside the turning circle could be
+	# orbited forever. If the distance to it stops shrinking, skip it (the
+	# next leg is re-aimed) and count the event; repeated skips = blocked.
+	if _ri != _wp_index:
+		_wp_index = _ri
+		_wp_best = to.length()
+		_wp_t = 0.0
+	_wp_t += delta
+	if to.length() < _wp_best - 0.5:
+		_wp_best = to.length()
+		_wp_t = 0.0
+	elif _wp_t > 12.0 and not _obstacle_ahead(-global_basis.z):
+		_ri += 1
+		progress_skips += 1
+		return
 	var dir := to.normalized()
 	var fwd := -global_basis.z
 	fwd.y = 0.0
 	fwd = fwd.normalized()
 	var turn := fwd.signed_angle_to(dir, Vector3.UP)
+	# Tight turn close to the waypoint: slow right down so it can come round.
+	if absf(turn) > 1.2 and to.length() < 8.0:
+		_auto_speed = minf(_auto_speed, 1.2)
 	var in_camp := Game.crew != null and Game.crew.nav.in_camp(p)
 	var want := (CAMP_SPEED if in_camp else 6.5) * clampf(1.0 - absf(turn) / 1.6, 0.25, 1.0)
 	if _ri >= route.size() - 1:

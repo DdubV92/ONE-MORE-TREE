@@ -435,7 +435,12 @@ func team_decide(w: Worker) -> bool:
 		_:
 			if w.seated:
 				w.activity = "seated"
-			return true
+				return true
+			# Missed the departure: released back to ordinary work instead of
+			# standing idle in camp all day (Phase 7 logistics fix).
+			tm.members.erase(w.id)
+			w.emp.erase("team")
+			return false
 
 
 func board(w: Worker, t: Truck, seat: String) -> void:

@@ -62,10 +62,21 @@ func _ready() -> void:
 		crew.emp(ids[2])["focus"] = [area.x, area.y, area.z]
 	var cash0 := cs.wallet.cash
 	var t := 0.0
-	var shift := 1200.0
+	var shift := float(OS.get_environment("SHIFT")) if OS.has_environment("SHIFT") else 1260.0
+	var next_log := 0.0
 	while t < shift:
 		await get_tree().physics_frame
 		t += 1.0 / 60.0
+		if t >= next_log:
+			next_log += 120.0 if t < 900.0 else 30.0
+			var acts := []
+			for w in crew.workers.values():
+				var wk := w as Worker
+				acts.append("%s:%s@%.0fm" % [wk.id, wk.activity, wk.global_position.distance_to(World.camp_origin())])
+			var tms := []
+			for tid in vs.teams:
+				tms.append("%s:%s(%s)" % [tid, vs.teams[tid].state, vs.teams[tid].reason])
+			print("T+%4d clock %4.0f  %s  |  %s" % [int(t), cs.clock.t, " ".join(acts), " ".join(tms)])
 	var c := cs.contract.counts()
 	var travel := 0.0
 	var work := 0.0
