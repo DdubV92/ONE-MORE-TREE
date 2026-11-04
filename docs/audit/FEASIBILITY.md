@@ -1,4 +1,38 @@
-# Thirty-day workload and economy feasibility (Phase 7)
+# Thirty-day workload and economy feasibility
+
+## Phase 9 re-measurement and projection
+
+**Method.** One full 20-minute workday per strategy, run through the real rules at 60 Hz (`tools/workload_sim.tscn`, headless accelerated agent simulation). The days were then projected over 30 days with `tools/balance_projection.py`, using the real prices (`economy_config.gd`) and real constraints: you can't spend cash you don't have, unpaid wages carry over, and an employee leaves after the following unpaid workday. This is **not** a human playthrough. It assumes every day repeats the measured day (no fear refusals, weather, learning curve or onboarding time), which is optimistic.
+
+Phase 9 added no costs to the simulated work loop (the guide and UI are cosmetic, and the animations are presentation-only). The 2-worker day re-measured after Phase 8 and 9 gives **3.00 tree-eq accepted, $300 paid, 6 felled, 4 stumps**, identical to Phase 7. The mixed and full-crew rows use the Phase 7 measurements; Phase 8 and 9 did not touch the work rules.
+
+| Strategy | Upfront cost | Affordable at start ($2,000)? | Measured tree-eq/day | Wages/day | Margin/day | Crew leave (unpaid) on day | Cash day 30 | Trees delivered by day 30 (boss alone afterwards: assumed 1/day, not measured) | Share of 12,000 |
+|---|---|---|---|---|---|---|---|---|---|
+| Modest crew, no truck (2 workers, small axes) | $0 | yes | 3.00 | $600 | -300 | 8 | $2200 | 46 | 0.4 % |
+| Practical growth (3 workers, medium axe, 1 truck) | $11,500 | no (falls back to 2 workers, small axes) | 4.22 | $900 | -478 | 8 | $2200 | 46 | 0.4 % |
+| Full crew (5 workers, large axe, 2 trucks) | $25,500 | no (falls back to 2 workers, small axes) | 7.01 | $1500 | -799 | 8 | $2200 | 46 | 0.4 % |
+
+
+**Findings.**
+- Every measured strategy loses money every day: wages are $300 per worker-day, and a worker currently delivers about 1–1.5 tree-eq a day ($100–150).
+- The truck ($9,000), hires ($1,000) and better axes ($1,500 / $4,500) can't be afforded from the $2,000 start. The economy never generates the cash, so "growth" strategies aren't reachable. Hiring is currently a trap, not a decision.
+- Unpaid crew leave around day 8. About 0.4 % of the 12,000-tree island is delivered by day 30.
+- For hiring to pay, a worker must deliver more than 3 trees' worth of logs per day. To clear 12,000 trees in 30 days with 6 people, each person would need about 67 trees a day (about 55× today's full-crew rate per person).
+
+**Decision.** The standard configuration stays **12,000 trees, unverified and not completable at current tuning**, per the owner's decision (Phase 7) and their planned faster cutting and longer days. Phase 9 does not change any fixed term or any running save. When the speed-ups land, re-run:
+
+```bash
+SCEN=hand2 godot --headless res://tools/workload_sim.tscn
+SCEN=mixed3 godot --headless res://tools/workload_sim.tscn
+SCEN=full5 godot --headless res://tools/workload_sim.tscn
+python3 tools/balance_projection.py hand2=<a> mixed3=<b> full5=<c>
+```
+
+The variables that can be tuned without touching the fixed terms are tree work time, sectioning time, the new-campaign tree count, and the axe, truck and hire prices.
+
+---
+
+# Phase 7 measurements
 
 All numbers below were **measured** through the real game rules: worker AI, navigation, felling physics, bucking, hand hauling, truck teams and rack acceptance, at 60 Hz simulated time for one full 20-minute workday per run (`tools/workload_sim.tscn`, `tools/crew_sim.tscn`, `tools/truck_sim.tscn`, Preview, never saved). They are simulation estimates, not human play.
 

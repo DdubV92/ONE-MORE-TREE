@@ -40,7 +40,9 @@ static func event_text(ev: InputEvent) -> String:
 	if ev is InputEventKey:
 		var k := ev as InputEventKey
 		var code := k.physical_keycode if k.physical_keycode != 0 else k.keycode
-		if k.physical_keycode != 0:
+		# Layout-aware name on real displays (e.g. AZERTY shows "Z" for the
+		# physical W key); headless has no keyboard layout, so use the code.
+		if k.physical_keycode != 0 and DisplayServer.get_name() != "headless":
 			code = DisplayServer.keyboard_get_keycode_from_physical(k.physical_keycode)
 		return OS.get_keycode_string(code)
 	if ev is InputEventMouseButton:
