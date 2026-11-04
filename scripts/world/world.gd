@@ -16,6 +16,7 @@ var trees: TreeService
 var timber: TimberService
 var campaign: CampaignService
 var crew: CrewService
+var vehicles: VehicleService
 var ground_cover: Node3D
 var environment: EnvironmentController
 var camp: Node3D
@@ -72,6 +73,11 @@ func _ready() -> void:
 	add_child(crew)
 	campaign.crew = crew
 	Game.crew = crew
+	vehicles = VehicleService.new()
+	vehicles.name = "Vehicles"
+	add_child(vehicles)
+	campaign.vehicles = vehicles
+	Game.vehicles = vehicles
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()
@@ -113,6 +119,7 @@ func _ready() -> void:
 	_apply_quality()
 	campaign.setup()
 	crew.setup(campaign)
+	vehicles.setup(campaign, crew)
 	_place_player()
 	_build_crew_world.call_deferred()
 	build_ms["total"] = Time.get_ticks_msec() - t0
@@ -128,6 +135,10 @@ func _build_crew_world() -> void:
 	var t := Time.get_ticks_msec()
 	crew.build_world()
 	build_ms["crew_nav"] = Time.get_ticks_msec() - t
+	var t2 := Time.get_ticks_msec()
+	vehicles.build_world()
+	build_ms["drive_nav"] = Time.get_ticks_msec() - t2
+	print("Drive routes built: %d ms (%dx%d cells)" % [build_ms.drive_nav, vehicles.nav.dims.x, vehicles.nav.dims.y])
 	print("Crew navigation built: %d ms (island %dx%d cells, camp %dx%d)" % [build_ms.crew_nav, crew.nav.dims.x, crew.nav.dims.y, crew.nav.camp_dims.x, crew.nav.camp_dims.y])
 
 

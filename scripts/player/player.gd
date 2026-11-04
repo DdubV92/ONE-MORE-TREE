@@ -42,6 +42,9 @@ var surface_name := "grass"
 var _last_safe := Vector3.ZERO
 var axe: AxeController
 var carry: CarryController
+var vehicle: Node3D = null          # Phase 5: the truck we sit in
+var vehicle_seat := ""
+var _veh_yaw := 0.0
 var _shake := 0.0
 
 
@@ -128,6 +131,9 @@ func show_message(text: String) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if get_tree().paused:
 		return
+	if vehicle != null:
+		_vehicle_input(event)
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
 		var inv := -1.0 if Settings.get_v("invert_y") else 1.0
@@ -173,6 +179,82 @@ func _select_tier(tier: String) -> void:
 	show_message("%s axe (%s) - preview tier" % [tier.capitalize(), RATE[tier]])
 
 
+# ---------------------------------------------------------------- vehicle
+
+func enter_vehicle(t: Node3D, seat: String) -> void:
+	vehicle = t
+	vehicle_seat = seat
+	_veh_yaw = 0.0
+	velocity = Vector3.ZERO
+	collision_layer = 0
+	collision_mask = 0
+	if _crouching:
+		_crouching = false
+	_interact_target = null
+	interact_target_changed.emit("")
+	show_message("Driving: W/S throttle and brake/reverse, A/D steer, Space parking brake, H lights, E get out." if seat == "driver" else "Riding as a passenger. E to get out when the truck has stopped.")
+
+
+func exit_vehicle(at: Vector3) -> void:
+	var yaw := vehicle.global_rotation.y + _veh_yaw if vehicle else _yaw
+	vehicle = null
+	vehicle_seat = ""
+	collision_layer = 2
+	collision_mask = 1
+	_yaw = yaw
+	teleport_feet(at, yaw)
+
+
+func _vehicle_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
+		var inv := -1.0 if Settings.get_v("invert_y") else 1.0
+		_veh_yaw = clampf(_veh_yaw - event.relative.x * s, deg_to_rad(-120.0), deg_to_rad(120.0))
+		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-60.0), deg_to_rad(50.0))
+	elif event.is_action_pressed("interact"):
+		var why: String = Game.vehicles.try_exit(self) if Game.vehicles else ""
+		if why != "":
+			show_message(why)
+	elif event.is_action_pressed("headlights") and vehicle_seat == "driver":
+		vehicle.headlights = not vehicle.headlights
+
+
+func _vehicle_process(_delta: float) -> void:
+	var t := vehicle as Truck
+	if t == null:
+		vehicle = null
+		return
+	if vehicle_seat == "driver" and t.mode == "player":
+		var fwd := Input.get_action_strength("move_forward")
+		var back := Input.get_action_strength("move_back")
+		var v := t.speed()
+		t.steer = Input.get_action_strength("move_left") - Input.get_action_strength("move_right")
+		t.brake = 0.0
+		if fwd > 0.0:
+			t.throttle = fwd if v > -0.5 else 0.0
+			t.brake = 1.0 if v < -0.5 else 0.0
+		elif back > 0.0:
+			if v > 0.6:
+				t.throttle = 0.0
+				t.brake = back
+			else:
+				t.throttle = -back
+				if v < -1.0 and Game.vehicles:
+					Game.vehicles.tutorial_mark("reverse")
+		else:
+			t.throttle = 0.0
+			t.brake = 0.15
+		t.handbrake = Input.is_action_pressed("jump")
+		if absf(v) > 3.0 and Game.vehicles:
+			Game.vehicles.tutorial_mark("drive")
+	var seat := t.seat_marker(vehicle_seat)
+	var eye := seat.global_transform * Vector3(0, 0.72, 0.05)
+	global_position = eye - Vector3(0, head.position.y, 0)
+	rotation = Vector3(0, t.global_rotation.y + _veh_yaw, 0)
+	head.rotation = Vector3(_pitch, 0, 0)
+	velocity = Vector3.ZERO
+
+
 func try_pick_up(body: TimberBody) -> void:
 	carry.try_pick_up(body)
 
@@ -188,6 +270,9 @@ func reset_to_safe() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if vehicle != null:
+		_vehicle_process(delta)
+		return
 	if fly_mode:
 		_fly(delta)
 		return
@@ -358,7 +443,8 @@ func _surface_under() -> String:
 func _update_interaction() -> void:
 	var from := camera.global_position
 	var to := from - camera.global_basis.z * INTERACT_RANGE
-	var q := PhysicsRayQueryParameters3D.create(from, to, 1)
+	# Layer 16: interaction-only spots (truck doors and tailgates).
+	var q := PhysicsRayQueryParameters3D.create(from, to, 1 | 16)
 	q.exclude = [get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	var target: Node = null

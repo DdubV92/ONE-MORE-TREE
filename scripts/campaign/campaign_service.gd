@@ -33,6 +33,7 @@ var test_route := false
 var phase2_migrated := false
 var _sleeping := false
 var crew: CrewService          # Phase 4 (set by the world)
+var vehicles: VehicleService   # Phase 5 (set by the world)
 var spawn_crew := true         # tests of the bare economy turn this off
 
 
@@ -307,7 +308,7 @@ func _restore_crew(data: Dictionary) -> void:
 
 
 func capture_campaign() -> Dictionary:
-	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}}
+	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}}
 
 
 func capture_economy() -> Dictionary:
@@ -362,6 +363,9 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 	active = true
 	_sync_axe()
 	_restore_crew(campaign.get("crew", {}))
+	var vd: Dictionary = campaign.get("vehicles", {})
+	if vehicles and not vd.is_empty():
+		vehicles.when_ready(func() -> void: vehicles.restore(vd))
 	if contract.is_closed():
 		outcome_ready.emit.call_deferred(contract.state, contract.outcome_id)
 	return false

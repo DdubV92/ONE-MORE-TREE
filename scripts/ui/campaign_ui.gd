@@ -262,7 +262,27 @@ func open_shop() -> void:
 	var te := 0.0
 	if Game.timber:
 		te = int(Game.timber.totals().accepted_mte) / 1000.0
-	_text(v, "Hire a worker ($%s) - coming in Phase 4 (crew).\nPickup truck - coming in Phase 5: unlocks after %.0f delivered tree-equivalents (you have %.2f); at most %d trucks." % [Money.format_cents(svc.config.hire_fee_cents), svc.config.truck_unlock_tree_equivalents, te, svc.config.max_trucks], 14, UITheme.MUTED)
+	_text(v, "Hiring: Journal (J) -> Crew.", 14, UITheme.MUTED)
+	if Game.vehicles:
+		var vs: VehicleService = Game.vehicles
+		var u := vs.unlock_state()
+		var row := HBoxContainer.new()
+		var l := UITheme.label("Logging pickup  -  $%s  ·  seats 3, bed holds 3 tree-equivalents  ·  owned %d / %d\nUnlock: %.0f delivered tree-equivalents (you have %.2f)%s" % [Money.format_cents(int(u.price)), int(u.owned), VehicleService.MAX_TRUCKS, float(u.need), float(u.have), "  ·  UNLOCKED" if bool(u.unlocked) else ""], 15)
+		l.custom_minimum_size = Vector2(430, 0)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		row.add_child(l)
+		var ok := vs.can_buy()
+		if bool(ok.ok):
+			row.add_child(UITheme.button("Buy", func() -> void:
+				var r := vs.buy()
+				hud.show_message("Bought pickup %s (%s). It's in the parking bays by the north gate." % [r.id, r.tx] if bool(r.ok) else str(r.reason))
+				close_panel(), 120))
+		else:
+			var why := UITheme.label(str(ok.reason), 13, UITheme.MUTED)
+			why.custom_minimum_size = Vector2(160, 0)
+			why.autowrap_mode = TextServer.AUTOWRAP_WORD
+			row.add_child(why)
+		v.add_child(row)
 	v.add_child(UITheme.button("Close", close_panel, 200))
 	_open(p)
 

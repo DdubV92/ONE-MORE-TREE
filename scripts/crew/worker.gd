@@ -49,6 +49,7 @@ var _carry_nodes: Array[Node3D] = []
 var talking_until := 0.0
 var _far := false
 var _time_check := 0.0
+var seated := false
 
 
 func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
@@ -102,7 +103,8 @@ func activity_words() -> String:
 		"fell": return "felling"
 		"retreat": return "stepping clear of a fall"
 		"buck": return "bucking a trunk"
-		"pick", "deliver": return "hauling"
+		"pick", "deliver", "load_truck": return "hauling"
+		"seated": return "riding in a truck"
 		"follow": return "following you"
 		"home": return "heading home"
 		"sit": return "resting"
@@ -282,9 +284,11 @@ func _physics_process(delta: float) -> void:
 			_do_pick()
 		"deliver":
 			_do_deliver()
+		"load_truck":
+			_do_load_truck()
 		"follow":
 			_do_follow(delta)
-		"sleep", "sit", "departed", "aboard":
+		"sleep", "sit", "departed", "aboard", "seated":
 			pass
 		"depart_wait":
 			body_char.set_locomotion(0.0)
@@ -507,6 +511,39 @@ func _do_deliver() -> void:
 	activity = "idle"
 
 
+func _do_load_truck() -> void:
+	var t: Truck = Game.vehicles.haul_target(self) if Game.vehicles else null
+	if t and t.tailgate_point().distance_to(global_position) < 3.0:
+		var n := Game.vehicles.load_from(id, t)
+		if n > 0:
+			crew.on_delivered_to_truck(self, n)
+	activity = "idle"
+	if is_carrying():
+		crew.send_to_rack(self)
+
+
+## Into a truck seat: walking, collision and steering stop; the body rides
+## the seat in a sitting pose (one person, one seat).
+func board_seat(seat: Marker3D) -> void:
+	abandon("boarding")
+	seated = true
+	activity = "seated"
+	col.collision_layer = 0
+	reparent(seat, false)
+	transform = Transform3D(Basis(), Vector3(0, -0.47, 0.12))
+	body_char.play("sit", 0.3)
+	body_char.set_locomotion(0.0)
+
+
+func leave_seat(at: Vector3) -> void:
+	seated = false
+	reparent(crew, true)
+	global_transform = Transform3D(Basis(Vector3.UP, global_rotation.y), Vector3(at.x, crew.nav.surface_at(at), at.z))
+	col.collision_layer = 1
+	body_char.play("idle", 0.2)
+	activity = "idle"
+
+
 func _update_carry_visual() -> void:
 	var held: Array = crew.timber.load_of(id)
 	if held.size() == _carry_nodes.size():
@@ -608,4 +645,4 @@ func sit_at(seat: Node3D) -> void:
 
 
 func capture() -> Dictionary:
-	return {"pos": [global_position.x, global_position.y, global_position.z], "yaw": rotation.y, "activity": activity if activity in ["sleep", "depart_wait", "aboard"] else "idle"}
+	return {"pos": [global_position.x, global_position.y, global_position.z], "yaw": global_rotation.y, "activity": activity if activity in ["sleep", "depart_wait", "aboard"] else "idle"}

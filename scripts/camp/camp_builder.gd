@@ -752,7 +752,7 @@ func _build_yard() -> void:
 	var blanket := BuildKit.box(y, Vector3(0.55, 0.03, 0.8), _ground(fp + Vector3(cos(-0.6) * 3.6, 0.62, sin(-0.6) * 3.6)), "blanket_green", false)
 	blanket.rotation.x = 0.4
 	BuildKit.prop(y, "wooden_crate_02", _ground(L.CAMPER_POS + Vector3(2.4, 0, -3.4)), 0.1, 1.0, Vector3(1.1, 0.45, 0.5))
-	BuildKit.prop(y, "Barrel_02", _ground(L.CAMPER_POS + Vector3(2.2, 0, -4.4)), 0.0, 1.0, Vector3(0.5, 0.9, 0.5))
+	BuildKit.prop(y, "Barrel_02", _ground(L.CAMPER_POS + Vector3(1.85, 0, -4.4)), 0.0, 1.0, Vector3(0.5, 0.9, 0.5))
 	# Payroll notice board (UI anchor for later prompts)
 	var board := Node3D.new()
 	board.name = "PayrollBoard"

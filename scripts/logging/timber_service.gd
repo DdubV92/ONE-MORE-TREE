@@ -467,6 +467,24 @@ func pick_up_for(carrier: String, body: TimberBody, budget := HAND_BUDGET_MTE) -
 	return {"ok": true, "sid": sid}
 
 
+## Phase 5: moves one held piece from one carrier to another (hands ->
+## truck bed). Atomic: the piece leaves the first list and joins the second
+## in one step; in a vehicle it is VEHICLE_RESERVED to that truck.
+func transfer(from_carrier: String, to_carrier: String, sid: String, to_budget: int) -> bool:
+	var src := load_of(from_carrier)
+	if not sid in src:
+		return false
+	var s := segment(sid)
+	if carrier_mte(to_carrier) + int(s.mte) > to_budget:
+		return false
+	src.erase(sid)
+	load_of(to_carrier).append(sid)
+	claims[sid] = to_carrier
+	_set_state(sid, Seg.VEHICLE_RESERVED if to_carrier.begins_with("truck:") else Seg.CARRIED)
+	carried_changed.emit()
+	return true
+
+
 ## Sets a carried piece down (caller validated the spot): `centre` is where
 ## the middle of the piece goes, `dir` its lengthwise direction.
 func put_down(sid: String, centre: Vector3, dir: Vector3, dynamic: bool) -> TimberBody:
@@ -756,7 +774,7 @@ func restore(data: Dictionary) -> void:
 			var sg := segment(str(sid))
 			if not sg.is_empty() and not accepted.has(str(sid)) and not str(sid) in carried and not _in_any_load(str(sid)):
 				load_of(str(c)).append(str(sid))
-				sg.state = Seg.CARRIED
+				sg.state = Seg.VEHICLE_RESERVED if str(c).begins_with("truck:") else Seg.CARRIED
 				claims[str(sid)] = str(c)
 	var placed := {}
 	for bd in data.get("bodies", []):

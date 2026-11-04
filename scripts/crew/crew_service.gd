@@ -560,6 +560,10 @@ func _share_stories() -> void:
 func decide(w: Worker) -> void:
 	var e := w.emp
 	var c := campaign.clock
+	if w.seated:
+		return
+	if Game.vehicles and str(e.status) == Payroll.ACTIVE and Game.vehicles.team_decide(w):
+		return
 	match str(e.status):
 		"departing":
 			_send_to_dock(w)
@@ -586,6 +590,18 @@ func decide(w: Worker) -> void:
 		return
 	var job := str(e.get("job", "automatic"))
 	match job:
+		"ride":
+			var t: Truck = Game.vehicles.ride_target() if Game.vehicles else null
+			if t == null or t.free_seat() == "" or t.free_seat() == "driver" and t.seats.middle != "" and t.seats.right != "":
+				w.activity = "follow"
+				return
+			var door := t.door_point(1.0)
+			if w.global_position.distance_to(door) < 1.3:
+				var seat := "middle" if t.seats.middle == "" else ("right" if t.seats.right == "" else "")
+				if seat != "":
+					Game.vehicles.board(w, t, seat)
+			else:
+				w.go_to(door, "idle", "the truck")
 		"follow":
 			w.activity = "follow"
 		"home":
@@ -623,7 +639,10 @@ func _auto(w: Worker) -> void:
 ## Mid-task safety: if the time left before night no longer covers the
 ## walk home plus margin, stop now and head back.
 func check_time(w: Worker) -> void:
-	if str(w.emp.status) != Payroll.ACTIVE:
+	if str(w.emp.status) != Payroll.ACTIVE or w.seated:
+		return
+	# Truck teams return together; the team checks its own (longer) margin.
+	if Game.vehicles and not Game.vehicles.team_of(w).is_empty():
 		return
 	var left := real_time_left()
 	if campaign.clock.phase() == WorkdayClock.Phase.NIGHT or left < return_seconds(w) + w.mind.return_margin():
@@ -886,6 +905,11 @@ func _try_haul(w: Worker) -> bool:
 
 
 func send_to_rack(w: Worker) -> bool:
+	# Team members and people riding with the boss load the nearby truck.
+	if Game.vehicles:
+		var t: Truck = Game.vehicles.haul_target(w)
+		if t and w.go_to(t.tailgate_point(), "load_truck", "the truck"):
+			return true
 	var pts: Array = CampLayout.DELIVERY_STANDPOINTS
 	for i in pts.size():
 		if claim("rack:%d" % i, w):
@@ -1048,6 +1072,10 @@ func on_felled(w: Worker, _tid: int) -> void:
 
 func on_bucked(w: Worker) -> void:
 	stats[w.id].bucked = int(stats[w.id].bucked) + 1
+
+
+func on_delivered_to_truck(w: Worker, n: int) -> void:
+	stats[w.id]["loaded_to_truck"] = int(stats[w.id].get("loaded_to_truck", 0)) + n
 
 
 func on_delivered(w: Worker, receipts: Array) -> void:
