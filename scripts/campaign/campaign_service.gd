@@ -87,9 +87,12 @@ func setup() -> void:
 
 # ------------------------------------------------------------ campaign life
 
+## Phase 12: set when a loaded save names a different frozen island.
+var island_mismatch := false
+
 ## Fresh timed campaign (the rules are fixed: 30 days, 15 + 5 minutes).
 func new_campaign() -> void:
-	ruleset = Ruleset.get_def(Ruleset.STANDARD) if World.manifest_variant != "full" or Game.mode == Game.Mode.CAMPAIGN else Ruleset.get_def(Ruleset.LEGACY)
+	ruleset = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant)) if World.manifest_variant != "full" else Ruleset.get_def(Ruleset.STANDARD if Game.mode == Game.Mode.CAMPAIGN else Ruleset.LEGACY)
 	rule_set = str(ruleset.id)
 	legacy = false
 	clock.restore({"day": 1, "t": 0.0, "running": true, "deadline_enabled": true})
@@ -359,7 +362,7 @@ func _restore_crew(data: Dictionary) -> void:
 
 
 func capture_campaign() -> Dictionary:
-	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}, "onboarding": onboarding.capture() if onboarding else {}, "post_contract": post_contract, "ruleset": ruleset.duplicate(true)}
+	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}, "onboarding": onboarding.capture() if onboarding else {}, "post_contract": post_contract, "ruleset": ruleset.duplicate(true), "island": World.island_signature()}
 
 
 func capture_economy() -> Dictionary:
@@ -392,6 +395,13 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 	post_contract = bool(campaign.get("post_contract", false))
 	var rid := Ruleset.id_of_save(campaign)
 	ruleset = (campaign.get("ruleset", {}) as Dictionary).duplicate(true) if Ruleset.known(rid) and campaign.has("ruleset") else Ruleset.get_def(rid)
+	# Phase 12: a save keeps its island for life. The variant was chosen from
+	# this save's ruleset before the world was built; a signature mismatch
+	# means the frozen data changed underneath it - say so, never re-plan.
+	var isl: Dictionary = campaign.get("island", {})
+	island_mismatch = not isl.is_empty() and (str(isl.get("revision", "")) != World.island_revision or str(isl.get("trees", "")) != str(World.island_signature().trees))
+	if island_mismatch:
+		push_warning("Save island %s does not match the loaded island %s" % [str(isl), str(World.island_signature())])
 	if onboarding:
 		onboarding.restore(campaign.get("onboarding", {}))
 	reports.clear()

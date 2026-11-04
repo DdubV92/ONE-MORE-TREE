@@ -50,7 +50,7 @@ static func audit_trees() -> Dictionary:
 		if World.water_depth_at(x, z) > 0.02:
 			in_water.append({"id": World.trees.id[i], "pos": base})
 		for ri in rock_hash.get(_key(x, z, 8.0), []):
-			if Vector2(x, z).distance_to(Vector2(World.rocks.x[ri], World.rocks.z[ri])) < float(World.rocks.scale[ri]) * 0.45 + r:
+			if Vector2(x, z).distance_to(Vector2(World.rocks.x[ri], World.rocks.z[ri])) < World.rock_radius(ri) + r:
 				on_rock.append({"id": World.trees.id[i], "rock": ri})
 		if cut_stands(i, tree_hash, rock_hash).is_empty():
 			no_stand.append({"id": World.trees.id[i], "pos": base})
@@ -62,12 +62,15 @@ static func audit_rocks() -> Dictionary:
 	for i in (World.rocks.x as PackedFloat32Array).size():
 		var p := World.rock_position(i)
 		var s: float = World.rocks.scale[i]
-		var squash: float = [0.75, 0.85, 0.55, 0.6][int(World.rocks.kind[i])]
+		var squash := World.rock_squash(i)
 		var bottom := p.y - 0.2 * s * squash
 		var lowest := INF
-		for k in 8:
-			var a := TAU * k / 8.0
-			lowest = minf(lowest, World.height_at(p.x + cos(a) * s * 0.38, p.z + sin(a) * s * 0.38))
+		# Elliptical footprint for stretched slabs (Phase 12 shelves).
+		var bs := World.rock_basis(i)
+		for k in 12:
+			var a := TAU * k / 12.0
+			var off := bs * Vector3(cos(a) * 0.38, 0.0, sin(a) * 0.38)
+			lowest = minf(lowest, World.height_at(p.x + off.x, p.z + off.z))
 		if bottom - lowest > SUPPORT_TOLERANCE:
 			floating.append({"index": i, "pos": p, "gap": bottom - lowest})
 	return {"checked": (World.rocks.x as PackedFloat32Array).size(), "floating": floating}
@@ -94,7 +97,7 @@ static func cut_stands(i: int, tree_hash: Dictionary = {}, rock_hash: Dictionary
 			if j != i and p.distance_to(Vector2(World.trees.x[j], World.trees.z[j])) < float(World.trees.radius[j]) + 0.35:
 				blocked = true
 		for ri in rock_hash.get(_key(p.x, p.y, 8.0), []):
-			if p.distance_to(Vector2(World.rocks.x[ri], World.rocks.z[ri])) < float(World.rocks.scale[ri]) * 0.5 + 0.3:
+			if p.distance_to(Vector2(World.rocks.x[ri], World.rocks.z[ri])) < World.rock_radius(ri) * 1.11 + 0.3:
 				blocked = true
 		if not blocked:
 			out.append(Vector3(p.x, World.height_at(p.x, p.y), p.y))

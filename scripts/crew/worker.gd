@@ -628,7 +628,7 @@ func board_seat(seat: Marker3D) -> void:
 	col.collision_layer = 0
 	reparent(seat, false)
 	transform = Transform3D(Basis(), Vector3(0, -0.47, 0.12))
-	body_char.play("sit", 0.3)
+	body_char.play("sit_relaxed" if seat.is_in_group("couch_seat") and body_char.anim.has_animation("sit_relaxed") else "sit", 0.3)
 	body_char.set_locomotion(0.0)
 
 

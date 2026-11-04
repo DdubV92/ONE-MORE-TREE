@@ -25,6 +25,11 @@
 - Worker cabin with an arcade corner: four beds plus an attached two-bed bedroom, kitchen and bathroom (six beds).
 - The player's camper: mini kitchen, bathroom, bedroom, player bed and dog bed.
 
+**The island (Phase 12)**
+- New campaigns use island revision 2: exactly 10,000 native trees in groves and glades.
+- Persistent undergrowth, landforms, rock formations and 60 rock hides. They aren't contract targets and stay after logging.
+- Older saves keep the island they started on.
+
 **The dog** lives with the player. It wanders camp by day and comes inside at dusk. It cannot be harmed or lost.
 
 ## Night rules (authoritative)
@@ -45,7 +50,7 @@ Combat, hunger meters, weapon shops, chainsaws, vehicles, crafting trees, multip
 
 ## Current phase
 
-Phases 0–4 are implemented (Phase 4: the living crew): the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
+Phases 0–12 are implemented. The latest is Phase 12: the dense 10,000-tree island with cover and hiding, the owner's motion-capture clips, and proper fabrics. Earlier phases built: the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
 
 ## Phase 0 scope (this pack)
 

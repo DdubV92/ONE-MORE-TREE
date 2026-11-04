@@ -26,8 +26,7 @@ func _build(o: Array, inner_z: float) -> void:
 	var h := float(o[3]) - float(o[2]) + 0.16
 	var mid := (float(o[0]) + float(o[1])) * 0.5
 	var cy := (float(o[2]) + float(o[3])) * 0.5 - 0.02
-	var mat := BuildKit.mat("blanket_blue").duplicate() as StandardMaterial3D
-	mat.albedo_color = Color(0.72, 0.6, 0.42)
+	var mat := BuildKit.mat("curtain_linen").duplicate() as StandardMaterial3D
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var rod := BuildKit.cylinder(self, 0.012, _w + 0.2, Vector3(mid, float(o[3]) + 0.07, inner_z), "steel", false, 6)
 	rod.rotation.z = PI * 0.5

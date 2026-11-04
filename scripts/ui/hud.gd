@@ -355,8 +355,13 @@ func _build_pause() -> void:
 
 func _build_tour() -> void:
 	tour_panel = _panel(Vector2(0, 0), Vector2(12, 60))
+	# Phase 12: the tour outgrew a 720p screen; it scrolls now.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(290, minf(get_viewport().get_visible_rect().size.y - 90.0, 900.0) if get_viewport() else 600.0)
+	tour_panel.add_child(scroll)
 	var v := VBoxContainer.new()
-	tour_panel.add_child(v)
+	scroll.add_child(v)
 	v.add_child(UITheme.label("Preview Tour", 22, UITheme.ACCENT))
 	v.add_child(UITheme.label("Locations", 16, UITheme.MUTED))
 	var grid := GridContainer.new()
@@ -418,6 +423,17 @@ func _build_tour() -> void:
 			tour_panel.visible = false
 			_capture_mouse(), 130))
 	v.add_child(p11)
+	v.add_child(UITheme.label("Phase 12 dense island, cover & motion", 16, UITheme.MUTED))
+	var p12 := GridContainer.new()
+	p12.columns = 2
+	for s12 in ReviewStations.STATIONS12:
+		p12.add_child(UITheme.button(s12[0], func() -> void:
+			var msg := ReviewStations.go(self, s12[1])
+			if msg != "":
+				show_message(msg, 9.0)
+			tour_panel.visible = false
+			_capture_mouse(), 130))
+	v.add_child(p12)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))

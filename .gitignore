@@ -32,3 +32,7 @@ Thumbs.db
 /assets/polyhaven/textures/gravel/
 /assets/polyhaven/textures/river_small_rocks/
 /assets/polyhaven/textures/brown_mud_leaves_01/
+
+# Phase 12: raw Mixamo FBX sources (Adobe terms: not redistributable as
+# standalone files). Only the retargeted clip data is committed.
+assets/mixamo_src/

@@ -30,6 +30,8 @@ var end_screen: EndScreen
 var arcade: ArcadeService
 var dock_site: DockSite
 var ground_cover: Node3D
+var undergrowth: UndergrowthSystem
+var cover: CoverService
 var environment: EnvironmentController
 var weather: WeatherService
 var camp: Node3D
@@ -133,6 +135,19 @@ func _ready() -> void:
 	comfort.name = "CamperComfort"
 	add_child(comfort)
 	Game.comfort = comfort
+	# Phase 12: island r2 undergrowth (persistent, non-native) and cover.
+	if World.island_revision == "r2":
+		undergrowth = _timed("undergrowth", func() -> Node:
+			var u := UndergrowthSystem.new()
+			u.name = "Undergrowth"
+			add_child(u)
+			u.build()
+			return u)
+		cover = CoverService.new()
+		cover.name = "Cover"
+		add_child(cover)
+		cover.build(self)
+		Game.cover = cover
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()
@@ -261,6 +276,8 @@ func _apply_quality() -> void:
 		terrain.set_lod_scale({"low": 0.7, "medium": 0.85, "high": 1.0, "ultra": 1.3}[q])
 	if ground_cover and ground_cover.has_method("set_density"):
 		ground_cover.set_density({"low": 0.35, "medium": 0.65, "high": 1.0, "ultra": 1.4}[q])
+	if undergrowth:
+		undergrowth.set_density({"low": 0.45, "medium": 0.75, "high": 1.0, "ultra": 1.0}[q])
 
 
 func _place_player() -> void:

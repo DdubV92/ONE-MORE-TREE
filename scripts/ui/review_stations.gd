@@ -34,6 +34,27 @@ const STATIONS11 := [
 	["Light: day/dusk/night", "p11_light"],
 	["Hide & camper search", "p11_hide"],
 ]
+## Phase 12 dense island r2 stations (Preview from the title shows r2).
+const STATIONS12 := [
+	["Dense grove (eye level)", "p12_grove"],
+	["Low-bough work approach", "p12_boughs"],
+	["Undergrowth edge", "p12_thicket"],
+	["Rocks & landforms", "p12_rocks"],
+	["Rock hide (try it)", "p12_hide"],
+	["Ridge sightline break", "p12_ridge"],
+	["Over the woods", "p12_high"],
+	["Truck bottleneck (bridge)", "p12_bridge"],
+	["River & dock route", "p12_dock"],
+	["Desk window view", "p12_window"],
+	["All ten cameras", "p12_cams"],
+	["Clearing 0/25/50/90/99.9/100 %", "p12_clear"],
+	["Cover/nav overlay (dev)", "p12_overlay"],
+	["Undergrowth density preset", "p12_density"],
+	["Mocap: walk / run / sit", "p12_mocap"],
+]
+static var _clear_i := 0
+static var _density_i := 0
+static var _overlay12: CoverOverlay
 static var _light_i := 0
 
 
@@ -136,6 +157,64 @@ static func go(hud: Node, which: String) -> String:
 		"p11_hide":
 			hud.call("_phase6_stop", "__p6_hunt")
 			return "FORCED hunt fixture (dev): hide under the camper bed or in the wardrobe; the Foreman searches by evidence and can look there."
+		"p12_grove", "p12_boughs", "p12_thicket", "p12_rocks", "p12_ridge", "p12_high":
+			if World.island_revision != "r2":
+				return "These stops show island r2 (new campaigns). Start Preview from the title screen."
+			if not Viewpoints.all().has(which):
+				return "No such feature near camp."
+			w.teleport_to(which)
+			env.apply_named("day")
+			wx.set_override("light_cloud", true)
+			return "%s. Native trees: %d (exactly the contract's), undergrowth and rock are permanent, not contract targets." % [str(Viewpoints.all()[which].label), World.native_total()]
+		"p12_hide":
+			if not Viewpoints.all().has("p12_hide"):
+				return "No rock hide near camp on this island."
+			w.teleport_to("p12_hide")
+			if Game.hunt:
+				Game.hunt.hunt_preview = true     # lets you use hides without a hunt
+			return "Rock recess: walk into the opening and press %s. Concealment is geometric: rock blocks the hunter's view from the sides and back, the opening does not. One way out - a deliberate dead end." % Keys.label("interact")
+		"p12_bridge":
+			hud.call("_phase7_stop", "__p7_bridge_e")
+			return "Truck bottleneck: the trail bridge. Trucks, logs and the crew share it (yield/queue); undergrowth keeps 3.5 m off truck trails."
+		"p12_dock":
+			w.teleport_to("dock")
+			return "River mouth and dock route: the dog's refuge path and the extraction dock are unchanged; no landform edits within 30 m of water."
+		"p12_window":
+			w.teleport_to("desk_window")
+			return "From the desk: the right-hand window keeps its view of the treeline and the approach beyond it."
+		"p12_cams":
+			hud.call("_phase5_stop", "__p5_tv")
+			return "Ten fixed cameras (four live tiles at a time). Lens corridors were kept free of trees and tall shrubs by the planner."
+		"p12_clear":
+			var fracs := [0.0, 0.25, 0.5, 0.9, 0.999, 1.0]
+			_clear_i = (_clear_i + 1) % fracs.size()
+			for id in World.removed_trees.keys():
+				if World.is_native(int(id)):
+					World.restore_tree(int(id))
+			var n := clear_near_camp(fracs[_clear_i]) if fracs[_clear_i] > 0.0 else 0
+			w.teleport_to("p12_high" if Viewpoints.all().has("p12_high") else "ridge")
+			return "Clearing fixture %.1f %% (%d native trees removed, in memory). Rocks, landforms, thickets and structures remain as persistent cover. Press again for the next level." % [fracs[_clear_i] * 100.0, n]
+		"p12_overlay":
+			if _overlay12 == null or not is_instance_valid(_overlay12):
+				_overlay12 = CoverOverlay.new()
+				w.add_child(_overlay12)
+				return "Cover/nav overlay: all layers. Press again to cycle soft / hard / hides / nav / support, then off."
+			var lay := _overlay12.next_layer()
+			if lay == "all":
+				_overlay12.queue_free()
+				_overlay12 = null
+				return "Overlay off."
+			return "Overlay layer: %s (green soft concealment, grey hard cover, magenta hide / cyan exits / yellow search approach, blue walkable / orange drivable, red support problems)." % lay
+		"p12_density":
+			var ds := [1.0, 0.75, 0.45]
+			_density_i = (_density_i + 1) % ds.size()
+			if w.undergrowth:
+				w.undergrowth.set_density(ds[_density_i])
+			return "Undergrowth density %.0f %%: only scattered decorative plants thin out; thicket members (the soft cover the hunter uses) always stay." % (ds[_density_i] * 100.0)
+		"p12_mocap":
+			busy_camp_fixture()
+			w.teleport_to("camp")
+			return "Crew motion: walk and run are the owner's Mixamo clips retargeted to each body (feet re-planted per leg length); sitting, couch, driving and bed use the captured seated/lying clips."
 		"cleared":
 			var n := clear_near_camp(0.9)
 			w.teleport_to("ridge")

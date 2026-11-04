@@ -33,11 +33,22 @@
   "authors": {
    "Rob Tuytel": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Brown Mud Leaves 01"
+ },
+ "caban": {
+  "authors": {
+   "Rico Cilliers": "Processing",
+   "colormass": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Caban"
  },
  "carved_wooden_plate": {
   "authors": {
@@ -53,7 +64,7 @@
   "authors": {
    "Rob Tuytel": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -63,7 +74,7 @@
   "authors": {
    "Dimitrios Savva": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -83,17 +94,27 @@
   "authors": {
    "Charlotte Baglioni": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Dirt"
  },
+ "dry_branches_medium_01": {
+  "authors": {
+   "Rico Cilliers": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Dry Branches Medium 01"
+ },
  "dry_decay_leaves": {
   "authors": {
    "Amal Kumar": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -108,6 +129,16 @@
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Fabric Leather 01"
+ },
+ "fabric_leather_02": {
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Fabric Leather 02"
  },
  "fern_02": {
   "authors": {
@@ -145,17 +176,28 @@
   "authors": {
    "Rob Tuytel": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Forest Leaves 02"
  },
+ "gingham_check": {
+  "authors": {
+   "Rico Cilliers": "Processing",
+   "colormass": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Gingham Check"
+ },
  "gravel": {
   "authors": {
    "Dimitrios Savva": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -182,11 +224,22 @@
   "source": "https://polyhaven.com",
   "title": "Industrial Wall Lamp"
  },
+ "knitted_fleece": {
+  "authors": {
+   "Rico Cilliers": "Processing",
+   "colormass": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Knitted Fleece"
+ },
  "leafy_grass": {
   "authors": {
    "Charlotte Baglioni": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -206,7 +259,7 @@
   "authors": {
    "Rob Tuytel": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -303,6 +356,28 @@
   "source": "https://polyhaven.com",
   "title": "Plastic Thermos"
  },
+ "polar_fleece": {
+  "authors": {
+   "Rico Cilliers": "Processing",
+   "colormass": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Polar Fleece"
+ },
+ "poly_wool_herringbone": {
+  "authors": {
+   "Rico Cilliers": "Processing",
+   "colormass": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Poly Wool Herringbone"
+ },
  "pot_enamel_01": {
   "authors": {
    "Kuutti Siitonen": "All"
@@ -328,7 +403,7 @@
    "Rico Cilliers": "Minor adjustment",
    "Rob Tuytel": "Photography, Processing"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -339,11 +414,22 @@
    "Dario Barresi": "Processing",
    "Greg Zaal": "Photography"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Rock Face"
+ },
+ "rough_linen": {
+  "authors": {
+   "Rico Cilliers": "Processing",
+   "colormass": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Rough Linen"
  },
  "rubber_boots": {
   "authors": {
@@ -395,11 +481,21 @@
   "source": "https://polyhaven.com",
   "title": "Sledgehammer 01"
  },
+ "sofa_02": {
+  "authors": {
+   "Kirill Sannikov": "All"
+  },
+  "files": "gltf 1k",
+  "kind": "model",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Sofa 02"
+ },
  "sparse_grass": {
   "authors": {
    "Amal Kumar": "All"
   },
-  "files": "1k jpg: diff, nor_gl, arm -> baked into assets/generated/terrain/terrain_*.jpg (originals not committed)",
+  "files": "1k jpg: diff, nor_gl, arm",
   "kind": "texture",
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
@@ -424,6 +520,17 @@
   "license": "CC0 1.0 (Poly Haven)",
   "source": "https://polyhaven.com",
   "title": "Stone Fire Pit"
+ },
+ "stretch_poplin": {
+  "authors": {
+   "Rico Cilliers": "Processing",
+   "colormass": "Photography"
+  },
+  "files": "1k jpg: diff, nor_gl, arm",
+  "kind": "texture",
+  "license": "CC0 1.0 (Poly Haven)",
+  "source": "https://polyhaven.com",
+  "title": "Stretch Poplin"
  },
  "throw_pillows_01": {
   "authors": {

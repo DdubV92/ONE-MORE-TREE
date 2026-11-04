@@ -1,7 +1,8 @@
 class_name TreeBuilder
 extends RefCounted
-## Builds the reusable tree meshes once (deterministic): three species x three
-## variants x two detail levels, plus a solid far-distance silhouette per
+## Builds the reusable tree meshes once (deterministic): three species x four
+## variants x two detail levels (variant 3, Phase 12 = open-grown form with
+## thick low boughs that belong to the tree and fall with it), plus a solid far-distance silhouette per
 ## species. Surface 0 = bark, surface 1 = foliage cards.
 ##
 ## Botanical set (coastal woodland): Scots-type pine, Norway-type spruce,
@@ -13,6 +14,7 @@ const SPECIES_NAMES := ["pine", "spruce", "birch"]
 ## per-tree record (World.trees.height / radius).
 const REF_HEIGHT := [20.0, 18.0, 13.0]
 const REF_RADIUS := [0.38, 0.33, 0.19]
+const VARIANTS := 4
 const FAR_COLORS := [Color(0.16, 0.24, 0.1), Color(0.1, 0.18, 0.1), Color(0.28, 0.38, 0.14)]
 
 var _bark: SurfaceTool
@@ -30,7 +32,7 @@ static func build_all() -> Dictionary:
 	for sp in 3:
 		var near_v := []
 		var mid_v := []
-		for v in 3:
+		for v in VARIANTS:
 			near_v.append(b.build(sp, v, true))
 			mid_v.append(b.build(sp, v, false))
 		near.append(near_v)
@@ -166,7 +168,7 @@ func _wobble_path(from: Vector3, to: Vector3, segments: int, wobble: float) -> A
 # --------------------------------------------------------------- species
 
 func _build_pine(variant: int, detailed: bool) -> void:
-	var H: float = REF_HEIGHT[0] * [1.0, 0.95, 1.04][variant]
+	var H: float = REF_HEIGHT[0] * [1.0, 0.95, 1.04, 0.93][variant]
 	var R: float = REF_RADIUS[0]
 	var sides := 10 if detailed else 6
 	var segs := 10 if detailed else 5
@@ -176,7 +178,7 @@ func _build_pine(variant: int, detailed: bool) -> void:
 		var t := float(k) / (trunk.size() - 1)
 		radii.append(R * (1.0 - t * 0.78) * (1.0 + 0.35 * exp(-t * 18.0)))
 	_tube(trunk, radii, sides, 2.0)
-	var crown_lo: float = H * [0.6, 0.66, 0.56][variant]
+	var crown_lo: float = H * [0.6, 0.66, 0.56, 0.48][variant]
 	_crown_center = Vector3(trunk[trunk.size() - 1].x * 0.8, (crown_lo + H) * 0.5, trunk[trunk.size() - 1].z * 0.8)
 	var branches := (17 if detailed else 8) + variant
 	for b in branches:
@@ -199,6 +201,8 @@ func _build_pine(variant: int, detailed: bool) -> void:
 		if detailed and length > 1.8:
 			_clump(mid, (dir + Vector3.UP * 0.4).normalized(), csize * 0.8, 2, true)
 	_clump(trunk[trunk.size() - 1] + Vector3(0, -0.4, 0), Vector3.UP, 2.4 * (1.0 if detailed else 1.3), 3)
+	if variant == 3:
+		_low_boughs(trunk, H, R, 4, 3.4, 6.2, 4.2, detailed, true)
 	if detailed:
 		# Dead stubs on the lower trunk
 		for k in 6:
@@ -212,7 +216,7 @@ func _build_pine(variant: int, detailed: bool) -> void:
 
 
 func _build_spruce(variant: int, detailed: bool) -> void:
-	var H: float = REF_HEIGHT[1] * [1.0, 1.06, 0.93][variant]
+	var H: float = REF_HEIGHT[1] * [1.0, 1.06, 0.93, 0.98][variant]
 	var R: float = REF_RADIUS[1]
 	var sides := 9 if detailed else 6
 	var trunk := _wobble_path(Vector3.ZERO, Vector3(_rng.randf_range(-0.15, 0.15), H, _rng.randf_range(-0.15, 0.15)), 8 if detailed else 4, 0.08)
@@ -221,7 +225,7 @@ func _build_spruce(variant: int, detailed: bool) -> void:
 		var t := float(k) / (trunk.size() - 1)
 		radii.append(R * (1.0 - t * 0.9) * (1.0 + 0.3 * exp(-t * 20.0)))
 	_tube(trunk, radii, sides, 2.0)
-	var lowest: float = H * [0.12, 0.08, 0.16][variant]
+	var lowest: float = H * [0.12, 0.08, 0.16, 0.11][variant]
 	_crown_center = Vector3(0, H * 0.45, 0)
 	var step := 0.62 if detailed else 1.25
 	var y := lowest
@@ -244,6 +248,9 @@ func _build_spruce(variant: int, detailed: bool) -> void:
 				_card(base + dir * 0.05, dir, up_tilt.lerp(side, 0.15).normalized(), length * 0.92, length * 0.45, 1.0, true)
 		y += step * _rng.randf_range(0.85, 1.15) * (1.0 - t * 0.35)
 		whorl += 1
+	if variant == 3:
+		# Heavy dead lower limbs below the live skirt (above head height).
+		_low_boughs(trunk, H, R, 5, 2.6, maxf(lowest - 0.3, 2.8), 1.9, detailed, false)
 	# Leader
 	var top := trunk[trunk.size() - 1]
 	for k in 3:
@@ -252,11 +259,11 @@ func _build_spruce(variant: int, detailed: bool) -> void:
 
 
 func _build_birch(variant: int, detailed: bool) -> void:
-	var H: float = REF_HEIGHT[2] * [1.0, 0.92, 1.08][variant]
+	var H: float = REF_HEIGHT[2] * [1.0, 0.92, 1.08, 0.95][variant]
 	var R: float = REF_RADIUS[2]
 	var sides := 9 if detailed else 6
 	var lean := Vector3(_rng.randf_range(-0.8, 0.8), 0, _rng.randf_range(-0.8, 0.8))
-	var fork_y: float = H * [0.45, 0.5, 0.4][variant]
+	var fork_y: float = H * [0.45, 0.5, 0.4, 0.3][variant]
 	var trunk := _wobble_path(Vector3.ZERO, Vector3(lean.x * 0.5, fork_y, lean.z * 0.5), 5 if detailed else 3, 0.12)
 	var radii: Array[float] = []
 	for k in trunk.size():
@@ -264,7 +271,7 @@ func _build_birch(variant: int, detailed: bool) -> void:
 		radii.append(R * (1.0 - t * 0.3) * (1.0 + 0.25 * exp(-t * 14.0)))
 	_tube(trunk, radii, sides, 1.0)
 	_crown_center = Vector3(lean.x, H * 0.68, lean.z)
-	var limbs := 3 if variant != 1 else 2
+	var limbs: int = [3, 2, 3, 4][variant]
 	var fork := trunk[trunk.size() - 1]
 	for l in limbs:
 		var az := TAU * l / limbs + _rng.randf_range(-0.4, 0.4)
@@ -275,13 +282,38 @@ func _build_birch(variant: int, detailed: bool) -> void:
 		for k in path.size():
 			rr.append(R * 0.7 * (1.0 - float(k) / path.size() * 0.85))
 		_tube(path, rr, 6 if detailed else 4, 1.0)
-	var clusters := 26 if detailed else 11
+	if variant == 3:
+		_low_boughs(trunk, H, R * 1.4, 2, 2.6, maxf(fork_y - 0.4, 2.8), 3.0, detailed, true)
+	var clusters := (26 if detailed else 11) + (6 if variant == 3 else 0)
 	for k in clusters:
 		var u := _rng.randf()
 		var a := _rng.randf() * TAU
 		var r := sqrt(_rng.randf())
 		var p := _crown_center + Vector3(cos(a) * r * 2.7, (u - 0.45) * 2.0 * H * 0.24, sin(a) * r * 2.7)
 		_ball(p, _rng.randf_range(1.5, 2.1) * (1.0 if detailed else 1.4), 3 if detailed else 2)
+
+
+## Thick low boughs (Phase 12): tapered limbs from y0..y1 (mesh units, above
+## a standing worker's head once scaled), rising and bending outward, with
+## foliage at mid and tip when `leafy`. Part of the tree's own mesh, so they
+## sway with it, fall with it and disappear with it in every LOD.
+func _low_boughs(trunk: Array[Vector3], h: float, r: float, count: int, y0: float, y1: float, length: float, detailed: bool, leafy: bool) -> void:
+	for b in count:
+		var y := lerpf(y0, y1, float(b) / maxf(count - 1, 1)) + _rng.randf_range(-0.2, 0.2)
+		var base := _trunk_point(trunk, y / h)
+		var az := _rng.randf() * TAU + b * 2.1
+		var out := Vector3(cos(az), 0, sin(az))
+		var L := length * _rng.randf_range(0.8, 1.15)
+		var mid := base + out * L * 0.5 + Vector3(0, L * (0.12 if leafy else -0.04), 0)
+		var tip := base + out * L + Vector3(0, L * (0.3 if leafy else -0.1), 0)
+		var r0 := r * 0.42
+		var pts: Array[Vector3] = [base - out * r * 0.3, mid, tip]
+		var rr: Array[float] = [r0, r0 * 0.6, r0 * 0.22]
+		_tube(pts, rr, 6 if detailed else 4, 0.6)
+		if leafy:
+			_clump(tip, (out + Vector3.UP * 0.6).normalized(), 2.2 * (1.0 if detailed else 1.35), 2, true)
+			if detailed:
+				_clump(mid + Vector3(0, 0.2, 0), (out + Vector3.UP).normalized(), 1.7, 2, true)
 
 
 func _trunk_point(trunk: Array[Vector3], t: float) -> Vector3:
@@ -350,19 +382,19 @@ func _far_blob(st: SurfaceTool, c: Vector3, r: Vector3, col: Color) -> void:
 static func trunk_radius_local(species: int, variant: int, y: float) -> float:
 	match species:
 		Species.PINE:
-			var h: float = REF_HEIGHT[0] * [1.0, 0.95, 1.04][variant]
+			var h: float = REF_HEIGHT[0] * [1.0, 0.95, 1.04, 0.93][variant]
 			var t := clampf(y / h, 0.0, 1.0)
 			return REF_RADIUS[0] * (1.0 - t * 0.78) * (1.0 + 0.35 * exp(-t * 18.0))
 		Species.SPRUCE:
-			var h: float = REF_HEIGHT[1] * [1.0, 1.06, 0.93][variant]
+			var h: float = REF_HEIGHT[1] * [1.0, 1.06, 0.93, 0.98][variant]
 			var t := clampf(y / h, 0.0, 1.0)
 			return REF_RADIUS[1] * (1.0 - t * 0.9) * (1.0 + 0.3 * exp(-t * 20.0))
 		_:
-			var h: float = REF_HEIGHT[2] * [1.0, 0.92, 1.08][variant]
-			var fork: float = h * [0.45, 0.5, 0.4][variant]
+			var h: float = REF_HEIGHT[2] * [1.0, 0.92, 1.08, 0.95][variant]
+			var fork: float = h * [0.45, 0.5, 0.4, 0.3][variant]
 			var t := clampf(y / fork, 0.0, 1.0)
 			return REF_RADIUS[2] * (1.0 - t * 0.3) * (1.0 + 0.25 * exp(-t * 14.0))
 
 
 static func mesh_height(species: int, variant: int) -> float:
-	return REF_HEIGHT[species] * [[1.0, 0.95, 1.04], [1.0, 1.06, 0.93], [1.0, 0.92, 1.08]][species][variant]
+	return REF_HEIGHT[species] * [[1.0, 0.95, 1.04, 0.93], [1.0, 1.06, 0.93, 0.98], [1.0, 0.92, 1.08, 0.95]][species][variant]

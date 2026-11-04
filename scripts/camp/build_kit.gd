@@ -18,7 +18,19 @@ static func mat(name: String) -> Material:
 		"floor": m = _tex_mat("wood_floor_worn", Color(1, 0.95, 0.9), 0.5)
 		"panel": m = _tex_mat("wood_floor_worn", Color(1.1, 1.0, 0.88), 0.7)
 		"dark_wood": m = _tex_mat("weathered_planks", Color(0.55, 0.45, 0.38), 0.6)
-		"denim": m = _tex_mat("denim_fabric", Color(1, 1, 1), 1.5)
+		"denim": m = _fabric("denim_fabric", Color(0.25, 0.33, 0.5), 1.5)
+		# Phase 12: proper soft furnishings (Poly Haven CC0 scans, neutral-grey
+		# versions tinted per use; see tools/bake_fabrics.py).
+		"upholstery": m = _fabric("poly_wool_herringbone", Color(0.36, 0.38, 0.33), 0.6)
+		"chair_vinyl": m = _fabric("fabric_leather_02", Color(0.13, 0.13, 0.14), 0.5, 0.45)
+		"sheet": m = _fabric("stretch_poplin", Color(0.86, 0.85, 0.8), 0.5)
+		"pillow": m = _fabric("stretch_poplin", Color(0.9, 0.88, 0.82), 0.4)
+		"curtain_linen": m = _fabric("rough_linen", Color(0.74, 0.68, 0.56), 0.7)
+		"shower_vinyl": m = _vinyl(Color(0.78, 0.86, 0.88, 0.9))
+		"towel": m = _fabric("knitted_fleece", Color(0.82, 0.8, 0.74), 0.35)
+		"picnic_check": m = _tex_mat("gingham_check", Color(1, 1, 1), 0.6)
+		"mug_enamel": m = _plain(Color(0.86, 0.85, 0.8), 0.25, 0.0)
+		"mug_blue": m = _plain(Color(0.2, 0.34, 0.5), 0.25, 0.0)
 		"leather": m = _tex_mat("fabric_leather_01", Color(1, 1, 1), 1.0)
 		"bark": m = _tex_mat_path("res://assets/polyhaven/textures/pine_bark/pine_bark", Color(0.9, 0.85, 0.8), 0.8)
 		"camper_paint": m = _plain(Color(0.88, 0.85, 0.76), 0.35, 0.15)
@@ -33,11 +45,11 @@ static func mat(name: String) -> Material:
 		"counter": m = _plain(Color(0.55, 0.6, 0.55), 0.35, 0.0)
 		"wall_white": m = _plain(Color(0.86, 0.83, 0.76), 0.7, 0.0)
 		"mattress": m = _plain(Color(0.86, 0.84, 0.78), 0.9, 0.0)
-		"blanket_red": m = _tex_mat("denim_fabric", Color(1.4, 0.35, 0.3), 1.2)
-		"blanket_green": m = _tex_mat("denim_fabric", Color(0.5, 0.9, 0.5), 1.2)
-		"blanket_ochre": m = _tex_mat("denim_fabric", Color(1.5, 1.1, 0.4), 1.2)
-		"blanket_blue": m = _tex_mat("denim_fabric", Color(0.8, 0.9, 1.2), 1.2)
-		"dog_bed": m = _tex_mat("denim_fabric", Color(1.3, 0.75, 0.45), 2.0)
+		"blanket_red": m = _fabric("caban", Color(0.5, 0.13, 0.11), 1.0)
+		"blanket_green": m = _fabric("caban", Color(0.2, 0.3, 0.2), 1.0)
+		"blanket_ochre": m = _fabric("caban", Color(0.6, 0.45, 0.2), 1.0)
+		"blanket_blue": m = _fabric("caban", Color(0.2, 0.27, 0.4), 1.0)
+		"dog_bed": m = _fabric("polar_fleece", Color(0.55, 0.4, 0.28), 0.6)
 		"roof": m = _plain(Color(0.22, 0.24, 0.23), 0.7, 0.3)
 		"stone": m = _plain(Color(0.45, 0.43, 0.4), 0.85, 0.0)
 		"ash": m = _plain(Color(0.16, 0.15, 0.14), 1.0, 0.0)
@@ -48,6 +60,31 @@ static func mat(name: String) -> Material:
 		"screen": m = _plain(Color(0.02, 0.02, 0.03), 0.2, 0.0)
 		_: m = _plain(Color(1, 0, 1), 0.5, 0.0)
 	_mats[name] = m
+	return m
+
+
+## Neutral-grey Poly Haven fabric scan tinted to `col` (mean albedo = col),
+## with the scan's own normal and AO/roughness maps.
+static func _fabric(tex: String, col: Color, scale: float, rough_mult := 1.0) -> StandardMaterial3D:
+	var base := "res://assets/polyhaven/textures/%s/%s" % [tex, tex]
+	var m := _tex_mat_path(base, Color(1, 1, 1), scale)
+	m.albedo_texture = load("res://assets/generated/fabrics/%s_grey.jpg" % tex)
+	m.albedo_color = Color(minf(col.r * 2.0, 2.0), minf(col.g * 2.0, 2.0), minf(col.b * 2.0, 2.0))
+	if rough_mult != 1.0:
+		m.roughness = rough_mult
+	return m
+
+
+## Thin vinyl (shower curtain): soft sheen, faintly translucent, two-sided.
+static func _vinyl(c: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = c
+	m.roughness = 0.32
+	m.metallic_specular = 0.45
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.backlight_enabled = true
+	m.backlight = Color(0.25, 0.28, 0.3)
 	return m
 
 

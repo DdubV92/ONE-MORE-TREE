@@ -107,7 +107,7 @@ func _drivable_point(c: Vector2) -> bool:
 		if c.distance_to(Vector2(World.trees.x[i], World.trees.z[i])) < CLEAR + float(World.trees.radius[i]):
 			return false
 	for r in _rock_hash.get(key, []):
-		if c.distance_to(Vector2(World.rocks.x[r], World.rocks.z[r])) < CLEAR * 0.6 + float(World.rocks.scale[r]) * 0.45:
+		if c.distance_to(Vector2(World.rocks.x[r], World.rocks.z[r])) < CLEAR * 0.6 + World.rock_radius(r):
 			return false
 	if int(log_refs.get(to_cell(c), 0)) > 0:
 		return false

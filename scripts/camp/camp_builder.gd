@@ -251,11 +251,11 @@ func _build_camper() -> void:
 	couch.name = "Couch"
 	couch.position = Vector3(W - 0.88, F, zs - 2.1)
 	c.add_child(couch)
-	BuildKit.box(couch, Vector3(1.7, 0.42, 0.78), Vector3(0, 0.21, 0), "dark_wood", true, 0.0, "CouchBase")
-	BuildKit.box(couch, Vector3(1.6, 0.14, 0.7), Vector3(0, 0.49, 0.02), "denim", false, 0.0, "SeatCushion")
-	BuildKit.box(couch, Vector3(1.7, 0.5, 0.18), Vector3(0, 0.72, -0.33), "denim", false, 0.0, "Backrest")
-	for sx in [-1.0, 1.0]:
-		BuildKit.box(couch, Vector3(0.16, 0.3, 0.74), Vector3(sx * 0.8, 0.6, 0.0), "denim", false, 0.0, "Arm")
+	# Phase 12: a real upholstered sofa (Poly Haven sofa_02, CC0) on the
+	# unchanged collision base (seat markers and sitting are unaffected).
+	var base := BuildKit.box(couch, Vector3(1.7, 0.42, 0.78), Vector3(0, 0.21, 0), "dark_wood", true, 0.0, "CouchBase")
+	base.visible = false
+	BuildKit.prop(couch, "sofa_02", Vector3(0, 0.0, 0.1), 0.0, 0.94)
 	BuildKit.marker(couch, "CouchSeat_1", Vector3(-0.38, 0.55, 0.05), PI, "couch_seat")
 	BuildKit.marker(couch, "CouchSeat_2", Vector3(0.38, 0.55, 0.05), PI, "couch_seat")
 	BuildKit.prop(c, "throw_pillows_01", Vector3(W - 0.35, F + 0.55, zs - 2.2), PI, 0.6)
@@ -312,7 +312,7 @@ func _build_camper() -> void:
 	bdoor.rotation.y = PI * 0.5
 	c.add_child(bdoor)
 	BuildKit.box(c, Vector3(0.85, 0.08, 0.8), Vector3(1.05, F + 0.04, -0.95), "ceramic", false, 0.0, "ShowerTray")
-	BuildKit.box(c, Vector3(0.02, 1.9, 0.8), Vector3(0.62, F + 1.05, -0.95), "blanket_blue", false, 0.0, "ShowerCurtain")
+	BuildKit.box(c, Vector3(0.02, 1.9, 0.8), Vector3(0.62, F + 1.05, -0.95), "shower_vinyl", false, 0.0, "ShowerCurtain")
 	var toilet := Node3D.new()
 	toilet.name = "Toilet"
 	toilet.position = Vector3(1.15, F, -0.12)
@@ -329,7 +329,8 @@ func _build_camper() -> void:
 	c.add_child(bed)
 	BuildKit.box(bed, Vector3(1.45, 0.35, 2.0), Vector3(0, 0.175, 0), "dark_wood", true)
 	BuildKit.box(bed, Vector3(1.38, 0.2, 1.95), Vector3(0, 0.45, 0.02), "mattress", false)
-	BuildKit.box(bed, Vector3(1.42, 0.06, 1.35), Vector3(0, 0.57, 0.33), "blanket_red", false)
+	BuildKit.box(bed, Vector3(1.4, 0.02, 1.96), Vector3(0, 0.555, 0.02), "sheet", false, 0.0, "Sheet")
+	BuildKit.box(bed, Vector3(1.44, 0.05, 1.3), Vector3(0, 0.585, 0.35), "blanket_red", false, 0.0, "Blanket")
 	BuildKit.box(bed, Vector3(1.45, 0.75, 0.08), Vector3(0, 0.5, -1.0), "dark_wood", false)
 	BuildKit.prop(bed, "throw_pillows_01", Vector3(0, 0.55, -0.72), 0.0, 1.0)
 	BuildKit.marker(bed, "PlayerSleepPoint", Vector3(0, 0.75, 0.1), PI, "player_bed")
@@ -421,8 +422,8 @@ func _build_desk(c: Node3D, W: float, F: float, zs: float) -> void:
 	chair.name = "DeskChair"
 	chair.position = Vector3(-W + 0.62, F, zs - 1.12)
 	c.add_child(chair)
-	BuildKit.box(chair, Vector3(0.48, 0.07, 0.46), Vector3(0, 0.46, 0), "denim", true, 0.0, "ChairSeat")
-	BuildKit.box(chair, Vector3(0.46, 0.5, 0.06), Vector3(0, 0.76, -0.22), "denim", false, 0.0, "ChairBack")
+	BuildKit.box(chair, Vector3(0.48, 0.07, 0.46), Vector3(0, 0.46, 0), "chair_vinyl", true, 0.0, "ChairSeat")
+	BuildKit.box(chair, Vector3(0.46, 0.5, 0.06), Vector3(0, 0.76, -0.22), "chair_vinyl", false, 0.0, "ChairBack")
 	BuildKit.cylinder(chair, 0.03, 0.42, Vector3(0, 0.22, 0), "steel", false, 8)
 	BuildKit.cylinder(chair, 0.26, 0.03, Vector3(0, 0.03, 0), "steel", false, 10)
 	BuildKit.marker(chair, "DeskSeat", Vector3(0, 0.55, 0.05), PI, "desk_seat")
@@ -518,8 +519,9 @@ func _build_cabin() -> void:
 		c.add_child(bed)
 		BuildKit.prop(bed, "old_bed_frame", Vector3.ZERO, 0.0, 1.0)
 		BuildKit.box(bed, Vector3(0.86, 0.18, 1.9), Vector3(0, 0.5, 0.02), "mattress", true)
-		BuildKit.box(bed, Vector3(0.9, 0.05, 1.3), Vector3(0, 0.61, 0.3), spec[1], false)
-		BuildKit.box(bed, Vector3(0.6, 0.12, 0.35), Vector3(0, 0.65, -0.72), "white", false)
+		BuildKit.box(bed, Vector3(0.88, 0.02, 1.9), Vector3(0, 0.6, 0.02), "sheet", false, 0.0, "Sheet")
+		BuildKit.box(bed, Vector3(0.92, 0.05, 1.3), Vector3(0, 0.625, 0.3), spec[1], false, 0.0, "Blanket")
+		BuildKit.box(bed, Vector3(0.6, 0.12, 0.35), Vector3(0, 0.67, -0.72), "pillow", false, 0.0, "Pillow")
 		var sp := BuildKit.marker(bed, "SleepPoint", Vector3(0, 0.8, 0.1), 0.0, "worker_bed")
 		sp.set_meta("bed_index", i + 1)
 		_hide_spot(bed, "UnderWorkerBed_%d" % (i + 1), Vector3(0, 0.08, 0.1), "under_bed")
@@ -543,7 +545,7 @@ func _build_cabin() -> void:
 		BuildKit.prop(c, "painted_wooden_chair_01", s[0], s[1], 1.0, Vector3(0.45, 0.5, 0.45))
 		BuildKit.marker(c, "WorkerSeat_%d" % (i + 1), s[0], s[1], "worker_seat")
 	BuildKit.prop(c, "carved_wooden_plate", Vector3(-0.4, F + 0.78, 0.4), 0.0, 1.0)
-	BuildKit.cylinder(c, 0.045, 0.1, Vector3(-0.2, F + 0.83, -0.3), "blanket_blue", false, 10)
+	BuildKit.cylinder(c, 0.045, 0.1, Vector3(-0.2, F + 0.83, -0.3), "mug_blue", false, 10)
 	# --- Arcade corner (east wall)
 	for i in 2:
 		var cab := _arcade_cabinet(i)
@@ -676,8 +678,9 @@ func _build_cabin_extension(c: Node3D, F: float, hx: float, hz: float, t: float)
 		e.add_child(bed)
 		BuildKit.prop(bed, "old_bed_frame", Vector3.ZERO, 0.0, 1.0)
 		BuildKit.box(bed, Vector3(0.86, 0.18, 1.9), Vector3(0, 0.5, 0.02), "mattress", true)
-		BuildKit.box(bed, Vector3(0.9, 0.05, 1.3), Vector3(0, 0.61, 0.3), spec[1], false)
-		BuildKit.box(bed, Vector3(0.6, 0.12, 0.35), Vector3(0, 0.65, -0.72), "white", false)
+		BuildKit.box(bed, Vector3(0.88, 0.02, 1.9), Vector3(0, 0.6, 0.02), "sheet", false, 0.0, "Sheet")
+		BuildKit.box(bed, Vector3(0.92, 0.05, 1.3), Vector3(0, 0.625, 0.3), spec[1], false, 0.0, "Blanket")
+		BuildKit.box(bed, Vector3(0.6, 0.12, 0.35), Vector3(0, 0.67, -0.72), "pillow", false, 0.0, "Pillow")
 		var m := BuildKit.marker(bed, "SleepPoint", Vector3(0, 0.8, 0.1), 0.0, "worker_bed")
 		m.set_meta("bed_index", 5 + i)
 		_hide_spot(bed, "UnderWorkerBed_%d" % (5 + i), Vector3(0, 0.08, 0.1), "under_bed")
@@ -826,7 +829,7 @@ func _build_yard() -> void:
 	pt.name = "PicnicTable"
 	BuildKit.prop(y, "wooden_lantern_01", _ground(L.PICNIC_POS) + Vector3(0.3, 0.76, 0.1), 0.0, 0.7)
 	for k in 2:
-		BuildKit.cylinder(y, 0.045, 0.1, _ground(L.PICNIC_POS) + Vector3(-0.3 + k * 0.25, 0.81, -0.2 + k * 0.1), ["blanket_ochre", "blanket_green"][k], false, 10)
+		BuildKit.cylinder(y, 0.045, 0.1, _ground(L.PICNIC_POS) + Vector3(-0.3 + k * 0.25, 0.81, -0.2 + k * 0.1), ["mug_enamel", "mug_blue"][k], false, 10)
 	# Seats around the fire, set back from embers
 	var fp := L.BURN_PIT_POS
 	var seats := [["Rockingchair_01", 1.0, -0.6], ["folding_wooden_stool", 1.0, 1.0], ["folding_wooden_stool", 1.0, 2.2], ["folding_wooden_stool", 1.0, 3.6]]
@@ -837,7 +840,7 @@ func _build_yard() -> void:
 		var pos := _ground(fp + Vector3(cos(ang) * r, 0, sin(ang) * r))
 		var face := atan2(-cos(ang), -sin(ang))
 		BuildKit.prop(y, s[0], pos, face, s[1], Vector3(0.6, 0.5, 0.6))
-	var blanket := BuildKit.box(y, Vector3(0.55, 0.03, 0.8), _ground(fp + Vector3(cos(-0.6) * 3.6, 0.62, sin(-0.6) * 3.6)), "blanket_green", false)
+	var blanket := BuildKit.box(y, Vector3(0.55, 0.03, 0.8), _ground(fp + Vector3(cos(-0.6) * 3.6, 0.62, sin(-0.6) * 3.6)), "picnic_check", false)
 	blanket.rotation.x = 0.4
 	BuildKit.prop(y, "wooden_crate_02", _ground(L.CAMPER_POS + Vector3(2.4, 0, -3.4)), 0.1, 1.0, Vector3(1.1, 0.45, 0.5))
 	BuildKit.prop(y, "Barrel_02", _ground(L.CAMPER_POS + Vector3(1.85, 0, -4.4)), 0.0, 1.0, Vector3(0.5, 0.9, 0.5))

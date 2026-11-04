@@ -18,7 +18,14 @@ extends RefCounted
 ## contract_v1 (legacy): the 12,000-tree / two-employee contract of
 ## Phases 3-9. Saves made with it keep it.
 
-const STANDARD := "expanded_v1"
+## expanded_v2 (Phase 12, new standard campaigns): the same terms as
+##   expanded_v1 on island revision 2 (data/world/r2): landform terrain,
+##   exactly 10,000 planned native trees with size cohorts and low boughs,
+##   persistent rock formations, undergrowth and hide anchors. Phase 10
+##   saves keep expanded_v1 on the revision-1 island; legacy keeps
+##   contract_v1. A save never changes island revision.
+const STANDARD := "expanded_v2"
+const PHASE10 := "expanded_v1"
 const LEGACY := "contract_v1"
 
 const DEFS := {
@@ -27,12 +34,25 @@ const DEFS := {
 		"starting_employees": 2, "start_cash_cents": 200000, "section_length_mult": 1.0, "section_length_active": true,
 		"tool_model": "per_contact_v1", "chainsaw": false, "version": 1,
 	},
+	"expanded_v2": {
+		"id": "expanded_v2", "label": "Standard 10,000-tree contract (island r2)", "native_total": 10000, "variant": "island_r2",
+		"starting_employees": 5, "start_cash_cents": 450000, "section_length_mult": 1.5, "section_length_active": false,
+		"tool_model": "per_contact_v1", "chainsaw": false, "version": 2,
+	},
 	"expanded_v1": {
 		"id": "expanded_v1", "label": "Standard 10,000-tree contract", "native_total": 10000, "variant": "standard_10k",
 		"starting_employees": 5, "start_cash_cents": 450000, "section_length_mult": 1.5, "section_length_active": false,
 		"tool_model": "per_contact_v1", "chainsaw": false, "version": 1,
 	},
 }
+
+
+## The ruleset a world variant belongs to (Preview fixtures, tests).
+static func for_variant(variant: String) -> String:
+	for id in DEFS:
+		if str(DEFS[id].variant) == variant:
+			return id
+	return LEGACY
 
 
 static func known(id: String) -> bool:

@@ -116,9 +116,15 @@ static func fabric(color: Color, texture: String = "denim_fabric") -> StandardMa
 		return _mat_cache[key]
 	var base := "res://assets/polyhaven/textures/%s/%s" % [texture, texture]
 	var m := StandardMaterial3D.new()
-	m.albedo_texture = load(base + "_diff.jpg")
-	# Desaturate the denim scan toward the requested garment colour.
-	m.albedo_color = color * 1.6
+	# Phase 12: neutral-grey version of the scan (tools/bake_fabrics.py) tinted
+	# to the garment colour, so a rust jacket is rust, not rust x blue denim.
+	var grey := "res://assets/generated/fabrics/%s_grey.jpg" % texture
+	if ResourceLoader.exists(grey):
+		m.albedo_texture = load(grey)
+		m.albedo_color = Color(minf(color.r * 2.0, 2.0), minf(color.g * 2.0, 2.0), minf(color.b * 2.0, 2.0))
+	else:
+		m.albedo_texture = load(base + "_diff.jpg")
+		m.albedo_color = color * 1.6
 	m.normal_enabled = true
 	m.normal_texture = load(base + "_nor_gl.jpg")
 	m.normal_scale = 0.6

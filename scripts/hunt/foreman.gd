@@ -203,9 +203,14 @@ func _sight_range(who: Node3D) -> float:
 func can_see(who: Node3D) -> bool:
 	if who == null or not is_instance_valid(who):
 		return false
-	if Game.hunt.is_hidden(who):
-		return false
 	var tp := who.global_position + Vector3(0, 1.3, 0)
+	if Game.hunt.is_hidden(who):
+		# Phase 12: rock hides conceal by geometry - the hunter sees the
+		# crouched eye if its ray reaches it (e.g. through the opening).
+		var spot: HideSpot = Game.hunt.hidden.get(who)
+		if spot == null or not spot.kind.begins_with("rock_"):
+			return false
+		tp = spot.eye
 	var head := _head()
 	var to := tp - head
 	if to.length() > _sight_range(who):
@@ -219,7 +224,16 @@ func can_see(who: Node3D) -> bool:
 		ex.append((who as CollisionObject3D).get_rid())
 	q.exclude = ex
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
-	return hit.is_empty() or (hit.position as Vector3).distance_to(tp) < 0.6
+	if not (hit.is_empty() or (hit.position as Vector3).distance_to(tp) < 0.6):
+		return false
+	# Phase 12 soft cover: dense brush between us thins the view (bounded:
+	# never within 4 m, weaker against a moving target).
+	if Game.cover:
+		var crouched := who is Player and bool(who.get("_crouching"))
+		var target := tp - Vector3(0, 0.45 if crouched else 0.0, 0)
+		if Game.cover.soft_hides(head, target, _velocity_of(who).length() > 2.2):
+			return false
+	return true
 
 
 ## Actual sound events in the world (footsteps, work, doors, engines...).

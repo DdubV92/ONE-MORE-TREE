@@ -1,0 +1,240 @@
+{
+	"format": 1,
+	"island_revision": "r2",
+	"planner_revision": 1,
+	"tree_target": 10000,
+	"base_world": {
+		"generation_version": 1.0,
+		"content_hashes": {
+			"heightmap.bin": "7e6df88e97a146690cb4cc53f1a416fd",
+			"masks.bin": "69f481e17ee36c653b12884411037865",
+			"water_surface.bin": "06c3ea2438916839c8e7ada4877c1990",
+			"water_region.bin": "f07dad3e60fd3d3ca89456ba0154c2b3",
+			"trees.bin": "1b707eb107fb4b915cfcd9931b4e61ef",
+			"rocks.bin": "d41e859b147b6b400b42fae1ba025f24",
+			"layout.json": "398beb1231018dacbdae39ef930af704"
+		}
+	},
+	"content_hashes": {
+		"height_delta.bin": "2b80275c11d89018c1bbc605729086fe",
+		"masks.bin": "498f833b67413d21dfab37a7165fb075",
+		"trees.bin": "84502336d65c240fc8667333a6b495ab",
+		"rocks.bin": "04bc57cb9b0a86b087138ac8ddaf386f",
+		"shrubs.bin": "caef325af869ed7082aaa3963a58136c",
+		"cover.json": "7b4986b24719da561a9b3edcb28b4efb"
+	},
+	"stats": {
+		"hide_max_gap_m": 113.8,
+		"hard_cover_gap_before_m": 109.0,
+		"hard_cover_gap_after_m": 47.5,
+		"work_cells": 16644,
+		"nav_component_cells": 126601,
+		"tree_spill_rounds": 0,
+		"generation_ms": 17267,
+		"tree_count": 10000,
+		"trees_per_species": {
+			"pine": 5233,
+			"spruce": 2896,
+			"birch": 1871
+		},
+		"trees_per_cohort": {
+			"young": 4050,
+			"mature": 3730,
+			"veteran": 2220
+		},
+		"trees_with_low_boughs": 1950,
+		"tree_height_range_m": [
+			7.01000022888184,
+			27.0
+		],
+		"regions": [
+			{
+				"id": 0,
+				"name": "Camp woods",
+				"seed": [
+					-190.0,
+					230.0
+				],
+				"density_weight": 1.0,
+				"usable_m2": 126121,
+				"quota": 1270,
+				"placed": 1270,
+				"groves": 57
+			},
+			{
+				"id": 1,
+				"name": "Lowland fern basin",
+				"seed": [
+					-430.0,
+					-40.0
+				],
+				"density_weight": 1.18,
+				"usable_m2": 67918,
+				"quota": 807,
+				"placed": 807,
+				"groves": 30
+			},
+			{
+				"id": 2,
+				"name": "South-west shore woods",
+				"seed": [
+					-540.0,
+					210.0
+				],
+				"density_weight": 0.85,
+				"usable_m2": 45423,
+				"quota": 389,
+				"placed": 389,
+				"groves": 20
+			},
+			{
+				"id": 3,
+				"name": "North-west inlet woods",
+				"seed": [
+					-560.0,
+					-260.0
+				],
+				"density_weight": 0.95,
+				"usable_m2": 59442,
+				"quota": 568,
+				"placed": 568,
+				"groves": 27
+			},
+			{
+				"id": 4,
+				"name": "Far west point",
+				"seed": [
+					-700.0,
+					20.0
+				],
+				"density_weight": 0.9,
+				"usable_m2": 41524,
+				"quota": 376,
+				"placed": 376,
+				"groves": 18
+			},
+			{
+				"id": 5,
+				"name": "Central woods",
+				"seed": [
+					-170.0,
+					-170.0
+				],
+				"density_weight": 1.05,
+				"usable_m2": 151232,
+				"quota": 1598,
+				"placed": 1598,
+				"groves": 68
+			},
+			{
+				"id": 6,
+				"name": "North bight woods",
+				"seed": [
+					90.0,
+					-480.0
+				],
+				"density_weight": 0.95,
+				"usable_m2": 76905,
+				"quota": 735,
+				"placed": 735,
+				"groves": 34
+			},
+			{
+				"id": 7,
+				"name": "River valley",
+				"seed": [
+					160.0,
+					110.0
+				],
+				"density_weight": 1.05,
+				"usable_m2": 135095,
+				"quota": 1428,
+				"placed": 1428,
+				"groves": 61
+			},
+			{
+				"id": 8,
+				"name": "Ridge slopes",
+				"seed": [
+					340.0,
+					-250.0
+				],
+				"density_weight": 0.7,
+				"usable_m2": 105540,
+				"quota": 744,
+				"placed": 744,
+				"groves": 47
+			},
+			{
+				"id": 9,
+				"name": "East plateau",
+				"seed": [
+					520.0,
+					-20.0
+				],
+				"density_weight": 1.0,
+				"usable_m2": 125887,
+				"quota": 1267,
+				"placed": 1267,
+				"groves": 57
+			},
+			{
+				"id": 10,
+				"name": "South-east cove woods",
+				"seed": [
+					430.0,
+					330.0
+				],
+				"density_weight": 0.9,
+				"usable_m2": 90259,
+				"quota": 818,
+				"placed": 818,
+				"groves": 41
+			}
+		],
+		"rejections": {
+			"hide_site_unavailable": 47,
+			"cover_site_unavailable": 9,
+			"tree_water": 221298,
+			"tree_rock": 4663,
+			"tree_slope": 2728,
+			"tree_hide_exit": 54,
+			"tree_river": 1000,
+			"tree_pond": 784,
+			"tree_beach": 7588,
+			"tree_trail": 1021,
+			"tree_camera": 34,
+			"tree_bridge": 114,
+			"tree_camp": 1010,
+			"tree_low_intensity": 51058,
+			"tree_spacing": 2326,
+			"tree_approach": 2
+		},
+		"landforms": {
+			"hummock": 84,
+			"ridge": 28,
+			"gully": 14
+		},
+		"max_landform_delta_m": 2.76,
+		"formations": {
+			"rock_gap": 23,
+			"rock_recess": 37,
+			"boulder_cluster": 153,
+			"rock_shelf": 37
+		},
+		"hides": 60,
+		"thickets": 150,
+		"rocks_total": 1449,
+		"rocks_new": 851,
+		"undergrowth": {
+			"hazel": 9022,
+			"bramble": 14295,
+			"bracken": 5051,
+			"deadfall": 1049,
+			"juniper": 3683,
+			"sedge": 2919
+		},
+		"undergrowth_total": 36019,
+		"max_slope_unused": 0.0
+	}
+}

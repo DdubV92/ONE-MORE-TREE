@@ -12,6 +12,8 @@ func _ready() -> void:
 		Settings.values.tonemapper = OS.get_environment("TONEMAP")
 	var args := OS.get_cmdline_user_args()
 	var shots: Array = DEFAULT if args.is_empty() else args
+	# Phase 12: captures show the new-campaign island unless ISLAND=full.
+	Game.preview_variant = OS.get_environment("ISLAND") if OS.has_environment("ISLAND") else "island_r2"
 	var world_scene: PackedScene = load("res://scenes/world.tscn")
 	var world: IslandWorld = world_scene.instantiate()
 	world.build_player = false

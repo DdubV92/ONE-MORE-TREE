@@ -448,7 +448,14 @@ func leave_hide() -> void:
 	var spot := hiding
 	var out := Vector3.INF
 	var fwd := spot.look_dir
-	for c in [spot.exit_point, spot.exit_point + fwd.cross(Vector3.UP) * 0.5, spot.exit_point - fwd.cross(Vector3.UP) * 0.5, spot.marker.global_position - fwd * 0.9]:
+	var cands: Array = [spot.exit_point, spot.exit_point + fwd.cross(Vector3.UP) * 0.5, spot.exit_point - fwd.cross(Vector3.UP) * 0.5]
+	# Phase 12 rock gaps: the far side is a real second way out.
+	for e in spot.exits:
+		if not cands.has(e):
+			cands.append(e)
+	if spot.exits.is_empty():
+		cands.append(spot.marker.global_position - fwd * 0.9)
+	for c in cands:
 		if _stand_clear(c):
 			out = c
 			break

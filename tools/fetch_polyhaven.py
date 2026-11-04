@@ -30,6 +30,8 @@ MODELS = [
     "russian_food_cans_01", "plastic_jerrycan", "security_light",
     "industrial_wall_lamp", "throw_pillows_01", "old_bed_frame",
     "tree_stump_01", "fern_02",
+    # Phase 12: camper couch, small woodland ground cover, forest-floor debris.
+    "sofa_02", "dry_branches_medium_01",
 ]
 
 # Surface textures: diffuse, OpenGL normal, AO/roughness/metal packed.
@@ -40,6 +42,9 @@ TEXTURES = [
     "pine_bark", "bark_brown_02", "weathered_planks", "wood_floor_worn",
     "weathered_plank_siding", "denim_fabric", "fabric_leather_01",
     "dry_decay_leaves", "gravel",
+    # Phase 12: proper soft furnishings (no more denim stand-ins).
+    "poly_wool_herringbone", "caban", "gingham_check", "stretch_poplin",
+    "rough_linen", "polar_fleece", "fabric_leather_02", "knitted_fleece",
 ]
 TEXTURE_MAPS = ["diff", "nor_gl", "arm"]
 

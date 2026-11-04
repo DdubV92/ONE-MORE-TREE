@@ -13,17 +13,25 @@ extends Node
 ##  4. Clearing fixtures (0/25/50/90/99/100 % removed, nearest-first) -> the
 ##     same coverage again for what remains + truck reach.
 ## Writes docs/audit/island_audit.json and docs/audit/ISLAND_AUDIT.md.
-##   godot --headless res://tools/island_audit.tscn [-- quick]
+##   godot --headless res://tools/island_audit.tscn [-- quick] [r2]
+## Phase 12: `r2` audits island revision 2 (new campaigns) and writes
+## docs/audit/island_audit_r2.json + ISLAND_AUDIT_R2.md, adding rock-hide
+## geometry, undergrowth placement and persistent-cover coverage.
 
 var w: IslandWorld
 var report := {}
 var issues: Array[Dictionary] = []
 var _issue_n := 0
 var quick := false
+var r2 := false
+var suffix := ""
 
 
 func _ready() -> void:
 	quick = "quick" in OS.get_cmdline_user_args()
+	r2 = "r2" in OS.get_cmdline_user_args()
+	suffix = "_r2" if r2 else ""
+	Game.preview_variant = "island_r2" if r2 else ""
 	Game.mode = Game.Mode.PREVIEW
 	Game.pending_teleport = "camp"
 	w = load("res://scenes/world.tscn").instantiate()
@@ -42,11 +50,13 @@ func _ready() -> void:
 	report["reach_original"] = _reach_coverage("original")
 	report["trucks_original"] = _truck_coverage()
 	report["facilities"] = _facilities()
+	if r2:
+		report["r2"] = await _r2_cover()
 	if not quick:
 		report["fixtures"] = await _fixtures()
 	report["issues"] = issues
 	report["elapsed_ms"] = Time.get_ticks_msec() - t0
-	PlacementValidator.write_report("res://docs/audit/island_audit.json", report)
+	PlacementValidator.write_report("res://docs/audit/island_audit%s.json" % suffix, report)
 	_write_md()
 	print("AUDIT ", JSON.stringify({"issues": issues.size(), "elapsed_ms": report.elapsed_ms, "unreachable_trees": report.reach_original.unreachable, "placement": report.placement.summary}))
 	get_tree().quit()
@@ -385,6 +395,131 @@ func _facilities() -> Dictionary:
 	return out
 
 
+# ------------------------------------------------------------ island r2
+
+func _r2_cover() -> Dictionary:
+	var out := {}
+	var space := w.get_world_3d().direct_space_state
+	var nav := w.crew.nav
+	var comp := _component()
+	var hd := {"checked": 0, "pocket_blocked": 0, "no_exit": 0, "exit_unreachable": 0, "dead_ends": 0}
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.28
+	cap.height = 0.95
+	for spot in Game.cover.hides:
+		var h := spot as HideSpot
+		hd.checked = int(hd.checked) + 1
+		if h.dead_end:
+			hd.dead_ends = int(hd.dead_ends) + 1
+		var q := PhysicsShapeQueryParameters3D.new()
+		q.shape = cap
+		q.collision_mask = 1
+		var base := h.marker.global_position
+		q.transform = Transform3D(Basis.IDENTITY, base + Vector3(0, 0.15 + 0.475 + 0.08, 0))
+		# Terrain is layer 1 too: only rock/structure hits count.
+		var hits := space.intersect_shape(q, 8)
+		var blocked := false
+		for hit in hits:
+			if not (hit.collider is StaticBody3D and str((hit.collider as Node).name).begins_with("Terrain")):
+				if hit.collider is Node and str((hit.collider as Node).name) == "RockCollision":
+					blocked = true
+		if blocked:
+			hd.pocket_blocked = int(hd.pocket_blocked) + 1
+			_issue("blocker", "hide_pocket", str(h.name), "crouched body overlaps rock in the pocket", "widen the formation")
+		var any_exit := false
+		var any_reach := false
+		for e in h.exits:
+			var q2 := PhysicsShapeQueryParameters3D.new()
+			var cap2 := CapsuleShape3D.new()
+			cap2.radius = 0.3
+			cap2.height = 1.6
+			q2.shape = cap2
+			q2.collision_mask = 1
+			q2.transform = Transform3D(Basis.IDENTITY, e + Vector3(0, 0.95, 0))
+			var bad := false
+			for hit in space.intersect_shape(q2, 8):
+				if hit.collider is Node and str((hit.collider as Node).name) == "RockCollision":
+					bad = true
+			if not bad:
+				any_exit = true
+				# A person steps out ~1.5 m into the open: the exit's 3 m nav
+				# cell or a neighbouring one must join the camp-connected area.
+				var ec := nav.to_cell(Vector2(e.x, e.z))
+				for dz in range(-1, 2):
+					for dx in range(-1, 2):
+						if comp.has(ec + Vector2i(dx, dz)):
+							any_reach = true
+		if not any_exit:
+			hd.no_exit = int(hd.no_exit) + 1
+			_issue("blocker", "hide_exit", str(h.name), "no exit where a standing body fits", "move the exit/opening")
+		elif not any_reach:
+			hd.exit_unreachable = int(hd.exit_unreachable) + 1
+			_issue("blocker", "hide_exit_reach", str(h.name), "exit not connected to the camp walkable area", "fix nav/placement")
+	out["hides"] = hd
+	# Persistent hard cover coverage (trees excluded on purpose).
+	var breaks: Array[Vector2] = []
+	for i in (World.rocks.x as PackedFloat32Array).size():
+		if 0.7 * float(World.rocks.scale[i]) * World.rock_squash(i) >= 1.25:
+			breaks.append(Vector2(World.rocks.x[i], World.rocks.z[i]))
+	for lf in World.cover.get("landforms", []):
+		if float(lf.height) >= 2.0:
+			breaks.append(Vector2(lf.center[0], lf.center[1]))
+	var hide_pts: Array[Vector2] = []
+	for spot in Game.cover.hides:
+		hide_pts.append(Vector2((spot as HideSpot).marker.global_position.x, (spot as HideSpot).marker.global_position.z))
+	var camp := Vector2(World.camp_origin().x, World.camp_origin().z)
+	var ds: Array[float] = []
+	var hs: Array[float] = []
+	var y := -620.0
+	while y <= 620.0:
+		var x := -850.0
+		while x <= 850.0:
+			var p := Vector2(x, y)
+			x += 10.0
+			if World.height_at(p.x, p.y) < 1.7 or World.water_depth_at(p.x, p.y) > 0.05 or not comp.has(nav.to_cell(p)):
+				continue
+			var best := maxf(p.distance_to(camp) - 30.0, 0.0)
+			for b in breaks:
+				best = minf(best, p.distance_to(b))
+			ds.append(best)
+			var hb := maxf(p.distance_to(camp) - 30.0, 0.0)
+			for hp in hide_pts:
+				hb = minf(hb, p.distance_to(hp))
+			hs.append(hb)
+		y += 10.0
+	ds.sort()
+	hs.sort()
+	var within := 0
+	for d in ds:
+		if d <= 50.0:
+			within += 1
+	out["coverage"] = {"cells": ds.size(), "max_m": snappedf(ds[-1], 0.1), "p95_m": snappedf(ds[int(ds.size() * 0.95)], 0.1), "within_50m_pct": snappedf(100.0 * within / maxf(ds.size(), 1), 0.1), "hide_max_m": snappedf(hs[-1], 0.1), "hide_p95_m": snappedf(hs[int(hs.size() * 0.95)], 0.1)}
+	# Undergrowth placement.
+	var ug := {"checked": 0, "in_water": 0, "in_buildings": 0, "in_cut_zone": 0, "on_trail": 0}
+	var rects := _building_rects()
+	var th := PlacementValidator._tree_hash()
+	for i in (World.shrubs.x as PackedFloat32Array).size():
+		ug.checked = int(ug.checked) + 1
+		var p := Vector2(World.shrubs.x[i], World.shrubs.z[i])
+		var k := int(World.shrubs.kind[i])
+		if k != 4 and World.water_depth_at(p.x, p.y) > 0.3:
+			ug.in_water = int(ug.in_water) + 1
+		for rc in rects:
+			if (rc as Rect2).has_point(p):
+				ug.in_buildings = int(ug.in_buildings) + 1
+		if k in [0, 1, 2]:
+			for ti in th.get(PlacementValidator._key(p.x, p.y, 8.0), []):
+				if p.distance_to(Vector2(World.trees.x[ti], World.trees.z[ti])) < float(World.trees.radius[ti]) + 1.0:
+					ug.in_cut_zone = int(ug.in_cut_zone) + 1
+					break
+			if World.masks_at(p.x, p.y).z > 0.6:
+				ug.on_trail = int(ug.on_trail) + 1
+	out["undergrowth"] = ug
+	if int(ug.in_water) + int(ug.in_buildings) + int(ug.in_cut_zone) > 0:
+		_issue("minor", "undergrowth_placement", "undergrowth", JSON.stringify(ug), "tighten planner exclusions")
+	return out
+
+
 # ------------------------------------------------------------ fixtures
 
 ## Removes trees nearest-first (how a crew actually clears) to the target
@@ -401,7 +536,7 @@ func _fixtures() -> Dictionary:
 		World.tree_removed.disconnect(veg._on_tree_removed)
 	var out := {}
 	var done := 0
-	for frac in [0.25, 0.5, 0.9, 0.99, 1.0]:
+	for frac in [0.25, 0.5, 0.9, 0.99, 0.999, 1.0]:
 		var target := int(round(frac * World.tree_count()))
 		var t0 := Time.get_ticks_msec()
 		while done < target:
@@ -411,7 +546,8 @@ func _fixtures() -> Dictionary:
 		await get_tree().process_frame
 		var rc := _reach_coverage("cleared_%d" % int(frac * 100))
 		var tc := _truck_coverage()
-		out["%d%%" % int(frac * 100)] = {"removed": done, "remaining": World.tree_count() - done, "unreachable_remaining": rc.unreachable, "component_cells": rc.component_cells, "truck_cells": tc.drivable_cells_from_bays, "remaining_within_25m_of_truck_route": tc.within_25m, "removal_ms": rm_ms}
+		var fk := ("%.1f%%" % (frac * 100.0)) if frac == 0.999 else "%d%%" % int(frac * 100)
+		out[fk] = {"removed": done, "remaining": World.tree_count() - done, "unreachable_remaining": rc.unreachable, "component_cells": rc.component_cells, "truck_cells": tc.drivable_cells_from_bays, "remaining_within_25m_of_truck_route": tc.within_25m, "removal_ms": rm_ms}
 		if int(rc.unreachable) > 0:
 			_issue("blocker", "cleared_unreachable", "fixture %d%%" % int(frac * 100), "%d remaining targets unreachable" % int(rc.unreachable), "investigate")
 	# Visual/collision: rebuilding every chunk once reflects the removals.
@@ -460,13 +596,20 @@ func _write_md() -> void:
 		md.append("- %s: %s" % [k, JSON.stringify(report.facilities[k])])
 	if report.has("fixtures"):
 		md.append_array(["", "## Clearing fixtures (nearest-first removal through the real removal signal)", "", "| Fixture | Removed | Remaining | Remaining unreachable | Walkable cells | Truck cells | Remaining within 25 m of a truck route |", "|---|---|---|---|---|---|---|"])
-		for k in ["25%", "50%", "90%", "99%", "100%"]:
+		for k in ["25%", "50%", "90%", "99%", "99.9%", "100%"]:
 			var f: Dictionary = report.fixtures.get(k, {})
 			if f.is_empty():
 				continue
 			md.append("| %s | %d | %d | %d | %d | %d | %d |" % [k, int(f.removed), int(f.remaining), int(f.unreachable_remaining), int(f.component_cells), int(f.truck_cells), int(f.remaining_within_25m_of_truck_route)])
 		md.append("")
 		md.append("Rebuilding every vegetation chunk after the full clear: %d ms; tree colliders active afterwards: %d." % [int(report.fixtures.rebuild_all_chunks_ms), int(report.fixtures.tree_colliders_after_full_clear)])
+	if report.has("r2"):
+		var q: Dictionary = report.r2
+		md.append_array(["", "## Island r2: persistent cover, hides and undergrowth", ""])
+		md.append("- Hides: %d checked; pocket blocked %d, no standable exit %d, exit not reachable from camp %d, dead ends (one way out, labelled) %d." % [int(q.hides.checked), int(q.hides.pocket_blocked), int(q.hides.no_exit), int(q.hides.exit_unreachable), int(q.hides.dead_ends)])
+		md.append("- Persistent hard cover (rocks, landforms, structures; trees excluded, so it holds at 100 %% cleared): %d work cells; max distance to a sightline break %.1f m, 95th percentile %.1f m, within 50 m %.1f %%." % [int(q.coverage.cells), float(q.coverage.max_m), float(q.coverage.p95_m), float(q.coverage.within_50m_pct)])
+		md.append("- Hides: max distance from work ground %.1f m, 95th percentile %.1f m." % [float(q.coverage.hide_max_m), float(q.coverage.hide_p95_m)])
+		md.append("- Undergrowth: %d plants; in water %d, inside buildings %d, tall shrubs in a trunk's cut zone %d, tall shrubs on trails %d." % [int(q.undergrowth.checked), int(q.undergrowth.in_water), int(q.undergrowth.in_buildings), int(q.undergrowth.in_cut_zone), int(q.undergrowth.on_trail)])
 	md.append_array(["", "## Issues found by this run: %d (see docs/audit/ISSUE_LEDGER.md for dispositions)" % issues.size()])
 	var by := {}
 	for it in issues:
@@ -474,6 +617,6 @@ func _write_md() -> void:
 		by[k2] = int(by.get(k2, 0)) + 1
 	for k3 in by:
 		md.append("- %s: %d" % [k3, int(by[k3])])
-	var f2 := FileAccess.open("res://docs/audit/ISLAND_AUDIT.md", FileAccess.WRITE)
+	var f2 := FileAccess.open("res://docs/audit/ISLAND_AUDIT%s.md" % suffix.to_upper(), FileAccess.WRITE)
 	f2.store_string("\n".join(md) + "\n")
 	f2.close()

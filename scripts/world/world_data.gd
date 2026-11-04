@@ -254,11 +254,112 @@ func is_native(tree_id: int) -> bool:
 
 ## Applies a manifest variant before vegetation is built (no signals: the
 ## excluded trees simply never exist in this world).
+##   full          revision-1 island, all 12,000 trees (legacy contract)
+##   standard_10k  revision-1 island, 10,000-tree subset (Phase 10 saves)
+##   island_r2     Phase 12 island revision 2 (new standard campaigns):
+##                 landform terrain, 10,000 planned native trees, rock
+##                 formations, undergrowth and hide anchors (data/world/r2)
 func apply_variant(variant: String) -> void:
+	_restore_base()
 	manifest_variant = variant
-	excluded_trees = Ruleset.excluded_ids(variant).duplicate()
+	excluded_trees = {}
+	if variant == "island_r2":
+		_apply_r2()
+	else:
+		excluded_trees = Ruleset.excluded_ids(variant).duplicate()
 	for id in excluded_trees:
 		removed_trees[id] = true
+
+
+# ------------------------------------------------------- island revisions
+
+const R2_DIR := "res://data/world/r2"
+## "r1" = the frozen base island; "r2" = Phase 12 revision (new campaigns).
+var island_revision := "r1"
+var r2_manifest: Dictionary = {}
+## Non-native undergrowth instances (r2 only): x, z, kind, scale, rot, seed.
+var shrubs: Dictionary = {}
+## r2 cover data: landforms, formations, hides, thickets, regions.
+var cover: Dictionary = {}
+var _base := {}
+var _r2 := {}
+
+
+func _restore_base() -> void:
+	if island_revision == "r1":
+		return
+	height = _base.height
+	masks = _base.masks
+	trees = _base.trees
+	rocks = _base.rocks
+	shrubs = {}
+	cover = {}
+	island_revision = "r1"
+	_build_textures()
+
+
+func _apply_r2() -> void:
+	if _base.is_empty():
+		_base = {"height": height, "masks": masks, "trees": trees, "rocks": rocks}
+	if _r2.is_empty():
+		var t0 := Time.get_ticks_msec()
+		r2_manifest = JSON.parse_string(FileAccess.get_file_as_string(R2_DIR.path_join("manifest.json")))
+		var dlt := _read_r2("height_delta.bin").to_float32_array()
+		var h2: PackedFloat32Array = (_base.height as PackedFloat32Array).duplicate()
+		for i in mini(dlt.size(), h2.size()):
+			if dlt[i] != 0.0:
+				h2[i] += dlt[i]
+		_r2 = {
+			"height": h2, "masks": _read_r2("masks.bin"),
+			"trees": bytes_to_var(_read_r2("trees.bin")), "rocks": bytes_to_var(_read_r2("rocks.bin")),
+			"shrubs": bytes_to_var(_read_r2("shrubs.bin")),
+			"cover": JSON.parse_string(FileAccess.get_file_as_string(R2_DIR.path_join("cover.json"))),
+		}
+		print("Island r2 loaded in %d ms (%d trees, %d rocks, %d undergrowth)" % [Time.get_ticks_msec() - t0, (_r2.trees.id as PackedInt32Array).size(), (_r2.rocks.x as PackedFloat32Array).size(), (_r2.shrubs.x as PackedFloat32Array).size()])
+	height = _r2.height
+	masks = _r2.masks
+	trees = _r2.trees
+	rocks = _r2.rocks
+	shrubs = _r2.shrubs
+	cover = _r2.cover
+	island_revision = "r2"
+	_build_textures()
+
+
+func _read_r2(fname: String) -> PackedByteArray:
+	var f := FileAccess.open_compressed(R2_DIR.path_join(fname + ".zst"), FileAccess.READ, FileAccess.COMPRESSION_ZSTD)
+	if f == null:
+		push_error("Island r2 data missing: run tools/generate_island_r2.gd")
+		return PackedByteArray()
+	return f.get_buffer(f.get_length())
+
+
+## Identity of the active island for saves (revision + content hash).
+func island_signature() -> Dictionary:
+	if island_revision == "r2":
+		return {"revision": "r2", "trees": str((r2_manifest.get("content_hashes", {}) as Dictionary).get("trees.bin", ""))}
+	return {"revision": "r1", "trees": str((manifest.get("content_hashes", {}) as Dictionary).get("trees.bin", ""))}
+
+
+## Rock shape helpers (r2 rocks carry explicit squash/stretch).
+func rock_squash(i: int) -> float:
+	if rocks.has("squash"):
+		return float(rocks.squash[i])
+	return [0.75, 0.85, 0.55, 0.6][int(rocks.kind[i])]
+
+
+func rock_stretch(i: int) -> float:
+	return float(rocks.stretch[i]) if rocks.has("stretch") else 1.0
+
+
+## Conservative footprint radius used by navigation and placement checks.
+func rock_radius(i: int) -> float:
+	return float(rocks.scale[i]) * 0.45 * maxf(rock_stretch(i), 1.0)
+
+
+func rock_basis(i: int) -> Basis:
+	var s: float = rocks.scale[i]
+	return Basis(Vector3.UP, rocks.rot[i]).scaled(Vector3(s * rock_stretch(i), s * rock_squash(i), s))
 
 
 ## Grounded trunk base: the lowest terrain under the flared trunk footprint
@@ -285,8 +386,8 @@ func rock_position(idx: int) -> Vector3:
 	var x: float = rocks.x[idx]
 	var z: float = rocks.z[idx]
 	var s: float = rocks.scale[idx]
-	var squash: float = [0.75, 0.85, 0.55, 0.6][int(rocks.kind[idx])]
-	var base := grounded_base_y(x, z, s * 0.38, 0.06 * s)
+	var squash := rock_squash(idx)
+	var base := grounded_base_y(x, z, s * 0.38 * maxf(rock_stretch(idx), 1.0), 0.06 * s)
 	return Vector3(x, base + 0.2 * s * squash, z)
 
 

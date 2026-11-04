@@ -42,11 +42,39 @@ func _ready() -> void:
 	cam.fov = 40.0
 	add_child(cam)
 	cam.make_current()
+	if "motion" in OS.get_cmdline_user_args():
+		await _motion()
+		get_tree().quit()
+		return
 	await _shots("clean")
 	CharMeshKit.apply_style("pixel")
 	await _shots("pixel")
 	CharMeshKit.apply_style("clean")
+	await _motion()
 	get_tree().quit()
+
+
+## Phase 12: the retargeted motion-capture clips side by side (side view):
+## walk and run mid-stride, upright and relaxed sitting, driving, lying.
+func _motion() -> void:
+	var clips := [["walk", 0.45], ["run", 0.3], ["sit", 2.0], ["sit_relaxed", 0.5], ["drive", 1.0]]
+	for k in 5:
+		var h := cast[k]
+		h.rotation.y = -PI * 0.5      # face +X: walking across the frame
+		h.play(clips[k][0], 0.0)
+		h.anim.seek(float(clips[k][1]), true)
+		h.playback_scale = 0.0
+	cam.global_position = Vector3(0.0, 1.1, 8.0)
+	cam.look_at(Vector3(0.0, 0.8, 0))
+	await _snap("motion_clean")
+	# Lying on the back like a worker in bed (root turned, clip body-relative).
+	var h0 := cast[0]
+	h0.play("lie", 0.0)
+	# Body up-axis along -X, face (-Z) to the sky, like Worker.lie_down().
+	h0.global_transform = Transform3D(Basis(Vector3(0, 0, 1), Vector3(-1, 0, 0), Vector3(0, -1, 0)), Vector3(-3.2, 0.3, 0))
+	cam.global_position = Vector3(-3.2, 2.2, 2.6)
+	cam.look_at(Vector3(-3.6, 0.3, 0))
+	await _snap("lie_clean")
 
 
 func _snap(name: String) -> void:

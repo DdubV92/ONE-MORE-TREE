@@ -113,7 +113,7 @@ func _build_island() -> void:
 	# Rocks are solid; trees cost more (steering avoids the trunks).
 	for r in (World.rocks.x as PackedFloat32Array).size():
 		var rp := Vector2(World.rocks.x[r], World.rocks.z[r])
-		var rad := float(World.rocks.scale[r]) * 0.45
+		var rad := World.rock_radius(r)
 		if rad > 0.9:
 			_mark_disc(rp, rad, true)
 	for i in World.tree_count():

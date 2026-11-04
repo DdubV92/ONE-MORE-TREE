@@ -18,6 +18,18 @@ extends Node3D
 const WALK_NOMINAL_SPEED := 1.35
 const WALK_PERIOD := 1.0
 const STANCE := 0.62
+## Phase 12: motion-captured clips (the owner's Mixamo FBX files, retargeted
+## to this rig by tools/bake_mixamo.gd). Procedural clips remain the
+## fallback when the data file is absent.
+const MOCAP_PATH := "res://data/anim/mixamo_retarget.json"
+const RUN_MIN_SPEED := 2.3
+static var _mocap: Dictionary = {}
+## Ground speed (m/s) of the walk/run clips at playback 1.0 for THIS body.
+var walk_nominal := WALK_NOMINAL_SPEED
+var run_nominal := 3.0
+var _contacts := {}       # clip -> [[t, side], ...]
+var _nominal := {}        # locomotion clip -> m/s at playback 1.0 for this body
+var _clip_prev := -1.0
 
 @export var appearance: HumanAppearance
 
@@ -325,7 +337,220 @@ func _build_animations() -> void:
 	# driving and hiding. All share the rig; feet stay planted by IK.
 	for k in CLIPS:
 		lib.add_animation(k, _make_body_clip(CLIPS[k]))
+	# Phase 12: motion capture replaces walk/sit/lie and adds run; the
+	# procedural versions stay available as *_proc.
+	if has_mocap("walk"):
+		for k in ["walk", "sit", "lie"]:
+			lib.add_animation(k + "_proc", lib.get_animation(k))
+			lib.remove_animation(k)
+		for k in ["walk", "run", "sit", "sit_relaxed", "lie"]:
+			if has_mocap(k):
+				lib.add_animation(k, _make_mocap(k))
+		# Brisk working pace from the same captured walk: longer stride, so
+		# 1.2-1.6 m/s plays at a natural cadence instead of a sped-up stroll.
+		lib.add_animation("walk_brisk", _make_mocap("walk_brisk", "walk", 1.45))
+		walk_nominal = float(_nominal.get("walk", walk_nominal))
+		run_nominal = float(_nominal.get("run", run_nominal))
+		# Driving: mocap seated body, procedural hands on the wheel.
+		if has_mocap("sit"):
+			var drive := _make_mocap("sit")
+			var proc: Animation = lib.get_animation("drive")
+			for b in ["UpperArmL", "ForearmL", "UpperArmR", "ForearmR", "HandL", "HandR"]:
+				var ti := drive.find_track(NodePath("Rig/" + str(rig.get_path_to(bones[b]))), Animation.TYPE_ROTATION_3D)
+				if ti >= 0:
+					drive.remove_track(ti)
+			for ti in proc.get_track_count():
+				var path := str(proc.track_get_path(ti))
+				if path.contains("Arm") or path.contains("Forearm"):
+					proc.copy_track(ti, drive)
+			lib.remove_animation("drive")
+			lib.add_animation("drive", drive)
+		_layer_mocap_breath(lib.get_animation("idle"))
+		for k in ["talk", "listen", "fear"]:
+			if lib.has_animation(k):
+				_layer_mocap_breath(lib.get_animation(k), 0.6)
 	anim.add_animation_library("", lib)
+
+
+# -------------------------------------------------------- motion capture
+
+static func mocap() -> Dictionary:
+	if _mocap.is_empty() and FileAccess.file_exists(MOCAP_PATH):
+		var d: Variant = JSON.parse_string(FileAccess.get_file_as_string(MOCAP_PATH))
+		_mocap = d if d is Dictionary else {"clips": {}}
+	return _mocap
+
+
+static func has_mocap(name: String) -> bool:
+	return (mocap().get("clips", {}) as Dictionary).has(name)
+
+
+static func _mq(clip: Dictionary, bone: String, f: int) -> Quaternion:
+	var a: Array = clip.rot[bone]
+	var i := (f % int(clip.frames)) * 4
+	return Quaternion(float(a[i]), float(a[i + 1]), float(a[i + 2]), float(a[i + 3])).normalized()
+
+
+static func _mhips(clip: Dictionary, f: int) -> Vector3:
+	var a: Array = clip.hips
+	var i := (f % int(clip.frames)) * 3
+	return Vector3(float(a[i]), float(a[i + 1]), float(a[i + 2]))
+
+
+## Builds a clip for THIS body from the retargeted data: hip offsets scaled
+## by this character's hip height; locomotion feet re-planted with its own
+## thigh/shin lengths; seated clips anchored to the seat height the seats
+## were designed for; lying clips body-relative (the bed orients the body).
+func _make_mocap(name: String, src := "", stride := 1.0) -> Animation:
+	var data := mocap()
+	var clip: Dictionary = data.clips[src if src != "" else name]
+	var fps: float = data.fps
+	var n: int = clip.frames
+	var kind := str(clip.kind)
+	var loop := bool(clip.loop)
+	var an := Animation.new()
+	an.length = float(clip.length)
+	an.loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
+	var tracks := {}
+	for b in data.bones:
+		tracks[b] = _track_rot(an, b)
+	var hips_pos := _track_pos(an, "Hips")
+	# Per-frame rotations for this clip, with the clip-level adjustments:
+	#  - the captured walk keeps its elbows bent ~90 deg (forearms forward);
+	#    relax them halfway for a looser woodcutter's walk;
+	#  - `stride` > 1 amplifies leg/arm swing about the clip's average pose
+	#    (a longer, brisker stride from the same capture).
+	var qs := {}
+	for b in data.bones:
+		var arr: Array[Quaternion] = []
+		for f in n:
+			arr.append(_mq(clip, b, f))
+		var relax := 0.5 if name.begins_with("walk") and b in ["ForearmL", "ForearmR", "HandL", "HandR"] else 1.0
+		var amp := stride if b.begins_with("Thigh") or b.begins_with("Shin") or b.begins_with("Foot") else (1.0 + (stride - 1.0) * 0.6 if b.begins_with("UpperArm") else 1.0)
+		if relax != 1.0 or amp != 1.0:
+			var acc := Vector4.ZERO
+			for q in arr:
+				acc += Vector4(q.x, q.y, q.z, q.w)
+			var mq := Quaternion(acc.x, acc.y, acc.z, acc.w).normalized()
+			for f in n:
+				var q: Quaternion = arr[f]
+				if amp != 1.0:
+					var d := (mq.inverse() * q).normalized()
+					var ang := d.get_angle()
+					if ang > 0.0001:
+						q = mq * Quaternion(d.get_axis().normalized(), ang * amp)
+				if relax != 1.0:
+					q = Quaternion.IDENTITY.slerp(q, relax)
+				arr[f] = q.normalized()
+		qs[b] = arr
+	var hip_h: float = rest["Hips"].origin.y
+	var mean := Vector3.ZERO
+	for f in n:
+		mean += _mhips(clip, f)
+	mean /= float(n)
+	var seat_hp: Vector3 = rest["Hips"].origin + Vector3(0, -(thigh_len + ankle_h) * 0.98 + 0.46 - 0.02, 0.06)
+	var hps: Array[Vector3] = []
+	var dys := PackedFloat32Array()
+	for f in n:
+		var off := _mhips(clip, f) * hip_h
+		var hp: Vector3
+		match kind:
+			"seated":
+				hp = seat_hp + (off - mean * hip_h) * 0.6
+			"lying":
+				hp = rest["Hips"].origin + (off - mean * hip_h) * 0.3
+			_:
+				hp = rest["Hips"].origin + off
+		hps.append(hp)
+		if kind == "locomotion":
+			var lo := INF
+			for sn in ["L", "R"]:
+				lo = minf(lo, _fk_ankle_q(qs, f, hp, sn).y)
+			dys.append(ankle_h - lo)
+	if kind == "locomotion":
+		# Walk: plant the lower foot every frame (smoothed); run keeps its
+		# flight phase, so one constant offset puts its lowest step on the ground.
+		var run := name == "run"
+		var const_dy := -INF
+		for d in dys:
+			const_dy = maxf(const_dy, d)
+		for f in n:
+			var d := const_dy if run else (dys[(f - 1 + n) % n] + dys[f] * 2.0 + dys[(f + 1) % n]) * 0.25
+			hps[f] = hps[f] + Vector3(0, d, 0)
+		# Nominal ground speed for THIS body: how fast the planted foot slides
+		# back under the hips in mid-stance (15-75 % of each plant window),
+		# measured with its own legs, so playback scale = speed / nominal
+		# leaves the stance foot still on the ground (no skating).
+		var cs: Array = clip.get("contacts", [])
+		var sum := 0.0
+		var cnt := 0
+		for ci in cs.size():
+			var c: Array = cs[ci]
+			var nxt: Array = cs[(ci + 1) % cs.size()]
+			var span := fposmod(float(nxt[0]) - float(c[0]), float(clip.length))
+			var sn := "L" if int(c[1]) == 0 else "R"
+			var f0 := int(round((float(c[0]) + span * 0.15) * fps))
+			var f1 := int(round((float(c[0]) + span * 0.75) * fps))
+			if f1 <= f0:
+				continue
+			var z0 := _fk_ankle_q(qs, f0 % n, hps[f0 % n], sn).z
+			var z1 := _fk_ankle_q(qs, f1 % n, hps[f1 % n], sn).z
+			sum += (z1 - z0) / (float(f1 - f0) / fps)
+			cnt += 1
+		var sp := sum / cnt if cnt > 0 else float(clip.get("speed_norm", 0.0)) * hip_h
+		_nominal[name] = maxf(sp, 0.4)
+		_contacts[name] = cs
+	for f in n + (1 if loop else 0):
+		var t := minf(float(f) / fps, an.length)
+		an.position_track_insert_key(hips_pos, t, hps[f % n])
+		for b in data.bones:
+			an.rotation_track_insert_key(tracks[b], t, (qs[b] as Array)[f % n])
+	return an
+
+
+func _fk_ankle_q(qs: Dictionary, f: int, hp: Vector3, sn: String) -> Vector3:
+	var rh := Basis((qs["Hips"] as Array)[f])
+	var rt := rh * Basis((qs["Thigh" + sn] as Array)[f])
+	var rs := rt * Basis((qs["Shin" + sn] as Array)[f])
+	var knee: Vector3 = hp + rh * rest["Thigh" + sn].origin + rt * rest["Shin" + sn].origin
+	return knee + rs * rest["Foot" + sn].origin
+
+
+## Ankle (Foot pivot) position in rig space for frame f, using this body's
+## own bone offsets and the clip's rotations.
+func _fk_ankle(clip: Dictionary, f: int, hp: Vector3, sn: String) -> Vector3:
+	var rh := Basis(_mq(clip, "Hips", f))
+	var rt := rh * Basis(_mq(clip, "Thigh" + sn, f))
+	var rs := rt * Basis(_mq(clip, "Shin" + sn, f))
+	var knee: Vector3 = hp + rh * rest["Thigh" + sn].origin + rt * rest["Shin" + sn].origin
+	return knee + rs * rest["Foot" + sn].origin
+
+
+## Adds the captured seated idle's upper-body micro-motion (breathing,
+## settling, small head turns) on top of a standing procedural clip, as
+## offsets from its own average pose, so idles and talk feel alive.
+func _layer_mocap_breath(an: Animation, amount := 1.0) -> void:
+	if not has_mocap("sit"):
+		return
+	var data := mocap()
+	var clip: Dictionary = data.clips.sit
+	var fps: float = data.fps
+	var n: int = clip.frames
+	for b in ["Spine", "Chest", "Neck", "Head"]:
+		var ti := an.find_track(NodePath("Rig/" + str(rig.get_path_to(bones[b]))), Animation.TYPE_ROTATION_3D)
+		if ti < 0:
+			continue
+		var acc := Vector4.ZERO
+		for f in n:
+			var q := _mq(clip, b, f)
+			acc += Vector4(q.x, q.y, q.z, q.w)
+		var mean_q := Quaternion(acc.x, acc.y, acc.z, acc.w).normalized()
+		for k in an.track_get_key_count(ti):
+			var t := an.track_get_key_time(ti, k)
+			var f := int(round(fmod(t, float(clip.length)) * fps)) % n
+			var delta := (mean_q.inverse() * _mq(clip, b, f)).normalized()
+			delta = Quaternion.IDENTITY.slerp(delta, amount)
+			an.track_set_key_value(ti, k, (an.track_get_key_value(ti, k) as Quaternion) * delta)
 
 
 ## Leg pose for a foot target given the hips pivot position (rig space).
@@ -450,7 +675,7 @@ func _make_body_clip(spec: Dictionary) -> Animation:
 
 func _make_idle() -> Animation:
 	var an := Animation.new()
-	var T := 4.0
+	var T := float(mocap().clips.sit.length) if has_mocap("sit") else 4.0
 	an.length = T
 	an.loop_mode = Animation.LOOP_LINEAR
 	var tracks := {}
@@ -458,7 +683,7 @@ func _make_idle() -> Animation:
 		tracks[b] = _track_rot(an, b)
 	var hips_pos := _track_pos(an, "Hips")
 	var post := appearance.posture
-	var n := 24
+	var n := int(T * 6.0)
 	for k in n + 1:
 		var t := T * k / n
 		var ph := TAU * t / T
@@ -698,9 +923,15 @@ func set_locomotion(speed: float) -> void:
 	if speed < 0.15:
 		play("idle" if rest_clip == "" else rest_clip)
 		playback_scale = 1.0
+	elif speed >= RUN_MIN_SPEED and anim.has_animation("run"):
+		play("run", 0.2)
+		playback_scale = clampf(speed / run_nominal, 0.7, 1.6)
+	elif anim.has_animation("walk_brisk") and speed > walk_nominal * 1.35:
+		play("walk_brisk", 0.25)
+		playback_scale = clampf(speed / float(_nominal.get("walk_brisk", walk_nominal)), 0.7, 1.8)
 	else:
 		play("walk")
-		playback_scale = clampf(speed / WALK_NOMINAL_SPEED, 0.6, 1.7)
+		playback_scale = clampf(speed / walk_nominal, 0.6, 1.8)
 
 
 ## Idle variant while standing (e.g. "fear" when a worker is frightened).
@@ -720,7 +951,17 @@ func _process(delta: float) -> void:
 			play(nxt, 0.3)
 	if anim:
 		anim.advance(delta * playback_scale)
-		if current == "walk" and anim.current_animation == "walk":
+		if _contacts.has(current) and anim.current_animation == current:
+			# Footfalls at the clip's real plants (motion capture).
+			var pos := anim.current_animation_position
+			if _clip_prev >= 0.0:
+				for c in _contacts[current]:
+					var ct := float(c[0])
+					if (_clip_prev < ct and pos >= ct) or (pos < _clip_prev and (ct > _clip_prev or ct <= pos)):
+						step.emit(int(c[1]))
+			_clip_prev = pos
+		elif current == "walk" and anim.current_animation == "walk":
+			_clip_prev = -1.0
 			var ph := fmod(anim.current_animation_position, WALK_PERIOD) / WALK_PERIOD
 			if _walk_prev >= 0.0:
 				if ph < _walk_prev:
@@ -730,6 +971,7 @@ func _process(delta: float) -> void:
 			_walk_prev = ph
 		else:
 			_walk_prev = -1.0
+			_clip_prev = -1.0
 	if arm_ik and axe_rig.visible:
 		_solve_arms()
 	elif carry_grips.size() == 2:

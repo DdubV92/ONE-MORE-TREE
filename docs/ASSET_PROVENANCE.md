@@ -17,10 +17,14 @@ Every asset in this repository is either **CC0 from Poly Haven** or **original t
 | Kitchen and clutter | pot_enamel_01, plastic_thermos, wall_clock, carved_wooden_plate, wooden_cutting_board, russian_food_cans_01, throw_pillows_01 |
 | Tools and gear | rubber_boots, rusted_spade_01, sledgehammer_01, metal_toolbox, steel_frame_shelves_01 (authored at 10× scale; instanced at 0.09) |
 | Lighting | wooden_lantern_01, security_light, industrial_wall_lamp |
-| Outdoors | ocean_buoy, tree_stump_01, fern_02 |
+| Outdoors | ocean_buoy, tree_stump_01, fern_02; Phase 12: dry_branches_medium_01 (forest-floor deadwood) |
+| Phase 12 furniture | sofa_02 (camper couch) |
 
 **Surface textures** (1k, diffuse + OpenGL normal + AO/roughness/metal):
-- Used directly: pine_bark, bark_brown_02, weathered_planks, weathered_plank_siding, wood_floor_worn, denim_fabric, fabric_leather_01.
+- Used directly: pine_bark, bark_brown_02, weathered_planks, weathered_plank_siding, wood_floor_worn, denim_fabric, fabric_leather_01, gingham_check.
+- **Phase 12 fabrics:** poly_wool_herringbone, caban, stretch_poplin, rough_linen, polar_fleece, knitted_fleece and fabric_leather_02.
+  - `tools/bake_fabrics.py` bakes neutral-grey versions of these, plus denim, into `assets/generated/fabrics/*_grey.jpg`, so code can tint them to the real colour. The originals' normal and AO/roughness maps are used as-is.
+  - These replace the denim stand-ins on furniture, bedding, curtains and jackets.
 - **Baked into the terrain texture arrays** (`assets/generated/terrain/terrain_{albedo,normal,arm}.jpg`) by `tools/bake_terrain_arrays.py`: coast_sand_01, damp_beach_sand, leafy_grass, sparse_grass, forest_leaves_02, dry_decay_leaves, dirt, mossy_rock, rock_face, gravel, river_small_rocks, brown_mud_leaves_01. The originals are not committed.
 
 **Foliage cards:**
@@ -41,6 +45,12 @@ Every asset in this repository is either **CC0 from Poly Haven** or **original t
 | **All sounds** in `audio/generated/` (surf, river, pond, wind in leaves, fire crackle, room tone, 5 bird calls, metal creak, footsteps on 7 surfaces, UI click; Phase 8: `rain_open`, `rain_roof`, `thunder_far_0/1`, `music_day_0..2` (Karplus-Strong plucked phrases, original melodies), `music_dusk`, `log_settle`) | `tools/generate_audio.gd` (filtered noise, FM and Karplus-Strong synthesis, seed 808 for Phase 8) |
 | Rain streaks, TV screen, sky cloud occlusion (Phase 8) | `shaders/rain.gdshader`, `shaders/tv_screen.gdshader`, `shaders/sky.gdshader` |
 | Phase 8 animation clips (pickup, setdown, talk, talk_shaken, fear, listen, glance, grip, drive, hide; dog sniff/growl) | `HumanCharacter.CLIPS` / `DogCharacter._make_head_pose` (procedural keyframes + IK) |
+
+## Motion capture (owner-supplied, Phase 12)
+
+- **Source:** five Adobe Mixamo animations (walk, run, two seated idles, lying with a nod), supplied by the project owner as FBX files.
+- **Where they live:** the raw FBX files sit in `assets/mixamo_src/`, which is **git-ignored**. Mixamo content may be used in projects, but not redistributed as standalone files.
+- **What the game ships:** only `data/anim/mixamo_retarget.json`, the retargeted per-joint rotations for this game's own rig, produced by `tools/bake_mixamo.gd`.
 
 ## Known asset gaps (deliberate temporary substitutes)
 

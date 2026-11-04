@@ -59,7 +59,7 @@ static func find(case_name: String) -> int:
 			"rock":
 				var near := 99.0
 				for ri in _cache.hashes[1].get(PlacementValidator._key(p.x, p.y, 8.0), []):
-					near = minf(near, p.distance_to(Vector2(World.rocks.x[ri], World.rocks.z[ri])) - float(World.rocks.scale[ri]) * 0.5)
+					near = minf(near, p.distance_to(Vector2(World.rocks.x[ri], World.rocks.z[ri])) - World.rock_radius(ri) * 1.11)
 				score += -near * 4.0
 			"neighbour":
 				var near_t := 99.0

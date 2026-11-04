@@ -75,7 +75,7 @@ func _make_materials() -> void:
 func _assign_materials() -> void:
 	for sp in 3:
 		for lod in ["near", "mid"]:
-			for v in 3:
+			for v in TreeBuilder.VARIANTS:
 				var m: ArrayMesh = meshes[lod][sp][v]
 				m.surface_set_material(0, materials.bark[sp])
 				m.surface_set_material(1, materials.leaf[sp])
@@ -156,14 +156,14 @@ func _build_chunk(chunk: int) -> void:
 	for i in (chunk_trees[chunk] as Array):
 		if World.removed_trees.has(int(World.trees.id[i])):
 			continue
-		var key := int(World.trees.species[i]) * 3 + int(World.trees.variant[i])
+		var key := int(World.trees.species[i]) * TreeBuilder.VARIANTS + int(World.trees.variant[i])
 		if not groups.has(key):
 			groups[key] = []
 		groups[key].append(i)
 		all_by_species[World.trees.species[i]].append(i)
 	for key in groups:
-		var sp: int = key / 3
-		var v: int = key % 3
+		var sp: int = key / TreeBuilder.VARIANTS
+		var v: int = key % TreeBuilder.VARIANTS
 		_add_mmi(node, meshes.near[sp][v], groups[key], 0.0, near_range, true)
 		_add_mmi(node, meshes.mid[sp][v], groups[key], near_range, mid_range, shadows_mid)
 	for sp in 3:
@@ -310,9 +310,7 @@ func _build_rocks() -> void:
 		for k in list.size():
 			var i: int = list[k]
 			var s: float = World.rocks.scale[i]
-			var kind: int = World.rocks.kind[i]
-			var squash := Vector3(1.0, [0.75, 0.85, 0.55, 0.6][kind], 1.0)
-			var b := Basis(Vector3.UP, World.rocks.rot[i]).scaled(squash * s)
+			var b := World.rock_basis(i)
 			var t := Transform3D(b, World.rock_position(i))
 			mm.set_instance_transform(k, t)
 			if s > 0.6:

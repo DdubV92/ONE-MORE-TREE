@@ -230,7 +230,9 @@ func _make_vp(size: Vector2i, w: World3D) -> SubViewport:
 	var vp := SubViewport.new()
 	vp.size = size
 	vp.world_3d = w
-	vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	# Render one real frame at start-up so an idle feed never shows an
+	# uninitialised render target (garbage/magenta on some drivers).
+	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
 	vp.msaa_3d = Viewport.MSAA_DISABLED
 	vp.use_hdr_2d = true      # keep scene-linear values for the single tone map
 	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED if size.x < 800 else Viewport.SCREEN_SPACE_AA_FXAA
@@ -553,6 +555,7 @@ func _place(cam: Camera3D, index: int) -> void:
 
 ## Dev/capture override: render without a player in the camper.
 var force_active := false
+var _warm := 3
 
 
 func is_active() -> bool:
@@ -576,6 +579,11 @@ func _process(delta: float) -> void:
 		_tagged = Game.player
 		_tag_player_layers(Game.player)
 	var active := is_active() and not get_tree().paused
+	if _warm > 0:
+		_warm -= 1
+		if _warm == 0:
+			_active = not active    # force the switch below to settle the state
+		return     # first frames: composite the start-up renders once
 	if active != _active:
 		_active = active
 		_update_ambience()

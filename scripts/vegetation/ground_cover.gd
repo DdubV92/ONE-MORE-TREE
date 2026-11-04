@@ -275,6 +275,8 @@ func _build_cell(c: Vector2i) -> Node3D:
 		var p_fern := (m.y * 0.25 + shade * 0.25 + damp * 0.4) * (1.0 if h < 30.0 else 0.3)
 		# Bushes gather at forest edges and under thin canopy, not mid-meadow.
 		var p_bush := 0.004 + m.y * 0.035 * (1.0 - shade * 0.5)
+		if World.island_revision == "r2":
+			p_bush = 0.0    # island r2 has authored undergrowth (UndergrowthSystem)
 		var t := rng.randf() * (p_grass + p_fern + p_bush + 0.6)
 		if t < p_grass:
 			# A small clump of tufts per accepted sample (dense but cheap).

@@ -2,6 +2,27 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 12: Dense 10,000-tree island, terrain, cover and hiding (plus motion capture and proper fabrics)
+
+Full detail: [PHASE12_NOTES.md](PHASE12_NOTES.md). Audit: [audit/ISLAND_AUDIT_R2.md](audit/ISLAND_AUDIT_R2.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Exactly 10,000 valid native records for new campaigns (deterministic, region quotas, rejection report, loud failure) | ✅ | Island r2; CI `generate_island_r2 --check` |
+| Legacy and Phase 10 saves keep their island and manifest | ✅ | Island identity stored in saves; tested |
+| Groves, gaps, size cohorts, low boughs that belong to their tree | ✅ | Removal clears every LOD (tested) |
+| Undergrowth families by habitat; cut zones, hides, trails, lenses clear | ✅ | 36,019 plants, no colliders |
+| Landforms (hummocks, ridges, gullies) and rock formations, supported | ✅ | 0 floating rocks; no edits near water, trails or camp |
+| Cover classes; soft concealment bounded; hard cover geometric | ✅ | `CoverService`, Foreman sight |
+| Rock hides with entries, crouched pose and exits; dead ends labelled | ✅ | 60 hides; geometry and search tested |
+| Persistent cover after full clearing | ✅ | 99 % of work ground within 50 m of hard cover |
+| Whole-manifest support and access audit | ✅ | 0 issues, 10,000/10,000 reachable |
+| Clearing fixtures at 0/25/50/90/99.9/100 % | ✅ | Audit and Preview |
+| Preview stations and dev cover/nav overlay | ✅ | |
+| 60 FPS at 1080p on a midrange GPU | ⛔ | Software renderer only |
+| Owner's Mixamo clips on the crew; uncovered clips improved | ✅ | Retargeted, feet re-planted per body |
+| Proper fabrics and models instead of denim stand-ins | ✅ | Poly Haven CC0 |
+
 ## Phase 9: Onboarding, UI, crew management, accessibility, balance and endings
 
 Status key: ✅ implemented and observed (automated test or capture) · 🟡 implemented, not yet run by a person / partial · ⬜ absent. Player guide: [PLAYER_GUIDE.md](PLAYER_GUIDE.md). Time/pause/state: [TIME_AND_STATE.md](TIME_AND_STATE.md).

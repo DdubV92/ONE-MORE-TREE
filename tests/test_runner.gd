@@ -13,6 +13,13 @@ var _log: PackedStringArray = []
 func _ready() -> void:
 	await get_tree().process_frame
 	World.ensure_loaded()
+	if OS.has_environment("ONLY_P12"):
+		await _run_async("human walk keeps stance foot planted", _t_human_walk)
+		if not OS.has_environment("WALK_ONLY"):
+			await _run_async("phase 12", _t_phase12_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P11"):
 		await _run_async("phase 11", _t_phase11_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -98,6 +105,7 @@ func _ready() -> void:
 	_run("phase 10 units: 10,000-tree manifest deterministic/unique/clustered, ruleset labels + unknown rulesets refused, share conservation incl. future 1.5x sections, contribution dedupe, audio event inventory", _t_phase10_units)
 	await _run_async("phase 10 world: standard ruleset = 10,000 natives + 5 employees + $4,500 + $1,500/day once, excluded trees untargetable, legacy load unchanged, deadline race, ruleset saved", _t_phase10_world)
 	await _run_async("phase 11: camper +25% area/safety/entrance, desk computer hosts cameras (relay at desk, tile click, sit/glance/stand, save standing), TV entertainment only, five distinct employees with real hands, dog anatomy, in-place pixel style", _t_phase11_world)
+	await _run_async("phase 12: island r2 exact 10,000 native records (unique, cohorts, low boughs, hashes), legacy islands untouched, removal clears every LOD, rocks supported, 62 rock hides with exits, geometric hide sight + bounded soft cover, lost contact vs seen entry, save island identity, undergrowth presets keep thickets, mocap clips, proper fabrics", _t_phase12_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -434,7 +442,9 @@ func _t_human_walk() -> String:
 	var h := HumanCharacter.new()
 	add_child(h)
 	await get_tree().process_frame
-	h.play("walk", 0.0)
+	# Procedural walk (fallback clip): fixed 1 s cycle, stance phase 0..0.62.
+	var proc := "walk_proc" if h.anim.has_animation("walk_proc") else "walk"
+	h.play(proc, 0.0)
 	var T := HumanCharacter.WALK_PERIOD
 	var worst := 0.0
 	var worst_speed := 0.0
@@ -453,11 +463,46 @@ func _t_human_walk() -> String:
 			prev = foot
 		else:
 			prev = Vector3.ZERO
-	h.queue_free()
 	if worst > 0.025:
-		return "stance foot height error %.3f m" % worst
+		h.queue_free()
+		return "procedural walk: stance foot height error %.3f m" % worst
 	if worst_speed > 0.2:
-		return "stance foot speed error %.2f m/s (stride/speed mismatch)" % worst_speed
+		h.queue_free()
+		return "procedural walk: stance foot speed error %.2f m/s (stride/speed mismatch)" % worst_speed
+	# Phase 12 motion-capture walk: stance windows come from the clip's own
+	# foot plants; the planted foot stays at ankle height and slides back
+	# under the body at this body's nominal walk speed (no foot skating).
+	if proc == "walk_proc":
+		h.play("walk", 0.0)
+		var clip_len := h.anim.get_animation("walk").length
+		var cs: Array = h._contacts.get("walk", [])
+		var worst_h := 0.0
+		var speeds: Array[float] = []
+		for ci in cs.size():
+			var c: Array = cs[ci]
+			var nxt: Array = cs[(ci + 1) % cs.size()]
+			var span := fposmod(float(nxt[0]) - float(c[0]), clip_len)
+			var foot_name := "FootL" if int(c[1]) == 0 else "FootR"
+			var pz := INF
+			for k in 8:
+				var t := fposmod(float(c[0]) + span * (0.15 + 0.6 * k / 7.0), clip_len)
+				h.anim.seek(t, true)
+				var fp: Vector3 = h.bones[foot_name].global_position
+				worst_h = maxf(worst_h, absf(fp.y - h.ankle_h))
+				if pz != INF:
+					speeds.append((fp.z - pz) / (span * 0.6 / 7.0))
+				pz = fp.z
+		var mean := 0.0
+		for v in speeds:
+			mean += v
+		mean /= maxf(speeds.size(), 1)
+		if worst_h > 0.06:
+			h.queue_free()
+			return "mocap walk: stance foot height error %.3f m" % worst_h
+		if absf(mean - h.walk_nominal) > 0.3:
+			h.queue_free()
+			return "mocap walk: stance foot slides at %.2f m/s, nominal %.2f (skating)" % [mean, h.walk_nominal]
+	h.queue_free()
 	return ""
 
 
@@ -3112,3 +3157,238 @@ func _t_phase11_world() -> String:
 	await get_tree().process_frame
 	Game.mode = Game.Mode.MENU
 	return err
+
+
+func _t_phase12_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	var err := await _p12_checks(world)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	if err == "" and (World.island_revision != "r1" or World.tree_count() != 12000 or not World.shrubs.is_empty()):
+		err = "switching back to the legacy island failed"
+	if err == "":
+		World.apply_variant("standard_10k")
+		if World.native_total() != 10000 or World.island_revision != "r1":
+			err = "Phase 10 standard_10k manifest changed (%d natives, %s)" % [World.native_total(), World.island_revision]
+		World.removed_trees.clear()
+		World.apply_variant("full")
+	return err
+
+
+func _p12_checks(world: IslandWorld) -> String:
+	# --- exact manifest -------------------------------------------------
+	if World.island_revision != "r2":
+		return "preview did not load island r2"
+	if World.tree_count() != 10000 or World.native_total() != 10000:
+		return "island r2 has %d records / %d natives" % [World.tree_count(), World.native_total()]
+	var ids := {}
+	for i in World.tree_count():
+		ids[int(World.trees.id[i])] = true
+	if ids.size() != 10000:
+		return "tree ids not unique"
+	var cohorts := {}
+	var v3 := 0
+	var hmin := 99.0
+	var hmax := 0.0
+	for i in World.tree_count():
+		cohorts[int(World.trees.cohort[i])] = true
+		if int(World.trees.variant[i]) == 3:
+			v3 += 1
+		hmin = minf(hmin, float(World.trees.height[i]))
+		hmax = maxf(hmax, float(World.trees.height[i]))
+	if cohorts.size() != 3 or v3 < 1000 or hmax - hmin < 15.0:
+		return "size/branch data too uniform: cohorts %d, low-bough %d, heights %.1f-%.1f" % [cohorts.size(), v3, hmin, hmax]
+	var mh: Dictionary = World.r2_manifest.content_hashes
+	if str(mh.get("trees.bin", "")) != IslandGenerator._md5(var_to_bytes(World.trees)):
+		return "loaded r2 trees differ from the frozen manifest hash"
+	if int(World.r2_manifest.stats.tree_count) != 10000 or int(World.r2_manifest.tree_target) != 10000:
+		return "r2 manifest stats wrong"
+	if Game.campaign.ruleset.is_empty() or true:
+		var def := Ruleset.get_def(Ruleset.STANDARD)
+		if str(def.variant) != "island_r2" or int(def.native_total) != 10000 or int(def.starting_employees) != 5:
+			return "standard ruleset is not the r2 10,000-tree contract: %s" % str(def)
+	# --- removal clears every LOD (low boughs belong to the tree) --------
+	var veg: VegetationSystem = Game.vegetation
+	var vi := -1
+	for i in World.tree_count():
+		if int(World.trees.variant[i]) == 3:
+			vi = i
+			break
+	var chunk: int = World.trees.chunk[vi]
+	var count_chunk := func() -> int:
+		var n := 0
+		for mmi in (veg.chunk_nodes[chunk] as Node).get_children():
+			if mmi is MultiMeshInstance3D:
+				n += (mmi as MultiMeshInstance3D).multimesh.instance_count
+		return n
+	var before: int = count_chunk.call()
+	World.remove_tree(int(World.trees.id[vi]))
+	await get_tree().process_frame
+	var after: int = count_chunk.call()
+	if before - after != 3:
+		return "removing a low-bough tree changed %d instances (want near+mid+far = 3)" % (before - after)
+	World.restore_tree(int(World.trees.id[vi]))
+	# --- rocks supported, formations present ----------------------------
+	var ra := PlacementValidator.audit_rocks()
+	if (ra.floating as Array).size() > 0:
+		return "%d r2 rocks float" % (ra.floating as Array).size()
+	# --- hides --------------------------------------------------------------
+	var cover: CoverService = Game.cover
+	if cover == null or cover.hides.size() != (World.cover.hides as Array).size() or cover.hides.size() < 40:
+		return "rock hides not built"
+	for h in cover.hides:
+		if not h.kind.begins_with("rock_") or h.exits.is_empty() or h.dead_end != (h.exits.size() == 1):
+			return "hide %s malformed" % h.name
+	# --- geometric concealment (real rays against real rock colliders) ---
+	var space := world.get_world_3d().direct_space_state
+	# Recess: rock behind blocks the view; gap: rock on both flanks blocks
+	# the view from the sides. Both stay open along their opening(s).
+	var shielded := 0
+	var front_seen := 0
+	for h in cover.hides:
+		var eye := h.eye
+		var away := -h.look_dir if h.kind == "rock_recess" else h.look_dir.cross(Vector3.UP).normalized()
+		var behind := eye + away * 9.0
+		behind.y = World.height_at(behind.x, behind.z) + 2.6
+		if not space.intersect_ray(PhysicsRayQueryParameters3D.create(behind, eye, 1)).is_empty():
+			shielded += 1
+		var front := eye + h.look_dir * 6.0
+		front.y = World.height_at(front.x, front.z) + 2.6
+		var hit2 := space.intersect_ray(PhysicsRayQueryParameters3D.create(front, eye, 1))
+		if hit2.is_empty() or (hit2.position as Vector3).distance_to(eye) < 0.6:
+			front_seen += 1
+	if shielded < cover.hides.size() * 0.9 or front_seen < cover.hides.size() * 0.75:
+		return "hide geometry: shielded %d/%d, open through the opening %d/%d" % [shielded, cover.hides.size(), front_seen, cover.hides.size()]
+	# --- bounded soft cover -------------------------------------------------
+	var th: Dictionary = (World.cover.thickets as Array)[0]
+	var c := Vector3(th.center[0], 0, th.center[1])
+	c.y = World.height_at(c.x, c.z) + 0.9
+	var a := c + Vector3(-10, 0.3, 0)
+	if cover.transmittance(a, c) > CoverService.SEEN_T or not cover.soft_hides(a, c, false):
+		return "a thicket does not conceal a still person (T=%.2f)" % cover.transmittance(a, c)
+	if cover.soft_hides(c + Vector3(-3, 0.3, 0), c, false):
+		return "soft cover hides someone within 4 m"
+	var open_p := Vector3(World.camp_origin().x, World.camp_origin().y + 1.0, World.camp_origin().z)
+	if cover.transmittance(open_p, open_p + Vector3(8, 0, 0)) < 0.99:
+		return "soft cover reported in the open camp yard"
+	# --- Foreman: hidden in rock, seen through the opening only ------------
+	var p: Player = world.player
+	var spot: HideSpot = null
+	for h in cover.hides:
+		if h.kind != "rock_recess":
+			continue
+		var behind := h.eye - h.look_dir * 9.0
+		behind.y = World.height_at(behind.x, behind.z) + 2.6
+		var front := h.eye + h.look_dir * 6.0
+		front.y = World.height_at(front.x, front.z) + 2.6
+		if not space.intersect_ray(PhysicsRayQueryParameters3D.create(behind, h.eye, 1)).is_empty() and space.intersect_ray(PhysicsRayQueryParameters3D.create(front, h.eye, 1)).is_empty() and cover.transmittance(front, h.eye) > 0.9:
+			spot = h
+			break
+	if spot == null:
+		return "no clean hide for the sight test"
+	world.hunt.hunt_preview = true
+	p.teleport_feet(spot.exit_point, 0.0)
+	await get_tree().physics_frame
+	p.hide_in(spot)
+	for i in 50:
+		await get_tree().physics_frame
+	var f := Foreman.new()
+	world.add_child(f)
+	var put := func(at: Vector3) -> void:
+		at.y = World.height_at(at.x, at.z)
+		f.global_position = at
+		var d := spot.eye - at
+		f.rotation.y = atan2(-d.x, -d.z)
+	put.call(spot.eye - spot.look_dir * 9.0)
+	await get_tree().physics_frame
+	var seen_back := f.can_see(p)
+	put.call(spot.eye + spot.look_dir * 6.0)
+	await get_tree().physics_frame
+	var seen_front := f.can_see(p)
+	var err := ""
+	if seen_back or not seen_front:
+		err = "Foreman sight through rock hide wrong (behind %s, front %s)" % [seen_back, seen_front]
+	# Lost contact: evidence 40 m away never names this spot; a seen entry does.
+	if err == "":
+		f._plan_search({"pos": spot.global_position + Vector3(40, 0, 0)})
+		for e in f.search_queue:
+			if e.get("spot") == spot:
+				err = "search named the hiding spot without evidence near it"
+		f._plan_search({"pos": spot.global_position, "spot": spot})
+		if err == "" and (f.search_queue.is_empty() or f.search_queue[0].get("spot") != spot):
+			err = "a seen entry did not put the spot first"
+	p.leave_hide()
+	world.hunt.hunt_preview = false
+	f.queue_free()
+	if err != "":
+		return err
+	if p.hiding != null:
+		return "could not leave the rock hide"
+	# --- saves keep their island ---------------------------------------------
+	var cs: CampaignService = world.campaign
+	cs.new_campaign()
+	if str(cs.ruleset.id) != "expanded_v2":
+		return "new campaign on r2 got ruleset %s" % str(cs.ruleset.id)
+	var cap: Dictionary = cs.capture_campaign()
+	if str((cap.get("island", {}) as Dictionary).get("revision", "")) != "r2":
+		return "save does not record its island"
+	var tampered := cap.duplicate(true)
+	tampered.island.trees = "0000"
+	cs.restore(tampered, cs.capture_economy())
+	if not cs.island_mismatch:
+		return "a save naming another island was not flagged"
+	cs.restore(cap, cs.capture_economy())
+	if cs.island_mismatch:
+		return "matching island flagged as mismatch"
+	# --- undergrowth presets keep thickets ----------------------------------
+	var ug: UndergrowthSystem = world.undergrowth
+	var full := ug.instance_count
+	var prot := 0
+	for v in ug.protected:
+		prot += int(v)
+	ug.set_density(0.45)
+	if ug.instance_count >= full or ug.instance_count < prot:
+		return "density preset wrong (%d -> %d, thicket members %d)" % [full, ug.instance_count, prot]
+	ug.set_density(1.0)
+	if full < 30000:
+		return "undergrowth too sparse (%d)" % full
+	# --- motion capture --------------------------------------------------------
+	var hc := HumanCharacter.new()
+	hc.appearance = HumanAppearance.for_employee("EMP-01", 1)
+	add_child(hc)
+	await get_tree().process_frame
+	for k in ["walk", "run", "sit", "sit_relaxed", "lie", "walk_proc"]:
+		if not hc.anim.has_animation(k):
+			hc.queue_free()
+			return "clip %s missing" % k
+	var steps := [0]
+	hc.step.connect(func(_s: int) -> void: steps[0] += 1)
+	hc.set_locomotion(1.3)
+	var lo := 9.0
+	for i in 180:
+		hc._process(1.0 / 60.0)
+		for ap in hc.ankle_positions():
+			lo = minf(lo, (ap as Vector3).y - hc.global_position.y)
+	hc.queue_free()
+	if steps[0] < 3 or absf(lo - hc.ankle_h) > 0.02:
+		return "mocap walk: %d steps in 3 s, lowest ankle %.3f (want %.3f)" % [steps[0], lo, hc.ankle_h]
+	# --- proper fabrics (no denim stand-ins on furniture) ----------------------
+	for m in ["blanket_red", "blanket_blue", "dog_bed", "upholstery", "sheet", "curtain_linen"]:
+		var mat := BuildKit.mat(m) as StandardMaterial3D
+		if mat.albedo_texture and mat.albedo_texture.resource_path.contains("denim"):
+			return "%s still uses denim" % m
+	if world.camp.find_child("sofa_02", true, false) == null:
+		return "camper couch is not the sofa model"
+	return ""

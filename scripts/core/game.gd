@@ -26,6 +26,7 @@ var weather: Node
 var safety: Node
 var player: Node3D
 var vegetation: Node
+var cover: CoverService              # Phase 12 (island r2 only)
 var trees: TreeService
 var timber: TimberService
 var campaign: CampaignService
@@ -81,6 +82,9 @@ func start_campaign() -> void:
 
 func start_preview(location: String = "camp") -> void:
 	mode = Mode.PREVIEW
+	# Phase 12: the Preview from the title shows the new-campaign island.
+	if preview_variant == "":
+		preview_variant = "island_r2"
 	pending_teleport = location
 	_change(SCENE_WORLD)
 
@@ -107,6 +111,7 @@ func _change(path: String) -> void:
 	safety = null
 	player = null
 	vegetation = null
+	cover = null
 	trees = null
 	timber = null
 	campaign = null

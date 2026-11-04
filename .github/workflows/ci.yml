@@ -49,8 +49,11 @@ jobs:
       - name: World generation determinism check
         run: timeout 600 ~/godot/godot --headless --script res://tools/generate_world.gd -- --check
 
+      - name: Island r2 determinism check (Phase 12, exactly 10,000 trees)
+        run: timeout 600 ~/godot/godot --headless --script res://tools/generate_island_r2.gd -- --check
+
       - name: Automated tests
-        run: timeout 900 ~/godot/godot --headless res://tests/test_runner.tscn
+        run: timeout 1500 ~/godot/godot --headless res://tests/test_runner.tscn
 
       - name: Startup smoke test
         run: timeout 900 ~/godot/godot --headless res://tests/smoke_test.tscn

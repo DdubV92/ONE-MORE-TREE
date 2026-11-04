@@ -4,10 +4,11 @@ extends RefCounted
 ## are derived from world data so they stay valid if the layout is edited.
 
 static var _cache := {}
+static var _cache_rev := ""
 
 
 static func all() -> Dictionary:
-	if not _cache.is_empty():
+	if not _cache.is_empty() and _cache_rev == World.island_revision:
 		return _cache
 	var co := World.camp_origin()
 	var c := Vector3(co.x, 0.0, co.z)   # heights come from the terrain in _v()
@@ -67,6 +68,9 @@ static func all() -> Dictionary:
 	vp["tv_wall"] = _v(camper + Vector3(-W + 0.62, F, zs - 1.07), camper + Vector3(-W + 0.63, F + 0.1, zs), 1.17, "Seated at the desk: monitor with the camera wall")
 	vp["desk_window"] = _v(camper + Vector3(-W + 0.62, F, zs - 1.07), camper + Vector3(-W - 3.0, F + 0.2, zs - 1.2), 1.17, "Seated at the desk, glancing right through the window")
 	vp["couch_tv"] = _v(camper + Vector3(W - 0.88, F, zs - 2.05), camper + Vector3(W - 0.88, F + 0.32, zs), 1.17, "Couch view of the entertainment TV")
+	# Phase 12: soft furnishings review (sheets/blankets, vinyl shower curtain).
+	vp["camper_bedroom"] = _v(camper + Vector3(-1.15, F, -1.75), camper + Vector3(0.0, F + 0.35, -3.7), 1.5, "Camper bedroom: sheet, wool blanket, pillows")
+	vp["camper_bath"] = _v(camper + Vector3(0.4, F, 0.1), camper + Vector3(0.95, F - 0.35, -1.0), 1.45, "Camper bathroom: vinyl shower curtain")
 	vp["dock"] = _v(c + Vector3(-7.0, 0.0, 121.0), c + Vector3(8.0, 0.0, 100.0), eye, "Service dock, utility building and beacon hut")
 	vp["dog_alcove"] = _v(c + Vector3(4.6, 0.0, 97.6), c + Vector3(8.8, -0.4, 95.0), 1.3, "The dog's dry alcove beside the utility building")
 	vp["utility_inside"] = _v(c + Vector3(10.2, 0.45, 92.6), c + Vector3(12.0, 0.0, 96.2), eye, "Inside the utility building: shelves, panel, radio and beacon")
@@ -79,8 +83,98 @@ static func all() -> Dictionary:
 		var foot := Vector2(b.x, b.z) + acr * (float(b.half_span) + 12.0)
 		var far := Vector2(b.x, b.z) - acr * float(b.half_span)
 		vp["bridge_%d" % bi] = _v(Vector3(foot.x + acr.y * 3.0, 0.0, foot.y - acr.x * 3.0), Vector3(far.x, 0.0, far.y), 1.65, "Trail bridge %d (3.6 m, truck-capable)" % bi)
+	if World.island_revision == "r2":
+		_add_r2(vp, c)
 	_cache = vp
+	_cache_rev = World.island_revision
 	return vp
+
+
+## Phase 12 review views on island r2, chosen from the frozen data so they
+## always point at real features (nearest to camp first).
+static func _add_r2(vp: Dictionary, c: Vector3) -> void:
+	var cc := Vector2(c.x, c.z)
+	var eye := 1.65
+	# Densest veteran grove at eye level (most standing trunks within 12 m).
+	var best := -1
+	var best_n := -1
+	var xs: PackedFloat32Array = World.trees.x
+	var zs: PackedFloat32Array = World.trees.z
+	for i in range(0, xs.size(), 7):
+		var p := Vector2(xs[i], zs[i])
+		if p.distance_to(cc) > 260.0 or int(World.trees.get("cohort", PackedByteArray())[i]) != 2:
+			continue
+		var n := 0
+		for j in range(maxi(i - 60, 0), mini(i + 60, xs.size())):
+			if p.distance_to(Vector2(xs[j], zs[j])) < 12.0:
+				n += 1
+		if n > best_n:
+			best_n = n
+			best = i
+	if best >= 0:
+		var t := Vector3(xs[best], 0, zs[best])
+		vp["p12_grove"] = _v(t + Vector3(7.0, 0, 6.0), t + Vector3(-6.0, 1.0, -8.0), eye, "Dense veteran grove at eye level (%d trunks within 12 m)" % best_n)
+	# Low-bough tree work approach: nearest variant-3 veteran to camp.
+	var lb := -1
+	var lbd := 1e9
+	for i in xs.size():
+		if int(World.trees.variant[i]) == 3 and int(World.trees.get("cohort", PackedByteArray())[i]) == 2:
+			var d := Vector2(xs[i], zs[i]).distance_to(cc)
+			if d < lbd and d > 40.0:
+				lbd = d
+				lb = i
+	if lb >= 0:
+		var t := Vector3(xs[lb], 0, zs[lb])
+		var dir := (Vector3(c.x, 0, c.z) - t).normalized()
+		vp["p12_boughs"] = _v(t + dir * 3.2, t + Vector3(0, 1.4, 0), eye, "Work approach under thick low boughs (tree #%d, %.1f m)" % [int(World.trees.id[lb]), float(World.trees.height[lb])])
+	var nearest := func(list: Array, kind: String, key: String) -> Dictionary:
+		var out: Dictionary = {}
+		var bd := 1e9
+		for e in list:
+			if kind != "" and str(e.get("kind", "")) != kind:
+				continue
+			var p := Vector2(float(e[key][0]), float(e[key][1]))
+			var d := p.distance_to(cc)
+			if d < bd and d > 30.0:
+				bd = d
+				out = e
+		return out
+	var th: Dictionary = nearest.call(World.cover.get("thickets", []), "", "center")
+	if not th.is_empty():
+		var t := Vector3(th.center[0], 0, th.center[1])
+		var dir := (Vector3(c.x, 0, c.z) - t).normalized()
+		vp["p12_thicket"] = _v(t + dir * (float(th.radius) + 7.0), t, eye, "Undergrowth edge: bramble and hazel thicket (soft cover)")
+	var sh: Dictionary = nearest.call(World.cover.get("formations", []), "rock_shelf", "center")
+	if not sh.is_empty():
+		var t := Vector3(sh.center[0], 0, sh.center[1])
+		var dir := (Vector3(c.x, 0, c.z) - t).normalized()
+		vp["p12_rocks"] = _v(t + dir * (float(sh.radius) + 9.0), t, eye, "Rock shelf on a landform rise (hard cover)")
+	# Nearest rock recess whose opening has a clear view line (no trunk
+	# within 1.6 m of the line from the viewpoint to the pocket).
+	var hides: Array = World.cover.get("hides", []).duplicate()
+	hides.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return Vector2(a.pos[0], a.pos[1]).distance_to(cc) < Vector2(b.pos[0], b.pos[1]).distance_to(cc))
+	for hd in hides:
+		if str(hd.kind) != "rock_recess":
+			continue
+		var t2 := Vector2(hd.pos[0], hd.pos[1])
+		var f2 := Vector2(hd.facing[0], hd.facing[1])
+		var from := t2 + f2 * 5.5 + Vector2(f2.y, -f2.x) * 1.5
+		var blocked := false
+		for i in xs.size():
+			var q := Vector2(xs[i], zs[i])
+			if q.distance_to(t2) < 9.0 and IslandGenerator.seg_dist(q, from, t2).x < 1.6:
+				blocked = true
+				break
+		if blocked:
+			continue
+		vp["p12_hide"] = _v(Vector3(from.x, 0, from.y), Vector3(t2.x, -0.4, t2.y), eye, "Rock recess hide: opening, crouch pocket, one way out")
+		break
+	var rg: Dictionary = nearest.call(World.cover.get("landforms", []), "ridge", "center")
+	if not rg.is_empty():
+		var t := Vector3(rg.center[0], 0, rg.center[1])
+		var d := Vector3(rg.dir[0], 0, rg.dir[1])
+		vp["p12_ridge"] = _v(t - d * (float(rg.length) * 0.5 + 6.0) + Vector3(d.z, 0, -d.x) * 14.0, t, eye, "Small landform ridge breaking the sightline")
+	vp["p12_high"] = _v(c + Vector3(-60.0, 0.0, -160.0), c + Vector3(80.0, -6.0, -420.0), 9.0, "Over the woods north of camp: canopy, groves and gaps")
 
 
 static func _v(pos: Vector3, look: Vector3, eye: float, label: String, lighting: String = "") -> Dictionary:

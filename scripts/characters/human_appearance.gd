@@ -12,7 +12,7 @@ extends Resource
 @export var hair_style := 0          # 0 short crop, 1 beanie, 2 bun, 3 bald + cap
 @export var beard := 0               # 0 none, 1 stubble, 2 full
 @export var jacket := Color(0.62, 0.22, 0.16)
-@export var jacket_texture := "denim_fabric"
+@export var jacket_texture := "caban"   # Phase 12: wool work jacket (was a blue denim scan)
 @export var shirt := Color(0.82, 0.78, 0.66)
 @export var pants := Color(0.24, 0.27, 0.32)
 @export var boots := Color(0.28, 0.18, 0.11)
