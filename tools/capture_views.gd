@@ -47,6 +47,10 @@ func _ready() -> void:
 			var dp: Vector3 = Game.dog.global_position
 			var fwd: Vector3 = -Game.dog.global_basis.z
 			vps["dog_close"] = {"pos": dp + fwd * 1.5 + fwd.cross(Vector3.UP) * 0.7 + Vector3(0, 0.55, 0), "look": dp + Vector3(0, 0.4, 0)}
+		var gw := 0
+		while not world.systems_ready and gw < 600:
+			await get_tree().process_frame
+			gw += 1
 		if vp_name == "tv_wall" and world.tv:
 			world.tv.force_active = true
 			if tv_mode in ["focus", "entertainment"]:

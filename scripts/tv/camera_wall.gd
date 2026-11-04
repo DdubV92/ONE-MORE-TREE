@@ -272,6 +272,8 @@ func _build_composite() -> void:
 
 func set_mode(m: String) -> void:
 	mode = m
+	if screen == null:
+		return
 	for r in _tile_rects:
 		r.visible = m == "quad"
 	for l in _tile_labels:
