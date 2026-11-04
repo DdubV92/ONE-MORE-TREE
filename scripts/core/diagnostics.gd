@@ -66,7 +66,9 @@ func _load_build_info() -> void:
 
 
 func version_string() -> String:
-	return "%s (%s)" % [ProjectSettings.get_setting("application/config/version"), str(build_info.get("commit", "?")).left(10)]
+	var label := str(build_info.get("label", ""))
+	var base := "%s (%s)" % [ProjectSettings.get_setting("application/config/version"), str(build_info.get("commit", "?")).left(10)]
+	return ("%s  -  build %s  -  %s" % [label, str(build_info.get("run", "?")), base]) if label != "" else base
 
 
 func frame_stats() -> Dictionary:

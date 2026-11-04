@@ -96,9 +96,21 @@ jobs:
           rm /tmp/templates.tpz
           cat "$DEST/version.txt"
 
+      - name: Build label (e.g. ONE MORE TREE LATEST BUILD PHASE 7)
+        id: label
+        run: |
+          REF="${GITHUB_REF_NAME}"
+          if [[ "$REF" =~ ^phase-([0-9]+) ]]; then
+            LABEL="ONE MORE TREE LATEST BUILD PHASE ${BASH_REMATCH[1]}"
+          else
+            LABEL="ONE MORE TREE LATEST BUILD ${REF^^}"
+          fi
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          echo "$LABEL"
+
       - name: Stamp build info
         run: |
-          printf '{"commit": "%s", "run": "%s", "built_at": "%s", "ref": "%s"}\n' "${GITHUB_SHA}" "${GITHUB_RUN_NUMBER}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${GITHUB_REF_NAME}" > build_info.json
+          printf '{"commit": "%s", "run": "%s", "built_at": "%s", "ref": "%s", "label": "%s"}\n' "${GITHUB_SHA}" "${GITHUB_RUN_NUMBER}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${GITHUB_REF_NAME}" "${{ steps.label.outputs.label }}" > build_info.json
           cat build_info.json
 
       - name: Import project
@@ -115,7 +127,7 @@ jobs:
       - name: Add tester readme
         run: |
           cat > build/windows/README.txt <<EOF
-          ONE MORE TREE - Phase 0 test build
+          ${{ steps.label.outputs.label }}  (build ${GITHUB_RUN_NUMBER}, branch ${GITHUB_REF_NAME})
           Commit: ${GITHUB_SHA}   Run: ${GITHUB_RUN_NUMBER}   Engine: Godot ${GODOT_VERSION}-${GODOT_RELEASE} (Forward+)
 
           1. Extract this whole folder somewhere (keep OneMoreTree.exe and OneMoreTree.pck together).
@@ -129,7 +141,7 @@ jobs:
       - name: Upload test build
         uses: actions/upload-artifact@v4
         with:
-          name: OneMoreTree-windows-x86_64-${{ github.ref_name }}-${{ github.run_number }}
+          name: ${{ steps.label.outputs.label }} - build ${{ github.run_number }} (Windows)
           path: build/windows/
           retention-days: 30
           compression-level: 6
