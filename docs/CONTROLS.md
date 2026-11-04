@@ -8,11 +8,14 @@
 | Shift | Sprint (forward) |
 | Ctrl | Crouch (stays crouched under low ceilings) |
 | Left mouse | Swing the axe (hold to keep chopping at the same pace). On a fallen trunk, aim at an orange mark to buck it into logs. Does nothing while carrying. |
-| 1 / 2 / 3 | Equip your small / medium / large axe (campaign: only axes you own; Preview: any tier for review) |
+| 1 / 2 / 3 | Equip your small / medium / large axe (campaign: only axes you own; Preview: any tier for review). All three swing at the same rhythm; bigger axes do more per hit |
+| 4 | Hold your chainsaw (campaign: if you own one) |
+| R | Chainsaw: start / stop the engine (squeezing the attack button also starts it) |
+| Left mouse (hold) with the saw | Throttle. It cuts only while the running chain is in the wood. Hiding, sitting, driving, sleeping or picking up logs stops the saw at once |
 | E on a crew member | Talk: what they're doing, their axe, wages, what they noticed, report what you saw, reassure, give orders (follow, work here, head home), hand over a spare axe, pay, fire |
 | J | Journal (crew roster and hiring first): contract progress, payroll and arrears (pay employees), money ledger, daily reports |
 | F9 / F10 | Quick save / quick load of the current slot (campaign only; a backup of the previous save is kept) |
-| E | Interact: doors, fire, the **tool rack** (axe shop), the **camper bed** (sleep: from dusk), notice board, arcade. Logs: pick up / add to your bundle; at the receiving cradle or a log deck: deliver everything you carry (refused, and not paid, if there is no room). Too heavy to lift: hold to drag. Handcart: load logs, grab or let go of the handle, unload at the cradle or a deck. Fire pit: load paid logs onto the fire |
+| E | Interact: doors, fire, the **tool rack** (your gear and camp storage: equip, put away, give to a worker), the **parcel locker** (collect supplier deliveries), the **camper bed** (sleep: from dusk), notice board, arcade. Logs: pick up / add to your bundle; at the receiving cradle or a log deck: deliver everything you carry (refused, and not paid, if there is no room). Too heavy to lift: hold to drag. Handcart: load logs, grab or let go of the handle, unload at the cradle or a deck. Fire pit: load paid logs onto the fire |
 | G | Set down one log at a checked spot in front of you (at the cradle: deliver). Holding paid yard logs: put them on the nearest deck or the fire pile |
 | X | Drop the whole load (each log still needs a clear spot; otherwise you keep it) |
 | Esc | Pause menu: resume, settings, diagnostics, save (campaign), title, quit. Releases the mouse. |

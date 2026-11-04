@@ -6,8 +6,11 @@ extends Resource
 
 ## Axe tier cutting-speed multipliers (work per second relative to small).
 @export var tier_rates := {"small": 1.0, "medium": 1.4, "large": 1.96}
-## Full swing cycle per tier (s): heavier heads recover a little slower.
-@export var tier_cycle := {"small": 0.95, "medium": 1.05, "large": 1.2}
+## Phase 14: one common legal swing cycle for every axe (s). Gains come
+## from work per valid hit (1.00/1.40/1.96); work per second is unchanged
+## from Phases 1-13 (the old per-tier cycles were compensated in
+## work_per_contact). ToolEffects.AXE_CYCLE is the same value.
+@export var tier_cycle := {"small": 0.95, "medium": 0.95, "large": 0.95}
 ## Contact moment as a fraction of the cycle (damage only lands here).
 @export var contact_fraction := 0.46
 ## Reference: small-axe units to fell a 0.5 m diameter pine.

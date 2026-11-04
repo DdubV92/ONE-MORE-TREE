@@ -42,6 +42,10 @@ func _ready() -> void:
 	cam.fov = 40.0
 	add_child(cam)
 	cam.make_current()
+	if "gear" in OS.get_cmdline_user_args():
+		await _gear()
+		get_tree().quit()
+		return
 	if "motion" in OS.get_cmdline_user_args():
 		await _motion()
 		get_tree().quit()
@@ -75,6 +79,60 @@ func _motion() -> void:
 	cam.global_position = Vector3(-3.2, 2.2, 2.6)
 	cam.look_at(Vector3(-3.6, 0.3, 0))
 	await _snap("lie_clean")
+
+
+## Phase 14: gear tiers and tools on the cast, the saw up close and in
+## first person.
+func _gear() -> void:
+	var kit := [["t1", "t1", "t1", "small", "swing"], ["t2", "t2", "t2", "chainsaw", "saw"], ["t3", "t3", "t3", "large", "swing"], ["", "", "", "medium", "idle"], ["t3", "t3", "", "chainsaw", "saw"]]
+	for k in 5:
+		var h := cast[k]
+		h.set_gear(kit[k][0], kit[k][1], kit[k][2])
+		h.set_axe_tier(kit[k][3])
+		h.play(kit[k][4], 0.0)
+		h.anim.seek(0.6, true)
+		h.playback_scale = 0.0
+	cam.global_position = Vector3(0.2, 1.25, 7.5)
+	cam.look_at(Vector3(0.2, 0.95, 0))
+	await _snap("gear_lineup")
+	cam.global_position = Vector3(-1.6, 1.25, 2.4)
+	cam.look_at(Vector3(-1.9, 1.0, 0))
+	await _snap("gear_saw_worker")
+	for k in 5:
+		cast[k].visible = k == 1
+	cam.global_position = Vector3(-1.9 + 2.6, 1.2, -0.6)
+	cam.look_at(Vector3(-1.9, 0.95, -0.2))
+	await _snap("gear_saw_side")
+	for k in 5:
+		cast[k].visible = true
+	cam.global_position = Vector3(0.6, 1.7, 1.7)
+	cam.look_at(Vector3(0.6, 1.5, 0))
+	await _snap("gear_helmets")
+	# The saw itself.
+	for h in cast:
+		h.visible = false
+	dog.visible = false
+	var saw := ChainsawModel.create(1.0)
+	saw.position = Vector3(0, 1.0, 0)
+	saw.rotation.y = PI * 0.62
+	add_child(saw)
+	cam.global_position = Vector3(0.0, 1.35, 1.1)
+	cam.look_at(Vector3(0.0, 1.05, 0))
+	await _snap("saw_closeup")
+	saw.queue_free()
+	# First person: hands on the saw.
+	var vm := ViewModel.new()
+	cam.add_child(vm)
+	cam.fov = 75.0
+	cam.global_position = Vector3(0, 1.65, 3.0)
+	cam.look_at(Vector3(0, 1.0, 0))
+	await get_tree().process_frame
+	vm.set_gloves("t2")
+	vm.equip_saw()
+	for i in 6:
+		vm.pose_saw(0.9, true, 0.0)
+		await get_tree().process_frame
+	await _snap("saw_first_person")
 
 
 func _snap(name: String) -> void:

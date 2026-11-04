@@ -8,10 +8,16 @@ extends Node
 ##   Cameras  - the existing live surveillance wall (CameraWall), rehosted:
 ##              quad, click a tile to focus, previous/next, back, swap
 ##              interval, microphones, volume, monitor power.
-##   Shop     - the existing axe purchases (real Equipment/Wallet API) and
+##   Supplier - Phase 14: the camp supplier (real Supplier/Equipment/Wallet:
+##              catalog with exact benefits, cart, quote with payroll
+##              warnings, idempotent prepaid orders, delivery status) and
 ##              the truck order (real VehicleService).
-##   Mail, News, Forums, Recordings - labelled "later update" placeholders
-##              (Phases 14/17/19); they never show fake content.
+##   Gear     - Phase 14: your kit breakdown, camp storage, issuing gear to
+##              the crew (the same screen as the tool rack).
+##   Mail     - Phase 14: supplier notices generated from the real order
+##              records only (company/personal mail arrives in Phase 17).
+##   News, Forums, Recordings - labelled "later update" placeholders
+##              (Phases 17/19); they never show fake content.
 ## A small quad inset keeps the cameras at the edge of attention in other
 ## apps (same four-feed budget: it is the same composite texture).
 ## Live: time keeps running while you use it; the real pause menu pauses.
@@ -19,9 +25,8 @@ extends Node
 signal app_changed(app: String)
 
 const SIZE := Vector2i(1024, 576)
-const APPS := ["Cameras", "Shop", "Mail", "News", "Forums", "Recordings"]
+const APPS := ["Cameras", "Supplier", "Gear", "Mail", "News", "Forums", "Recordings"]
 const LATER := {
-	"Mail": "Camp Mail arrives with the supplier and company correspondence in a later update (Phase 14 and Phase 17).",
 	"News": "Regional news arrives in a later update (Phase 17).",
 	"Forums": "The community forums arrive in a later update (Phase 17).",
 	"Recordings": "The camera recording archive arrives in a later update (Phase 19). Nothing is being recorded yet.",
@@ -46,6 +51,8 @@ var _status: Label
 var _clock: Label
 var _buttons := {}
 var _shop_box: VBoxContainer
+var cart: Array = []                # Supplier cart lines {"key", "qty"}
+var _req := [""]                    # current order request id (idempotency)
 var clicks := 0                # tile clicks handled (tests)
 
 
@@ -177,7 +184,7 @@ func open_app(a: String) -> void:
 	match a:
 		"Cameras":
 			_build_cameras()
-		"Shop":
+		"Supplier", "Gear", "Mail":
 			_build_shop()
 		_:
 			var l := UITheme.label(str(LATER.get(a, "")), 18)
@@ -301,46 +308,38 @@ func _build_shop() -> void:
 
 
 func _refresh_shop() -> void:
-	if _shop_box == null:
+	if _shop_box == null or not is_instance_valid(_shop_box):
 		return
 	for c in _shop_box.get_children():
 		c.queue_free()
+	var st := func(t: String) -> void:
+		if _status:
+			_status.text = t
+	match app:
+		"Supplier":
+			GearPanel.build_supplier(_shop_box, cart, _req, st, _refresh_shop)
+		"Gear":
+			GearPanel.build_gear(_shop_box, st, _refresh_shop)
+		"Mail":
+			_build_mail()
+
+
+## Supplier notices derived from the order records (nothing invented).
+func _build_mail() -> void:
+	_shop_box.add_child(UITheme.label("Camp Mail", 20, UITheme.ACCENT))
 	var cs: CampaignService = Game.campaign
-	_shop_box.add_child(UITheme.label("Camp Supply (company account)", 20, UITheme.ACCENT))
-	if cs == null or not cs.active:
-		_shop_box.add_child(UITheme.label("Orders are only available during a campaign.", 16))
+	if cs == null or not cs.active or cs.supplier == null or cs.supplier.orders.is_empty():
+		_shop_box.add_child(UITheme.label("No messages. Supplier confirmations and delivery notices appear here. (Company and personal mail arrives in a later update.)", 15, UITheme.MUTED))
 		return
-	_shop_box.add_child(UITheme.label("Cash $%s · wages owed $%s · tonight's payroll $%s" % [Money.format_cents(cs.wallet.cash), Money.format_cents(cs.payroll.owed_total()), Money.format_cents(cs.payroll.todays_estimate())], 15))
-	for tier in ["medium", "large"]:
-		var mult: float = {"medium": 1.40, "large": 1.96}[tier]
-		var owned := cs.equipment.boss_has(tier)
-		var price := cs.equipment.price(tier)
-		var row := HBoxContainer.new()
-		var l := UITheme.label("%s axe: x%.2f cutting rate (more work per hit) · $%s%s" % [tier.capitalize(), mult, Money.format_cents(price), "  · OWNED" if owned else ""], 15)
-		l.custom_minimum_size = Vector2(620, 0)
-		row.add_child(l)
-		if not owned:
-			var t2: String = tier
-			row.add_child(UITheme.button("Buy", func() -> void:
-				var r := cs.equipment.buy(t2)
-				_status.text = ("Bought: the %s axe is at the tool rack and equipped." % t2) if bool(r.get("ok", false)) else str(r.get("reason", "Not possible."))
-				if bool(r.get("ok", false)):
-					cs.equipment.equip_tier(t2)
-				_refresh_shop(), 0))
-		_shop_box.add_child(row)
-	if Game.vehicles:
-		var u: Dictionary = Game.vehicles.unlock_state()
-		var row2 := HBoxContainer.new()
-		var l2 := UITheme.label("Logging pickup: 3 seats, 3 trees' worth of logs · $%s · owned %d of 2%s" % [Money.format_cents(int(u.price)), int(u.owned), "" if bool(u.unlocked) else " · unlocks after %.0f trees' worth delivered" % float(u.get("need", 0))], 15)
-		l2.custom_minimum_size = Vector2(620, 0)
-		row2.add_child(l2)
-		if int(u.owned) < 2:
-			row2.add_child(UITheme.button("Order", func() -> void:
-				var r2: Dictionary = Game.vehicles.buy()
-				_status.text = "Pickup delivered to the camp bays." if bool(r2.get("ok", false)) else str(r2.get("reason", "Not possible."))
-				_refresh_shop(), 0))
-		_shop_box.add_child(row2)
-	_shop_box.add_child(UITheme.label("Gloves, boots, helmets and chainsaws: not stocked yet (a later update).", 14, UITheme.MUTED))
+	for i in range(cs.supplier.orders.size() - 1, -1, -1):
+		var o: Dictionary = cs.supplier.orders[i]
+		var parts := PackedStringArray()
+		for ln in o.lines:
+			parts.append("%d x %s" % [int(ln.qty), str(GearCatalog.def(str(ln.key)).name)])
+		var body := "From: Camp Supply\nRe: order %s (day %d, %s)\n%s - $%s paid (%s).\nStatus: %s" % [str(o.id), int(o.placed.day), Supplier.hour_words(float(o.placed.t)), ", ".join(parts), Money.format_cents(int(o.total)), str(o.tx), cs.supplier.state_words(o)]
+		var l := UITheme.label(body, 14)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		_shop_box.add_child(l)
 
 
 # ------------------------------------------------------------ seat + glance
@@ -349,7 +348,7 @@ func sit(on: bool) -> void:
 	seated = on
 	glancing = false
 	_update_overlay()
-	if on and app == "Shop":
+	if on and app in ["Supplier", "Gear", "Mail"]:
 		_refresh_shop()
 
 
@@ -395,6 +394,9 @@ func capture() -> Dictionary:
 
 
 func restore(d: Dictionary) -> void:
-	open_app(str(d.get("app", "Cameras")) if APPS.has(str(d.get("app", ""))) else "Cameras")
+	var a := str(d.get("app", "Cameras"))
+	if a == "Shop":
+		a = "Supplier"          # Phase 11-13 saves
+	open_app(a if APPS.has(a) else "Cameras")
 	if bool(d.get("powered", true)) != powered:
 		set_power(bool(d.get("powered", true)))

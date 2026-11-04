@@ -61,8 +61,8 @@ func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
 	body_char = HumanCharacter.new()
 	body_char.appearance = HumanAppearance.for_employee(id, int(record.get("look_seed", 1)))
 	add_child(body_char)
-	body_char.set_axe_tier(axe_tier())
 	_flavor_rng.seed = hash(id)
+	refresh_kit_visuals.call_deferred()
 	body_char.step.connect(func(_side: int) -> void:
 		if body_char.visible:
 			get_tree().call_group("footstep_listeners", "play_crowd_step", global_position, _speed))
@@ -82,9 +82,150 @@ func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
 	add_to_group("crew_workers")
 
 
+## The equipped axe tier, "chainsaw" for a saw, "" for no cutting tool.
 func axe_tier() -> String:
-	var a := crew.equipment_axe_of(id)
-	return str(a.get("tier", "")) if not a.is_empty() else ""
+	var k := crew.kit(self)
+	if str(k.tool) == "chainsaw":
+		return "chainsaw"
+	return str(k.tier) if str(k.tool) == "axe" else ""
+
+
+## Shows the equipped tool and gear on the body.
+func refresh_kit_visuals() -> void:
+	if body_char == null:
+		return
+	body_char.set_axe_tier(axe_tier())
+	var k := crew.kit(self)
+	body_char.set_gear(str(k.get("boots", "")), str(k.get("gloves", "")), str(k.get("helmet", "")))
+	if axe_tier() != "chainsaw" and saw.state != SawMachine.S.STOPPED:
+		saw.kill()
+
+
+## Phase 14 team carry: the team this worker belongs to ("" = none).
+var team := ""
+
+
+## Follower: walk to the far end of the log, wait for the lift, then carry
+## the far end along the leader's actual path (breadcrumb trail).
+func start_team_follow(tid: String) -> void:
+	team = tid
+	path.clear()
+	_after_move = ""
+	activity = "team_follow"
+	target = {"team": tid, "label": "a long log", "team_ready": false}
+
+
+func _do_team_follow(delta: float) -> void:
+	var t: Dictionary = crew.coord.teams.get(team, {})
+	if t.is_empty():
+		activity = "idle"
+		team = ""
+		target = {}
+		body_char.carry_grips = []
+		return
+	var leader: Worker = crew.workers.get(str(t.leader))
+	if leader == null:
+		crew.coord.break_team_of(self, "leader gone")
+		return
+	var goal: Vector3
+	var sid := str(t.sid)
+	var s := crew.timber.segment(sid)
+	var rec: Dictionary = crew.timber.records.get(int(sid.trim_prefix("T").split("_S")[0]), {})
+	var L := TimberMesh.piece_length(rec, int(s.k)) if not rec.is_empty() else 2.0
+	if str(t.state) == "gather":
+		var b := crew.timber.body_of(sid)
+		if b == null:
+			if crew.timber.load_of(leader.id).has(sid):
+				crew.coord.lifted(team)
+			return
+		# The end of the log farther from the leader.
+		var ends: Array = b.axis_samples(2)
+		var e0: Vector3 = ends[0][0]
+		var e1: Vector3 = ends[ends.size() - 1][0]
+		var far := e0 if e0.distance_to(leader.global_position) > e1.distance_to(leader.global_position) else e1
+		var off := (far - (e0 + e1) * 0.5).normalized()
+		goal = far + off * 0.45
+		target["team_ready"] = Vector2(goal.x - global_position.x, goal.z - global_position.z).length() < 1.1
+	else:
+		# Carry: L x 0.95 behind the leader along the leader's trail.
+		var trail: Array = t.get("trail", [])
+		var need := L * 0.95
+		var acc := 0.0
+		var prev := leader.global_position
+		goal = prev + leader.global_basis.z * need
+		for i in range(trail.size() - 1, -1, -1):
+			var q: Vector3 = trail[i]
+			var d := prev.distance_to(q)
+			if acc + d >= need:
+				goal = prev.lerp(q, (need - acc) / maxf(d, 0.001))
+				break
+			acc += d
+			prev = q
+	var to := Vector3(goal.x - global_position.x, 0, goal.z - global_position.z)
+	var dist := to.length()
+	var sp := 0.0
+	if dist > 0.15:
+		sp = minf(crew.coord.team_speed(team) * (1.6 if str(t.state) == "carry" else 1.0) + dist * 0.5, WALK * 1.4)
+		var step := to.normalized() * minf(sp * delta, dist)
+		var np := global_position + step
+		np.y = crew.nav.surface_at(np)
+		global_position = np
+	if str(t.state) == "carry":
+		_face(Vector3(leader.global_position.x - global_position.x, 0, leader.global_position.z - global_position.z).normalized(), delta * 4.0)
+		var g0 := global_position + (leader.global_position - global_position).normalized() * 0.35 + Vector3(0, 0.85, 0)
+		body_char.carry_grips = [g0 + global_basis.x * -0.15, g0 + global_basis.x * 0.15]
+	body_char.set_locomotion(sp if dist > 0.15 else 0.0)
+
+
+## Phase 14: the worker's chainsaw engine and its sound (only used while
+## a saw is equipped).
+var saw := SawMachine.new()
+var saw_audio: SawAudio
+
+
+func _saw_audio() -> SawAudio:
+	if saw_audio == null:
+		saw_audio = SawAudio.new()
+		saw_audio.name = "SawAudio"
+		saw_audio.who = id
+		saw_audio.position = Vector3(0, 1.0, -0.6)
+		add_child(saw_audio)
+	return saw_audio
+
+
+## One step of cutting work with the equipped tool (the caller has already
+## validated the target, range and facing). Axe: the worker's work per
+## contact exactly once per swing at contact. Chainsaw: the engine starts
+## once, then rate x SAW_TICK per completed loaded tick.
+func _work_step(delta: float) -> float:
+	var fx := crew.tool_effects(self)
+	if str(fx.tool) == "chainsaw":
+		if body_char.current != "saw":
+			body_char.play("saw", 0.2)
+		if saw.state == SawMachine.S.STOPPED:
+			saw.start(float(fx.start_s))
+		var n := saw.step(delta, saw.state != SawMachine.S.STARTING, true)
+		work_seconds += delta
+		return float(n) * float(fx.saw_rate) * ToolEffects.SAW_TICK
+	return float(fx.work_per_contact) if _swing(delta) else 0.0
+
+
+## Saw upkeep every frame: cutting stops the moment the worker leaves a
+## cutting job; the engine is switched off when they move on, carry, ride,
+## sit, sleep, hide or flee.
+func _saw_upkeep(delta: float) -> void:
+	if saw.state == SawMachine.S.STOPPED and saw_audio == null:
+		return
+	if not activity in ["fell", "buck", "stump"]:
+		if activity in ["retreat", "retreat_wait", "move", "idle"] and saw.running():
+			saw.step(delta, false, false)
+			if activity != "retreat_wait" and activity != "idle":
+				saw.stop()
+		elif saw.state != SawMachine.S.STOPPED:
+			saw.kill()
+		else:
+			saw.step(delta, false, false)
+	_saw_audio().update(saw, delta)
 
 
 func trait_list() -> Array:
@@ -114,7 +255,8 @@ func activity_words() -> String:
 		"stump": return "chopping out a stump"
 		"hidden": return "hiding"
 		"dead": return "dead"
-		"pick", "deliver", "load_truck": return "dragging a long log" if dragging_log() else "hauling"
+		"pick", "deliver", "load_truck": return ("carrying a long log with a partner" if team != "" else "dragging a long log") if dragging_log() else "hauling"
+		"team_follow": return "helping carry a long log"
 		"deliver_deck": return "stacking logs on a yard deck"
 		"yard_take", "yard_drop": return "yard work: moving paid logs"
 		"seated": return "riding in a truck"
@@ -212,8 +354,12 @@ func _move(delta: float) -> void:
 	var want := (CARRY_WALK if is_carrying() else WALK)
 	if is_carrying() and crew.timber.is_dragging(id, crew.carry_budget(self)):
 		want = CARRY_WALK * 0.5           # dragging an oversized log
+		if team != "" and str(crew.coord.teams.get(team, {}).get("state", "")) == "carry":
+			want = crew.coord.team_speed(team) / maxf(float(crew.tool_effects(self).walk_mult), 0.01)   # boots applied below
+			crew.coord.trail_point(team, global_position)
 	if mind.state >= WorkerMind.Fear.DISTRESSED and activity == "move" and _after_move == "home":
 		want *= 1.12       # hurrying home
+	want *= float(crew.tool_effects(self).walk_mult)   # boots (one pair)
 	_speed = move_toward(_speed, want, delta * 3.0)
 	var step := dir * _speed * delta
 	var np := global_position + step
@@ -329,6 +475,7 @@ func _physics_process(delta: float) -> void:
 			_face(Vector3(Game.player.global_position.x - global_position.x, 0, Game.player.global_position.z - global_position.z).normalized(), delta)
 		return
 	_update_lod()
+	_saw_upkeep(delta)
 	# Long jobs re-check the clock: a far worker turns back in time, even in
 	# the middle of a task (claims released, load handled by the crew).
 	_time_check -= delta
@@ -361,6 +508,8 @@ func _physics_process(delta: float) -> void:
 			_do_load_truck()
 		"follow":
 			_do_follow(delta)
+		"team_follow":
+			_do_team_follow(delta)
 		"sleep", "sit", "departed", "aboard", "seated", "hidden", "dead", "board":
 			pass
 		"hide_enter":
@@ -391,6 +540,7 @@ func _update_lod() -> void:
 ## Ends the current activity safely: claims released, load kept (the crew
 ## service decides whether to stage it), swing stopped.
 func abandon(reason: String) -> void:
+	crew.coord.break_team_of(self, reason)
 	crew.release_claims(self)
 	path.clear()
 	_after_move = ""
@@ -416,7 +566,7 @@ func start_fell(tree_id: int, stand: Vector3, retreat: Vector3) -> bool:
 
 
 func _swing_cycle() -> float:
-	return float(crew.work_config.tier_cycle.get(axe_tier() if axe_tier() != "" else "small", 1.0))
+	return float(crew.tool_effects(self).cycle_s)
 
 
 ## Advances one swing; returns true exactly once per swing at contact.
@@ -450,11 +600,13 @@ func _do_fell(delta: float) -> void:
 		return
 	var base := World.tree_position(Game.vegetation.tree_index_by_id.get(tid, tid))
 	_face(Vector3(base.x - global_position.x, 0, base.z - global_position.z).normalized(), delta * 3.0)
-	if _swing(delta):
-		var res := Game.trees.apply_contact(tid, global_position, crew.work_per_contact(self))
+	var wk := _work_step(delta)
+	if wk > 0.0:
+		var res := Game.trees.apply_contact(tid, global_position, wk)
 		if bool(res.get("accepted", false)):
-			crew.contributions.add_work(id, crew.work_per_contact(self))
-		LoggingFX.play(LoggingFX.Sound.CHOP, base + Vector3(0, 0.8, 0), -6.0)
+			crew.contributions.add_work(id, wk)
+		if saw.state == SawMachine.S.STOPPED:
+			LoggingFX.play(LoggingFX.Sound.CHOP, base + Vector3(0, 0.8, 0), -6.0)
 		if bool(res.get("felled", false)):
 			crew.on_felled(self, tid)
 			_begin_retreat()
@@ -509,14 +661,17 @@ func _do_buck(delta: float) -> void:
 	if global_position.distance_to(at) > 2.6:
 		abandon("moved away")
 		return
-	if _swing(delta):
-		var res := crew.timber.apply_cut(body, y, crew.work_per_contact(self))
+	var wk := _work_step(delta)
+	if wk > 0.0:
+		var res := crew.timber.apply_cut(body, y, wk)
 		if str(res.get("reason", "")) == "wait":
 			return
 		if not bool(res.get("accepted", false)):
 			abandon("no cut there")
 			return
-		LoggingFX.play(LoggingFX.Sound.CHOP, at, -6.0)
+		crew.contributions.add_work(id, wk)
+		if saw.state == SawMachine.S.STOPPED:
+			LoggingFX.play(LoggingFX.Sound.CHOP, at, -6.0)
 		if bool(res.get("separated", false)):
 			crew.on_bucked(self)
 			abandon("cut done")
@@ -541,13 +696,15 @@ func _do_stump(delta: float) -> void:
 	if global_position.distance_to(at) > 2.8:
 		abandon("moved away")
 		return
-	if _swing(delta):
-		var res := crew.trees.apply_stump_work(tid, crew.work_per_contact(self))
+	var wk := _work_step(delta)
+	if wk > 0.0:
+		var res := crew.trees.apply_stump_work(tid, wk)
 		if not bool(res.get("accepted", false)):
 			abandon("no stump there")
 			return
-		LoggingFX.play(LoggingFX.Sound.CHOP, at + Vector3(0, 0.3, 0), -8.0)
-		crew.contributions.add_work(id, crew.work_per_contact(self))
+		if saw.state == SawMachine.S.STOPPED:
+			LoggingFX.play(LoggingFX.Sound.CHOP, at + Vector3(0, 0.3, 0), -8.0)
+		crew.contributions.add_work(id, wk)
 		if bool(res.get("removed", false)):
 			crew.on_stump_removed(self, tid)
 			abandon("stump out")
@@ -592,6 +749,12 @@ func _do_pick() -> void:
 	if list.is_empty():
 		_next_pick()
 		return
+	# Phase 14 team carry: both people in place before the lift.
+	if team != "" and crew.coord.teams.has(team) and str(crew.coord.teams[team].state) == "gather" and not crew.coord.follower_ready(team):
+		body_char.set_locomotion(0.0)
+		return
+	if team != "" and not crew.coord.teams.has(team):
+		team = ""
 	var sid: String = list.pop_front()
 	var b := crew.timber.body_of(sid)
 	if b != null:
@@ -599,6 +762,8 @@ func _do_pick() -> void:
 		if bool(res.ok):
 			# The transaction already happened; the bend is presentation.
 			body_char.play_action("pickup")
+			if team != "":
+				crew.coord.lifted(team)
 	else:
 		crew.timber.release(sid, id)
 	target["pick"] = list
@@ -787,7 +952,7 @@ var _carry_sig := "-"
 
 func _update_carry_visual() -> void:
 	var held: Array = crew.timber.load_of(id)
-	var sig := ",".join(PackedStringArray(held))
+	var sig := ",".join(PackedStringArray(held)) + "|" + team
 	if sig == _carry_sig:
 		if held.is_empty():
 			body_char.carry_grips = []
@@ -809,11 +974,13 @@ func _update_carry_visual() -> void:
 		var r0 := TimberMesh.piece_radius(rec0, int(s0.k))
 		var mi0 := MeshInstance3D.new()
 		mi0.mesh = TimberMesh.piece_mesh(rec0, int(s0.k))
-		var axis := Vector3(0.0, -(0.85 - r0) / maxf(L, 0.5), 1.0).normalized()
+		# Phase 14 team carry: held level at hip height, the partner takes the
+		# far end; otherwise the far end trails on the ground.
+		var axis := Vector3(0.0, -(0.85 - r0) / maxf(L, 0.5), 1.0).normalized() if team == "" else Vector3(0, 0, 1)
 		var b0 := TimberMesh.frame_for(axis)
 		var front := Vector3(0.0, 0.85, -0.45)
-		var mid := (float(s0.a) + float(s0.b)) * 0.5
-		mi0.transform = Transform3D(b0, front + axis * (L * 0.5) - b0.y * mid)
+		# piece_mesh is already centred on the piece's middle.
+		mi0.transform = Transform3D(b0, front + axis * (L * 0.5))
 		body_char.add_child(mi0)
 		_carry_nodes.append(mi0)
 		var g0 := Marker3D.new()

@@ -9,8 +9,8 @@ extends RefCounted
 const REMAPPABLE := [
 	["move_forward", "Move forward"], ["move_back", "Move back"], ["move_left", "Move left"], ["move_right", "Move right"],
 	["jump", "Jump"], ["sprint", "Sprint (hold)"], ["crouch", "Crouch"], ["interact", "Interact / use"],
-	["attack", "Swing axe (hold to keep chopping if enabled)"], ["set_down", "Set load down"], ["drop_load", "Drop load"],
-	["tool_small", "Small axe"], ["tool_medium", "Medium axe"], ["tool_large", "Large axe"],
+	["attack", "Swing axe / chainsaw throttle (hold)"], ["set_down", "Set load down"], ["drop_load", "Drop load"],
+	["tool_small", "Small axe"], ["tool_medium", "Medium axe"], ["tool_large", "Large axe"], ["tool_saw", "Chainsaw"], ["saw_engine", "Chainsaw: start / stop engine"],
 	["toggle_journal", "Journal"], ["toggle_help", "Controls / help"], ["headlights", "Truck headlights"],
 	["quick_save", "Quick save"], ["pause", "Pause / back"],
 ]

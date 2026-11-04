@@ -174,6 +174,11 @@ func _ready() -> void:
 		add_child(cart)
 		cart.setup(CampLayout.world(CampLayout.CART_PARK), 0.0)
 		Game.cart = cart
+		# Phase 14: the supplier's parcel locker.
+		var locker := ParcelLocker.new()
+		add_child(locker)
+		var lp := CampLayout.world(CampLayout.PARCEL_LOCKER_POS)
+		locker.setup(Vector3(lp.x, World.height_at(lp.x, lp.z), lp.z))
 	if camp:
 		dog = CampDog.new()
 		dog.name = "Dog"

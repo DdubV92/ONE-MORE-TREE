@@ -62,6 +62,15 @@ const STATIONS13 := [
 	["Crew yard work", "p13_crew"],
 	["Longer logs (plan v2) side by side", "p13_compare"],
 ]
+const STATIONS14 := [
+	["Axe comparison (1 / 2 / 3)", "p14_axes"],
+	["Chainsaw: try it (4, R)", "p14_saw"],
+	["Crew in gear", "p14_gear"],
+	["Supplier order -> parcel", "p14_supplier"],
+	["Coordinated felling lanes", "p14_lanes"],
+	["Two-person carry", "p14_team"],
+	["Gear & tool numbers", "p14_numbers"],
+]
 static var _clear_i := 0
 static var _density_i := 0
 static var _overlay12: CoverOverlay
@@ -267,6 +276,42 @@ static func go(hud: Node, which: String) -> String:
 		"p13_compare":
 			w.teleport_to("p13_cradle")
 			return compare_plans()
+		"p14_axes", "p14_saw":
+			var i := _tree_near_camp(40.0)
+			if i < 0:
+				return "No tree near camp."
+			var stand := PlacementValidator.cut_stands(i)[0]
+			var base := World.tree_position(i)
+			w.vegetation.update_collision_around(base)
+			p.teleport(stand + Vector3(0, 1.65, 0), base + Vector3(0, 1.0, 0))
+			env.apply_named("day")
+			if which == "p14_saw":
+				p.axe.equip_saw()
+				return "Chainsaw (preview). %s starts the engine (or just squeeze %s), hold %s to rev - it only cuts while the moving chain is in the wood. %s stops it. Hiding, sitting, driving or picking up logs stops it at once. Numbers: %s" % [Keys.label("saw_engine"), Keys.label("attack"), Keys.label("attack"), Keys.label("saw_engine"), " ".join(ToolEffects.describe(ToolEffects.breakdown({"tool": "chainsaw"})))]
+			p.axe.equip("small")
+			var lines := PackedStringArray()
+			for t in ["small", "medium", "large"]:
+				lines.append(ToolEffects.describe(ToolEffects.breakdown({"tool": "axe", "tier": t}))[0])
+			return "Same tree, same swing rhythm: press %s / %s / %s to switch. Bigger axes bite deeper per hit, they don't swing faster.\n%s" % [Keys.label("tool_small"), Keys.label("tool_medium"), Keys.label("tool_large"), "\n".join(lines)]
+		"p14_gear":
+			busy_camp_fixture()
+			gear_fixture()
+			w.teleport_to("camp")
+			return "Crew gear: boots, gloves and helmets fitted to each body (tiers 1-3, one per slot). Talk to a worker or open the tool rack (E) to see exactly what each item does."
+		"p14_supplier":
+			return supplier_fixture(w)
+		"p14_lanes":
+			busy_camp_fixture()
+			w.teleport_to("ridge" if not Viewpoints.all().has("p12_high") else "p12_high")
+			return "Each tree being felled reserves only its fall lane (trunk length + crown width along the planned direction). Others keep working outside it, routes bend around it, and anyone inside steps out at the warning crack."
+		"p14_team":
+			return team_fixture(w)
+		"p14_numbers":
+			var out := PackedStringArray()
+			for k in [{"tool": "axe", "tier": "small"}, {"tool": "axe", "tier": "large", "helmet": "t3", "gloves": "t3"}, {"tool": "axe", "tier": "large", "hard_working": true}, {"tool": "chainsaw"}, {"tool": "chainsaw", "gloves": "t3"}]:
+				var b := ToolEffects.breakdown(k)
+				out.append("%s: %.2f work/s (%.2fx hatchet)" % [str(k), float(b.work_per_second), float(b.vs_hatchet)])
+			return "\n".join(out)
 		"cleared":
 			var n := clear_near_camp(0.9)
 			w.teleport_to("ridge")
@@ -274,6 +319,96 @@ static func go(hud: Node, which: String) -> String:
 			wx.set_override("clear", true)
 			return "Station 11 - cleared overlook (in memory): %d original trees removed around camp. No stale shadows, leaf audio or birds where trees are gone." % n
 	return ""
+
+
+## Phase 14 fixtures (Preview, in memory only).
+static func _tree_near_camp(min_d: float) -> int:
+	var o := World.camp_origin()
+	var best := -1
+	var bd := INF
+	for i in World.tree_count():
+		if World.removed_trees.has(int(World.trees.id[i])):
+			continue
+		var d := Vector2(World.trees.x[i] - o.x, World.trees.z[i] - o.z).length()
+		if d > min_d and d < bd and float(World.trees.radius[i]) > 0.12:
+			bd = d
+			best = i
+	return best
+
+
+static func gear_fixture() -> void:
+	var cs: CampaignService = Game.campaign
+	if cs == null or Game.crew == null:
+		return
+	var tiers := ["t1", "t2", "t3", "t2", "t1"]
+	var k := 0
+	for e in cs.payroll.employees:
+		if str(e.status) != Payroll.ACTIVE:
+			continue
+		var t: String = tiers[k % tiers.size()]
+		for kind in ["boots", "gloves", "helmet"]:
+			if kind == "helmet" and k == 4:
+				continue
+			var it := cs.equipment.add_item(kind, t, "storage", "preview")
+			Game.crew.issue(str(it.id), str(e.id))
+		if k == 1:
+			var saw := cs.equipment.add_item("chainsaw", "saw", "storage", "preview")
+			Game.crew.issue(str(saw.id), str(e.id))
+		k += 1
+
+
+static func supplier_fixture(w: IslandWorld) -> String:
+	var cs: CampaignService = Game.campaign
+	if cs == null:
+		return ""
+	if not cs.active:
+		cs.start_test_route(true, false)
+	cs.wallet.grant(800000, "test", "FIXTURE", "Preview supplier cash")
+	cs.clock.t = 120.0
+	var r := cs.supplier.place([{"key": "chainsaw:saw", "qty": 1}, {"key": "boots:t2", "qty": 1}, {"key": "gloves:t3", "qty": 1}], "PREVIEW-%d" % Time.get_ticks_msec())
+	cs.clock.t = 302.0
+	cs.supplier.tick()
+	cs.supplier.tick()
+	var lk := Game.player.get_tree().get_nodes_in_group("parcel_locker")
+	if not lk.is_empty():
+		var at: Vector3 = (lk[0] as Node3D).global_position
+		Game.player.teleport(at + Vector3(0, 1.65, -2.6), at + Vector3(0, 1.0, 0))
+	return "Order %s (in memory): paid at the computer, carried on the %s supply boat, now in the parcel locker. Press %s on the locker to collect it into camp storage, then the tool rack or the computer's Gear app to equip or issue it." % [str(r.get("order", {}).get("id", "?")), Supplier.hour_words(300.0), Keys.label("interact")]
+
+
+static func team_fixture(w: IslandWorld) -> String:
+	busy_camp_fixture()
+	var crew: CrewService = Game.crew
+	if crew == null or crew.workers.size() < 2:
+		return "The crew is still arriving; try again in a moment."
+	var t: TimberService = Game.timber
+	var idx := _tree_near_camp(25.0)
+	var id: int = World.trees.id[idx]
+	if not t.records.has(id):
+		t.records[id] = t._build_record(id, idx, {"plan": "v2", "segments": []})
+	var big := -1
+	for sg in t.records[id].segments:
+		if int(sg.mte) > TimberService.HAND_BUDGET_MTE + 2 and int(sg.mte) <= TimberService.HAND_BUDGET_MTE * 2:
+			big = int(sg.k)
+	if big < 0:
+		big = 0
+	for sg in t.records[id].segments:
+		sg.state = TimberService.Seg.CONSUMED if int(sg.k) != big else TimberService.Seg.CARRIED
+	var sid := "T%d_S%d" % [id, big]
+	t.carried.append(sid)
+	var o := World.camp_origin()
+	var at := Vector3(o.x + 3.0, 0, o.z - 24.0)
+	var rr := TimberMesh.piece_radius(t.records[id], big)
+	at.y = World.height_at(at.x, at.z) + rr + 0.02
+	t.put_down(sid, at, Vector3.RIGHT, false)       # resting on the ground
+	var lead: Worker = crew.workers.values()[0]
+	for wk in crew.workers.values():
+		(wk as Worker).abandon("preview")
+		(wk as Worker).emp["job"] = "automatic"
+	lead.target = {}
+	var ok := crew._try_haul(lead)
+	w.teleport_to("camp")
+	return "A heavy log lies just outside the north gate. %s %s" % [("%s went to lift it and called %s to take the far end; they walk at the slower partner's carry speed." % [lead.emp.name, crew.emp(str(crew.coord.teams.get(lead.team, {}).get("follower", ""))).get("name", "nobody")]) if ok and lead.team != "" else "No free partner right now: one worker drags it alone (the solo fallback).", "If the partner is called away, the leader keeps the log and drags it - nothing is dropped or duplicated."]
 
 
 ## Phase 13: one-line yard status for the tour.

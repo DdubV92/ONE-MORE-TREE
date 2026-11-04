@@ -48,11 +48,11 @@
 
 ## Explicitly out of scope (unless separately requested)
 
-Combat, hunger meters, weapon shops, chainsaws, vehicles, crafting trees, multiplayer, supernatural lore explanations, a second web/Three.js version.
+Combat, hunger meters, weapon shops, fuel/durability grinds for tools, vehicles beyond the two pickups, crafting trees, multiplayer, supernatural lore explanations, a second web/Three.js version.
 
 ## Current phase
 
-Phases 0–13 are implemented. The latest is Phase 13: longer logs for new campaigns, the logging yard (cradle, decks, fire loading pile), dragging, the handcart and crew yard work. Phase 12 added the dense 10,000-tree island with cover and hiding, the owner's motion-capture clips, and proper fabrics. Earlier phases built: the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
+Phases 0–14 are implemented. The latest is Phase 14: stronger per-hit axes, the chainsaw, boots/gloves/helmets, the camper computer's supplier with boat deliveries to a parcel locker, crew gear, fall-lane coordination and two-person carries. Phase 13 added longer logs for new campaigns, the logging yard (cradle, decks, fire loading pile), dragging, the handcart and crew yard work. Phase 12 added the dense 10,000-tree island with cover and hiding, the owner's motion-capture clips, and proper fabrics. Earlier phases built: the island; the axe and felling; timber, carrying, delivery and the fuel-driven burn pit; workdays, the 30-day contract, exact delivery income, payroll with arrears, owned axes, sleep and reports, and save slots. See PHASE_CHECKLIST.md for exact status and ARCHITECTURE.md for the authoritative values.
 
 ## Phase 0 scope (this pack)
 

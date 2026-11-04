@@ -2,6 +2,26 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 14: Stronger axes, chainsaws, gear, the computer supplier and coordinated logging
+
+Full detail: [PHASE14_NOTES.md](PHASE14_NOTES.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| One tool/gear/trait calculation (player, crew, UI, tests) | ✅ | `ToolEffects.breakdown` |
+| Axes 1.00/1.40/1.96 per hit at one cadence; Hard-working x1.25 once | ✅ | Output per second unchanged (no progress rescale) |
+| Chainsaw state machine, contact-only work, bounded ticks, interruptions | ✅ | 3.23x a hatchet over whole trees (measured) |
+| Saw sound layers (start/idle/rev/load/stop) at the tool; hunt hearing evidence | 🟡 | Procedural interim sources, never listened to (Phase 15) |
+| Boots/gloves/helmets, one per slot, tier replacement, honest numbers | ✅ | |
+| Unique items, one owner, legacy axes mapped once, issue/recall at boundaries | ✅ | |
+| Visible tools and gear on the crew; gloves in first person | ✅ | Software renderer only |
+| Supplier app, idempotent prepaid orders, boat schedule, parcel locker, refunds at close | ✅ | |
+| Fall lanes, claim reaper, stage division, yard backlog awareness | ✅ | |
+| Two-person carry with safe break and solo fallback | ✅ | Probe observed; teams not saved |
+| Measured cutting and whole-day pipeline | ✅ | +44 % deliveries with saws; walking dominates |
+| 10,000-tree feasibility | ⛔ | Not shown; hauling distance is the bottleneck |
+| 60 FPS with full crew + saws + cameras on a midrange GPU | ⛔ | Not measurable here |
+
 ## Phase 13: Logging yard, longer logs and storage
 
 Full detail: [PHASE13_NOTES.md](PHASE13_NOTES.md).

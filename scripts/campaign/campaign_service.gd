@@ -22,6 +22,7 @@ var clock: WorkdayClock
 var wallet: Wallet
 var payroll: Payroll
 var equipment: Equipment
+var supplier: Supplier             # Phase 14 camp supplier (orders, parcels)
 var contract: ContractService
 var config: EconomyConfig
 var rule_set := RULE_SET
@@ -56,6 +57,9 @@ func _ready() -> void:
 	contract = ContractService.new()
 	contract.name = "Contract"
 	add_child(contract)
+	supplier = Supplier.new()
+	supplier.name = "Supplier"
+	add_child(supplier)
 
 
 ## Phase 9 first-day guide (per save).
@@ -70,6 +74,14 @@ func setup() -> void:
 	payroll.setup(wallet, config)
 	equipment.setup(wallet, config)
 	contract.setup(Game.trees, Game.timber, clock)
+	supplier.setup(equipment, wallet, clock, contract, payroll)
+	contract.outcome.connect(func(_s: String, _o: String) -> void:
+		var n := supplier.refund_undelivered()
+		if n > 0:
+			notice.emit("The supply boat won't come again: %d undelivered order%s refunded." % [n, "" if n == 1 else "s"], 7.0))
+	supplier.arrived.connect(func(oid: String) -> void:
+		if active:
+			notice.emit("Supply boat: order %s arrived. Collect it from the parcel locker by the camp gate." % oid, 7.0))
 	clock.warning.connect(_on_warning)
 	clock.night_started.connect(func(_d: int) -> void: notice.emit("Night. Camp lamps and the camper are safe; sleep in the camper bed to end the day.", 6.0))
 	contract.outcome.connect(func(s: String, oid: String) -> void: outcome_ready.emit(s, oid))
@@ -108,6 +120,7 @@ func new_campaign() -> void:
 	for e in payroll.employees:
 		ids.append(e.id)
 	equipment.init_new(ids)
+	supplier.restore({})
 	contract.restore({"state": ContractService.ACTIVE})
 	if onboarding:
 		onboarding.start_new()
@@ -199,10 +212,19 @@ func _on_warning(kind: String, left: float) -> void:
 func _sync_axe() -> void:
 	var p := Game.player
 	if p and p.get("axe") and active:
-		p.axe.equip(equipment.equipped_tier())
+		var ax: AxeController = p.axe
+		if equipment.boss_tool_kind() == "chainsaw":
+			if ax.tool != "chainsaw":
+				ax.equip_saw()
+		elif ax.tool != "axe" or ax.tier != equipment.equipped_tier():
+			ax.equip(equipment.equipped_tier())
+		ax.invalidate_kit()
+		ax.view.set_gloves(str(equipment.kit_of("boss").get("gloves", "")))
 
 
 func _process(_delta: float) -> void:
+	if active and supplier:
+		supplier.tick()
 	if active and clock.running and Game.environment and not test_route_light_override:
 		var env: EnvironmentController = Game.environment
 		var mp := EnvironmentController.moon_phase_for_day(clock.day)
@@ -282,6 +304,8 @@ func _wake_player() -> void:
 	var p := Game.player
 	if p == null:
 		return
+	if p.get("axe"):
+		p.axe.kill_saw()        # sleeping stops any running tool
 	var beds := p.get_tree().get_nodes_in_group("player_bed")
 	if beds.is_empty():
 		return
@@ -398,7 +422,7 @@ func capture_campaign() -> Dictionary:
 
 
 func capture_economy() -> Dictionary:
-	return {"wallet": wallet.capture(), "payroll": payroll.capture(), "equipment": equipment.capture(), "phase2_migrated": phase2_migrated}
+	return {"wallet": wallet.capture(), "payroll": payroll.capture(), "equipment": equipment.capture(), "supplier": supplier.capture(), "phase2_migrated": phase2_migrated}
 
 
 ## Restores both blocks. Returns true if the player must choose rules
@@ -408,6 +432,7 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 	wallet.restore(economy.get("wallet", {}))
 	payroll.restore(economy.get("payroll", {}))
 	equipment.restore(economy.get("equipment", {}))
+	supplier.restore(economy.get("supplier", {}))
 	if payroll.employees.is_empty():
 		payroll.employees = Payroll.starting_crew()
 	phase2_migrated = bool(economy.get("phase2_migrated", false))

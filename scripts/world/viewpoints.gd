@@ -27,6 +27,8 @@ static func all() -> Dictionary:
 	vp["p13_yard"] = _v(c + Vector3(4.0, 3.2, -12.0), yc + Vector3(0, -1.0, 0), eye, "Logging yard: receiving cradle, three log decks, fire loading pile")
 	vp["p13_decks"] = _v(c + Vector3(6.5, 0, -19.6), yc + Vector3(4.0, 0, -0.6), eye, "Log decks from the yard walkway")
 	vp["p13_cradle"] = _v(rack + Vector3(2.8, 0, 4.2), rack + Vector3(-1.0, 0, -1.2), eye, "Receiving cradle (paid intake) and the fire's loading pile")
+	var lk := c + CampLayout.PARCEL_LOCKER_POS
+	vp["p14_locker"] = _v(lk + Vector3(-2.2, 0, -3.4), lk + Vector3(0.2, -0.2, 0), eye, "Parcel locker by the payroll board (supplier deliveries)")
 	vp["p13_cart"] = _v(c + CampLayout.CART_PARK + Vector3(2.6, 0, 2.4), c + CampLayout.CART_PARK + Vector3(-0.4, -0.6, -0.8), eye, "Handcart parked by the fire")
 	var cabin := c + CampLayout.CABIN_POS
 	var bedroom := cabin + Vector3(-2.2, CampLayout.CABIN_FLOOR, -6.6)

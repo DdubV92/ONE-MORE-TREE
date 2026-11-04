@@ -331,6 +331,7 @@ func _build_animations() -> void:
 	lib.add_animation("idle", _make_idle())
 	lib.add_animation("walk", _make_walk())
 	lib.add_animation("swing", _make_swing())
+	lib.add_animation("saw", _make_saw())
 	lib.add_animation("sit", _make_static_pose("sit"))
 	lib.add_animation("lie", _make_static_pose("lie"))
 	# Phase 8 coverage: work handling, conversation, fear, trait idles,
@@ -861,7 +862,8 @@ func _make_static_pose(kind: String) -> Animation:
 	return an
 
 
-## Shows the assigned axe tier (same models as the first-person axes).
+## Shows the assigned tool (same models as the first-person tools):
+## an axe tier, "chainsaw", or "" (nothing in hand).
 func set_axe_tier(tier: String) -> void:
 	if tier == axe_tier and axe_rig.get_node_or_null("Axe"):
 		return
@@ -869,6 +871,24 @@ func set_axe_tier(tier: String) -> void:
 	var old := axe_rig.get_node_or_null("Axe")
 	if old:
 		old.free()
+	var rg: Node3D = axe_rig.get_node("RightGrip")
+	var lg: Node3D = axe_rig.get_node("LeftGrip")
+	if tier == "chainsaw":
+		# The saw sits in the rig with its bar forward (-Z); the grip markers
+		# move onto its rear and top handles.
+		var saw := ChainsawModel.create(0.95)
+		saw.name = "Axe"
+		var rear: Vector3 = (saw.get_node("RearGrip") as Node3D).position * 0.95
+		var front: Vector3 = (saw.get_node("FrontGrip") as Node3D).position * 0.95
+		saw.position = -(rear + front) * 0.5
+		axe_rig.add_child(saw)
+		rg.position = rear + saw.position
+		lg.position = front + saw.position
+		return
+	rg.position = Vector3(0, 0.1, 0)
+	lg.position = Vector3(0, -0.11, 0)
+	if tier == "":
+		return
 	var spec: Dictionary = ViewModel.AXES.get(tier, ViewModel.AXES["small"])
 	var scene: PackedScene = load("res://assets/polyhaven/models/%s/%s_1k.gltf" % [spec.asset, spec.asset])
 	if scene:
@@ -877,6 +897,99 @@ func set_axe_tier(tier: String) -> void:
 		axe.scale = Vector3.ONE * float(spec.scale) * 0.82
 		axe.position = Vector3(0, 0.2 if tier != "small" else 0.1, 0)
 		axe_rig.add_child(axe)
+
+
+## Phase 14: visible gear. Boots and gloves recolour the existing parts
+## (no new limbs, nothing clips); helmets are shells on the head bone.
+## "" = the character's own everyday kit.
+const GEAR_BOOTS := {"t1": Color(0.36, 0.24, 0.13), "t2": Color(0.12, 0.1, 0.09), "t3": Color(0.1, 0.09, 0.08)}
+const GEAR_GLOVES := {"t1": Color(0.78, 0.62, 0.3), "t2": Color(0.38, 0.23, 0.12), "t3": Color(0.12, 0.12, 0.13)}
+const GEAR_HELMET := {"t1": Color(0.92, 0.75, 0.12), "t2": Color(0.9, 0.38, 0.08), "t3": Color(0.9, 0.38, 0.08)}
+var gear := {"boots": "", "gloves": "", "helmet": ""}
+
+
+func set_gear(boots_t: String, gloves_t: String, helmet_t: String) -> void:
+	if gear.boots == boots_t and gear.gloves == gloves_t and gear.helmet == helmet_t and rig != null:
+		return
+	gear = {"boots": boots_t, "gloves": gloves_t, "helmet": helmet_t}
+	if rig == null:
+		return
+	for side in ["L", "R"]:
+		for mi in bones["Hand" + side].find_children("*", "MeshInstance3D", true, false):
+			_gear_paint(mi, GEAR_GLOVES.get(gloves_t, null), 0.85)
+		for n in ["BootTop", "Boot"]:
+			var b: Node = (bones["Shin" + side] as Node).get_node_or_null(n) if n == "BootTop" else (bones["Foot" + side] as Node).get_node_or_null(n)
+			if b:
+				_gear_paint(b, GEAR_BOOTS.get(boots_t, null), 0.55)
+	var head: Node3D = bones["Head"]
+	var old := head.get_node_or_null("Helmet")
+	if old:
+		old.free()
+	if helmet_t == "":
+		return
+	var h := Node3D.new()
+	h.name = "Helmet"
+	head.add_child(h)
+	var shell := CharMeshKit.mat(GEAR_HELMET[helmet_t], 0.45)
+	var dark := CharMeshKit.mat(Color(0.1, 0.1, 0.11), 0.6)
+	CharMeshKit.blob(h, shell, Vector3(0, 0.108 * H, 0.002 * H), Vector3(0.142 * H, 0.098 * H, 0.152 * H), Vector3.ZERO, "Shell")
+	CharMeshKit.blob(h, shell, Vector3(0, 0.084 * H, -0.004 * H), Vector3(0.158 * H, 0.012 * H, 0.17 * H), Vector3.ZERO, "Brim")
+	if helmet_t in ["t2", "t3"]:
+		# Mesh visor folded up on the brow.
+		CharMeshKit.blob(h, dark, Vector3(0, 0.1 * H, -0.074 * H), Vector3(0.13 * H, 0.04 * H, 0.01 * H), Vector3(-0.35, 0, 0), "Visor")
+	if helmet_t == "t3":
+		for sx in [-1.0, 1.0]:
+			CharMeshKit.blob(h, shell, Vector3(sx * 0.072 * H, 0.058 * H, 0.004 * H), Vector3(0.022 * H, 0.05 * H, 0.046 * H), Vector3.ZERO, "Muff")
+
+
+func _gear_paint(mi: Node, col, rough: float) -> void:
+	var m := mi as MeshInstance3D
+	if m == null:
+		return
+	if not m.has_meta("own_mat"):
+		m.set_meta("own_mat", m.material_override)
+	m.material_override = CharMeshKit.mat(col, rough) if col != null else m.get_meta("own_mat")
+
+
+## Chainsaw hold: wide stance, saw in front at hip height with the bar
+## level and slightly down, a slow push into the cut and back.
+func _make_saw() -> Animation:
+	var an := Animation.new()
+	an.length = 1.6
+	an.loop_mode = Animation.LOOP_LINEAR
+	var tracks := {}
+	for b in ["Hips", "Spine", "Chest", "Head", "ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR"]:
+		tracks[b] = _track_rot(an, b)
+	var hips_pos := _track_pos(an, "Hips")
+	var rig_pos := an.add_track(Animation.TYPE_POSITION_3D)
+	an.track_set_path(rig_pos, NodePath("AxeRig"))
+	var rig_rot := an.add_track(Animation.TYPE_ROTATION_3D)
+	an.track_set_path(rig_rot, NodePath("AxeRig"))
+	var hs := H / 1.78
+	for k in 5:
+		var t := an.length * k / 4.0
+		var push := 0.5 - 0.5 * cos(TAU * k / 4.0)
+		var hp: Vector3 = rest["Hips"].origin + Vector3(0, -0.09 - 0.02 * push, 0)
+		an.position_track_insert_key(hips_pos, t, hp)
+		an.position_track_insert_key(rig_pos, t, Vector3(0.06, 0.86 - 0.03 * push, -0.42 - 0.05 * push) * hs)
+		an.rotation_track_insert_key(rig_rot, t, Quaternion(Vector3.RIGHT, -0.22 - 0.05 * push))
+		# Lean INTO the saw (negative pitch = forward on this rig); the head
+		# counters part of it to watch the bar.
+		an.rotation_track_insert_key(tracks["Hips"], t, _q(-0.06, 0.1, 0))
+		an.rotation_track_insert_key(tracks["Spine"], t, _q(-0.16 - 0.04 * push, -0.05, 0))
+		an.rotation_track_insert_key(tracks["Chest"], t, _q(-0.12 - 0.03 * push, -0.05, 0))
+		an.rotation_track_insert_key(tracks["Head"], t, _q(0.14, 0.05, 0))
+		for side in [-1.0, 1.0]:
+			var sn := "L" if side < 0 else "R"
+			var foot := Vector3(side * foot_side * 2.1, ankle_h, -0.2 if side < 0 else 0.14)
+			var hip := hp + Vector3(side * foot_side, -0.02 * H, 0)
+			var d := foot - hip
+			var ang := LimbIK.solve_planar(d.y, d.z, thigh_len, shin_len, true)
+			var roll := atan2(d.x, -d.y)
+			an.rotation_track_insert_key(tracks["Thigh" + sn], t, _q(ang.x, 0, roll))
+			an.rotation_track_insert_key(tracks["Shin" + sn], t, _q(ang.y))
+			an.rotation_track_insert_key(tracks["Foot" + sn], t, _q(-(ang.x + ang.y), 0, -roll))
+	return an
 
 
 # ---------------------------------------------------------------- runtime
@@ -906,8 +1019,8 @@ func play(name: String, blend := 0.25) -> void:
 	if current == name:
 		return
 	current = name
-	arm_ik = name == "swing"
-	axe_rig.visible = name == "swing"
+	arm_ik = name == "swing" or name == "saw"
+	axe_rig.visible = arm_ik
 	if not arm_ik:
 		# Restore FK arm rest so the next clip blends from a sane pose.
 		for b in ["UpperArmL", "ForearmL", "UpperArmR", "ForearmR", "HandL", "HandR"]:

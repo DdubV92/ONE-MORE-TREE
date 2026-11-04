@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 9
+const SCHEMA_VERSION := 10
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -345,6 +345,13 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# "yard" block and moves the old pit backlog onto the decks once
 		# (receipts, payments and burn progress unchanged).
 		data["schema"] = 9
+		v = 9
+	if v == 9:
+		# Phase 9-13 saves: axes become item records on load (Equipment
+		# restore: same ids, owners, receipts; "rack" -> storage; nothing
+		# granted); no supplier orders; tools keep their per-contact work
+		# (identical work per second - tree progress is never rescaled).
+		data["schema"] = 10
 	return data
 
 

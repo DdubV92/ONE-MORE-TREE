@@ -169,6 +169,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_select_tier("medium")
 	elif event.is_action_pressed("tool_large"):
 		_select_tier("large")
+	elif event.is_action_pressed("tool_saw"):
+		_select_saw()
+	elif event.is_action_pressed("saw_engine") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var why := axe.toggle_engine()
+		if why != "":
+			show_message(why)
 	elif event.is_action_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if _interact_target and _interact_target.has_method("interact"):
 			_interact_target.interact(self)
@@ -179,24 +185,39 @@ func _unhandled_input(event: InputEvent) -> void:
 		show_message("Fly mode %s (preview only)" % ("ON" if fly_mode else "OFF"))
 
 
-## Campaign: only owned axes (bought at the tool rack). Preview: any tier
-## for review. Selecting never costs money.
+## Campaign: only axes you own (ordered from the camper computer and
+## collected from the parcel locker). Preview: any tier for review.
+## Selecting never costs money.
 func _select_tier(tier: String) -> void:
 	var c: CampaignService = Game.campaign
 	const RATE := {"small": "1.00x", "medium": "1.40x", "large": "1.96x"}
 	if c and c.active and not Game.is_preview():
 		if not c.equipment.equip_tier(tier):
-			show_message("You don't own a %s axe yet. Buy one at the tool rack." % tier)
+			show_message("You don't own a %s axe. Order one on the camper computer (Supplier), or take one from camp storage at the tool rack." % tier)
 		else:
-			show_message("%s axe (%s)" % [tier.capitalize(), RATE[tier]])
+			show_message("%s axe (%s work per hit)" % [tier.capitalize(), RATE[tier]])
 		return
 	axe.equip(tier)
-	show_message("%s axe (%s) - preview tier" % [tier.capitalize(), RATE[tier]])
+	show_message("%s axe (%s work per hit) - preview tier" % [tier.capitalize(), RATE[tier]])
+
+
+func _select_saw() -> void:
+	var c: CampaignService = Game.campaign
+	var hint := "%s starts it (or just squeeze %s), %s again stops it." % [Keys.label("saw_engine"), Keys.label("attack"), Keys.label("saw_engine")]
+	if c and c.active and not Game.is_preview():
+		if not c.equipment.equip_saw():
+			show_message("You don't own a chainsaw. Order one on the camper computer (Supplier).")
+		else:
+			show_message("Chainsaw. " + hint)
+		return
+	axe.equip_saw()
+	show_message("Chainsaw (preview). " + hint)
 
 
 # ---------------------------------------------------------------- vehicle
 
 func enter_vehicle(t: Node3D, seat: String) -> void:
+	axe.kill_saw()
 	if pushing_cart != null:
 		pushing_cart.release()
 	vehicle = t
@@ -278,6 +299,7 @@ func _vehicle_process(_delta: float) -> void:
 ## Sits on a couch seat marker (faces the TV). Looking around stays free;
 ## the stand-up point is verified clear before leaving.
 func sit_on_couch(marker: Node3D) -> void:
+	axe.kill_saw()          # couch, desk computer: the saw stops at once
 	if pushing_cart != null:
 		pushing_cart.release()
 	if vehicle != null or couch != null or carry.is_carrying():
@@ -428,6 +450,7 @@ func _couch_process(delta: float) -> void:
 ## Gets into a hiding place: a short readable move, then a low/limited
 ## view from inside. Concealment only - see HuntService.
 func hide_in(spot: HideSpot) -> void:
+	axe.kill_saw()
 	if pushing_cart != null:
 		pushing_cart.release()
 	if vehicle != null or couch != null or hiding != null:
@@ -537,6 +560,9 @@ func _physics_process(delta: float) -> void:
 	elif Input.is_action_pressed("sprint") and input.y < 0.0:
 		speed = SPRINT_SPEED
 	speed *= carry.speed_factor() * (0.8 if pushing_cart != null else 1.0)
+	# Phase 14: boots (one pair, x1.03/1.06/1.09) on top of the controller's
+	# own load, cart and water factors; never applied to vehicles.
+	speed *= float(axe.effects().walk_mult)
 	# Water: slower with depth, gently pushed back beyond the wading limit.
 	var feet := global_position
 	# Depth of water above the player's feet (not above the bed), so bridges,

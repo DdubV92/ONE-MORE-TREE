@@ -1,10 +1,29 @@
-# ONE MORE TREE LATEST BUILD PHASE 13
+# ONE MORE TREE LATEST BUILD PHASE 14
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 13 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 14 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 13
+## New in Phase 14
+
+- **Axes feel different:** all three swing at the same rhythm; bigger axes bite deeper per hit (x1.00 / x1.40 / x1.96).
+- **Chainsaw:**
+  - `4` to hold it, `R` (or squeezing the attack button) to start it, hold the attack button for throttle, and `R` to stop.
+  - It cuts only while the running chain is in the wood: about 3x a hatchet over whole trees.
+  - Hiding, sitting, driving, sleeping or picking up logs stops it at once.
+- **Gear:** boots (+3/6/9 % walking), gloves (+2/4/6 % axe rhythm, quicker saw start) and helmets (+2/4/6 % axe work per hit). One of each is worn, and a better tier replaces a worse one.
+- **Supplier on the camper computer:**
+  - order tools and gear with the exact benefit shown, see your cash after the order and a payroll warning, and confirm;
+  - the supply boat (about 10:30 and 15:00) brings orders to the **parcel locker** by the payroll board;
+  - collect them into camp storage, then equip them or hand them to a worker at the tool rack or in the computer's **Gear** app;
+  - orders are prepaid and refunded if the contract ends before delivery. The computer's **Mail** app lists your order notices.
+- **Crew:** workers wear and use the gear and saws you give them (changes happen between jobs). Fellers keep everyone else out of each tree's fall line. Two workers carry a heavy log together when someone is free.
+- **Saves:** older campaigns keep their axes (now item records) and their progress.
+- **Review:** Preview (title screen) -> Tab -> "Phase 14 tools, gear, supplier & teamwork".
+
+**Checks:** see PHASE14_NOTES.md. Visuals were checked on a software renderer only. The chainsaw sounds are interim procedural placeholders (Phase 15 replaces the audio).
+
+## Phase 13 (previous build)
 
 - **Longer logs (new campaigns):** about 7 logs per tree instead of 9, each about 1.7 m. Every tree still pays exactly $100.
 - **Dragging:** a log too heavy to lift can be dragged by one end. You walk slowly and can't jump.
@@ -23,6 +42,6 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns,
 
 **Checks:** see PHASE13_NOTES.md. Visuals were checked on a software renderer only.
 
-## Phase 12 (previous build)
+## Phase 12 (earlier)
 
-The dense 10,000-tree island with landforms, rock hides and undergrowth, the owner's Mixamo clips on the crew, and proper fabrics. See PHASE12_NOTES.md.
+The dense 10,000-tree island, the owner's Mixamo clips and proper fabrics. See PHASE12_NOTES.md.

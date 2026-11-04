@@ -161,7 +161,21 @@ func _refresh_weight(k: Vector2i) -> void:
 	var c := cell_center(k)
 	var n := World.normal_at(c.x, c.y)
 	var w := 1.0 + (1.0 - n.y) * 6.0 + float(tree_count_in_cell.get(k, 0)) * 0.8
+	if int(lane_refs.get(k, 0)) > 0:
+		w *= CrewCoordinator.LANE_COST     # Phase 14: an active fall lane
 	grid.set_point_weight_scale(k, w)
+
+
+## Phase 14: active felling lanes make their cells expensive (refcounted),
+## so routes bend around them; never solid (no one is trapped).
+var lane_refs := {}
+
+
+func lane_penalty(k: Vector2i, on: bool) -> void:
+	if not _in_island(k):
+		return
+	lane_refs[k] = maxi(int(lane_refs.get(k, 0)) + (1 if on else -1), 0)
+	_refresh_weight(k)
 
 
 func _on_tree_removed(tree_id: int) -> void:

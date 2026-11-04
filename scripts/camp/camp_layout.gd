@@ -70,6 +70,10 @@ const YARD_RECT := {"center": Vector3(15.9, 0.0, -23.0), "size": Vector3(20.0, 0
 const PIT_LOAD_POS := Vector3(4.2, 0.0, -10.4)      # fuel loading pile (pit queue), east of the pit
 const PIT_QUEUE_CAP := 12                          # pieces waiting beside the pit
 const CART_PARK := Vector3(0.8, 0.0, -4.0)
+## Phase 14: the supplier's parcel locker, in the quiet south-east corner of
+## camp beside the payroll board (off the log, cart and truck routes). Its
+## doors face north into camp.
+const PARCEL_LOCKER_POS := Vector3(6.6, 0.0, 7.6)
 
 
 static func deck_standpoint(i: int) -> Vector3:

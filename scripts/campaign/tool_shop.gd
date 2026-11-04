@@ -1,12 +1,13 @@
 class_name ToolShop
 extends StaticBody3D
-## The tool rack / ledger at the lean-to: opens the axe shop (Phase 3).
+## The tool rack at the lean-to: camp storage, equipping and issuing gear
+## (Phase 14; purchases happen on the camper computer).
 
 
 func get_interact_text() -> String:
 	var c: CampaignService = Game.campaign
 	if c and c.active:
-		return "Axe rack: buy or equip axes"
+		return "Tool rack: your gear and camp storage"
 	return "Inspect axe rack"
 
 

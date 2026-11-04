@@ -12,6 +12,11 @@ var rng := RandomNumberGenerator.new()
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
+	if "chainsaw" in OS.get_cmdline_user_args():
+		_chainsaw_set()
+		print("chainsaw audio generated")
+		quit()
+		return
 	rng.seed = 7
 	_save("ocean_surf", _ocean(10.0), true)
 	_save("river", _river(5.0), true)
@@ -84,6 +89,7 @@ func _init() -> void:
 		_save("music_day_%d" % v, _phrase(v), false)
 	_save("music_dusk", _dusk_pad(), false)
 	_save("log_settle", _log_settle(), false)
+	_chainsaw_set()
 	print("audio generated")
 	quit()
 
@@ -966,4 +972,105 @@ func _log_settle() -> PackedFloat32Array:
 	for i in int(0.3 * RATE):
 		var t := float(i) / RATE
 		d.append(lp.run(_white()) * 2.2 * exp(-t * 16.0) + sin(TAU * 85.0 * t) * exp(-t * 14.0) * 0.5)
+	return d
+
+
+# ------------------------------------------------------------ Phase 14 saw
+# Chainsaw layers (own seed, earlier sounds unchanged). A two-stroke engine
+# is a train of firing pulses exciting the muffler/housing resonances, with
+# exhaust noise, a metallic clutch/chain rattle and - under load - the wood
+# rasp of the chain teeth. Interim procedural sources: see ASSET_PROVENANCE
+# and PHASE14_NOTES for the remaining quality gap (Phase 15 replaces them).
+
+func _chainsaw_set() -> void:
+	rng.seed = 1414
+	_save("saw_idle", _loopify(_saw_engine(2.6, 46.0, 46.0, 0.22, 0.0, 0.25), 1800), true)
+	_save("saw_rev", _loopify(_saw_engine(2.6, 158.0, 158.0, 0.05, 0.0, 1.0), 1800), true)
+	_save("saw_load", _loopify(_saw_engine(2.6, 128.0, 128.0, 0.12, 1.0, 0.85), 1800), true)
+	_save("saw_start", _saw_start(), false)
+	_save("saw_stop", _saw_stop(), false)
+
+
+## Engine pulse train from f0 to f1 Hz over `sec`. jitter: firing-interval
+## irregularity; rasp: wood-cutting layer level; chain: chain whir level.
+func _saw_engine(sec: float, f0: float, f1: float, jitter: float, rasp: float, chain: float) -> PackedFloat32Array:
+	var n := int(sec * RATE)
+	var d := PackedFloat32Array()
+	d.resize(n)
+	var body := _bq("bp", 420.0, 2.2)
+	var body2 := _bq("bp", 1150.0, 3.0)
+	var exhaust := _bq("lp", 1800.0, 0.7)
+	var low := _bq("lp", 220.0, 0.9)
+	var whir := _bq("bp", 5200.0, 1.4)
+	var rasp_bp := _bq("bp", 2600.0, 0.9)
+	var rasp_hp := _bq("hp", 900.0, 0.7)
+	var phase := 0.0
+	var next_gap := 1.0
+	var env := 0.0
+	var amp := 1.0
+	var bog := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var f := lerpf(f0, f1, t / sec)
+		# Under load the engine labours: slow random bogging of speed/level.
+		if rasp > 0.0:
+			bog = lerpf(bog, sin(TAU * 0.7 * t) * 0.5 + sin(TAU * 1.9 * t + 1.3) * 0.3, 0.0005)
+			f *= 1.0 + 0.06 * bog
+		phase += f / RATE
+		var impulse := 0.0
+		if phase >= next_gap:
+			phase -= next_gap
+			next_gap = 1.0 + rng.randf_range(-jitter, jitter)
+			amp = rng.randf_range(0.75, 1.0) if rng.randf() > jitter * 0.6 else rng.randf_range(0.2, 0.5)
+			env = amp
+			impulse = amp
+		env *= exp(-1.0 / (RATE * 0.0035))
+		var noise := _white()
+		var exc := impulse * 6.0 + noise * env * 1.4
+		var v := body.run(exc) * 1.3 + body2.run(exc) * 0.55 + low.run(impulse * 9.0) * 0.9 + exhaust.run(noise) * (0.08 + env * 0.5)
+		# Chain and clutch: a thin metallic whir rising with speed.
+		v += whir.run(noise) * chain * (0.12 + 0.1 * sin(TAU * f * 3.0 * t))
+		if rasp > 0.0:
+			# Teeth biting wood: noise gated at the tooth rate, with chip grit.
+			var tooth := 0.5 + 0.5 * sin(TAU * f * 6.0 * t)
+			var grit := rasp_bp.run(noise) * (0.45 + 0.55 * tooth) + rasp_hp.run(noise if rng.randf() < 0.35 else 0.0) * 0.6
+			v += grit * rasp * (0.7 + 0.3 * absf(bog))
+		d[i] = v
+	return d
+
+
+func _saw_start() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	# Two cord pulls (ratchet zip + compression chug), then the engine catches.
+	for pull in 2:
+		var dur := 0.34
+		var zip := _bq("bp", 2400.0, 1.6)
+		var chug := _bq("bp", 300.0, 2.0)
+		for i in int(dur * RATE):
+			var t := float(i) / RATE
+			var e := sin(PI * t / dur)
+			var ratchet := zip.run(_white()) * (0.5 + 0.5 * sin(TAU * 60.0 * t)) * e * 0.8
+			var c := chug.run(1.0 if fmod(t, 0.085) < 0.002 else 0.0) * 4.0
+			d.append(ratchet + c)
+		if pull == 0:
+			# A failed cough between pulls.
+			var cough := _saw_engine(0.22, 40.0, 25.0, 0.3, 0.0, 0.0)
+			for i in cough.size():
+				d.append(cough[i] * (1.0 - float(i) / cough.size()) * 0.7)
+			for i in int(0.12 * RATE):
+				d.append(0.0)
+	var catch_ := _saw_engine(0.9, 90.0, 46.0, 0.25, 0.0, 0.4)
+	for i in catch_.size():
+		var t := float(i) / RATE
+		d.append(catch_[i] * minf(t / 0.05, 1.0))
+	return d
+
+
+func _saw_stop() -> PackedFloat32Array:
+	var e := _saw_engine(1.1, 46.0, 9.0, 0.35, 0.0, 0.2)
+	var d := PackedFloat32Array()
+	d.resize(e.size())
+	for i in e.size():
+		var t := float(i) / e.size()
+		d[i] = e[i] * (1.0 - t) * (1.0 - t)
 	return d

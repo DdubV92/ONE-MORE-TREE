@@ -1,5 +1,5 @@
 {
-	"elapsed_ms": 8484,
+	"elapsed_ms": 13903,
 	"engine": "4.5.1-stable (official)",
 	"facilities": {
 		"arcade_spot:Cabin/Arcade_1": {
@@ -312,57 +312,57 @@
 			"component_cells": 126391,
 			"remaining": 0,
 			"remaining_within_25m_of_truck_route": 0,
-			"removal_ms": 2,
+			"removal_ms": 3,
 			"removed": 10000,
-			"truck_cells": 64511,
+			"truck_cells": 64509,
 			"unreachable_remaining": 0
 		},
 		"25%": {
 			"component_cells": 126391,
 			"remaining": 7500,
 			"remaining_within_25m_of_truck_route": 7432,
-			"removal_ms": 502,
+			"removal_ms": 818,
 			"removed": 2500,
-			"truck_cells": 54678,
+			"truck_cells": 54676,
 			"unreachable_remaining": 0
 		},
 		"50%": {
 			"component_cells": 126391,
 			"remaining": 5000,
 			"remaining_within_25m_of_truck_route": 4932,
-			"removal_ms": 502,
+			"removal_ms": 852,
 			"removed": 5000,
-			"truck_cells": 58035,
+			"truck_cells": 58033,
 			"unreachable_remaining": 0
 		},
 		"90%": {
 			"component_cells": 126391,
 			"remaining": 1000,
 			"remaining_within_25m_of_truck_route": 1000,
-			"removal_ms": 838,
+			"removal_ms": 1393,
 			"removed": 9000,
-			"truck_cells": 63210,
+			"truck_cells": 63208,
 			"unreachable_remaining": 0
 		},
 		"99%": {
 			"component_cells": 126391,
 			"remaining": 100,
 			"remaining_within_25m_of_truck_route": 100,
-			"removal_ms": 174,
+			"removal_ms": 285,
 			"removed": 9900,
-			"truck_cells": 64365,
+			"truck_cells": 64363,
 			"unreachable_remaining": 0
 		},
 		"99.9%": {
 			"component_cells": 126391,
 			"remaining": 10,
 			"remaining_within_25m_of_truck_route": 10,
-			"removal_ms": 17,
+			"removal_ms": 25,
 			"removed": 9990,
-			"truck_cells": 64494,
+			"truck_cells": 64492,
 			"unreachable_remaining": 0
 		},
-		"rebuild_all_chunks_ms": 6,
+		"rebuild_all_chunks_ms": 9,
 		"tree_colliders_after_full_clear": 0
 	},
 	"issues": [],
@@ -570,7 +570,7 @@
 		}
 	},
 	"trucks_original": {
-		"drivable_cells_from_bays": 51278,
+		"drivable_cells_from_bays": 51276,
 		"per_region": {
 			"camp surroundings": {
 				"targets": 59,

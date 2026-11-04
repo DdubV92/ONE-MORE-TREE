@@ -34,6 +34,13 @@ var fore_len := 0.26
 var _two_hands := false
 var _bob := 0.0
 var _recoil := 0.0
+## Phase 14: the chainsaw in first person (two hands: rear handle + top
+## handle), and the glove tier shown on the hands.
+var saw_model: ChainsawModel
+var _push := 0.0
+var _vib_t := 0.0
+var _glove_mat: StandardMaterial3D
+const GLOVE_COLORS := {"": Color(0.78, 0.6, 0.48), "t1": Color(0.6, 0.47, 0.28), "t2": Color(0.36, 0.22, 0.12), "t3": Color(0.12, 0.12, 0.13)}
 
 
 func _ready() -> void:
@@ -48,7 +55,8 @@ func _ready() -> void:
 func _build_arms() -> void:
 	var jacket := CharMeshKit.fabric(Color(0.42, 0.2, 0.14))
 	var cuff := CharMeshKit.mat(Color(0.25, 0.12, 0.08), 0.85)
-	var glove := CharMeshKit.mat(Color(0.55, 0.42, 0.25), 0.8)
+	var glove := CharMeshKit.mat(Color(0.55, 0.42, 0.25), 0.8).duplicate() as StandardMaterial3D
+	_glove_mat = glove
 	for side in ["L", "R"]:
 		var s := -1.0 if side == "L" else 1.0
 		var up := Node3D.new()
@@ -82,6 +90,7 @@ func _build_arms() -> void:
 
 func equip(t: String) -> void:
 	tier = t if AXES.has(t) else "small"
+	saw_model = null
 	if axe_node:
 		axe_node.queue_free()
 	for c in axe_pivot.get_children():
@@ -138,6 +147,59 @@ static func _aabb(n: Node, xf := Transform3D()) -> AABB:
 	return out
 
 
+## Phase 14: hands show the equipped glove tier ("" = bare hands).
+func set_gloves(t: String) -> void:
+	if _glove_mat:
+		_glove_mat.albedo_color = GLOVE_COLORS.get(t, GLOVE_COLORS[""])
+		_glove_mat.roughness = 0.55 if t == "" else 0.85
+
+
+## Phase 14: hold the chainsaw (replaces the axe on the same pivot).
+func equip_saw() -> void:
+	if axe_node:
+		axe_node.queue_free()
+	for c in axe_pivot.get_children():
+		c.queue_free()
+	tier = "chainsaw"
+	saw_model = ChainsawModel.create(1.0)
+	_two_hands = true
+	# Pivot origin = between the hands; the bar points away (-Z).
+	axe_pivot.add_child(saw_model)
+	axe_node = saw_model
+	var rear: Vector3 = (saw_model.get_node("RearGrip") as Node3D).position
+	var front: Vector3 = (saw_model.get_node("FrontGrip") as Node3D).position
+	saw_model.position = -(rear + front) * 0.5
+	grip_r = Marker3D.new()
+	grip_r.position = rear + saw_model.position
+	axe_pivot.add_child(grip_r)
+	grip_l = Marker3D.new()
+	grip_l.position = front + saw_model.position
+	axe_pivot.add_child(grip_l)
+	head_marker = Marker3D.new()
+	head_marker.position = (saw_model.get_node("BarTip") as Node3D).position + saw_model.position
+	axe_pivot.add_child(head_marker)
+
+
+## Saw held low in front, bar level and slightly down; it eases forward
+## into the cut and trembles a little with engine speed (millimetres, no
+## camera shake).
+func pose_saw(rpm: float, cutting: bool, walk_bob := 0.0) -> void:
+	if saw_model == null:
+		return
+	var dt := get_process_delta_time()
+	_vib_t += dt
+	_push = move_toward(_push, 1.0 if cutting else 0.0, dt * 3.0)
+	saw_model.set_running(rpm > 0.01, rpm)
+	var pos := Vector3(0.27, -0.42, -0.52) + Vector3(-0.02 * _push, 0.03 * _push, -0.07 * _push)
+	pos += Vector3(0.006 * sin(walk_bob), 0.008 * absf(cos(walk_bob)), 0.0)
+	var a := (0.0015 + 0.002 * rpm) if rpm > 0.01 else 0.0
+	pos += Vector3(sin(_vib_t * 91.0) * a, cos(_vib_t * 77.0) * a, 0)
+	# Bar angled in toward the aim point so it reads past the housing.
+	var basis := Basis(Vector3.UP, 0.42) * Basis(Vector3.RIGHT, 0.04 - 0.08 * _push)
+	axe_pivot.transform = Transform3D(basis, pos)
+	_solve_arms()
+
+
 ## Places the axe at swing phase `u` (0..1) and solves the arms.
 func pose_at(u: float, walk_bob := 0.0) -> void:
 	var k := 0
@@ -192,7 +254,7 @@ func _solve_arms() -> void:
 		# Free hand rests low at the side, out of the way.
 		var rest := global_transform * Vector3(-0.3, -0.62, -0.25)
 		LimbIK.solve_nodes(ul, bones["ForearmL"], fore_len + 0.04, rest, ul.global_position - right * 0.5 + down * 0.5)
-	var handle := axe_pivot.global_basis.y.normalized()
+	var handle := axe_pivot.global_basis.y.normalized() if saw_model == null else axe_pivot.global_basis.x.normalized()
 	for side in (["L", "R"] if _two_hands else ["R"]):
 		var hand: Node3D = bones["Hand" + side]
 		var fdown := -hand.global_basis.y

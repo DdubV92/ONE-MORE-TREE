@@ -1,10 +1,13 @@
 class_name AxeController
 extends Node
-## Owns the player's axe: equipped tier, swing state machine, input
-## ownership, and contact-timed hit validation. Damage never lands on
-## button-down; it lands at the contact moment of the animation. Clicking
-## faster than the cycle cannot bypass the cooldown (one buffered press).
-## Hold-to-chop repeats at exactly the same legal cadence.
+## Owns the player's cutting tool: the equipped axe tier or the chainsaw,
+## the swing state machine / saw engine, input ownership, and contact-timed
+## hit validation. Damage never lands on button-down; it lands at the
+## contact moment of the animation. Clicking faster than the cycle cannot
+## bypass the cooldown (one buffered press). Hold-to-chop repeats at exactly
+## the same legal cadence. Work and cadence come from ToolEffects (tier,
+## helmet, gloves); the chainsaw cuts only during valid loaded contact
+## (SawMachine ticks), never in the air.
 
 signal target_changed(info: Dictionary)
 signal hit_result(kind: String, info: Dictionary)
@@ -23,6 +26,14 @@ var _cycle := 0.95
 var target_tree := -1
 var _target_info := {}
 var _walk_bob := 0.0
+## Phase 14: "axe" or "chainsaw"; the saw's engine, sound and contact.
+var tool := "axe"
+var saw := SawMachine.new()
+var saw_audio: SawAudio
+var saw_target := ""
+var saw_ticks_applied := 0
+var preview_gear := {"boots": "", "gloves": "", "helmet": ""}
+var _kit_cache := {}
 
 
 func setup(p: Player) -> void:
@@ -31,16 +42,85 @@ func setup(p: Player) -> void:
 	view = ViewModel.new()
 	view.name = "ViewModel"
 	player.camera.add_child(view)
+	saw_audio = SawAudio.new()
+	saw_audio.name = "SawAudio"
+	saw_audio.who = "player"
+	view.add_child(saw_audio)
 	equip("small")
 
 
 func equip(t: String) -> void:
 	if swinging:
 		return
+	kill_saw()
+	tool = "axe"
 	tier = t if config.tier_rates.has(t) else "small"
-	_cycle = float(config.tier_cycle[tier])
+	_kit_cache.clear()
+	_cycle = float(effects().cycle_s)
 	view.equip(tier)
 	view.pose_at(0.0)
+
+
+## Phase 14: hold the chainsaw (engine off until started).
+func equip_saw() -> void:
+	if swinging:
+		return
+	kill_saw()
+	tool = "chainsaw"
+	_kit_cache.clear()
+	view.equip_saw()
+	view.pose_saw(0.0, false, 0.0)
+
+
+## Engine off immediately (vehicle, computer, hide, sleep, carry, stow).
+func kill_saw() -> void:
+	if saw.state != SawMachine.S.STOPPED:
+		saw.kill()
+	saw_target = ""
+	if saw_audio:
+		saw_audio.update(saw, 0.0)
+		saw_audio.silence()
+
+
+## Start the engine, or stop it if running.
+func toggle_engine() -> String:
+	if tool != "chainsaw":
+		return "Hold the chainsaw first (%s)." % Keys.label("tool_saw")
+	if saw.state == SawMachine.S.STOPPED:
+		saw.start(float(effects().start_s))
+		return ""
+	saw.stop()
+	return ""
+
+
+## The boss's kit in ToolEffects form (campaign equipment, or the Preview
+## selection), cached until the equipment changes.
+func kit() -> Dictionary:
+	var c: CampaignService = Game.campaign
+	var k: Dictionary
+	if c and c.active and c.equipment and not Game.is_preview():
+		k = c.equipment.kit_of("boss")
+		k["tool"] = tool
+		if tool == "axe":
+			k["tier"] = tier
+	else:
+		k = {"tool": tool, "tier": tier}
+		for s in preview_gear:
+			k[s] = preview_gear[s]
+	k["hard_working"] = false      # traits are employees' (the boss has none)
+	return k
+
+
+func effects() -> Dictionary:
+	if _kit_cache.is_empty():
+		_kit_cache = ToolEffects.breakdown(kit())
+	return _kit_cache
+
+
+func invalidate_kit() -> void:
+	_kit_cache.clear()
+	if tool == "axe":
+		_cycle = float(effects().cycle_s)
 
 
 func input_allowed() -> bool:
@@ -53,6 +133,8 @@ func input_allowed() -> bool:
 
 
 func try_swing() -> void:
+	if tool != "axe":
+		return
 	if not input_allowed():
 		return
 	if swinging:
@@ -65,6 +147,9 @@ func try_swing() -> void:
 
 func _physics_process_step(delta: float) -> void:
 	# Called from Player._physics_process (fixed step): frame-rate independent.
+	if tool == "chainsaw":
+		_saw_step(delta)
+		return
 	_update_target()
 	var want_hold: bool = Settings.get_v("hold_to_chop") and Input.is_action_pressed("attack") and input_allowed()
 	if not swinging and (want_hold or _buffered):
@@ -102,19 +187,101 @@ func _process_visual(delta: float, speed: float) -> void:
 	view.visible = player.vehicle == null and player.couch == null and player.hiding == null
 	if speed > 0.5 and not swinging:
 		_walk_bob += delta * speed * 1.6
+	if saw_audio:
+		saw_audio.update(saw, delta)
 	if player.carry and player.carry.is_carrying():
 		view.pose_carry(player.carry.grips())
 		return
+	if tool == "chainsaw":
+		view.pose_saw(saw.rpm, saw.state == SawMachine.S.CUTTING, _walk_bob)
+		return
 	view.pose_at(_u if swinging else 0.0, _walk_bob)
+
+
+# ------------------------------------------------------------ chainsaw
+
+## One fixed step of the saw: engine, contact validation, committed ticks.
+func _saw_step(delta: float) -> void:
+	var busy := (player.carry and player.carry.is_carrying()) or player.vehicle != null or player.couch != null or player.hiding != null
+	if busy:
+		kill_saw()
+		return
+	_update_target(ToolEffects.SAW_REACH)
+	var throttle := Input.is_action_pressed("attack") and input_allowed()
+	if throttle and saw.state == SawMachine.S.STOPPED:
+		saw.start(float(effects().start_s))
+	var p := probe(ToolEffects.SAW_REACH)
+	var key := saw_contact_key(p)
+	if key != saw_target:
+		saw.cut_time = 0.0          # one cut target at a time
+		saw_target = key
+	var n := saw.step(delta, throttle, key != "")
+	for i in n:
+		if not apply_saw_tick(p):
+			break
+
+
+## Which wood the bar is in ("" = none): only a standing/notched trunk, a
+## cuttable boundary of resting timber, or a ready stump - the FIRST thing
+## along the bar (a wall or another trunk in front blocks it).
+func saw_contact_key(p: Dictionary) -> String:
+	match str(p.kind):
+		"tree":
+			return "tree:%d" % int(p.id)
+		"timber":
+			var tb: TimberBody = p.body
+			if tb.is_single_piece() or not tb.is_resting():
+				return ""
+			return "timber:%d" % tb.tree_id
+		"stump":
+			if Game.trees and Game.trees.state_of(int(p.id)) == TreeService.State.SECTIONED:
+				return "stump:%d" % int(p.id)
+	return ""
+
+
+## Applies one saw tick (rate x SAW_TICK) to the validated target.
+func apply_saw_tick(p: Dictionary) -> bool:
+	var work: float = float(effects().saw_rate) * ToolEffects.SAW_TICK
+	var ok := false
+	match str(p.kind):
+		"tree":
+			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work)
+			ok = bool(res.get("accepted", false))
+			if ok:
+				var bark := Color(0.35, 0.25, 0.18) if int(World.trees.species[Game.vegetation.tree_index_by_id.get(p.id, p.id)]) != 2 else Color(0.85, 0.83, 0.78)
+				if saw_ticks_applied % 2 == 0:
+					LoggingFX.chips(p.point, p.normal, bark)
+				hit_result.emit("tree", res)
+				_target_info = _describe(p.id)
+				target_changed.emit(_target_info)
+		"timber":
+			var res2: Dictionary = Game.timber.apply_cut(p.body, float(p.y), work) if Game.timber else {"accepted": false}
+			ok = bool(res2.get("accepted", false))
+			if ok:
+				if saw_ticks_applied % 2 == 0:
+					LoggingFX.chips(p.point, p.normal, Color(0.86, 0.74, 0.52))
+				hit_result.emit("timber", res2)
+				target_tree = -3
+		"stump":
+			var res3: Dictionary = Game.trees.apply_stump_work(int(p.id), work)
+			ok = bool(res3.get("accepted", false))
+			if ok:
+				if saw_ticks_applied % 2 == 0:
+					LoggingFX.chips(p.point, p.normal, Color(0.8, 0.66, 0.45))
+				hit_result.emit("stump", res3)
+				target_tree = -3
+	if ok:
+		saw_ticks_applied += 1
+	return ok
 
 
 ## The single arbitration query for the axe: the first thing along the view
 ## ray within reach decides the outcome (fence, another trunk, rock or
 ## building in front of a tree means that tree is not strikeable).
-func probe() -> Dictionary:
+func probe(reach := REACH) -> Dictionary:
 	var cam := player.camera
 	var from := cam.global_position
-	var to := from - cam.global_basis.z * REACH
+	var to := from - cam.global_basis.z * reach
 	var q := PhysicsRayQueryParameters3D.create(from, to, 1 | 4)
 	q.exclude = [player.get_rid()]
 	var hit := player.get_world_3d().direct_space_state.intersect_ray(q)
@@ -135,12 +302,12 @@ func probe() -> Dictionary:
 	return {"kind": "hard", "point": hit.position, "normal": hit.normal}
 
 
-func _update_target() -> void:
-	var p := probe()
+func _update_target(reach := REACH) -> void:
+	var p := probe(reach)
 	if p.kind == "timber" and Game.timber:
 		var tb: TimberBody = p.body
 		var pr := Game.timber.boundary_progress(tb, float(p.y))
-		var info := {"timber": true, "progress": pr, "resting": tb.is_resting(), "tier": tier, "single": tb.is_single_piece()}
+		var info := {"timber": true, "progress": pr, "resting": tb.is_resting(), "tier": tier if tool == "axe" else "chainsaw", "single": tb.is_single_piece()}
 		if target_tree != -2 or absf(pr - float(_target_info.get("progress", -9.0))) > 0.001 or bool(_target_info.get("resting", true)) != tb.is_resting():
 			target_tree = -2
 			_target_info = info
@@ -178,7 +345,7 @@ func _describe(id: int) -> Dictionary:
 		"species": NAMES[int(World.trees.species[i])],
 		"diameter": float(World.trees.radius[i]) * 2.0,
 		"progress": Game.trees.progress(id) if Game.trees else 0.0,
-		"tier": tier,
+		"tier": tier if tool == "axe" else "chainsaw",
 	}
 	if Game.trees and Game.trees.records.has(id):
 		var fd: Array = Game.trees.records[id].fall_dir
@@ -190,7 +357,7 @@ func _contact() -> void:
 	var p := probe()
 	match p.kind:
 		"tree":
-			var work := config.work_per_contact(tier)
+			var work: float = float(effects().work_per_contact)
 			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work)
 			var bark := Color(0.35, 0.25, 0.18) if int(World.trees.species[Game.vegetation.tree_index_by_id.get(p.id, p.id)]) != 2 else Color(0.85, 0.83, 0.78)
 			LoggingFX.chips(p.point, p.normal, bark)
@@ -202,7 +369,7 @@ func _contact() -> void:
 			target_changed.emit(_target_info)
 		"timber":
 			var tb: TimberBody = p.body
-			var res: Dictionary = Game.timber.apply_cut(tb, float(p.y), config.work_per_contact(tier)) if Game.timber else {"accepted": false}
+			var res: Dictionary = Game.timber.apply_cut(tb, float(p.y), float(effects().work_per_contact)) if Game.timber else {"accepted": false}
 			if bool(res.get("accepted", false)):
 				LoggingFX.chips(p.point, p.normal, Color(0.86, 0.74, 0.52))
 				LoggingFX.play(LoggingFX.Sound.CHOP, p.point)
@@ -213,7 +380,7 @@ func _contact() -> void:
 			hit_result.emit("timber", res)
 			target_tree = -3
 		"stump":
-			var sres: Dictionary = Game.trees.apply_stump_work(int(p.id), config.work_per_contact(tier))
+			var sres: Dictionary = Game.trees.apply_stump_work(int(p.id), float(effects().work_per_contact))
 			if bool(sres.accepted):
 				LoggingFX.chips(p.point, p.normal, Color(0.8, 0.66, 0.45))
 				LoggingFX.play(LoggingFX.Sound.CHOP, p.point)

@@ -335,31 +335,26 @@ func _journal_reports() -> Control:
 
 func open_shop() -> void:
 	if not svc.active:
-		hud.show_message("The axe shop opens in the campaign. (Preview: use 1/2/3 to try tiers.)")
+		hud.show_message("The tool rack is your camp storage in the campaign. (Preview: 1/2/3 axes, %s chainsaw.)" % Keys.label("tool_saw"))
 		return
-	var f := _frame("Tool rack: axes")
+	var f := _frame("Tool rack: your gear and camp storage", 980)
 	var p: PanelContainer = f[0]
 	var v: VBoxContainer = f[1]
-	_text(v, "Cash $%s. Tonight's payroll $%s, wages owed $%s." % [Money.format_cents(svc.wallet.cash), Money.format_cents(svc.payroll.todays_estimate()), Money.format_cents(svc.payroll.owed_total())], 16)
-	const DESC := {"small": "Hatchet. x1.00 cutting rate.", "medium": "Felling axe. x1.40 rate: +40% work per swing (a cut takes about 29% less time).", "large": "Heavy felling axe. x1.96 rate: +40% over the medium (a cut takes about half the time of the hatchet)."}
-	for tier in Equipment.TIERS:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		var owned := svc.equipment.boss_has(tier)
-		var price := svc.equipment.price(tier)
-		var l := UITheme.label("%s  -  %s\n%s" % [tier.capitalize(), ("owned" + ("  ·  EQUIPPED" if svc.equipment.equipped_tier() == tier else "")) if owned else "$" + Money.format_cents(price), DESC[tier]], 15)
-		l.custom_minimum_size = Vector2(400, 0)
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD
-		row.add_child(l)
-		if owned:
-			if svc.equipment.equipped_tier() != tier:
-				row.add_child(UITheme.button("Equip", func() -> void:
-					svc.equipment.equip_tier(tier)
-					hud.show_message("Equipped the %s axe." % tier)
-					close_panel(), 120))
-		else:
-			row.add_child(UITheme.button("Buy", func() -> void: _confirm_buy(tier), 120))
-		v.add_child(row)
+	_text(v, "New tools and gear are ordered on the camper computer (Supplier app) and arrive by supply boat at the parcel locker. Cash $%s · tonight's payroll $%s · wages owed $%s." % [Money.format_cents(svc.wallet.cash), Money.format_cents(svc.payroll.todays_estimate()), Money.format_cents(svc.payroll.owed_total())], 15)
+	var sc := ScrollContainer.new()
+	sc.custom_minimum_size = Vector2(940, 380)
+	v.add_child(sc)
+	var gv := VBoxContainer.new()
+	gv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(gv)
+	var st := UITheme.label("", 14, UITheme.ACCENT)
+	var rebuild := [Callable()]
+	rebuild[0] = func() -> void:
+		for c in gv.get_children():
+			c.queue_free()
+		GearPanel.build_gear(gv, func(t: String) -> void: st.text = t, rebuild[0])
+	rebuild[0].call()
+	v.add_child(st)
 	var te := 0.0
 	if Game.timber:
 		te = int(Game.timber.totals().accepted_mte) / 1000.0
@@ -385,35 +380,6 @@ func open_shop() -> void:
 			row.add_child(why)
 		v.add_child(row)
 	v.add_child(UITheme.button("Close", close_panel, 200))
-	_open(p)
-
-
-func _confirm_buy(tier: String) -> void:
-	var price := svc.equipment.price(tier)
-	var f := _frame("Buy the %s axe?" % tier, 520)
-	var p: PanelContainer = f[0]
-	var v: VBoxContainer = f[1]
-	var after := svc.wallet.cash - price
-	var need := svc.payroll.todays_estimate() + svc.payroll.owed_total()
-	if price > svc.wallet.cash:
-		_text(v, "You need $%s; you have $%s." % [Money.format_cents(price), Money.format_cents(svc.wallet.cash)])
-		v.add_child(UITheme.button("Back", open_shop, 200))
-		_open(p)
-		return
-	_text(v, "Price $%s. Cash after: $%s." % [Money.format_cents(price), Money.format_cents(after)])
-	if after < need:
-		_text(v, "Warning: that leaves less than tonight's payroll and wages owed ($%s). Unpaid wages must be cleared by the end of the next workday." % Money.format_cents(need), 15, Color(1.0, 0.75, 0.45))
-	var row := HBoxContainer.new()
-	row.add_child(UITheme.button("Confirm purchase", func() -> void:
-		var res := svc.equipment.buy(tier)
-		if bool(res.ok):
-			svc.equipment.equip_tier(tier)
-			hud.show_message("Bought and equipped the %s axe (%s)." % [tier, res.tx])
-		else:
-			hud.show_message(str(res.reason))
-		close_panel(), 220))
-	row.add_child(UITheme.button("Cancel", open_shop, 140))
-	v.add_child(row)
 	_open(p)
 
 
@@ -778,7 +744,7 @@ func _spare_axe_for(w: Worker) -> Dictionary:
 	# A company axe the boss owns but is not holding, better than the
 	# worker's; handing it over is an explicit equipment transaction.
 	var mine := w.axe_tier()
-	for a in svc.equipment.owned_by("rack") + svc.equipment.owned_by("boss"):
+	for a in svc.equipment.owned_by("storage") + svc.equipment.owned_by("boss"):
 		if str(a.id) == svc.equipment.equipped:
 			continue
 		if Equipment.TIERS.find(str(a.tier)) > Equipment.TIERS.find(mine):

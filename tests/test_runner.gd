@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P14"):
+		_run("phase 14 units", _t_phase14_units)
+		await _run_async("phase 14 world", _t_phase14_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P13"):
 		_run("phase 13 units", _t_phase13_units)
 		await _run_async("phase 13 world", _t_phase13_world)
@@ -114,6 +120,8 @@ func _ready() -> void:
 	await _run_async("phase 12: island r2 exact 10,000 native records (unique, cohorts, low boughs, hashes), legacy islands untouched, removal clears every LOD, rocks supported, 62 rock hides with exits, geometric hide sight + bounded soft cover, lost contact vs seen entry, save island identity, undergrowth presets keep thickets, mocap clips, proper fabrics", _t_phase12_world)
 	_run("phase 13 units: plan v2 conserves $100 and 1 tree-eq per tree with fewer, longer pieces (bounded by two hand loads), old rulesets keep plan v1, save schema 9 + yard summary", _t_phase13_units)
 	await _run_async("phase 13 world: cradle intake pays once, full cradle refuses unpaid, deck delivery, yard moves, fire pile cap, mid-move reload, burn, old queue migrates once, cart partial unload + pose, drag", _t_phase13_world)
+	_run("phase 14 units: axes 1.00/1.40/1.96 per hit at one cadence (output unchanged), Hard-working x1.25 once, gear factors exact and smaller than a tier step, saw 3-5x with no work in the air or during the start, frame-rate/hitch-proof, legacy axes mapped once, tier replacement, one owner, supplier quote/warnings/idempotent order/schedule/collect once/refund once/stock limit, schema 10", _t_phase14_units)
+	await _run_async("phase 14 world: player saw cuts only real wood, sky = zero, hide/axe stop the saw, worker gear changes only between jobs, worker saw start/stop, fall lanes cost routes and release, team break keeps one cargo owner, parcel locker collects once", _t_phase14_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -1156,7 +1164,7 @@ func _t_equipment() -> String:
 	if bool(e.buy("medium").ok):
 		_free_all(f)
 		return "bought with no cash"
-	w.grant(160000, "test", "T", "cash")
+	w.grant(e.price("medium") + 10000, "test", "T", "cash")
 	var r := e.buy("medium")
 	if not bool(r.ok) or w.cash != 10000 or not e.boss_has("medium"):
 		_free_all(f)
@@ -3521,7 +3529,7 @@ func _t_phase13_units() -> String:
 	# Save schema 8 -> 9 adds nothing destructive; summaries count yard stock.
 	var old := {"schema": 8, "campaign": {"phase3": true, "day": 4, "ruleset": {"id": "expanded_v2"}}, "timber": {"queue": ["T1_S0"]}}
 	var m := SaveService.migrate(old.duplicate(true))
-	if int(m.schema) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION != 9 or (m.timber.queue as Array).size() != 1:
+	if int(m.schema) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION < 9 or (m.timber.queue as Array).size() != 1:
 		return "schema 8 -> 9 migration wrong: %s" % str(m)
 	var sum := SaveService.summarize({"schema": 9, "campaign": {"phase3": true, "day": 2, "ruleset": {"id": "expanded_v3"}}, "timber": {"yard": {"cradle": ["a", "b"], "decks": [["c"], [], []]}}})
 	if int(sum.get("yard_pieces", -1)) != 3:
@@ -3790,4 +3798,382 @@ func _p13_checks(world: IslandWorld) -> String:
 	t.clear_all()
 	if not y.cradle.is_empty() or not t.queue.is_empty():
 		return "clear_all left yard stock"
+	return ""
+
+
+# ------------------------------------------------------------------ Phase 14
+
+func _t_phase14_units() -> String:
+	# --- one tool calculation: axes per contact at one cadence -------------
+	var b := {}
+	for t in ["small", "medium", "large"]:
+		b[t] = ToolEffects.breakdown({"tool": "axe", "tier": t})
+	for t in [["medium", 1.4], ["large", 1.96]]:
+		if absf(float(b[t[0]].work_per_contact) / float(b.small.work_per_contact) - float(t[1])) > 0.0001:
+			return "%s work per contact ratio wrong" % t[0]
+		if absf(float(b[t[0]].cycle_s) - float(b.small.cycle_s)) > 0.0001:
+			return "axes do not share one legal cadence"
+	var cfg: TreeWorkConfig = load("res://config/tree_work.tres")
+	for t in ["small", "medium", "large"]:
+		if absf(float(b[t].work_per_second) - cfg.work_per_second(t)) > 0.0001:
+			return "%s: ToolEffects (%.4f) disagrees with the tree work config (%.4f)" % [t, float(b[t].work_per_second), cfg.work_per_second(t)]
+	if absf(float(b.small.work_per_second) - 1.0 / 0.95) > 0.0001:
+		return "hatchet output changed from Phases 1-13"
+	var hw := ToolEffects.breakdown({"tool": "axe", "tier": "large", "hard_working": true})
+	if absf(float(hw.work_per_contact) / float(b.large.work_per_contact) - 1.25) > 0.0001 or absf(float(hw.cycle_s) - float(b.large.cycle_s)) > 0.0001:
+		return "Hard-working not applied exactly once (output only)"
+	var full := ToolEffects.breakdown({"tool": "axe", "tier": "small", "helmet": "t3", "gloves": "t3", "boots": "t3"})
+	if absf(float(full.work_per_contact) - 1.06) > 0.0001 or absf(float(full.cycle_s) - 0.95 / 1.06) > 0.0001 or absf(float(full.walk_mult) - 1.09) > 0.0001:
+		return "gear factors wrong: %s" % str(full)
+	if float(full.work_per_second) / float(b.small.work_per_second) > float(b.medium.work_per_second) / float(b.small.work_per_second):
+		return "full gear outweighs an axe tier step"
+	var saw := ToolEffects.breakdown({"tool": "chainsaw"})
+	var saw_g := ToolEffects.breakdown({"tool": "chainsaw", "helmet": "t3", "gloves": "t3"})
+	if float(saw.vs_hatchet) < 3.0 or float(saw.vs_hatchet) > 5.0:
+		return "saw outside the 3-5x band (%.2f)" % float(saw.vs_hatchet)
+	if absf(float(saw_g.saw_rate) - float(saw.saw_rate)) > 0.0001 or float(saw_g.start_s) >= float(saw.start_s):
+		return "saw gear: helmet/gloves must not raise loaded cutting; gloves shorten the start"
+	if absf(float(ToolEffects.breakdown({"tool": "chainsaw", "hard_working": true}).saw_rate) / float(saw.saw_rate) - 1.25) > 0.0001:
+		return "Hard-working not applied once to the saw"
+	# --- saw engine: no work in the air, frame-rate independent, bounded --
+	var m := SawMachine.new()
+	m.start()
+	var air := 0
+	for i in 600:
+		air += m.step(1.0 / 60.0, true, false)
+	if air != 0 or m.state != SawMachine.S.REVVING:
+		return "throttle with no contact produced %d ticks (state %s)" % [air, m.state_name()]
+	var counts := []
+	for dt in [1.0 / 30.0, 1.0 / 60.0, 1.0 / 144.0, 1.0 / 20.0]:
+		var mm := SawMachine.new()
+		mm.start()
+		var tt := 0.0
+		var n := 0
+		while tt < 8.0:
+			n += mm.step(dt, tt > 2.0, tt > 2.0)
+			tt += dt
+		counts.append(n)
+	if counts.max() - counts.min() > 3 or int(counts.min()) < 50:
+		return "saw ticks depend on frame step: %s" % str(counts)
+	var burst := SawMachine.new()
+	burst.start()
+	for i in 40:
+		burst.step(0.05, true, true)
+	var before := burst.ticks_total
+	burst.step(5.0, true, true)
+	if burst.ticks_total - before > 1:
+		return "a 5 s hitch released %d ticks at once" % (burst.ticks_total - before)
+	burst.kill()
+	if burst.state != SawMachine.S.STOPPED or burst.step(0.1, true, true) != 0:
+		return "kill did not stop the saw at once"
+	var st := SawMachine.new()
+	st.start()
+	var during := 0
+	for i in int(ToolEffects.SAW_START_S * 60.0) - 2:
+		during += st.step(1.0 / 60.0, true, true)
+	if during != 0:
+		return "the start pull cut wood"
+	# --- inventory: legacy axes once, one owner, tier replacement ----------
+	var f := _economy_fixture()
+	var w: Wallet = f[0]
+	var e: Equipment = f[2]
+	var legacy := {"axes": [{"id": "AXE-0001", "tier": "small", "owner": "boss", "source": "starting", "receipt": ""}, {"id": "AXE-0002", "tier": "small", "owner": "EMP-01", "source": "starting", "receipt": ""}, {"id": "AXE-0003", "tier": "large", "owner": "boss", "source": "purchase", "receipt": "TX-000009"}, {"id": "AXE-0004", "tier": "medium", "owner": "rack", "source": "issued", "receipt": ""}, {"id": "AXE-0003", "tier": "large", "owner": "boss", "source": "purchase", "receipt": "TX-000009"}], "equipped": "AXE-0003", "counter": 4}
+	e.restore(legacy)
+	var err := ""
+	if e.items.size() != 4:
+		err = "legacy axes not mapped once (%d items)" % e.items.size()
+	elif e.equipped_tier() != "large" or str(e.item("AXE-0004").owner) != "storage" or str(e.kit_of("EMP-01").tier) != "small":
+		err = "legacy mapping wrong: %s / %s" % [e.equipped_tier(), str(e.item("AXE-0004"))]
+	if err == "":
+		e.restore(e.capture())
+		if e.items.size() != 4:
+			err = "re-restore duplicated items"
+	if err == "":
+		var b1 := e.add_item("boots", "t1", "boss", "order")
+		var b3 := e.add_item("boots", "t3", "boss", "order")
+		e.equip("boss", str(b1.id))
+		e.equip("boss", str(b3.id))
+		if str(e.kit_of("boss").boots) != "t3" or absf(float(ToolEffects.breakdown(e.kit_of("boss")).walk_mult) - 1.09) > 0.0001:
+			err = "boots tier did not replace (stacked?)"
+		if err == "" and not bool(e.transfer(str(b3.id), "EMP-01").ok):
+			err = "transfer refused"
+		if err == "" and (str(e.kit_of("boss").boots) != "" or str(b3.owner) != "EMP-01"):
+			err = "transfer left the boss wearing the boots"
+		if err == "" and e.return_to_storage("EMP-01") != 2:
+			err = "departure did not return kit to storage"
+		var owners := {}
+		for a in e.items:
+			if owners.has(a.id):
+				err = "duplicate item id %s" % a.id
+			owners[a.id] = true
+	# --- supplier: idempotent orders, schedule, collect once, refund once --
+	if err == "":
+		err = _p14_supplier(w, e, f[1], f[3])
+	_free_all(f)
+	if err != "":
+		return err
+	var mig := SaveService.migrate({"schema": 9, "economy": {"equipment": {"axes": [], "equipped": ""}}})
+	if int(mig.schema) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION != 10:
+		return "schema 9 -> 10 migration wrong"
+	return ""
+
+
+func _p14_supplier(w: Wallet, e: Equipment, p: Payroll, clock: WorkdayClock) -> String:
+	var contract := ContractService.new()
+	contract.state = ContractService.ACTIVE
+	var sup := Supplier.new()
+	sup.setup(e, w, clock, contract, p)
+	p.employees = Payroll.starting_crew(5)
+	for emp in p.employees:
+		emp.status = Payroll.ACTIVE
+	clock.restore({"day": 3, "t": 100.0, "running": true, "deadline_enabled": true})
+	var err := ""
+	var lines := [{"key": "chainsaw:saw", "qty": 1}, {"key": "gloves:t2", "qty": 2}]
+	w.grant(GearCatalog.price("chainsaw", "saw") + 2 * GearCatalog.price("gloves", "t2") + 50000 - w.cash, "test", "T", "cash")
+	var cash0 := w.cash
+	var q := sup.quote(lines)
+	var expect := GearCatalog.price("chainsaw", "saw") + 2 * GearCatalog.price("gloves", "t2")
+	if not bool(q.ok) or int(q.total) != expect or int(q.eta.day) != 3 or float(q.eta.t) != 300.0:
+		err = "quote wrong: %s" % str(q)
+	if err == "" and (q.warnings as Array).is_empty():
+		err = "no payroll warning when cash after < tonight's payroll (%d < %d)" % [int(q.after), int(q.tonight)]
+	var r1 := sup.place(lines, "REQ-A")
+	var r2 := sup.place(lines, "REQ-A")
+	if err == "" and (not bool(r1.ok) or not bool(r2.get("repeat", false)) or sup.orders.size() != 1 or w.cash != cash0 - expect):
+		err = "double confirm charged twice or made two orders (cash %d)" % w.cash
+	if err == "":
+		for id in r1.order.items:
+			if not str(e.item(str(id)).owner).begins_with("order:"):
+				err = "ordered item not in transit"
+	# Schedule.
+	if err == "":
+		var a1 := sup.next_arrival(5, 200.0)
+		var a2 := sup.next_arrival(5, 700.0)
+		var a3 := sup.next_arrival(30, 700.0)
+		if float(a1.t) != 660.0 or int(a2.day) != 6 or float(a2.t) != 300.0 or bool(a3.ok):
+			err = "schedule wrong: %s %s %s" % [str(a1), str(a2), str(a3)]
+	# Arrival, collection once.
+	if err == "":
+		clock.t = 299.0
+		sup.tick()
+		if str(r1.order.state) != "dispatched":
+			err = "not dispatched before arrival (%s)" % str(r1.order.state)
+		clock.t = 301.0
+		sup.tick()
+		if err == "" and str(r1.order.state) != "arrived":
+			err = "not arrived on time"
+		var n1 := sup.collect(str(r1.order.id))
+		var n2 := sup.collect(str(r1.order.id))
+		if err == "" and (n1 != 3 or n2 != 0 or e.items_of("storage").size() < 3):
+			err = "collect not exactly once (%d, %d)" % [n1, n2]
+	# Refund once at contract close; stock limit.
+	if err == "":
+		var r3 := sup.place([{"key": "boots:t1", "qty": 1}], "REQ-B")
+		var c1 := w.cash
+		contract.state = ContractService.ABANDONMENT
+		sup.tick()
+		sup.refund_undelivered()
+		sup.tick()
+		if not bool(r3.ok) or str(r3.order.state) != "refunded" or w.cash != c1 + GearCatalog.price("boots", "t1"):
+			err = "refund not exactly once (cash %d -> %d, %s)" % [c1, w.cash, str(r3.order.get("state", ""))]
+		elif bool(sup.place([{"key": "boots:t1", "qty": 1}], "REQ-C").ok):
+			err = "ordered after the contract closed"
+		contract.state = ContractService.ACTIVE
+		var lim := sup.quote([{"key": "helmet:t1", "qty": GearCatalog.STOCK_LIMIT + 1}])
+		if err == "" and bool(lim.ok):
+			err = "stock limit not enforced"
+	# Save round trip keeps orders/items once.
+	if err == "":
+		var snap: Dictionary = JSON.parse_string(JSON.stringify({"e": e.capture(), "s": sup.capture()}))
+		var n_items := e.items.size()
+		e.restore(snap.e)
+		sup.restore(snap.s)
+		if e.items.size() != n_items or sup.orders.size() != 2 or bool(sup.place([{"key": "chainsaw:saw", "qty": 1}], "REQ-A").get("repeat", false)) == false:
+			err = "supplier/equipment did not round-trip idempotently"
+	sup.free()
+	contract.free()
+	return err
+
+
+func _t_phase14_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.yard == null or Game.crew == null or Game.campaign == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 10:
+		await get_tree().physics_frame
+	var err := await _p14_checks(world)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p14_checks(world: IslandWorld) -> String:
+	var p: Player = world.player
+	var ax: AxeController = p.axe
+	# --- player saw: real contact only -----------------------------------
+	var o := World.camp_origin()
+	var best := -1
+	var bd := INF
+	for i in World.tree_count():
+		var d := Vector2(World.trees.x[i] - o.x, World.trees.z[i] - o.z).length()
+		if d > 45.0 and d < bd and float(World.trees.radius[i]) > 0.12:
+			bd = d
+			best = i
+	var tid: int = World.trees.id[best]
+	var stand := PlacementValidator.cut_stands(best)[0]
+	var base := World.tree_position(best)
+	world.vegetation.update_collision_around(base)
+	p.teleport(stand + Vector3(0, 1.65, 0), base + Vector3(0, 0.95, 0))
+	for i in 3:
+		await get_tree().physics_frame
+	ax.equip_saw()
+	ax.saw.start()
+	for i in 120:
+		ax.saw.step(1.0 / 60.0, false, false)
+	var pr0 := Game.trees.progress(tid)
+	var ticks := 0
+	for i in 240:
+		var pb := ax.probe(ToolEffects.SAW_REACH)
+		var key := ax.saw_contact_key(pb)
+		var n := ax.saw.step(1.0 / 60.0, true, key != "")
+		for k in n:
+			if ax.apply_saw_tick(pb):
+				ticks += 1
+	var pr1 := Game.trees.progress(tid)
+	if ticks == 0 or pr1 <= pr0:
+		return "saw in contact did no work (ticks %d, key %s, probe %s)" % [ticks, ax.saw_contact_key(ax.probe(ToolEffects.SAW_REACH)), str(ax.probe(ToolEffects.SAW_REACH).kind)]
+	var expect := float(ax.effects().saw_rate) * ToolEffects.SAW_TICK * ticks
+	var req := float(Game.trees.record(tid).required)
+	if absf((pr1 - pr0) * req - expect) > 0.01 * maxf(expect, 1.0) and pr1 < 1.0:
+		return "saw work %.3f vs expected %.3f" % [(pr1 - pr0) * req, expect]
+	# Pointing at the sky: zero work.
+	p.teleport(stand + Vector3(0, 1.65, 0), stand + Vector3(0, 30, 0))
+	await get_tree().physics_frame
+	var sky := ax.saw_contact_key(ax.probe(ToolEffects.SAW_REACH))
+	if sky != "":
+		return "pointing at the sky counted as contact (%s)" % sky
+	# Interruption: hiding stops the engine at once.
+	ax.saw.start()
+	if Game.cover and not Game.cover.hides.is_empty():
+		Game.hunt.hunt_preview = true
+		var spot: HideSpot = Game.cover.hides[0]
+		p.teleport_feet(spot.exit_point, 0.0)
+		await get_tree().physics_frame
+		p.hide_in(spot)
+		if ax.saw.state != SawMachine.S.STOPPED:
+			return "hiding left the saw running"
+		p.leave_hide()
+		Game.hunt.hunt_preview = false
+	ax.equip("small")
+	if ax.tool != "axe" or ax.saw.state != SawMachine.S.STOPPED:
+		return "switching to the axe left the saw running"
+	# --- campaign: worker gear issue/recall at safe boundaries -------------
+	var cs: CampaignService = Game.campaign
+	cs.start_test_route(true, true)
+	var g2 := 0
+	while Game.crew.workers.size() < 2 and g2 < 600:
+		await get_tree().physics_frame
+		g2 += 1
+	if Game.crew.workers.is_empty():
+		return "no crew spawned"
+	var wk: Worker = Game.crew.workers.values()[0]
+	var saw_item := cs.equipment.add_item("chainsaw", "saw", "storage", "test")
+	wk.activity = "fell"
+	var r := Game.crew.issue(str(saw_item.id), wk.id)
+	if not bool(r.ok) or str(saw_item.owner) != wk.id:
+		return "issue failed: %s" % str(r)
+	if wk.axe_tier() == "chainsaw":
+		return "tool changed mid-cut (issue must wait for a boundary)"
+	var rec := Game.crew.recall(str(saw_item.id))
+	if bool(rec.ok):
+		return "recall allowed mid-cut"
+	wk.activity = "idle"
+	Game.crew.apply_pending_equip(wk)
+	if wk.axe_tier() != "chainsaw" or wk.body_char.axe_rig.get_node_or_null("Axe") == null or not (wk.body_char.axe_rig.get_node("Axe") is ChainsawModel):
+		return "worker did not take up the saw at the boundary (%s)" % wk.axe_tier()
+	# Worker saw: no work during the start pull, then rate x tick.
+	var total := 0.0
+	var first_work_t := -1.0
+	for i in 300:
+		var wv := wk._work_step(1.0 / 60.0)
+		if wv > 0.0 and first_work_t < 0.0:
+			first_work_t = i / 60.0
+		total += wv
+	var fx := Game.crew.tool_effects(wk)
+	if first_work_t < ToolEffects.SAW_START_S * 0.9 or total <= 0.0:
+		return "worker saw worked during the start pull (%.2f s) or never (%.2f)" % [first_work_t, total]
+	wk.activity = "move"
+	wk._saw_upkeep(0.1)
+	for i in 30:
+		wk._saw_upkeep(0.05)
+	if wk.saw.running():
+		return "worker saw kept running after leaving the cut"
+	if not bool(Game.crew.recall(str(saw_item.id)).ok) or str(saw_item.owner) != "storage":
+		return "recall between jobs failed"
+	# --- felling lanes ------------------------------------------------------
+	var co: CrewCoordinator = Game.crew.coord
+	var lane := co.predict_lane(best, stand)
+	var tip: Vector2 = (lane.base as Vector2) + (lane.dir as Vector2) * (float(lane.len) - 1.0)
+	if not CrewCoordinator.in_lane(lane, Vector3(tip.x, 0, tip.y)) or CrewCoordinator.in_lane(lane, Vector3(tip.x, 0, tip.y) + Vector3((lane.dir as Vector2).y, 0, -(lane.dir as Vector2).x) * (float(lane.half_w) + 1.0)):
+		return "lane geometry wrong"
+	co.register_lane(tid, wk, stand)
+	if co.lane_at(Vector3(tip.x, 0, tip.y), "other") != tid:
+		return "registered lane not found"
+	var cell := Game.crew.nav.to_cell(tip)
+	if int(Game.crew.nav.lane_refs.get(cell, 0)) <= 0:
+		return "lane cells not costed for routing"
+	co.clear_lane(tid)
+	if int(Game.crew.nav.lane_refs.get(cell, 0)) != 0:
+		return "lane cost not released"
+	# --- team carry: break keeps the log with its one owner ----------------
+	if Game.crew.workers.size() >= 2:
+		var lead: Worker = Game.crew.workers.values()[0]
+		var fol: Worker = Game.crew.workers.values()[1]
+		var tr := Game.timber
+		var rid := int(World.trees.id[best])
+		if not tr.records.has(rid):
+			tr.records[rid] = tr._build_record(rid, best, {})
+		var sid := str(tr.records[rid].segments[0].sid)
+		tr.load_of(lead.id).append(sid)
+		tr.claims[sid] = lead.id
+		tr.segment(sid).state = TimberService.Seg.CARRIED
+		co.teams["TEAM-T"] = {"leader": lead.id, "follower": fol.id, "sid": sid, "state": "carry", "since": Game.crew.now()}
+		lead.team = "TEAM-T"
+		fol.start_team_follow("TEAM-T")
+		fol.abandon("called away")
+		if co.teams.has("TEAM-T") or fol.team != "" or lead.team != "" or fol.activity == "team_follow":
+			return "team not broken cleanly"
+		if not tr.load_of(lead.id).has(sid) or tr.load_of(fol.id).has(sid):
+			return "breaking the team moved or duplicated the log"
+		tr.load_of(lead.id).erase(sid)
+		tr.claims.erase(sid)
+		tr.records.erase(rid)
+	# --- parcel locker collects the arrived order once ---------------------
+	var lockers := get_tree().get_nodes_in_group("parcel_locker")
+	if lockers.is_empty():
+		return "no parcel locker in camp"
+	cs.wallet.grant(500000, "test", "T", "cash")
+	cs.clock.t = 50.0
+	var po := cs.supplier.place([{"key": "helmet:t2", "qty": 1}], "REQ-W")
+	if not bool(po.ok):
+		return "order failed: %s" % str(po.reason)
+	cs.clock.t = 305.0
+	cs.supplier.tick()
+	cs.supplier.tick()
+	var lk: ParcelLocker = lockers[0]
+	var before := cs.equipment.items_of("storage").size()
+	lk.interact(p)
+	lk.interact(p)
+	if cs.equipment.items_of("storage").size() != before + 1:
+		return "locker collected %d items (want 1)" % (cs.equipment.items_of("storage").size() - before)
 	return ""

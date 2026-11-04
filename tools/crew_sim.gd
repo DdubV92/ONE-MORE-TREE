@@ -14,6 +14,9 @@ var world: IslandWorld
 func _ready() -> void:
 	Game.mode = Game.Mode.PREVIEW
 	Game.pending_teleport = "camp"
+	# Phase 14: ISLAND=island_r2 runs on the new-campaign island.
+	if OS.has_environment("ISLAND"):
+		Game.preview_variant = OS.get_environment("ISLAND")
 	world = load("res://scenes/world.tscn").instantiate()
 	world.build_ui = false
 	add_child(world)
@@ -32,6 +35,13 @@ func _ready() -> void:
 		if not bool(r.ok):
 			print("hire failed: ", r.reason)
 			break
+	# Phase 14: TOOL=saw|large|medium|small issues that tool to every worker
+	# (real item records, equipped at the start).
+	var tool_env := OS.get_environment("TOOL") if OS.has_environment("TOOL") else ""
+	if tool_env != "":
+		for e in cs.payroll.employees:
+			var item := cs.equipment.add_item("chainsaw" if tool_env == "saw" else "axe", "saw" if tool_env == "saw" else tool_env, str(e.id), "sim")
+			cs.equipment.equip(str(e.id), str(item.id))
 	var shift := float(OS.get_environment("SHIFT_SECONDS")) if OS.has_environment("SHIFT_SECONDS") else 1210.0
 	var t := 0.0
 	var next_report := 0.0
@@ -65,6 +75,10 @@ func _ready() -> void:
 	res["stuck_events"] = crew.stuck_log.size()
 	res["stuck_log"] = crew.stuck_log.slice(0, 6)
 	res["owners_ok"] = _owners_ok(world.timber)
+	res["tool"] = tool_env if tool_env != "" else "small (default)"
+	res["coord"] = crew.coord.stats
+	if Game.yard:
+		res["yard_stock_te"] = Game.yard.stock_mte() / 1000.0
 	print("CREW_SIM ", JSON.stringify(res))
 	get_tree().quit()
 
@@ -81,6 +95,10 @@ func _owners_ok(t: TimberService) -> bool:
 			held[sid] = int(held.get(sid, 0)) + 1
 	for sid in t.queue + t.burning:
 		held[sid] = int(held.get(sid, 0)) + 1
+	if Game.yard:
+		for sid in Game.yard.all_yard_sids():
+			if not Game.yard.is_yard_move(str(sid)):
+				held[sid] = int(held.get(sid, 0)) + 1
 	for id in t.records:
 		for s in t.records[id].segments:
 			var want := 0 if int(s.state) == TimberService.Seg.CONSUMED else 1

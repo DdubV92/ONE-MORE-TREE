@@ -22,7 +22,7 @@ const STEPS := [
 	["section", "Cut the fallen trunk into logs: chop at the marked cut lines along it."],
 	["carry", "Pick up a log ({interact}). Your hands hold about a third of a tree; big pieces may need another cut, help or a truck."],
 	["deliver", "Carry it to the rack and deliver it ({interact}). The credit you see is the real payment."],
-	["review", "Check money and crew in the Journal ({toggle_journal}): today's wages ($300 per employee) and your next axe at the tool rack."],
+	["review", "Check money and crew in the Journal ({toggle_journal}): today's wages ($300 per employee) and better tools on the camper computer (Supplier)."],
 	["dusk", "When dusk comes you'll get the night rules. Head home before dark."],
 	["sleep", "Sleep in the camper bed to end the day. Night only ends when you sleep."],
 ]

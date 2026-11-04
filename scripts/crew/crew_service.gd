@@ -50,6 +50,10 @@ var world_ready := false
 var _pending: Array[Callable] = []
 
 
+## Phase 14 coordination (felling lanes, claim reaper, team carry).
+var coord: CrewCoordinator
+
+
 func setup(c: CampaignService) -> void:
 	campaign = c
 	payroll = c.payroll
@@ -60,6 +64,10 @@ func setup(c: CampaignService) -> void:
 	nav = CrewNav.new()
 	nav.name = "CrewNav"
 	add_child(nav)
+	coord = CrewCoordinator.new(self)
+	if trees:
+		trees.tree_warning.connect(coord.on_warning)
+		trees.tree_felled.connect(coord.on_felled)
 	payroll.quit_due_to_arrears.connect(func(eid: String) -> void: start_departure(eid, "unpaid wages"))
 	c.clock.day_started.connect(_on_morning)
 	c.clock.night_started.connect(_on_night)
@@ -293,14 +301,13 @@ func start_departure(eid: String, reason: String) -> void:
 	e.status = "departing"
 	e["departure_reason"] = reason
 	e["departure_day"] = campaign.clock.day
-	for a in campaign.equipment.owned_by(eid):
-		a.owner = "rack"
-	campaign.equipment.changed.emit()
+	# Company kit goes back to camp storage (explicit, conserved policy).
+	campaign.equipment.return_to_storage(eid)
 	var w: Worker = workers.get(eid)
 	if w:
 		release_claims(w)
 		stage_load(w)
-		w.body_char.set_axe_tier("small")
+		w.refresh_kit_visuals()
 		_send_to_dock(w)
 		w.say("fired" if reason.begins_with("fired") else ("quit_wages" if reason == "unpaid wages" else "quit_fear"), true)
 	else:
@@ -481,6 +488,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_update_skiff(delta)
 	_close_doors()
+	coord.tick(delta)
 	var c := campaign.clock
 	# Wages accrue for each day a person is employed during daylight.
 	if c.phase() == WorkdayClock.Phase.DAYLIGHT and _last_day_marked != c.day:
@@ -564,6 +572,7 @@ func decide(w: Worker) -> void:
 	var c := campaign.clock
 	if w.seated:
 		return
+	apply_pending_equip(w)
 	if Game.hunt and Game.hunt.hunt_active():
 		Game.hunt.worker_decide(w)
 		return
@@ -636,7 +645,18 @@ func _auto(w: Worker) -> void:
 	var focus := work_focus(w)
 	var loose := _loose_pieces(focus, w).size()
 	var trunks := _trunks(focus, w).size()
-	if loose >= 3 and _try_haul(w):
+	# Phase 14 downstream backlog: when the yard is nearly full, moving paid
+	# logs to the fire comes before cutting more (no dumping unpaid wood
+	# at a full cradle).
+	var yard_full := Game.yard != null and Game.yard.cradle_free() == 0 and Game.yard.deck_free_estimate() < 10
+	if yard_full and try_yard(w):
+		return
+	# Stage division: the saw is wasted carrying logs, so saw holders cut
+	# while axe hands haul first when anything is waiting.
+	var saw := w.axe_tier() == "chainsaw"
+	if saw and trunks > 0 and _try_buck(w):
+		return
+	if (loose >= 3 or (loose > 0 and not saw)) and _try_haul(w):
 		return
 	if trunks > 0 and axe_ok(w) and _try_buck(w):
 		return
@@ -647,8 +667,10 @@ func _auto(w: Worker) -> void:
 		return
 	# Never fell more while trunks wait to be bucked or logs wait to be
 	# carried (the bottleneck rule); only fell into a clear area.
-	if trunks == 0 and loose == 0 and axe_ok(w) and _try_fell(w):
+	if trunks == 0 and loose == 0 and not yard_full and axe_ok(w) and _try_fell(w):
 		return
+	if saw and loose < 3 and trunks == 0 and not yard_full and axe_ok(w) and _try_fell(w):
+		return              # a saw keeps felling while axe hands catch up
 	w.activity = "idle"
 	w._decide_cd = 3.0
 
@@ -697,11 +719,92 @@ func search_radius(w: Worker) -> float:
 	return 60.0 if w.mind.refuses_risk() else SEARCH_RADIUS
 
 
+## Phase 14: hands an item from the boss or camp storage to an employee.
+## Ownership moves now (one owner, never duplicated); the worker straps it
+## on at their next safe boundary (between jobs, nothing in hand), so a cut
+## or a carried log is never interrupted or changed halfway.
+func issue(item_id: String, eid: String) -> Dictionary:
+	var e := emp(eid)
+	if e.is_empty() or str(e.status) != Payroll.ACTIVE:
+		return {"ok": false, "reason": "Only active employees can be issued gear."}
+	var a := campaign.equipment.item(item_id)
+	if a.is_empty():
+		return {"ok": false, "reason": "No such item."}
+	var holder := str(a.owner)
+	if holder != "boss" and holder != "storage":
+		return {"ok": false, "reason": "%s is %s." % [GearCatalog.display_name(str(a.kind), str(a.tier)), campaign.equipment.where_words(a)]}
+	var r := campaign.equipment.transfer(item_id, eid)
+	if not bool(r.ok):
+		return r
+	var pend: Array = e.get("pending_equip", [])
+	pend.append(item_id)
+	e["pending_equip"] = pend
+	var w: Worker = workers.get(eid)
+	if w:
+		apply_pending_equip(w)
+	return {"ok": true, "pending": w == null or not (e.get("pending_equip", []) as Array).is_empty()}
+
+
+## Takes an item back from an employee into camp storage - refused while
+## they are cutting or carrying (no tool vanishes mid-swing).
+func recall(item_id: String) -> Dictionary:
+	var a := campaign.equipment.item(item_id)
+	if a.is_empty():
+		return {"ok": false, "reason": "No such item."}
+	var w: Worker = workers.get(str(a.owner))
+	if w and (w.activity in ["fell", "buck", "stump"] or w.is_carrying()):
+		return {"ok": false, "reason": "%s is %s - ask again when they're between jobs." % [w.emp.name, w.activity_words()]}
+	var e := emp(str(a.owner))
+	if not e.is_empty():
+		(e.get("pending_equip", []) as Array).erase(item_id)
+	return campaign.equipment.transfer(item_id, "storage")
+
+
+func apply_pending_equip(w: Worker) -> void:
+	var pend: Array = w.emp.get("pending_equip", [])
+	if pend.is_empty() or w.activity in ["fell", "buck", "stump", "seated", "sleep", "hidden"] or w.is_carrying():
+		return
+	for id in pend.duplicate():
+		var a := campaign.equipment.item(str(id))
+		if not a.is_empty() and str(a.owner) == w.id:
+			campaign.equipment.equip(w.id, str(id))
+	w.emp["pending_equip"] = []
+	w.refresh_kit_visuals()
+
+
+## Phase 14: a worker's equipped kit (ToolEffects form). Hard-working is
+## the trait's single cutting factor.
+func kit(w: Worker) -> Dictionary:
+	var k: Dictionary = campaign.equipment.kit_of(w.id) if campaign and campaign.equipment else {"tool": "axe", "tier": "small"}
+	k["hard_working"] = w.mind != null and w.mind.has("hard_working")
+	return k
+
+
+var _fx := {}
+
+
+func tool_effects(w: Worker) -> Dictionary:
+	if campaign and campaign.equipment and not campaign.equipment.changed.is_connected(_on_equipment_changed):
+		campaign.equipment.changed.connect(_on_equipment_changed)
+	if not _fx.has(w.id):
+		_fx[w.id] = ToolEffects.breakdown(kit(w))
+	return _fx[w.id]
+
+
+## Equipment moved: effects are recomputed and each worker shows what they
+## actually hold (tool and gear).
+func _on_equipment_changed() -> void:
+	_fx.clear()
+	for w in workers.values():
+		(w as Worker).refresh_kit_visuals()
+
+
+## Axe work per valid contact (0 for no axe; a saw works per tick).
 func work_per_contact(w: Worker) -> float:
-	var tier := w.axe_tier()
-	if tier == "":
+	var k := kit(w)
+	if str(k.tool) != "axe":
 		return 0.0
-	return work_config.work_per_contact(tier, w.mind.has("hard_working"))
+	return float(ToolEffects.breakdown(k).work_per_contact)
 
 
 func carry_budget(w: Worker) -> int:
@@ -752,6 +855,9 @@ func _try_fell(w: Worker) -> bool:
 						continue
 					if _someone_felling_near(tp, w):
 						continue
+					# Phase 14: no tree whose fall line crosses live work.
+					if coord.fell_conflict(i, w.global_position, w):
+						continue
 					var d := Vector2(tp.x - w.global_position.x, tp.z - w.global_position.z).length()
 					if d < best_d:
 						best_d = d
@@ -785,10 +891,14 @@ func _try_fell(w: Worker) -> bool:
 	retreat.y = nav.surface_at(retreat)
 	if not claim("tree:%d" % tid, w):
 		return false
+	if coord.fell_conflict(best, stand, w):
+		claims.erase("tree:%d" % tid)
+		return false
 	if not w.start_fell(tid, stand, retreat):
 		claims.erase("tree:%d" % tid)
 		claims["tree:%d" % tid] = "unreachable"
 		return false
+	coord.register_lane(tid, w, stand)
 	return true
 
 
@@ -798,7 +908,9 @@ func _someone_felling_near(p: Vector3, me: Worker) -> bool:
 		if w != me and w.activity in ["fell", "move"] and w.target.has("tree"):
 			var tid: int = w.target.tree
 			var i: int = Game.vegetation.tree_index_by_id.get(tid, tid)
-			if Vector2(World.trees.x[i] - p.x, World.trees.z[i] - p.z).length() < 16.0:
+			# Phase 14: fall lanes handle the danger zone; this only keeps two
+			# fellers from crowding the same few trees.
+			if Vector2(World.trees.x[i] - p.x, World.trees.z[i] - p.z).length() < 8.0:
 				return true
 	return false
 
@@ -809,6 +921,8 @@ func _trunks(focus: Vector3, w: Worker) -> Array:
 	for key in timber.bodies:
 		var b: TimberBody = timber.bodies[key]
 		if b.is_single_piece() or not b.is_resting() or claims.has("trunk:%d" % b.tree_id):
+			continue
+		if coord.lane_at(b.global_position, w.id) >= 0:
 			continue
 		if b.global_position.distance_to(focus) > rad + 20.0:
 			continue
@@ -832,6 +946,8 @@ func _stumps(focus: Vector3, w: Worker) -> Array:
 			continue
 		var p := World.tree_position(i)
 		if p.distance_to(focus) > rad + 20.0:
+			continue
+		if coord.lane_at(p, w.id) >= 0:
 			continue
 		out.append(i)
 	return out
@@ -947,6 +1063,8 @@ func _loose_pieces(focus: Vector3, w: Worker) -> Array:
 			pass
 		if b.global_position.distance_to(focus) > rad + 20.0:
 			continue
+		if coord.lane_at(b.global_position, w.id) >= 0:
+			continue
 		out.append(b)
 	return out
 
@@ -980,11 +1098,18 @@ func _try_haul(w: Worker) -> bool:
 			var m2 := int(timber.segment(sid2).mte)
 			if m2 > carry_budget(w) and m2 <= carry_budget(w) * 2 + 2 and timber.claim(sid2, w.id):
 				pick.append(sid2)
-				w.target["drag"] = true
 				break
 	if pick.is_empty():
 		return false
-	return w.start_pick(pick)
+	var drag := timber.carrier_mte(w.id) == 0 and pick.size() == 1 and int(timber.segment(str(pick[0])).mte) > carry_budget(w)
+	if not w.start_pick(pick):
+		return false
+	if drag:
+		w.target["drag"] = true
+		# Phase 14: ask a free crewmate to take the far end (falls back to a
+		# solo drag if nobody comes).
+		coord.form_team(w, str(pick[0]))
+	return true
 
 
 # ------------------------------------------------------------ yard (P13)
