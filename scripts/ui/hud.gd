@@ -329,6 +329,12 @@ func _build_tour() -> void:
 		var cd := CrewDemoPanel.new()
 		v.add_child(cd)
 		cd.setup(self)
+	v.add_child(UITheme.label("Phase 5 stops", 16, UITheme.MUTED))
+	var p5 := GridContainer.new()
+	p5.columns = 2
+	for s5 in [["Driving & hauling", "__p5_drive"], ["Dock & dog", "__p5_dock"], ["Surveillance", "__p5_tv"], ["Arcade", "__p5_arcade"], ["Dog: refuge", "__p5_refuge"], ["Dog: home now", "__p5_doghome"]]:
+		p5.add_child(UITheme.button(s5[0], func() -> void: _phase5_stop(s5[1]), 130))
+	v.add_child(p5)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))
@@ -360,6 +366,57 @@ func _goto(spot: String) -> void:
 		Game.world_root.teleport_to(spot)
 		var vp: Dictionary = Viewpoints.all().get(spot, {})
 		show_message(vp.get("label", spot))
+	_capture_mouse()
+
+
+## Preview-only review stops (in-memory, never saved).
+func _phase5_stop(which: String) -> void:
+	var w: IslandWorld = Game.world_root
+	if w == null:
+		return
+	var p: Player = Game.player
+	match which:
+		"__p5_drive":
+			var cs: CampaignService = Game.campaign
+			if cs and not cs.active:
+				cs.start_test_route(false)
+			var vs: VehicleService = Game.vehicles
+			vs.dev_unlock = true
+			while vs.trucks.size() < VehicleService.MAX_TRUCKS:
+				cs.wallet.grant(int(vs.unlock_state().price), "preview", "P5", "preview truck fixture")
+				if not bool(vs.buy().ok):
+					break
+			var t: Truck = vs.trucks.values()[0]
+			p.teleport_feet(t.door_point(-1.0), t.global_rotation.y)
+			show_message("Two pickups in the bays (preview fixture). E at the driver's door to drive; the Journal (J) Crew tab sends a team. Load logs at the tailgate, unload at the drop-off by the rack.", 9.0)
+		"__p5_dock":
+			w.teleport_to("dock")
+			show_message("Service dock, utility building (beacon console inside) and Biscuit's alcove.", 6.0)
+		"__p5_refuge":
+			if Game.dog:
+				show_message("Biscuit heads for the dock refuge (Phase 6 survival state test)." if Game.dog.enter_refuge() else "No route to the refuge.")
+		"__p5_doghome":
+			if Game.dog:
+				Game.dog.leave_refuge()
+				Game.dog.go_home()
+				show_message("Biscuit walks home through the camper door flap.")
+		"__p5_tv":
+			if w.get_node_or_null("ReviewSubject") == null:
+				var rs := ReviewSubject.new()
+				rs.name = "ReviewSubject"
+				w.add_child(rs)
+			var seats := get_tree().get_nodes_in_group("couch_seat")
+			w.teleport_to("camper_lounge")
+			if not seats.is_empty():
+				p.sit_on_couch.call_deferred(seats[0])
+			show_message("Surveillance: a preview surveyor in hi-vis walks past CAM-03 and the north fence so you can check the feeds are live.", 8.0)
+		"__p5_arcade":
+			var spots := get_tree().get_nodes_in_group("arcade_spot")
+			if not spots.is_empty():
+				var s: Node3D = spots[0]
+				p.teleport_feet(s.global_position, s.global_rotation.y)
+			show_message("Two original cabinets: Log Stacker and Flapjack Flip. E to play - the world pauses while you do.", 7.0)
+	tour_panel.visible = false
 	_capture_mouse()
 
 
@@ -568,7 +625,16 @@ func _process(delta: float) -> void:
 		var t: String = p.axe.tier
 		var owned_hint := "(1/2/3 debug tiers)" if not (Game.campaign and Game.campaign.active and not Game.campaign.test_route) else "(1/2/3 owned axes · J journal)"
 		axe_label.text = "Axe: %s  %.2fx  %s" % [t.capitalize(), float(CampaignRules.AXE_RATES[t]), owned_hint]
-	if p:
+	if p and p.get("vehicle") is Truck:
+		var tr: Truck = p.vehicle
+		var vs: VehicleService = Game.vehicles
+		var step := vs.next_tutorial_step() if vs else ""
+		hint_label.text = "%s  ·  %s  ·  %d km/h  ·  bed %.2f / 3.00 tree-eq  ·  lights %s%s%s" % [tr.truck_id, p.vehicle_seat, roundi(absf(tr.speed()) * 3.6), tr.cargo_mte() / 1000.0, "on" if tr.headlights else "off (H)", ("  ·  camp limit %d km/h" % roundi(Truck.CAMP_SPEED * 3.6)) if Game.crew and Game.crew.nav.in_camp(tr.global_position) else "", ("\nTutorial: " + str(VehicleService.TUTORIAL_TEXT.get(step, ""))) if step != "" else ""]
+	elif p and p.get("couch") != null and Game.tv:
+		var tv: CameraWall = Game.tv
+		var what: String = {"quad": "camera wall", "focus": "%s %s (focused)" % [tv.cam_id(tv.focus_index), tv.cam_name(tv.focus_index)], "entertainment": "Timber Tales (channel 3)"}.get(tv.mode, tv.mode) if tv.powered else "TV off"
+		hint_label.text = "TV: %s  ·  mics %s  ·  vol %d%%  ·  swap every %.0f s  ·  click a tile · RMB back · A/D camera · C channel · M mute · P power · E stand" % [what, "muted" if tv.mic_muted else "on", roundi(tv.tv_volume * 100.0), tv.interval]
+	elif p:
 		if p.too_deep:
 			hint_label.text = "Too deep to wade - the water pushes you back toward the shore"
 		elif p.wading_depth > 0.3:

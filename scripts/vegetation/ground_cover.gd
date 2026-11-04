@@ -15,6 +15,9 @@ var _meshes := {}
 var _materials := {}
 var _tree_hash := {}       # 8 m buckets of tree positions for shade/clearance
 var _last_center := Vector2i(999999, 999999)
+## Extra keep-alive points (remote security cameras on the TV): cover within
+## one cell of each is built and kept, so far feeds show real vegetation.
+var _anchor_cells: Array[Vector2i] = []
 
 
 func _ready() -> void:
@@ -165,7 +168,7 @@ func _process(_delta: float) -> void:
 	var n := 0
 	while n < BUILD_PER_FRAME and not _queue.is_empty():
 		var c: Vector2i = _queue.pop_front()
-		if not _cells.has(c) and (c - _last_center).length() <= RADIUS + 0.5:
+		if not _cells.has(c) and _wanted(c, 0.5):
 			_cells[c] = _build_cell(c)
 		n += 1
 
@@ -180,9 +183,29 @@ func force_build_around(p: Vector3) -> void:
 			_cells[c] = _build_cell(c)
 
 
+func set_anchors(points: Array[Vector3]) -> void:
+	var cells: Array[Vector2i] = []
+	for p in points:
+		cells.append(Vector2i(int(floor(p.x / CELL)), int(floor(p.z / CELL))))
+	if cells == _anchor_cells:
+		return
+	_anchor_cells = cells
+	if _last_center.x != 999999:
+		_refresh(_last_center)
+
+
+func _wanted(c: Vector2i, slack: float) -> bool:
+	if (c - _last_center).length() <= RADIUS + slack:
+		return true
+	for a in _anchor_cells:
+		if (c - a).length() <= 1.0 + slack:
+			return true
+	return false
+
+
 func _refresh(center: Vector2i) -> void:
 	for c in _cells.keys():
-		if (c - center).length() > RADIUS + 1.5:
+		if not _wanted(c, 1.5):
 			(_cells[c] as Node).queue_free()
 			_cells.erase(c)
 	var want: Array[Vector2i] = []
@@ -191,6 +214,12 @@ func _refresh(center: Vector2i) -> void:
 			var c := center + Vector2i(dx, dz)
 			if Vector2(dx, dz).length() <= RADIUS + 0.5 and not _cells.has(c):
 				want.append(c)
+	for a in _anchor_cells:
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var c := a + Vector2i(dx, dz)
+				if Vector2(dx, dz).length() <= 1.0 and not _cells.has(c) and not want.has(c):
+					want.append(c)
 	want.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return (a - center).length_squared() < (b - center).length_squared())
 	_queue = want
 

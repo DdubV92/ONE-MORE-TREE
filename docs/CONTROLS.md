@@ -18,6 +18,45 @@
 | Esc | Pause menu: resume, settings, diagnostics, save (campaign), title, quit. Releases the mouse. |
 | Click | Recapture the mouse after using a panel |
 
+## Pickup trucks (Phase 5)
+
+| Input | Action |
+|---|---|
+| E at a truck door | Driver's door: drive. Passenger door: ride. Tailgate: load the logs you carry, or unload (paid at the drop-off by the rack, set down unpaid elsewhere) |
+| W / S | Throttle / brake, then reverse once stopped |
+| A / D | Steer |
+| Space | Parking brake |
+| H | Headlights |
+| Mouse | Look around the cab |
+| E | Get out (only when stopped and the door side is clear and dry) |
+| J → Crew | Send a team (driver + two loaders) to log near you, call a team home, recover a stuck truck, order a worker to ride with you |
+
+## Couch and TV (Phase 5)
+
+| Input | Action |
+|---|---|
+| E on the couch | Sit (look around freely) |
+| Left click on a tile (or 1-4) | Focus that camera (the one shown at that moment) |
+| A / D or mouse wheel | Previous / next camera while focused |
+| Right click or Backspace | Back to the four-camera wall |
+| C | Channel: camera wall ↔ Timber Tales (entertainment with the wall as an inset) |
+| [ / ] | Swap speed: frozen, 5, 10, 20 or 40 s per tile (saved in Settings) |
+| M | Mute the camera microphones (the room still sounds normal) |
+| - / + | TV volume |
+| P | TV power (also E on the TV when standing) |
+| E or Space | Stand up |
+
+## Around camp (Phase 5)
+
+| Input | Action |
+|---|---|
+| E on Biscuit | Pet the dog (walk away to stop) |
+| E on the light switch by the camper door | Lights on/off |
+| E on a curtain | Open/close it |
+| E on the kitchen thermos | Pour a hot drink |
+| E on the beacon console (utility building) | Beacon status |
+| E on an arcade cabinet | Play Log Stacker or Flapjack Flip. **The world pauses while you play.** Space start, H help, R restart, Esc leave |
+
 ## Review and debug keys (available in every build)
 
 | Key | Action |

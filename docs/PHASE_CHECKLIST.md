@@ -1,5 +1,72 @@
 # Phase checklist
 
+## Phase 5: Two logging pickups, a living camp, dock and dog, couch television, and ten live cameras
+
+Status key: ✅ implemented and observed (automated test or headless sim) · 🟡 implemented, needs live review on real hardware · ⬜ later phase.
+
+### Trucks
+
+| Item | Status | Notes |
+|---|---|---|
+| Purchase: $9,000 (provisional), at most two, unlocked at 50 delivered tree-equivalents; charged once; free parking bay | ✅ | Locked before the unlock, two succeed, third refused, exact charge (test) |
+| Procedural original pickup (cab, bed, bench, lamps, mirrors, plate), compound collision, raycast spring/damper wheels, AWD, grip, brakes, reverse, anti-roll, camp speed limit | ✅ / 🟡 | Headless drive: 4.1 m/s in camp, brakes to 0, reverses at 4 m/s, upright, steers. Handling feel needs live review |
+| Player driving: E at the driver door, W/S/A/D, Space handbrake, H lights, E to get out only when stopped at a clear dry door spot; HUD (speed, bed load, lights, camp limit, tutorial step) | ✅ / 🟡 | |
+| Driving tutorial: enter, drive, reverse, load, deliver, park | 🟡 | Steps tick from real actions |
+| Seats: driver plus two passengers; workers board real seat markers; "Ride with me" order; nobody in two trucks | ✅ | Test |
+| Cargo: 3 tree-equivalents through the timber ledger (VEHICLE_RESERVED, one owner); load at the tailgate; paid only when unloaded at the drop-off (accept), never twice; unloading elsewhere sets logs down unpaid | ✅ | Test: one payment, second unload pays nothing, no piece in two trucks |
+| Separate drivable route graph (4 m cells, slope, water only on bridges, trunk/rock clearance, open camp yard, logs block, felling opens corridors) | ✅ | Built in about 1.1 s |
+| Worker team (driver + up to two loaders): gather → board → drive out → work/load → board back → drive back → unload at drop-off → park → next run or home | ✅ | Full headless day below |
+| Dusk: no departure when the return no longer fits; teams head back early; passengers warned | ✅ | Second run turned back "before dark" in the sim |
+| Dismissing / firing a driver while moving: brake to a safe stop first, riders stay aboard, cargo stays in the ledger | ✅ | Test |
+| Recovery button (journal) puts a stuck/flipped truck on the nearest drivable cell; refused during a future hunt | 🟡 | |
+| Save: trucks restored parked and stationary, nobody seated, cargo from the ledger, teams resume at "gather" | ✅ | Documented policy |
+
+**Team cycle measurement** (headless, `tools/truck_sim.tscn`, one full day, two starters, area 70 m north of the gate): 2 runs, 35 truck receipts, 3.07 tree-equivalents paid at the drop-off ($306.31), 797 m driven, 6 recovered "something in the road" stops. A truck run roughly doubles what the same two workers deliver by hand (3.0 tree-eq/day in Phase 4), but the honest conclusion stands: the 30-day contract still needs far more throughput. Loading by hand at the work site, not driving, is now the bottleneck.
+
+### Camp, dock, dog
+
+| Item | Status | Notes |
+|---|---|---|
+| Dock finished in place (not a second dock): stringers, joists, pile caps, cleats, fenders, end ladder, landward railing, practical lamp, sign, plank path to the utility door and beach gate | ✅ / 🟡 | Rendered |
+| Utility building on piers: raised floor, real door and step, windows, ceiling, storage shelves, electrical panel, radio desk, emergency-beacon console (status + `request_rescue` hook only), two later hiding spots | ✅ / 🟡 | The five-day ship rescue is **not** implemented |
+| Dog alcove: raised floor on posts, roof, side walls, bed, water bowl, name board, ramp; refuge + approach anchors | ✅ / 🟡 | |
+| Dog: articulated body with idle, walk, trot, sit, lie/sleep, alert, petting pose; ear/tail motion; head turn and ear-perk overlays; red collar and tag | ✅ / 🟡 | Clip quality needs live review |
+| Day life on the crew's camp grid: wander, sit, nap, come over to the boss; avoids the burn pit, moving trucks; stuck guard re-plans | ✅ / 🟡 | Fire avoidance tested |
+| Dusk: walks home across the yard, up the ramp and in through a **dog flap** in the camper door (or the open door), sleeps on its bed; after dawn leaves the same way; no teleporting | ✅ | Test: flap passages, largest step under 0.4 m |
+| Petting: optional, reachable hotspot, cancellable by walking away | ✅ | Test |
+| Reactions: real nearby sounds and sounds replayed by the TV (ears, head turn, alert, retreat, rare whine); calm cooldowns; footsteps ignored | ✅ / 🟡 | |
+| Survival interface: `enter_refuge()`, `board_ship()` exactly once, distinct saved routines (camp / refuge / boarded) for the same identity; wind-door escape reserved, never triggered | ✅ | Test |
+
+### Camper comfort and the TV
+
+| Item | Status | Notes |
+|---|---|---|
+| Couch: sit with a short transition, look around, verified stand-up spot | ✅ | Test |
+| Light switch (lights + bulbs), curtains on every window (animated), hot drink at the kitchen | ✅ / 🟡 | Cosmetic only; safety is untouched |
+| Ten cameras CAM-01..10 on real mounts and FOVs (cabin/camper, forest entrance, four fence corners, west trail, east ridge trail, deep woods) | ✅ | |
+| 2×2 wall: four distinct live feeds, labels, aspect kept | ✅ / 🟡 | |
+| Rotation: one tile per interval (5 s default), round-robin tile order, fair shuffled bag, no immediate repeat; all ten appear; pause halts it, no catch-up burst; `[`/`]` sets 0 (frozen), 5, 10, 20 or 40 s | ✅ | Test: 40 steps, one tile each, all ten shown |
+| Click selects the camera the tile shows at that moment; focus is locked; A/D or wheel prev/next; right-click returns to a distinct set with a fresh timer | ✅ | Test |
+| Pooled rendering: at most four 384×216 feeds at 12 Hz (staggered) **or** one 1280×720 feed at 30 Hz; nothing renders when the TV is off or nobody is within 14 m | ✅ | Test checks the pool |
+| No recursive capture: the screen is on its own layer and every camera excludes it; first-person arms excluded; a camera-only body shows the boss on the feeds | ✅ | Test |
+| Remote views get vegetation around what they look at (ground-cover anchors) | ✅ / 🟡 | |
+| Lighter camera environment (same sky/sun/fog/time; no SDFGI/SSIL/SSR/volumetric; SSAO only in focus) | 🟡 | Night look on feeds needs review |
+| Entertainment channel: original procedural cartoon (Timber Tales) with a synthesized jingle and the wall as an inset | ✅ / 🟡 | |
+| Remote microphones: world sounds (logging, footsteps, dog) are sampled at displayed cameras by distance and occlusion and re-played from the TV speaker; one replay per sound (strongest camera), density cap; quiet in quad, louder/clearer in focus (smooth ramp, low-pass opens); mute (room unaffected); TV output never re-enters the registry; remote captions | ✅ | Test: near, out-of-range, duplicate, mute, focus louder, no feedback |
+| Ambient bed for the cameras (wind or surf) phase-locked to world time | 🟡 | |
+
+### Arcade, saves, preview
+
+| Item | Status | Notes |
+|---|---|---|
+| Two original cabinet games: **Log Stacker** and **Flapjack Flip**, with score, failure, restart, help, exit and high score | ✅ / 🟡 | Logic tested; feel needs play |
+| Arcade pauses the whole world (clock, work, fire, crew, trucks) with a clear banner; exit restores the previous pause/mouse state; a scene change never leaves a phantom pause; the TV is live time by design | ✅ | Test: clock frozen, game running, state restored |
+| Save schema 6: player seat (saved standing at a verified spot; couch re-seats in the real camper), dog, TV (mode, quad set, bag, interval, mute, volume, power), lights/curtains, arcade high scores, beacon; trucks in the campaign block; v5 → v6 migration | ✅ | Tests |
+| Preview Tour stops: Driving & hauling, Dock & dog, Surveillance (with a preview-only surveyor walking past CAM-03), Arcade, Dog refuge / home | 🟡 | In memory only |
+| Terror Director, Foreman hunt, rescue ship (Phase 6+) | ⬜ | Hooks only |
+
+PERF_PLACEHOLDER
+
 ## Phase 4: The living crew
 
 Status key: ✅ implemented and observed (test or headless sim) · 🟡 implemented, needs live review · ⬜ later phase.

@@ -376,6 +376,14 @@ func disband(truck_id: String, why := "") -> void:
 	if tm.is_empty():
 		return
 	var t: Truck = trucks.get(truck_id)
+	# Moving: brake to a safe stop first (cargo and riders stay aboard),
+	# then stand the team down.
+	if t and t.mode == "auto" and t._auto_speed > 0.2 and str(tm.state) != "stopping":
+		t.route.clear()
+		tm.state = "stopping"
+		tm.reason = "stopping safely (%s)" % why
+		tm["why"] = why
+		return
 	for m in tm.members:
 		var e := crew.emp(m)
 		if not e.is_empty():
@@ -503,10 +511,24 @@ func _step_team(tm: Dictionary, delta: float) -> void:
 		teams.erase(tm.truck)
 		return
 	tm.t = float(tm.t) + delta
+	if str(tm.state) == "stopping":
+		if t._auto_speed <= 0.05:
+			tm.state = "stopped"
+			disband(str(tm.truck), str(tm.get("why", "")))
+		return
 	var members: Array = tm.members.filter(func(m: String) -> bool: return crew.workers.has(m) and str(crew.emp(m).get("status", "")) == Payroll.ACTIVE)
 	if members.is_empty() or not str(tm.driver) in members:
 		disband(str(tm.truck), "the driver is no longer available")
 		return
+	# A loader who was fired or quit gets off at the next stop and leaves.
+	for m in tm.members.duplicate():
+		if not m in members:
+			var gone: Worker = crew.workers.get(m)
+			if gone and gone.seated and (t.mode == "parked" or t._auto_speed < 0.1):
+				disembark(gone, t)
+			if gone == null or not gone.seated:
+				tm.members.erase(m)
+				crew.emp(m).erase("team")
 	var area := Vector3(tm.area[0], tm.area[1], tm.area[2])
 	var back_secs := DriveNav.length(nav.route(t.global_position, CampLayout.world(CampLayout.TRUCK_DROPOFF))) / 5.5 + 90.0
 	var time_short := crew.real_time_left() < back_secs + 60.0 or campaign.clock.phase() == WorkdayClock.Phase.NIGHT

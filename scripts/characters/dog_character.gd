@@ -8,6 +8,8 @@ extends Node3D
 ## The dog cannot be harmed: it has no health and no damage interface.
 
 const WALK_NOMINAL_SPEED := 1.1
+const TROT_NOMINAL_SPEED := 2.3
+const TROT_PERIOD := 0.42
 const WALK_PERIOD := 0.62
 const STANCE := 0.6
 
@@ -27,6 +29,12 @@ var lower_f := 0.22
 var upper_h := 0.22
 var lower_h := 0.24
 var paw_h := 0.035
+## Runtime overlays (Phase 5): head/neck turn toward a world point and
+## pricked ears, blended over whatever clip plays.
+var look_target := Vector3.INF
+var look_weight := 0.0
+var ear_perk := 0.0
+var _look_w := 0.0
 
 
 func _ready() -> void:
@@ -143,6 +151,10 @@ func _build_animations() -> void:
 	lib.add_animation("idle", _make_idle())
 	lib.add_animation("walk", _make_walk())
 	lib.add_animation("lie", _make_lie())
+	lib.add_animation("trot", _make_trot())
+	lib.add_animation("sit", _make_sit(false))
+	lib.add_animation("pet", _make_sit(true))
+	lib.add_animation("alert", _make_alert())
 	anim.add_animation_library("", lib)
 
 
@@ -297,6 +309,128 @@ func _make_lie() -> Animation:
 	return an
 
 
+## Diagonal trot: LH+RF and RH+LF in pairs, short flight phase.
+func _make_trot() -> Animation:
+	var an := Animation.new()
+	var T := TROT_PERIOD
+	an.length = T
+	an.loop_mode = Animation.LOOP_LINEAR
+	var tr := _leg_tracks(an)
+	var body_p := _track(an, "Body", Animation.TYPE_POSITION_3D)
+	var body_r := _track(an, "Body")
+	var neck := _track(an, "Neck")
+	var tail := _track(an, "TailBase")
+	var ear_l := _track(an, "EarL")
+	var ear_r := _track(an, "EarR")
+	var st := 0.45
+	var S := TROT_NOMINAL_SPEED * st * T
+	var offsets := {"HL": 0.0, "FR": 0.0, "HR": 0.5, "FL": 0.5}
+	var n := 24
+	for k in n + 1:
+		var t := T * k / n
+		var u := t / T
+		var bp: Vector3 = rest["Body"].origin + Vector3(0, 0.005 + 0.016 * cos(2.0 * TAU * u), 0)
+		an.position_track_insert_key(body_p, t, bp)
+		an.rotation_track_insert_key(body_r, t, _q(0.02 * sin(2.0 * TAU * u), 0, 0.02 * sin(TAU * u)))
+		an.rotation_track_insert_key(neck, t, _q(-0.08 + 0.05 * cos(2.0 * TAU * u), 0, 0))
+		an.rotation_track_insert_key(tail, t, _q(-1.85, 0.5 * sin(TAU * u * 2.0), 0))
+		an.rotation_track_insert_key(ear_l, t, _q(0.25 + 0.12 * sin(TAU * u * 2.0), 0, -0.35))
+		an.rotation_track_insert_key(ear_r, t, _q(0.25 + 0.12 * sin(TAU * u * 2.0 + 0.8), 0, 0.35))
+		for key in offsets:
+			var front: bool = key.begins_with("F")
+			var side := -1.0 if key.ends_with("L") else 1.0
+			var ph := fposmod(u + float(offsets[key]), 1.0)
+			var base_z := -0.21 if front else 0.26
+			var z: float
+			var y := 0.0
+			var pitch := 0.0
+			if ph < st:
+				z = base_z - S * 0.5 + (ph / st) * S
+			else:
+				var w := (ph - st) / (1.0 - st)
+				z = base_z + S * 0.5 - S * smoothstep(0.0, 1.0, w)
+				y = 0.09 * sin(PI * w)
+				pitch = 0.8 * sin(PI * w)
+			_leg_keys(an, tr, t, front, side, bp, Vector3(side * 0.09, y, z), pitch)
+	return an
+
+
+## Sitting upright on the haunches; `pet` tilts the head up into the hand,
+## half-closes the eyes and sweeps the tail on the ground.
+func _make_sit(pet: bool) -> Animation:
+	var an := Animation.new()
+	var T := 2.0
+	an.length = T
+	an.loop_mode = Animation.LOOP_LINEAR
+	var tr := _leg_tracks(an)
+	var body_p := _track(an, "Body", Animation.TYPE_POSITION_3D)
+	var body_r := _track(an, "Body")
+	var neck := _track(an, "Neck")
+	var head := _track(an, "Head")
+	var tail := _track(an, "TailBase")
+	var tip := _track(an, "TailTip")
+	var ear_l := _track(an, "EarL")
+	var ear_r := _track(an, "EarR")
+	var eyes := [_track(an, "EyeL", Animation.TYPE_SCALE_3D), _track(an, "EyeR", Animation.TYPE_SCALE_3D)]
+	var pitch := 0.75
+	var n := 20
+	for k in n + 1:
+		var t := T * k / n
+		var ph := TAU * t / T
+		var breath := 0.006 * sin(ph * 1.5)
+		an.position_track_insert_key(body_p, t, Vector3(0, 0.385 + breath, 0.08))
+		an.rotation_track_insert_key(body_r, t, _q(pitch))
+		an.rotation_track_insert_key(neck, t, _q(-0.45 + (0.25 if pet else 0.0), 0.0 if pet else 0.1 * sin(ph * 0.5), 0))
+		an.rotation_track_insert_key(head, t, _q(-0.3 + (0.35 if pet else 0.0), 0.0, (0.18 * sin(ph) if pet else 0.0)))
+		var wag := (0.7 if pet else 0.3) * sin(ph * (8.0 if pet else 4.0))
+		an.rotation_track_insert_key(tail, t, _q(-1.15, wag, 0))
+		an.rotation_track_insert_key(tip, t, _q(0.3, wag * 0.6, 0))
+		an.rotation_track_insert_key(ear_l, t, _q(-0.2 if pet else 0.0, 0, -0.6 if pet else -0.35))
+		an.rotation_track_insert_key(ear_r, t, _q(-0.2 if pet else 0.0, 0, 0.6 if pet else 0.35))
+		for e in eyes:
+			an.scale_track_insert_key(e, t, Vector3(1, 0.35 if pet else 1.0, 1))
+		for side in [-1.0, 1.0]:
+			var lr := "L" if side < 0 else "R"
+			an.rotation_track_insert_key(tr["FrontUpper" + lr], t, _q(-pitch + 0.05))
+			an.rotation_track_insert_key(tr["FrontLower" + lr], t, _q(0.0))
+			an.rotation_track_insert_key(tr["FrontPaw" + lr], t, _q(0.0))
+			an.rotation_track_insert_key(tr["HindUpper" + lr], t, _q(0.6, 0, side * 0.25))
+			an.rotation_track_insert_key(tr["HindLower" + lr], t, _q(-2.5))
+			an.rotation_track_insert_key(tr["HindPaw" + lr], t, _q(1.9 - pitch))
+	return an
+
+
+## Standing alert: head up, ears pricked, tail high and still, weight forward.
+func _make_alert() -> Animation:
+	var an := Animation.new()
+	var T := 2.0
+	an.length = T
+	an.loop_mode = Animation.LOOP_LINEAR
+	var tr := _leg_tracks(an)
+	var body_p := _track(an, "Body", Animation.TYPE_POSITION_3D)
+	var neck := _track(an, "Neck")
+	var head := _track(an, "Head")
+	var tail := _track(an, "TailBase")
+	var tip := _track(an, "TailTip")
+	var ear_l := _track(an, "EarL")
+	var ear_r := _track(an, "EarR")
+	var n := 10
+	for k in n + 1:
+		var t := T * k / n
+		var bp: Vector3 = rest["Body"].origin + Vector3(0, 0.005, -0.015)
+		an.position_track_insert_key(body_p, t, bp)
+		an.rotation_track_insert_key(neck, t, _q(0.25))
+		an.rotation_track_insert_key(head, t, _q(0.05, 0.05 * sin(TAU * t / T), 0))
+		an.rotation_track_insert_key(tail, t, _q(-2.55, 0.03 * sin(TAU * t / T), 0))
+		an.rotation_track_insert_key(tip, t, _q(0.1))
+		an.rotation_track_insert_key(ear_l, t, _q(-0.25, 0, -0.08))
+		an.rotation_track_insert_key(ear_r, t, _q(-0.25, 0, 0.08))
+		for side in [-1.0, 1.0]:
+			_leg_keys(an, tr, t, true, side, bp, Vector3(side * 0.09, 0, -0.23))
+			_leg_keys(an, tr, t, false, side, bp, Vector3(side * 0.09, 0, 0.27))
+	return an
+
+
 # --------------------------------------------------------------- runtime
 
 func play(name: String, blend := 0.3) -> void:
@@ -306,19 +440,46 @@ func play(name: String, blend := 0.3) -> void:
 	anim.play(name, blend if name != "lie" else maxf(blend, 1.0))
 
 
-func set_locomotion(speed: float) -> void:
+func set_locomotion(speed: float, rest_clip := "idle") -> void:
 	if speed < 0.12:
-		if current != "lie":
-			play("idle")
+		play(rest_clip)
 		playback_scale = 1.0
-	else:
+	elif speed < 1.7:
 		play("walk")
-		playback_scale = clampf(speed / WALK_NOMINAL_SPEED, 0.6, 1.8)
+		playback_scale = clampf(speed / WALK_NOMINAL_SPEED, 0.6, 1.6)
+	else:
+		play("trot", 0.2)
+		playback_scale = clampf(speed / TROT_NOMINAL_SPEED, 0.75, 1.5)
 
 
 func _process(delta: float) -> void:
+	# Undo last frame's overlays first: bones the clip does not key would
+	# otherwise accumulate them; keyed bones are simply overwritten.
+	for b in _ov:
+		var n := bones[b] as Node3D
+		n.basis = n.basis * (_ov[b] as Basis).inverse()
+	_ov.clear()
 	if anim:
 		anim.advance(delta * playback_scale)
+	_look_w = move_toward(_look_w, look_weight if look_target != Vector3.INF else 0.0, delta * 3.0)
+	if _look_w > 0.001 and look_target != Vector3.INF:
+		var local := global_transform.affine_inverse() * look_target
+		var yaw := clampf(atan2(-local.x, -local.z), -1.2, 1.2) * _look_w
+		var up := clampf(atan2(local.y - 0.6, Vector2(local.x, local.z).length()), -0.4, 0.5) * _look_w
+		_overlay("Neck", Basis(Vector3.UP, yaw * 0.45))
+		_overlay("Head", Basis(Vector3.UP, yaw * 0.55) * Basis(Vector3.RIGHT, up))
+	if ear_perk > 0.01:
+		_overlay("EarL", Basis(Vector3.FORWARD, -0.3 * ear_perk) * Basis(Vector3.RIGHT, -0.3 * ear_perk))
+		_overlay("EarR", Basis(Vector3.FORWARD, 0.3 * ear_perk) * Basis(Vector3.RIGHT, -0.3 * ear_perk))
+
+
+var _ov := {}
+
+
+func _overlay(bone: String, b: Basis) -> void:
+	var n := bones[bone] as Node3D
+	n.basis = n.basis * b
+	_ov[bone] = b
 
 
 func paw_positions() -> Array[Vector3]:

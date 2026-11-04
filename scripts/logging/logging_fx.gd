@@ -73,6 +73,7 @@ func _play(s: int, at: Vector3, volume_db: float) -> void:
 	p.volume_db = base_db + volume_db + _rng.randf_range(-1.5, 1.5)
 	p.unit_size = 14.0 if s in [Sound.CRACK, Sound.IMPACT] else 6.0
 	p.play()
+	SoundEvents.emit(p.stream, at, p.volume_db, "work", ["chopping", "wood knock", "axe swish", "wood creaking", "trunk cracking", "a tree falling", "branches rustling"][s])
 
 
 static func chips(at: Vector3, normal: Vector3, bark_color: Color) -> void:

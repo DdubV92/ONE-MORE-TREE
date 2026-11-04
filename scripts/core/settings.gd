@@ -5,7 +5,7 @@ extends Node
 signal changed
 
 const PATH := "user://settings.cfg"
-const BUSES := ["Master", "Ambience", "Work", "Characters", "Music", "Horror", "UI"]
+const BUSES := ["Master", "Ambience", "Work", "Characters", "Music", "Horror", "UI", "TV"]
 
 var values := {
 	"mouse_sensitivity": 0.22,
@@ -35,6 +35,8 @@ var values := {
 	"vol_Music": 0.6,
 	"vol_Horror": 0.9,
 	"vol_UI": 0.7,
+	"vol_TV": 0.8,
+	"tv_interval": 5.0,             # camera wall: seconds per tile swap (0 = frozen)
 }
 
 var defaults := {}
@@ -63,6 +65,19 @@ func _ensure_buses() -> void:
 		lp.cutoff_hz = 20000.0
 		lp.resonance = 0.5
 		AudioServer.add_bus_effect(amb, lp)
+	# TV speaker: transmission low-pass (camera wall drives the cutoff) and
+	# a limiter so relayed peaks are bounded.
+	var tvb := AudioServer.get_bus_index("TV")
+	if AudioServer.get_bus_effect_count(tvb) == 0:
+		var tlp := AudioEffectLowPassFilter.new()
+		tlp.cutoff_hz = 2600.0
+		AudioServer.add_bus_effect(tvb, tlp)
+		var hp := AudioEffectHighPassFilter.new()
+		hp.cutoff_hz = 180.0
+		AudioServer.add_bus_effect(tvb, hp)
+		var lim := AudioEffectHardLimiter.new()
+		lim.ceiling_db = -3.0
+		AudioServer.add_bus_effect(tvb, lim)
 	var chars := AudioServer.get_bus_index("Characters")
 	if AudioServer.get_bus_effect_count(chars) == 0:
 		var rv := AudioEffectReverb.new()
@@ -114,6 +129,7 @@ func sanitize() -> void:
 		values.tonemapper = "filmic"
 	for b in BUSES:
 		values["vol_" + b] = clampf(float(values["vol_" + b]), 0.0, 1.0)
+	values.tv_interval = clampf(float(values.get("tv_interval", 5.0)), 0.0, 60.0)
 
 
 func save_settings() -> void:

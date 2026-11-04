@@ -406,7 +406,12 @@ func _journal_crew() -> Control:
 				order_focus(w)
 				close_panel(), 150))
 			row2.add_child(UITheme.button("Fire...", func() -> void: confirm_fire(eid), 100))
+			if Game.vehicles and not Game.vehicles.trucks.is_empty():
+				row2.add_child(UITheme.button("Ride with me" + (" *" if str(e.get("job", "")) == "ride" else ""), func() -> void:
+					order_job(w, "ride")
+					close_panel(), 150))
 			v.add_child(row2)
+	_trucks_section(v, crew)
 	# Hiring
 	_text(v, "")
 	_text(v, "Hire (fee $%s, wage $300/day; arrives by the daylight boat)" % Money.format_cents(crew.econ.hire_fee_cents), 17, UITheme.ACCENT)
@@ -431,6 +436,49 @@ func _journal_crew() -> Control:
 	if not gone.is_empty():
 		_text(v, "Former crew: " + ", ".join(PackedStringArray(gone.map(func(e: Dictionary) -> String: return "%s (%s)" % [e.name, e.get("departure_reason", "left")]))), 14, UITheme.MUTED)
 	return s[0]
+
+
+## Phase 5: owned pickups, their state/reason, team dispatch and recovery.
+func _trucks_section(v: VBoxContainer, crew: CrewService) -> void:
+	var vs: VehicleService = Game.vehicles
+	if vs == null or vs.trucks.is_empty():
+		return
+	_text(v, "")
+	_text(v, "Pickups", 17, UITheme.ACCENT)
+	for id in vs.trucks:
+		var t: Truck = vs.trucks[id]
+		var tm: Dictionary = vs.teams.get(id, {})
+		var who := []
+		for m in tm.get("members", []):
+			who.append(str(crew.emp(m).get("name", m)))
+		var line := "%s  ·  %s  ·  cargo %.2f / 3.00 tree-eq  ·  %.0f m driven" % [id, ("team: %s (%s)" % [", ".join(PackedStringArray(who)), str(tm.get("reason", tm.get("state", "")))]) if not tm.is_empty() else ("you are driving" if t.seat_of("boss") == "driver" else ("parked" if t.mode == "parked" else t.mode)), t.cargo_mte() / 1000.0, t.odometer]
+		if t.is_flipped():
+			line += "  ·  ON ITS SIDE"
+		_text(v, line, 15)
+		var row := HBoxContainer.new()
+		if tm.is_empty():
+			var free := []
+			for e in svc.payroll.employees:
+				if str(e.status) == Payroll.ACTIVE and str(e.get("team", "")) == "" and crew.workers.has(str(e.id)):
+					free.append(str(e.id))
+			if free.is_empty():
+				row.add_child(UITheme.label("No free crew to send.", 14, UITheme.MUTED))
+			else:
+				var tid := str(id)
+				row.add_child(UITheme.button("Send a team to log near me (%d)" % mini(free.size(), 3), func() -> void:
+					var r := vs.dispatch(tid, free[0], free.slice(1, 3), Game.player.global_position)
+					hud.show_message("Team on its way." if bool(r.ok) else str(r.reason))
+					close_panel(), 300))
+		else:
+			var tid2 := str(id)
+			row.add_child(UITheme.button("Call the team home", func() -> void:
+				vs.disband(tid2, "called home by the boss")
+				close_panel(), 200))
+		var tid3 := str(id)
+		row.add_child(UITheme.button("Recover", func() -> void:
+			hud.show_message(vs.recover(vs.trucks[tid3]))
+			close_panel(), 110))
+		v.add_child(row)
 
 
 func _free_beds(crew: CrewService) -> int:

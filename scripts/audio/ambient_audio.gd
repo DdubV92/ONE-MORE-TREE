@@ -233,7 +233,7 @@ func _creak_somewhere() -> void:
 	_creak.play()
 
 
-func play_footstep(surface: String, _pos: Vector3, intensity: float) -> void:
+func play_footstep(surface: String, pos: Vector3, intensity: float) -> void:
 	var p := _steps[_step_i]
 	_step_i = (_step_i + 1) % _steps.size()
 	var v := _rng.randi() % 5
@@ -244,3 +244,4 @@ func play_footstep(surface: String, _pos: Vector3, intensity: float) -> void:
 	p.pitch_scale = _rng.randf_range(0.93, 1.07)
 	p.volume_db = float(STEP_DB.get(surface, -24.0)) + linear_to_db(intensity) + _rng.randf_range(-1.5, 1.5)
 	p.play()
+	SoundEvents.emit(p.stream, pos, p.volume_db + 10.0, "steps", "footsteps")

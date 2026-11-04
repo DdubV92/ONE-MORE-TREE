@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 5
+const SCHEMA_VERSION := 6
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -37,6 +37,39 @@ static func slot_summary(n: int) -> Dictionary:
 	return {"day": int(c.get("day", 1)), "rule_set": str(c.get("rule_set", "?")), "state": str(c.get("state", "")), "cash": cash, "pre_contract": not bool(c.get("phase3", false)), "legacy_file": path == DEFAULT_PATH}
 
 
+## Where the player's body is saved: a seated player is saved standing
+## at a verified spot (beside the truck door / in front of the couch), with
+## the seat recorded so a couch load re-seats them in the real camper.
+static func _player_record(p: Node3D) -> Dictionary:
+	if p == null:
+		return {"position": [0, 0, 0], "yaw": 0.0}
+	var pos := p.global_position
+	var seat := ""
+	var seat_index := -1
+	var veh: Node3D = p.get("vehicle")
+	var couch: Node3D = p.get("couch")
+	if veh is Truck:
+		pos = (veh as Truck).door_point(-1.0)
+		seat = "truck"
+	elif couch:
+		var fwd := -couch.global_basis.z
+		fwd.y = 0.0
+		pos = couch.global_position + fwd.normalized() * 0.6
+		pos.y = couch.global_position.y - 0.55
+		seat = "couch"
+		seat_index = p.get_tree().get_nodes_in_group("couch_seat").find(couch)
+	return {"position": [pos.x, pos.y, pos.z], "yaw": p.call("get_yaw") if p.has_method("get_yaw") else 0.0, "seat": seat, "seat_index": seat_index}
+
+
+static func _phase5_record(world: Node) -> Dictionary:
+	var out := {}
+	for k in ["dog", "tv", "comfort", "arcade", "dock_site"]:
+		var n: Object = world.get(k)
+		if n and n.has_method("capture"):
+			out[k] = n.call("capture")
+	return out
+
+
 static func capture_state(world: Node) -> Dictionary:
 	var p: Node3D = world.get("player")
 	var env: Node = world.get("environment")
@@ -49,10 +82,11 @@ static func capture_state(world: Node) -> Dictionary:
 			"seed": World.manifest.get("world_seed"),
 			"generation_version": World.manifest.get("generation_version"),
 		},
-		"player": {
-			"position": [p.global_position.x, p.global_position.y, p.global_position.z] if p else [0, 0, 0],
-			"yaw": p.call("get_yaw") if p and p.has_method("get_yaw") else 0.0,
-		},
+		"player": _player_record(p),
+		# Phase 5: dog (identity, routine, pose), TV wall (mode, quad set,
+		# scheduler, focus, volume/mute), camper comfort (lights, curtains),
+		# arcade high scores, dock beacon state. Trucks live in campaign.vehicles.
+		"phase5": _phase5_record(world),
 		"time_of_day": env.get("hour") if env else 12.0,
 		# Modified original trees only, keyed by stable ID (state, notch work,
 		# cut side, fall intent, felled guard, trunk pose/velocity).
@@ -174,6 +208,12 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# employees are activated once by CrewService.migrate_pending (same
 		# identities; wages only from days they actually work).
 		data["schema"] = 5
+		v = 5
+	if v == 5:
+		# Phase 4 saves: no trucks, dog/TV/comfort/arcade state. Defaults
+		# apply (no trucks owned, dog in the yard, TV quad 1-4, high scores 0).
+		data["phase5"] = {}
+		data["schema"] = 6
 	return data
 
 
@@ -215,3 +255,17 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 		var target := Vector3(pos[0], pos[1], pos[2])
 		target.y = maxf(target.y, World.height_at(target.x, target.z) + 0.1)
 		p.call("teleport_feet", target, float(data.player.get("yaw", 0.0)))
+	# Phase 5 systems restore once they exist (crew/dock/TV/comfort/arcade).
+	var p5: Dictionary = data.get("phase5", {})
+	var seat := str(data.get("player", {}).get("seat", ""))
+	var seat_index := int(data.get("player", {}).get("seat_index", -1))
+	if world.has_method("when_systems_ready"):
+		world.call("when_systems_ready", func() -> void:
+			for k in ["dog", "tv", "comfort", "arcade", "dock_site"]:
+				var n: Object = world.get(k)
+				if n and n.has_method("restore") and p5.has(k):
+					n.call("restore", p5[k])
+			if seat == "couch" and p and p.has_method("sit_on_couch"):
+				var seats := world.get_tree().get_nodes_in_group("couch_seat")
+				if seat_index >= 0 and seat_index < seats.size():
+					p.call("sit_on_couch", seats[seat_index]))

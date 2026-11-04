@@ -13,6 +13,14 @@ var _log: PackedStringArray = []
 func _ready() -> void:
 	await get_tree().process_frame
 	World.ensure_loaded()
+	if OS.has_environment("ONLY_P5"):
+		# Dev shortcut: just the Phase 5 checks.
+		_run("save v5 -> v6 migration adds the Phase 5 block", _t_save_v6)
+		_run("arcade games: score, failure, restart, high score", _t_arcade_logic)
+		await _run_async("phase 5 world", _t_phase5_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	_run("world data matches manifest", _t_manifest)
 	_run("tree count and stable unique IDs", _t_tree_ids)
 	_run("trees respect exclusion zones", _t_tree_exclusions)
@@ -54,6 +62,9 @@ func _ready() -> void:
 	_run("crew return planning: distance, load, doors, timid margin", _t_return_plan)
 	await _run_async("crew: two starters once, six beds, rates, hire to five, firing keeps wages and slot until departure, reload", _t_crew_world)
 	await _run_async("crew claims: worker/worker/player contest, delivery pays once, loads persist", _t_crew_claims)
+	_run("save v5 -> v6 migration adds the Phase 5 block", _t_save_v6)
+	_run("arcade games: score, failure, restart, high score", _t_arcade_logic)
+	await _run_async("phase 5: trucks, seats, cargo once, TV rotation/focus/pool, mics, arcade pause, dog door route, refuge, couch, saves", _t_phase5_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -1553,6 +1564,423 @@ func _t_crew_claims() -> String:
 		if err == "" and t.load_of("EMP-02").size() != 1:
 			err = "worker load lost or duplicated on reload"
 	t.clear_all()
+	world.trees.clear_all()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.mode = Game.Mode.MENU
+	return err
+
+
+# ----------------------------------------------------------------- phase 5
+
+func _t_save_v6() -> String:
+	var d := SaveService.migrate({"schema": 5, "player": {"position": [0, 0, 0]}, "campaign": {}, "economy": {}})
+	if int(d.get("schema", 0)) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION != 6:
+		return "schema not 6 after migration"
+	if not d.has("phase5"):
+		return "phase5 block missing"
+	return ""
+
+
+func _t_arcade_logic() -> String:
+	var ls := LogStacker.new()
+	ls.size = Vector2(900, 620)
+	add_child(ls)
+	ls.start()
+	# Perfect drop on top of the base log scores 2.
+	ls.cur_x = ls.stack[0].x
+	ls._press(KEY_SPACE)
+	if ls.score != 2 or ls.stack.size() != 2:
+		ls.queue_free()
+		return "perfect drop scored %d" % ls.score
+	# Overhang is sawn off: width shrinks, not grows.
+	ls.cur_x = ls.stack[1].x + 60.0
+	var w0: float = ls.cur_w
+	ls._press(KEY_SPACE)
+	if ls.cur_w >= w0 or ls.falling.is_empty():
+		ls.queue_free()
+		return "overhang not cut"
+	# Complete miss ends the game; high score kept; restart resets score.
+	ls.cur_x = 2000.0
+	ls._press(KEY_SPACE)
+	if ls.state != "over" or ls.high != 3:
+		ls.queue_free()
+		return "miss did not end game (state %s high %d)" % [ls.state, ls.high]
+	ls.start()
+	if ls.score != 0 or ls.state != "play" or ls.high != 3:
+		ls.queue_free()
+		return "restart wrong"
+	ls.queue_free()
+	var ff := FlapjackFlip.new()
+	ff.size = Vector2(900, 620)
+	add_child(ff)
+	ff.start()
+	for p in ff.pans:
+		p.phase = "cook"
+	ff.pans[0].cook = 0.675
+	ff._press(KEY_1)
+	if ff.score != 2:
+		ff.queue_free()
+		return "perfect flip scored %d" % ff.score
+	ff.pans[1].cook = 0.2
+	ff._press(KEY_2)
+	ff.pans[2].cook = 0.95
+	ff._press(KEY_3)
+	ff.pans[0].phase = "cook"
+	ff.pans[0].cook = 1.5
+	ff._tick(0.01)
+	if ff.state != "over" or ff.strikes != 3 or ff.high != 2:
+		ff.queue_free()
+		return "three strikes did not end the game (%s, %d)" % [ff.state, ff.strikes]
+	ff.queue_free()
+	return ""
+
+
+func _t_phase5_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while not world.systems_ready and guard < 600:
+		await get_tree().physics_frame
+		guard += 1
+	var err := ""
+	var cs: CampaignService = world.campaign
+	cs.start_test_route(false)
+	await get_tree().physics_frame
+	var vs: VehicleService = world.vehicles
+	# --- purchase: locked without deliveries, two max, charged once each.
+	if bool(vs.can_buy().ok):
+		err = "pickup purchasable before the unlock"
+	cs.wallet.grant(3000000, "test", "P5", "test cash")
+	vs.dev_unlock = true
+	var cash0 := cs.wallet.cash
+	var r1 := vs.buy()
+	var r2 := vs.buy()
+	var r3 := vs.buy()
+	if err == "" and (not bool(r1.ok) or not bool(r2.ok) or bool(r3.ok) or vs.trucks.size() != 2):
+		err = "purchase limits wrong: %s %s %s" % [r1.ok, r2.ok, r3.ok]
+	if err == "" and cash0 - cs.wallet.cash != 2 * int(vs.unlock_state().price):
+		err = "purchase charged %d" % (cash0 - cs.wallet.cash)
+	var t1: Truck = vs.trucks[r1.id] if bool(r1.ok) else null
+	var t2: Truck = vs.trucks[r2.id] if bool(r2.ok) else null
+	# --- seats: driver + two passengers, never one person in two trucks.
+	var p: Player = world.player
+	if err == "" and t1:
+		vs.enter(p, t1, "driver")
+		vs.board(world.crew.workers["EMP-01"], t1, "middle")
+		vs.board(world.crew.workers["EMP-02"], t1, "right")
+		if t1.free_seat() != "" or t1.occupants().size() != 3:
+			err = "seats: %s" % str(t1.seats)
+		if err == "" and (t2.seat_of("boss") != "" or t2.seat_of("EMP-01") != ""):
+			err = "someone seated in two trucks"
+		if err == "" and p.couch != null:
+			err = "driver also on the couch"
+		vs.disembark(world.crew.workers["EMP-01"], t1)
+		vs.disembark(world.crew.workers["EMP-02"], t1)
+		p.exit_vehicle(t1.door_point(-1.0))
+		t1.seats.driver = ""
+		t1.release_control()
+	# --- cargo: real pieces load into the bed (one owner), pay once on unload.
+	var tm: TimberService = world.timber
+	var i := LoggingTest.find("small")
+	var id: int = World.trees.id[i]
+	var stand := PlacementValidator.cut_stands(i)[0]
+	world.trees.apply_contact(id, stand, float(world.trees.record(id).required) + 1.0)
+	var w := 0.0
+	while world.trees.state_of(id) < TreeService.State.SECTIONED and w < 30.0:
+		await get_tree().physics_frame
+		w += 1.0 / 60.0
+	guard = 0
+	while guard < 100:
+		guard += 1
+		var tb: TimberBody = null
+		for key in tm.bodies:
+			if not (tm.bodies[key] as TimberBody).is_single_piece():
+				tb = tm.bodies[key]
+		if tb == null:
+			break
+		var y := float(tm.records[id].merch_top) if tb.crown else float(tm.records[id].segments[tb.ks.max() - 1].b)
+		tm.apply_cut(tb, y, 100.0)
+		for f in 20:
+			await get_tree().physics_frame
+	for f in 60:
+		await get_tree().physics_frame
+	if err == "" and tm.bodies.is_empty():
+		err = "no timber pieces to load"
+	if err == "":
+		var b: TimberBody = tm.bodies.values()[0]
+		var sid: String = b.sid_list()[0]
+		tm.pick_up_for("player", b, 2000)
+		var n := vs.load_from("player", t1)
+		var seg := tm.segment(sid)
+		if n < 1 or not tm.load_of(t1.carrier()).has(sid) or int(seg.state) != TimberService.Seg.VEHICLE_RESERVED:
+			err = "load into the bed failed (%d, state %s)" % [n, str(seg.get("state"))]
+		if err == "" and (tm.transfer(t1.carrier(), t2.carrier(), sid, 0) and tm.load_of(t1.carrier()).has(sid)):
+			err = "piece owned by two trucks"
+		if err == "" and tm.load_of(t2.carrier()).has(sid):
+			# move it back so the rest of the test is about t1
+			tm.transfer(t2.carrier(), t1.carrier(), sid, Truck.CAPACITY_MTE)
+		cs.wallet.enabled = true
+		var c1 := cs.wallet.cash
+		var rs := vs.unload_accept(t1, "truck:" + t1.truck_id)
+		var rs2 := vs.unload_accept(t1, "truck:" + t1.truck_id)
+		var cents := 0
+		for r in rs:
+			cents += int(r.cents)
+		if err == "" and (rs.is_empty() or not rs2.is_empty() or cs.wallet.cash - c1 != cents or not tm.load_of(t1.carrier()).is_empty()):
+			err = "truck delivery not paid exactly once (%d receipts, %d again, %d cents)" % [rs.size(), rs2.size(), cs.wallet.cash - c1]
+	# --- safe stop: dismissing a moving team brakes first.
+	if err == "" and t2:
+		var area := World.camp_origin() + Vector3(0, 0, -70)
+		vs.dispatch(t2.truck_id, "EMP-01", ["EMP-02"], area)
+		var tmd: Dictionary = vs.teams[t2.truck_id]
+		tmd.state = "drive_back"
+		t2.take_control("auto")
+		t2.set_route(vs.nav.route(t2.global_position, area))
+		t2._auto_speed = 5.0
+		vs.disband(t2.truck_id, "test")
+		if not vs.teams.has(t2.truck_id) or str(vs.teams[t2.truck_id].state) != "stopping":
+			err = "moving team was not brought to a stop first"
+		var k := 0
+		while err == "" and vs.teams.has(t2.truck_id) and k < 300:
+			await get_tree().physics_frame
+			k += 1
+		if err == "" and (vs.teams.has(t2.truck_id) or t2.mode != "parked"):
+			err = "team not stood down after stopping"
+	# --- TV: ten cameras, distinct quad, one tile per step, fair bag.
+	var tv: CameraWall = world.tv
+	tv.force_active = true
+	tv.set_power(true)
+	tv.set_mode("quad")
+	for f in 3:
+		await get_tree().process_frame
+	if err == "" and tv.cams.size() != 10:
+		err = "expected 10 cameras, got %d" % tv.cams.size()
+	var seen := {}
+	for c in tv.tiles:
+		seen[c] = true
+	for step in 40:
+		var before: Array[int] = tv.tiles.duplicate()
+		var expect_tile := tv._next_tile
+		tv.rotate_once()
+		var changed := 0
+		for k2 in 4:
+			if before[k2] != tv.tiles[k2]:
+				changed += 1
+				if k2 != expect_tile:
+					err = "tile %d changed, expected %d (round robin)" % [k2, expect_tile]
+		var uniq := {}
+		for c in tv.tiles:
+			uniq[c] = true
+			seen[c] = true
+		if err == "" and (changed != 1 or uniq.size() != 4):
+			err = "rotation step changed %d tiles / %d distinct" % [changed, uniq.size()]
+		if err != "":
+			break
+	if err == "" and seen.size() != 10:
+		err = "only %d of 10 cameras shown in 40 steps" % seen.size()
+	# Click selects what the tile shows now; focus locks; back gives a set.
+	if err == "":
+		var shown := tv.tiles[2]
+		tv.focus_tile(2)
+		if tv.mode != "focus" or tv.focus_index != shown:
+			err = "focus did not take the displayed camera"
+		tv._process(1.0)
+		if err == "" and tv.focus_index != shown:
+			err = "focus changed by itself"
+		# Pool: in focus no quad render target updates, and vice versa.
+		for vp in tv._quad_vps:
+			if err == "" and vp.render_target_update_mode != SubViewport.UPDATE_DISABLED and vp.render_target_update_mode != SubViewport.UPDATE_ONCE:
+				err = "quad viewport set to continuous update"
+		tv._process(0.2)
+		var quad_updating := 0
+		for vp in tv._quad_vps:
+			if vp.render_target_update_mode == SubViewport.UPDATE_ONCE:
+				quad_updating += 1
+		if err == "" and quad_updating > 0:
+			err = "quad feeds render while focused"
+		if err == "" and tv._focus_vp.size.x <= tv._quad_vps[0].size.x * 2:
+			err = "focus resolution not materially higher"
+		tv.back_to_quad()
+		var u2 := {}
+		for c in tv.tiles:
+			u2[c] = true
+		if err == "" and (tv.mode != "quad" or u2.size() != 4 or not shown in tv.tiles):
+			err = "back to quad gave %s" % str(tv.tiles)
+	# No recursive capture: TV screen on its own layer, cameras exclude it.
+	if err == "" and (tv.screen.layers != 1 << (CameraWall.LAYER_TV - 1) or (tv._quad_cams[0].cull_mask & (1 << (CameraWall.LAYER_TV - 1))) != 0 or (tv._focus_cam.cull_mask & (1 << (CameraWall.LAYER_TV - 1))) != 0):
+		err = "TV screen visible to security cameras"
+	# --- remote microphones
+	if err == "":
+		var trail := -1
+		for ci in tv.cams.size():
+			if tv.cam_id(ci) == "CAM-08":
+				trail = ci
+		tv.tiles = [trail, (trail + 1) % 10, (trail + 2) % 10, (trail + 3) % 10]
+		tv._apply_tiles()
+		tv.set_mode("quad")
+		tv._process(0.05)
+		tv._gain = 0.25   # settled wall level (the ramp is tested by the focus step)
+		var snd: AudioStream = load("res://audio/generated/chop_0.wav")
+		var near := tv.cams[trail].global_position + Vector3(4, -2, 4)
+		var r0 := tv.relayed
+		SoundEvents.emit(snd, near, -6.0, "work", "chopping")
+		if tv.relayed != r0 + 1:
+			err = "nearby trail sound not relayed"
+		var quad_db := float(tv.last_relay.get("volume_db", 0.0))
+		SoundEvents.emit(snd, near, -6.0, "work", "chopping")
+		if err == "" and tv.relayed != r0 + 1:
+			err = "duplicate replay of one sound"
+		var dr := tv.dropped_range
+		SoundEvents.emit(load("res://audio/generated/chop_1.wav"), tv.cams[trail].global_position + Vector3(300, 0, 0), 0.0, "work", "chopping")
+		if err == "" and tv.dropped_range != dr + 1:
+			err = "out-of-range sound not dropped"
+		tv.set_mic_muted(true)
+		var r1b := tv.relayed
+		await get_tree().create_timer(0.2).timeout
+		SoundEvents.emit(load("res://audio/generated/chop_2.wav"), near, -6.0, "work", "chopping")
+		if err == "" and tv.relayed != r1b:
+			err = "muted microphones still relayed"
+		tv.set_mic_muted(false)
+		tv.focus_index = trail
+		tv.set_mode("focus")
+		tv._gain = 1.0
+		await get_tree().create_timer(0.2).timeout
+		SoundEvents.emit(load("res://audio/generated/chop_3.wav"), near, -6.0, "work", "chopping")
+		if err == "" and float(tv.last_relay.get("volume_db", -99.0)) < quad_db + 6.0:
+			err = "focused mic not louder (%.1f vs quad %.1f dB)" % [float(tv.last_relay.get("volume_db", -99.0)), quad_db]
+		# TV output is never an event: no feedback loop.
+		SoundEvents.recent.clear()
+		await get_tree().create_timer(0.3).timeout
+		for q in SoundEvents.recent:
+			if err == "" and q.distance_to(tv.speaker.global_position) < 1.0:
+				err = "TV replay re-entered the sound registry"
+		tv.back_to_quad()
+	# --- pause: rotation does not advance while paused, no burst on resume
+	if err == "":
+		var tiles0: Array[int] = tv.tiles.duplicate()
+		get_tree().paused = true
+		for f in 20:
+			await get_tree().process_frame
+		get_tree().paused = false
+		if tv.tiles != tiles0:
+			err = "rotation advanced while paused"
+	# --- arcade: pauses the world, restores exactly
+	var ar: ArcadeService = world.arcade
+	if err == "":
+		var clock_t := cs.clock.t
+		ar.open(0)
+		if not get_tree().paused or not ar.is_open():
+			err = "arcade did not pause the world"
+		ar._game.start()
+		for f in 30:
+			await get_tree().process_frame
+		if err == "" and absf(cs.clock.t - clock_t) > 0.001:
+			err = "campaign clock ran during the arcade"
+		if err == "" and ar._game.state != "play":
+			err = "arcade game not running while the world is paused"
+		ar._game.score = 7
+		ar.close()
+		if err == "" and (get_tree().paused or ar.is_open() or int(ar.highs.log_stacker) != 7):
+			err = "arcade exit did not restore state / keep the high score"
+	# --- dog: dusk route through the real camper door flap, no teleport
+	var dog: CampDog = world.dog
+	if err == "":
+		dog.global_position = CampLayout.world(Vector3(0, 0, 6))
+		dog.global_position.y = world.crew.nav.surface_at(dog.global_position)
+		dog.state = CampDog.State.IDLE
+		dog.events.clear()
+		dog.go_home()
+		var last := dog.global_position
+		var max_step := 0.0
+		for f in 3000:
+			dog._process(1.0 / 30.0)
+			max_step = maxf(max_step, dog.global_position.distance_to(last))
+			last = dog.global_position
+			if dog.state == CampDog.State.SLEEP:
+				break
+		if dog.state != CampDog.State.SLEEP or not dog.inside_camper():
+			err = "dog did not get to bed (%s, events %s)" % [CampDog.State.keys()[dog.state], str(dog.events)]
+		elif not ("flap_in" in dog.events or "door_open_in" in dog.events):
+			err = "dog did not pass the door/flap: %s" % str(dog.events)
+		elif max_step > 0.4:
+			err = "dog jumped %.2f m in one step (teleport)" % max_step
+	if err == "":
+		# Morning: gets up and goes out the same way.
+		dog.events.clear()
+		dog._leave_camper()
+		var last2 := dog.global_position
+		var ms2 := 0.0
+		for f in 1500:
+			dog._process(1.0 / 30.0)
+			ms2 = maxf(ms2, dog.global_position.distance_to(last2))
+			last2 = dog.global_position
+			if dog.state == CampDog.State.IDLE:
+				break
+		if dog.inside_camper() or not ("flap_out" in dog.events or "door_open_out" in dog.events) or ms2 > 0.4:
+			err = "dog morning exit wrong: %s (step %.2f)" % [str(dog.events), ms2]
+	# Avoids the burn pit; a petting is optional and cancellable.
+	if err == "":
+		for fp in dog._fire_points():
+			if dog._good_spot(fp + Vector3(1.0, 0, 0)):
+				err = "dog would wander into the fire"
+		dog.pet(p)
+		if err == "" and dog.state != CampDog.State.PET:
+			err = "petting did not start"
+		p.global_position = dog.global_position + Vector3(6, 0, 0)
+		dog._process(0.1)
+		if err == "" and dog.state == CampDog.State.PET:
+			err = "petting not cancelled by walking away"
+	# Refuge + one boarding handoff, distinct saved states, same identity.
+	if err == "":
+		if not dog.enter_refuge():
+			err = "dog could not head for the refuge"
+		for f in 6000:
+			if dog.state == CampDog.State.REFUGE:
+				break
+			dog._process(1.0 / 30.0)
+		if err == "" and dog.state != CampDog.State.REFUGE:
+			err = "dog did not reach the refuge (%s)" % CampDog.State.keys()[dog.state]
+		var cap := dog.capture()
+		if err == "" and (str(cap.routine) != "refuge" or str(cap.id) != CampDog.DOG_ID):
+			err = "refuge state not captured"
+		dog.restore(JSON.parse_string(JSON.stringify(cap)))
+		if err == "" and dog.state != CampDog.State.REFUGE:
+			err = "refuge not restored"
+		var b1 := dog.board_ship()
+		var b2 := dog.board_ship()
+		if err == "" and (not b1 or b2):
+			err = "boarding handoff not exactly once"
+		dog.boarded_once = false
+		dog.routine = "camp"
+		dog.visible = true
+		dog.state = CampDog.State.IDLE
+	# --- couch: sit, look around, verified stand-up
+	if err == "":
+		var seats := get_tree().get_nodes_in_group("couch_seat")
+		p.teleport_feet(Viewpoints.all()["camper"].feet, 0.0)
+		await get_tree().physics_frame
+		p.sit_on_couch(seats[0])
+		for f in 40:
+			await get_tree().physics_frame
+		if p.couch == null or not p.collision_layer == 0:
+			err = "player did not sit"
+		var data := SaveService.capture_state(world)
+		if err == "" and (str(data.player.seat) != "couch" or not data.has("phase5") or not (data.phase5 as Dictionary).has("tv")):
+			err = "couch/phase5 not saved: %s" % str(data.player)
+		p.stand_from_couch()
+		await get_tree().physics_frame
+		if err == "" and (p.couch != null or not p._stand_clear(p.global_position)):
+			err = "stand-up not clear"
+		# TV state round trip.
+		var tvd := tv.capture()
+		tv.restore(JSON.parse_string(JSON.stringify(tvd)))
+		if err == "" and tv.tiles != tvd.tiles:
+			err = "TV quad set not restored"
+	world.timber.clear_all()
 	world.trees.clear_all()
 	world.queue_free()
 	await get_tree().process_frame

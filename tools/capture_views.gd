@@ -33,7 +33,29 @@ func _ready() -> void:
 		if "@" in vp_name:
 			at = float(vp_name.get_slice("@", 1))
 			vp_name = vp_name.get_slice("@", 0)
-		var vps := Viewpoints.all()
+		var vps := Viewpoints.all().duplicate()
+		var tv_mode := ""
+		if vp_name.begins_with("tv_") and vp_name != "tv_wall":
+			tv_mode = vp_name.substr(3)
+			vp_name = "tv_wall"
+		if vp_name == "dog_close" and Game.dog:
+			for i in 30:
+				await get_tree().process_frame
+			Game.dog.path.clear()
+			Game.dog.state = CampDog.State.SIT
+			Game.dog.timer = 120.0
+			var dp: Vector3 = Game.dog.global_position
+			var fwd: Vector3 = -Game.dog.global_basis.z
+			vps["dog_close"] = {"pos": dp + fwd * 1.5 + fwd.cross(Vector3.UP) * 0.7 + Vector3(0, 0.55, 0), "look": dp + Vector3(0, 0.4, 0)}
+		if vp_name == "tv_wall" and world.tv:
+			world.tv.force_active = true
+			if tv_mode in ["focus", "entertainment"]:
+				world.tv.focus_index = 7
+				world.tv.set_mode(tv_mode)
+			else:
+				world.tv.set_mode("quad")
+		elif world.tv:
+			world.tv.force_active = false
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue
@@ -46,12 +68,12 @@ func _ready() -> void:
 		world.vegetation.update_collision_around(vp.pos)
 		if world.ground_cover and world.ground_cover.has_method("force_build_around"):
 			world.ground_cover.force_build_around(vp.pos)
-		for i in 12:
+		for i in (40 if vp_name == "tv_wall" else 12):
 			if at >= 0.0:
 				Game.world_time = at
 			await get_tree().process_frame
 		var img := get_viewport().get_texture().get_image()
-		var out := "res://captures/%s_%s%s.png" % [vp_name, lighting, ("_t%.1f" % at) if at >= 0.0 else ""]
+		var out := "res://captures/%s_%s%s.png" % [(vp_name + ("_" + tv_mode if tv_mode != "" else "")), lighting, ("_t%.1f" % at) if at >= 0.0 else ""]
 		img.save_png(out)
 		print("captured ", out, " | draw calls %d, primitives %dk, objects %d, VRAM %.0f MB, tree colliders %d, physics active %d" % [Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME) / 1000, Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME), Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0, world.vegetation.active_tree_collision_count(), Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS)])
 	get_tree().quit()

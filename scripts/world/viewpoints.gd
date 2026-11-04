@@ -59,6 +59,14 @@ static func all() -> Dictionary:
 	vp["high_overview"] = _v(Vector3(420.0, 0.0, -170.0), Vector3(-150.0, 0.0, 300.0), 22.0, "High view from the ridge over the island")
 	var fire := c + CampLayout.BURN_PIT_POS
 	vp["fire_close"] = _v(fire + Vector3(0.0, 0.0, 4.2), fire + Vector3(0.0, 0.6, 0.0), 0.2, "Campfire close-up", "night")
+	# Phase 5: TV from the couch, dock + utility building, dog alcove.
+	var F := CampLayout.CAMPER_FLOOR
+	var Lz := CampLayout.CAMPER_SIZE.z * 0.5
+	vp["tv_wall"] = _v(camper + Vector3(0.3, F, Lz - 1.62), camper + Vector3(0.3, F + 0.32, Lz), 1.17, "Couch view of the 2x2 camera wall")
+	vp["dock"] = _v(c + Vector3(-7.0, 0.0, 121.0), c + Vector3(8.0, 0.0, 100.0), eye, "Service dock, utility building and beacon hut")
+	vp["dog_alcove"] = _v(c + Vector3(4.6, 0.0, 97.6), c + Vector3(8.8, -0.4, 95.0), 1.3, "The dog's dry alcove beside the utility building")
+	vp["utility_inside"] = _v(c + Vector3(10.2, 0.45, 92.6), c + Vector3(12.0, 0.0, 96.2), eye, "Inside the utility building: shelves, panel, radio and beacon")
+	vp["dock_end"] = _v(c + Vector3(6.0, 0.0, 112.0), c + Vector3(6.0, -0.6, 126.0), eye, "Along the dock deck to the ladder and lamp")
 	_cache = vp
 	return vp
 

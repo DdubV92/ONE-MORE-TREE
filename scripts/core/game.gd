@@ -30,6 +30,11 @@ var timber: TimberService
 var campaign: CampaignService
 var crew: CrewService
 var vehicles: VehicleService
+var tv: CameraWall
+var dog: CampDog
+var arcade: ArcadeService
+var dock_site: DockSite
+var comfort: Node
 var campaign_ui: CampaignUI
 var new_game := false              # start a fresh contract in SaveService.slot
 
@@ -93,5 +98,10 @@ func _change(path: String) -> void:
 	campaign = null
 	crew = null
 	vehicles = null
+	tv = null
+	dog = null
+	arcade = null
+	dock_site = null
+	comfort = null
 	campaign_ui = null
 	get_tree().change_scene_to_file(path)

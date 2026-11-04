@@ -43,6 +43,8 @@ func _ready() -> void:
 	_section(v, "Audio")
 	for b in Settings.BUSES:
 		_slider(v, "%s volume" % b, "vol_" + b, 0.0, 1.0, 0.01)
+	_section(v, "Camera TV")
+	_slider(v, "Seconds per camera swap (0 = frozen)", "tv_interval", 0.0, 40.0, 5.0)
 	var row := HBoxContainer.new()
 	row.add_child(UITheme.button("Reset to defaults", func() -> void:
 		Settings.reset_defaults()

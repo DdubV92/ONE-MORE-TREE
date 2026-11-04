@@ -175,9 +175,12 @@ func _build_camper() -> void:
 	for o in east:
 		if o != door_open:
 			BuildKit.window_glass(c, east_o, PI * 0.5, o, t)
+			Curtain.make(c, east_o, PI * 0.5, o, -0.08)
 	for o in west:
 		BuildKit.window_glass(c, west_o, -PI * 0.5, o, t)
+		Curtain.make(c, west_o, -PI * 0.5, o, -0.08)
 	BuildKit.window_glass(c, Vector3(-W - t, F, -Lz - t * 0.5), 0.0, north[0], t)
+	Curtain.make(c, Vector3(-W - t, F, -Lz - t * 0.5), 0.0, north[0], 0.08)
 
 	# Teal stripe below the windows (split around the door)
 	BuildKit.box(c, Vector3(0.012, 0.16, 2.3), Vector3(W + t + 0.006, F + 0.62, 3.55), "camper_stripe", false)
@@ -202,6 +205,7 @@ func _build_camper() -> void:
 	door.height = 2.0
 	door.material_name = "camper_paint"
 	door.open_angle = 100.0
+	door.dog_flap = true
 	door.position = Vector3(W + t * 0.5, F, 2.3)
 	door.rotation.y = PI * 0.5
 	c.add_child(door)
@@ -335,8 +339,13 @@ func _build_camper() -> void:
 		li.omni_range = 3.6 if lz != -0.6 else 1.6
 		li.light_energy = 0.9
 		li.light_color = Color(1.0, 0.78, 0.52)
+		li.add_to_group("camper_light")
 		c.add_child(li)
-		BuildKit.cylinder(c, 0.14, 0.03, li.position + Vector3(0, 0.12, 0), "lamp_bulb", false, 12)
+		var bulb := BuildKit.cylinder(c, 0.14, 0.03, li.position + Vector3(0, 0.12, 0), "lamp_bulb", false, 12)
+		bulb.add_to_group("camper_bulb")
+	# Light switch beside the door (Phase 5 comfort) and a reading lamp.
+	BuildKit.box(c, Vector3(0.02, 0.12, 0.08), Vector3(W - 0.01, F + 1.25, 1.2), "white", false, 0.0, "LightSwitch")
+	BuildKit.marker(c, "LightSwitchPoint", Vector3(W - 0.03, F + 1.25, 1.2), 0.0, "camper_switch")
 	_interior_zone(c, "camper", Vector3(0, F + H * 0.5, 0), Vector3(W * 2, H, Lz * 2), true)
 
 

@@ -27,9 +27,10 @@ const FOCUS_SIZE := Vector2i(1280, 720)
 const QUAD_HZ := 12.0
 const FOCUS_HZ := 30.0
 const MIC_RANGE := 38.0
-const LAYER_TV := 20
-const LAYER_BOSS_BODY := 21
-const LAYER_VIEWMODEL := 22
+const LAYER_TV := 18          # TV screen: never captured by security cameras
+const LAYER_BOSS_BODY := 19   # boss stand-in body: cameras only (not the 1st-person view)
+const LAYER_VIEWMODEL := 20   # first-person arms/axe: never captured
+const MAX_REPLAYS := 6
 
 var cams: Array[Node3D] = []          # sorted CAM_01..CAM_10
 var mode := "quad"                   # quad / focus / entertainment / off
@@ -63,6 +64,16 @@ var _rng := RandomNumberGenerator.new()
 var renders_this_second := 0
 var _rps_t := 0.0
 var _rps_count := 0
+var powered := true
+var _music: AudioStreamPlayer3D
+var _music_stream: AudioStreamWAV
+var _gain := 0.0          # smoothed relay gain (quad ~0.25 -> focus 1.0)
+var _recent := {}         # dedupe: stream id -> last replay time
+var _caption_t := -10.0
+var relayed := 0          # counters for tests / perf report
+var dropped_range := 0
+var dropped_dupe := 0
+var last_relay := {}
 
 
 func setup() -> void:
@@ -84,6 +95,7 @@ func setup() -> void:
 		_render_t.append(float(i) / (QUAD_HZ * 4.0))
 	_focus_vp = _make_vp(FOCUS_SIZE, w)
 	_focus_cam = _focus_vp.get_child(0)
+	_sync_env()
 	_build_composite()
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -100,10 +112,48 @@ func setup() -> void:
 	_ambience.bus = "TV"
 	_ambience.unit_size = 3.0
 	tv.add_child(_ambience)
+	_music = AudioStreamPlayer3D.new()
+	_music.name = "TVMusic"
+	_music.bus = "TV"
+	_music.unit_size = 3.0
+	tv.add_child(_music)
 	_refill_bag()
 	tiles = [0, 1, 2, 3]
+	interval = float(Settings.get_v("tv_interval"))
 	_apply_tiles()
 	set_mode("quad")
+	SoundEvents.listen(on_world_sound)
+	Settings.changed.connect(func() -> void:
+		var want := float(Settings.get_v("tv_interval"))
+		if not is_equal_approx(want, interval):
+			set_interval(want))
+
+
+func _exit_tree() -> void:
+	SoundEvents.unlisten(on_world_sound)
+
+
+## Viewmodel arms never appear on the security feeds; a simple stand-in body
+## for the boss is visible ONLY to the security cameras.
+func _tag_player_layers(p: Node3D) -> void:
+	var vm := p.find_child("ViewModel", true, false)
+	if vm:
+		_set_layers(vm, 1 << (LAYER_VIEWMODEL - 1))
+	var cam := p.get_viewport().get_camera_3d()
+	if cam:
+		cam.cull_mask &= ~(1 << (LAYER_BOSS_BODY - 1))
+	if p.find_child("CameraBody", false, false) == null:
+		var body := BossBody.build()
+		body.name = "CameraBody"
+		p.add_child(body)
+		_set_layers(body, 1 << (LAYER_BOSS_BODY - 1))
+
+
+static func _set_layers(n: Node, mask: int) -> void:
+	if n is VisualInstance3D:
+		(n as VisualInstance3D).layers = mask
+	for c in n.get_children():
+		_set_layers(c, mask)
 
 
 func _make_vp(size: Vector2i, w: World3D) -> SubViewport:
@@ -117,10 +167,50 @@ func _make_vp(size: Vector2i, w: World3D) -> SubViewport:
 	add_child(vp)
 	var cam := Camera3D.new()
 	cam.cull_mask = 0xFFFFF & ~(1 << (LAYER_TV - 1)) & ~(1 << (LAYER_VIEWMODEL - 1))
-	cam.cull_mask |= 1 << (LAYER_BOSS_BODY - 1)
 	cam.far = 900.0 if size.x < 800 else 1800.0
 	vp.add_child(cam)
 	return vp
+
+
+## Security cameras use a lighter copy of the live environment (same sky,
+## sun, fog colour/density, exposure, time of day) without the per-viewport
+## heavy effects (SDFGI, SSIL, SSR, volumetric fog; SSAO only in focus).
+## Synced from the world environment twice a second, never per frame.
+var _env_quad: Environment
+var _env_focus: Environment
+var _env_t := 0.0
+const _ENV_SKIP := ["sdfgi_enabled", "ssil_enabled", "ssr_enabled", "ssao_enabled", "volumetric_fog_enabled", "resource_local_to_scene", "resource_path", "resource_name", "script"]
+
+
+func _sync_env() -> void:
+	var src := get_viewport().world_3d.environment if get_viewport() and get_viewport().world_3d else null
+	if src == null:
+		return
+	if _env_quad == null:
+		_env_quad = src.duplicate() as Environment
+		_env_focus = src.duplicate() as Environment
+		for c in _quad_cams:
+			c.environment = _env_quad
+		_focus_cam.environment = _env_focus
+	for prop in src.get_property_list():
+		var n: String = prop.name
+		if (int(prop.usage) & PROPERTY_USAGE_STORAGE) == 0 or n in _ENV_SKIP:
+			continue
+		var v: Variant = src.get(n)
+		_env_quad.set(n, v)
+		_env_focus.set(n, v)
+	for e in [_env_quad, _env_focus]:
+		e.sdfgi_enabled = false
+		e.ssil_enabled = false
+		e.ssr_enabled = false
+		e.volumetric_fog_enabled = false
+		# Volumetric fog carried the night murk: keep it as depth fog.
+		if src.volumetric_fog_enabled:
+			e.fog_enabled = true
+			e.fog_light_color = src.volumetric_fog_albedo * src.ambient_light_energy
+			e.fog_density = maxf(src.fog_density, src.volumetric_fog_density * 0.6)
+	_env_quad.ssao_enabled = false
+	_env_focus.ssao_enabled = src.ssao_enabled
 
 
 func _build_composite() -> void:
@@ -195,7 +285,33 @@ func set_mode(m: String) -> void:
 		_focus_label.text = "%s  ·  %s  ·  LIVE" % [cam_id(focus_index), cam_name(focus_index)]
 	_timer = 0.0
 	_update_ambience()
+	_update_music()
+	_update_anchors()
 	mode_changed.emit(m)
+
+
+func set_power(on: bool) -> void:
+	powered = on
+	var mat := screen.material_override as StandardMaterial3D
+	if mat:
+		mat.albedo_texture = composite.get_texture() if on else null
+		mat.albedo_color = Color.WHITE if on else Color(0.02, 0.02, 0.025)
+	_active = false   # re-evaluated next frame
+	_update_ambience()
+	_update_music()
+	_update_anchors()
+
+
+func cycle_mode() -> void:
+	match mode:
+		"quad": set_mode("entertainment")
+		"entertainment": set_mode("quad")
+		_: back_to_quad()
+
+
+func set_interval(sec: float) -> void:
+	interval = maxf(sec, 0.0)
+	_timer = 0.0
 
 
 func focus_tile(tile: int) -> void:
@@ -203,6 +319,26 @@ func focus_tile(tile: int) -> void:
 		return
 	focus_index = tiles[tile]   # exactly what that tile shows right now
 	set_mode("focus")
+
+
+## Which wall tile (0..3) a ray from the couch hits on the physical screen,
+## or -1. Uses the tile currently displayed at the moment of the click.
+func tile_under_ray(from: Vector3, dir: Vector3) -> int:
+	if screen == null:
+		return -1
+	var xf := screen.global_transform
+	var n := xf.basis.z.normalized()
+	var denom := n.dot(dir)
+	if absf(denom) < 1e-4:
+		return -1
+	var t := n.dot(xf.origin - from) / denom
+	if t <= 0.0:
+		return -1
+	var local := xf.affine_inverse() * (from + dir * t)
+	var half := (screen.mesh as QuadMesh).size * 0.5
+	if absf(local.x) > half.x or absf(local.y) > half.y:
+		return -1
+	return (0 if local.x < 0.0 else 1) + (0 if local.y > 0.0 else 2)
 
 
 func focus_step(d: int) -> void:
@@ -231,13 +367,24 @@ func _dedupe_tiles() -> void:
 		seen[tiles[i]] = true
 
 
+## Camera indices currently on screen (one in focus, four on the wall).
+func shown_cameras() -> Array[int]:
+	var out: Array[int] = []
+	if mode == "focus":
+		out.append(focus_index)
+	else:
+		out.append_array(tiles)
+	return out
+
+
 func cam_id(i: int) -> String:
 	return str(cams[i].get_meta("camera_id")).replace("_", "-")
 
 
 func cam_name(i: int) -> String:
-	const NAMES := {"cabin_to_camper": "Cabin to camper", "camper_to_cabin": "Camper to cabin", "forest_entrance": "Forest entrance", "perimeter_nw": "Fence NW", "perimeter_ne": "Fence NE", "perimeter_sw": "Fence SW", "perimeter_se": "Fence SE", "trail_1": "West trail", "trail_2": "Ridge trail", "trail_3": "River trail"}
-	return NAMES.get(str(cams[i].get_meta("category")), str(cams[i].get_meta("category")))
+	const NAMES := {"CAM_01": "Cabin to camper", "CAM_02": "Camper to cabin", "CAM_03": "Forest entrance", "CAM_04": "Fence NW", "CAM_05": "Fence NE", "CAM_06": "Fence SW", "CAM_07": "Fence SE", "CAM_08": "West trail", "CAM_09": "East ridge trail", "CAM_10": "Deep woods"}
+	var id := str(cams[i].get_meta("camera_id"))
+	return NAMES.get(id, id)
 
 
 # ---------------------------------------------------------------- rotation
@@ -275,10 +422,22 @@ func rotate_once() -> void:
 	_place(_quad_cams[tile], pick)
 	_tile_labels[tile].text = "%s  %s" % [cam_id(pick), cam_name(pick)]
 	_next_tile = (_next_tile + 1) % 4
-	if Game.environment and Game.world_root:
-		var gc: Node = Game.world_root.get("ground_cover")
-		if gc and gc.has_method("force_build_around"):
-			gc.call_deferred("force_build_around", cams[pick].global_position)
+	_update_anchors()
+
+
+## Keeps vegetation built around what the displayed cameras look at.
+func _update_anchors() -> void:
+	if Game.world_root == null:
+		return
+	var gc: Node = Game.world_root.get("ground_cover")
+	if gc == null or not gc.has_method("set_anchors"):
+		return
+	var pts: Array[Vector3] = []
+	if _active:
+		var shown := shown_cameras()
+		for ci in shown:
+			pts.append(cams[ci].global_transform * Vector3(0, 0, -30.0))
+	gc.call("set_anchors", pts)
 
 
 func _apply_tiles() -> void:
@@ -295,28 +454,51 @@ func _place(cam: Camera3D, index: int) -> void:
 
 # ---------------------------------------------------------------- per frame
 
+## Dev/capture override: render without a player in the camper.
+var force_active := false
+
+
 func is_active() -> bool:
-	if mode == "off" or screen == null:
+	if not powered or screen == null:
 		return false
+	if force_active:
+		return true
 	var p := Game.player
 	if p == null:
 		return false
 	return p.global_position.distance_to(screen.global_position) < 14.0
 
 
+var _tagged: Node = null
+
+
 func _process(delta: float) -> void:
 	if screen == null:
 		return
+	if Game.player and Game.player != _tagged:
+		_tagged = Game.player
+		_tag_player_layers(Game.player)
 	var active := is_active() and not get_tree().paused
 	if active != _active:
 		_active = active
 		_update_ambience()
+		_update_music()
+		_update_anchors()
+		composite.render_target_update_mode = SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
 		if not active:
 			for vp in _quad_vps:
 				vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 			_focus_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
+			renders_this_second = 0
 	if not active:
 		return
+	_gain = move_toward(_gain, 1.0 if mode == "focus" else 0.25, delta * 1.5)
+	_env_t -= delta
+	if _env_t <= 0.0:
+		_env_t = 0.5
+		_sync_env()
+	if _ambience.playing:
+		_ambience.volume_db = lerpf(-26.0, -12.0, (_gain - 0.25) / 0.75) + linear_to_db(tv_volume)
 	# Rotation only advances while unpaused and in wall/entertainment modes.
 	if (mode == "quad" or mode == "entertainment") and interval > 0.0:
 		_timer += delta
@@ -345,69 +527,150 @@ func _process(delta: float) -> void:
 
 # ------------------------------------------------------------------- audio
 
-## World sound at `pos` (from LoggingFX and other sound sources). Picks up
-## at the displayed cameras within range, de-duplicated (strongest pickup
-## wins, one replay), quiet for the wall, louder and clearer when focused.
-func on_world_sound(stream: AudioStream, pos: Vector3, volume_db: float) -> void:
-	if not _active or mic_muted or stream == null or mode == "entertainment":
+## A world sound (SoundEvents registry). Each displayed camera's microphone
+## samples it by distance and occlusion; ONE replay (the strongest pickup,
+## not four copies) plays from the TV speaker, quiet for the wall, louder
+## and clearer for the focused camera. TV output is never an event, so
+## there is no feedback loop. The player's own listener stays in the room.
+func on_world_sound(stream: AudioStream, pos: Vector3, volume_db: float, category := "world", label := "") -> void:
+	if not _active or mic_muted or stream == null or mode == "entertainment" or speaker == null:
 		return
-	var shown: Array[int] = [focus_index] if mode == "focus" else tiles.duplicate()
+	var shown := shown_cameras()
 	var best := 0.0
+	var best_tile := -1
 	var space := get_world_3d().direct_space_state
-	for ci in shown:
-		var cp := cams[ci].global_position
+	for ti in shown.size():
+		var cp := cams[shown[ti]].global_position
 		var d := cp.distance_to(pos)
 		if d > MIC_RANGE:
 			continue
 		var g := pow(1.0 - d / MIC_RANGE, 2.0)
-		var q := PhysicsRayQueryParameters3D.create(cp, pos + Vector3(0, 0.3, 0), 1)
+		var q := PhysicsRayQueryParameters3D.create(cp, pos + Vector3(0, 0.4, 0), 1)
 		if not space.intersect_ray(q).is_empty():
-			g *= 0.45          # occluded
-		best = maxf(best, g)
+			g *= 0.4          # occluded by a building / rock / terrain
+		if g > best:
+			best = g
+			best_tile = ti
 	if best <= 0.02:
+		dropped_range += 1
 		return
+	# The same physical sound is one replay; repeated identical samples
+	# within 120 ms (e.g. heard by neighbouring cameras) are dropped.
+	var now := Time.get_ticks_msec()
+	var key := stream.get_instance_id()
+	if now - int(_recent.get(key, -100000)) < 120:
+		dropped_dupe += 1
+		return
+	_recent[key] = now
+	# Density limit: the oldest replay gives way to the newest cue.
+	while speaker.get_child_count() >= MAX_REPLAYS:
+		var oldest := speaker.get_child(0)
+		speaker.remove_child(oldest)
+		oldest.queue_free()
+		dropped_dupe += 1
 	var p := AudioStreamPlayer3D.new()
 	p.stream = stream
 	p.bus = "TV"
 	p.unit_size = 3.0
-	var base := -4.0 if mode == "focus" else -15.0
-	p.volume_db = clampf(base + linear_to_db(best) + volume_db * 0.5 + linear_to_db(tv_volume), -40.0, 0.0)
+	var g_db := lerpf(-15.0, -3.0, (_gain - 0.25) / 0.75)
+	p.volume_db = clampf(g_db + linear_to_db(best) + clampf(volume_db, -30.0, 6.0) * 0.5 + linear_to_db(maxf(tv_volume, 0.001)), -40.0, 0.0)
+	# Subtle tile-relative stereo: left tiles a little left on the screen.
+	if mode == "quad" and best_tile >= 0:
+		p.position = Vector3(-0.35 if best_tile % 2 == 0 else 0.35, 0.0, 0.0)
 	speaker.add_child(p)
 	p.play()
 	p.finished.connect(p.queue_free)
+	relayed += 1
+	# Reproduced sound is a real sound in the camper: the dog may hear it.
+	if Game.dog and Game.dog.global_position.distance_to(speaker.global_position) < 8.0:
+		Game.dog.hear(stream, speaker.global_position, p.volume_db, "tv", label)
+	var cam_i: int = shown[maxi(best_tile, 0)]
+	last_relay = {"camera": cam_id(cam_i), "gain": best, "volume_db": p.volume_db, "mode": mode, "category": category}
 	_set_transmission()
+	if label != "" and Game.world_time - _caption_t > 4.0 and Game.player and Game.player.global_position.distance_to(screen.global_position) < 6.0:
+		_caption_t = Game.world_time
+		Game.player.show_message("[TV · %s, remote] %s" % [cam_id(cam_i), label])
 
 
 func _set_transmission() -> void:
 	var bus := AudioServer.get_bus_index("TV")
 	if bus < 0:
 		return
-	for i in AudioServer.get_bus_effect_count(bus):
-		var fx := AudioServer.get_bus_effect(bus, i)
-		if fx is AudioEffectLowPassFilter:
-			(fx as AudioEffectLowPassFilter).cutoff_hz = 7800.0 if mode == "focus" else 2600.0
+	var fx := AudioServer.get_bus_effect(bus, 0)
+	if fx is AudioEffectLowPassFilter:
+		(fx as AudioEffectLowPassFilter).cutoff_hz = lerpf(2600.0, 8000.0, (_gain - 0.25) / 0.75)
 
 
-## A low ambient bed for what the cameras hear (wind, surf), phase-locked to
-## world time so switching tiles never restarts it.
+## What the displayed cameras hear continuously (surf near the coast, the
+## river, wind in the trees) - phase-locked to world time so a tile change
+## never restarts the recording.
 func _update_ambience() -> void:
 	if _ambience == null:
 		return
 	if not _active or mic_muted or mode == "entertainment":
 		_ambience.stop()
 		return
-	var s: AudioStream = load("res://assets/audio/wind_trees.ogg") if ResourceLoader.exists("res://assets/audio/wind_trees.ogg") else null
+	var c := cams[focus_index if mode == "focus" else tiles[0]].global_position
+	var n := "wind_leaves"
+	if World.height_at(c.x, c.z) < World.sea_level + 6.0:
+		n = "ocean_surf"
+	var s: AudioStreamWAV = _loop("res://audio/generated/%s.wav" % n)
 	if s == null:
 		return
+	if _ambience.stream == s and _ambience.playing:
+		return
 	_ambience.stream = s
-	_ambience.volume_db = (-14.0 if mode == "focus" else -24.0) + linear_to_db(tv_volume)
-	var length := s.get_length()
-	_ambience.play(fposmod(Game.world_time, maxf(length, 0.1)))
+	_ambience.volume_db = -26.0 + linear_to_db(maxf(tv_volume, 0.001))
+	_ambience.play(fposmod(Game.world_time, maxf(s.get_length(), 0.1)))
 	_set_transmission()
 
 
+func _update_music() -> void:
+	if _music == null:
+		return
+	if not (_active and mode == "entertainment"):
+		_music.stop()
+		return
+	if _music_stream == null:
+		_music_stream = TVProgram.make_music()
+	_music.stream = _music_stream
+	_music.volume_db = -10.0 + linear_to_db(maxf(tv_volume, 0.001))
+	if not _music.playing:
+		_music.play(fposmod(Game.world_time, _music_stream.get_length()))
+
+
+var _loops := {}
+
+
+func _loop(path: String) -> AudioStreamWAV:
+	if _loops.has(path):
+		return _loops[path]
+	if not ResourceLoader.exists(path):
+		return null
+	var src: AudioStreamWAV = load(path)
+	var w: AudioStreamWAV = src.duplicate()
+	w.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	w.loop_begin = 0
+	w.loop_end = int(w.get_length() * w.mix_rate)
+	_loops[path] = w
+	return w
+
+
+func set_volume(v: float) -> void:
+	tv_volume = clampf(v, 0.0, 1.0)
+	_ambience.stop()
+	_update_ambience()
+	if _music.playing:
+		_music.volume_db = -10.0 + linear_to_db(maxf(tv_volume, 0.001))
+
+
+func set_mic_muted(m: bool) -> void:
+	mic_muted = m
+	_update_ambience()
+
+
 func capture() -> Dictionary:
-	return {"mode": mode, "tiles": tiles.duplicate(), "focus": focus_index, "interval": interval, "mic_muted": mic_muted, "volume": tv_volume, "next_tile": _next_tile}
+	return {"mode": mode, "tiles": tiles.duplicate(), "focus": focus_index, "interval": interval, "mic_muted": mic_muted, "volume": tv_volume, "next_tile": _next_tile, "powered": powered, "bag": _bag.duplicate(), "last_removed": _last_removed}
 
 
 func restore(d: Dictionary) -> void:
@@ -422,5 +685,14 @@ func restore(d: Dictionary) -> void:
 	mic_muted = bool(d.get("mic_muted", false))
 	tv_volume = float(d.get("volume", 0.8))
 	_next_tile = int(d.get("next_tile", 0)) % 4
+	_last_removed = int(d.get("last_removed", -1))
+	var bag: Array = d.get("bag", [])
+	if not bag.is_empty():
+		_bag.clear()
+		for b in bag:
+			if int(b) >= 0 and int(b) < cams.size() and not _bag.has(int(b)):
+				_bag.append(int(b))
 	_apply_tiles()
-	set_mode(str(d.get("mode", "quad")))
+	var m := str(d.get("mode", "quad"))
+	set_mode(m if m in ["quad", "focus", "entertainment"] else "quad")
+	set_power(bool(d.get("powered", true)))

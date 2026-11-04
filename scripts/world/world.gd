@@ -17,6 +17,11 @@ var timber: TimberService
 var campaign: CampaignService
 var crew: CrewService
 var vehicles: VehicleService
+var tv: CameraWall
+var comfort: CamperComfort
+var dog: CampDog
+var arcade: ArcadeService
+var dock_site: DockSite
 var ground_cover: Node3D
 var environment: EnvironmentController
 var camp: Node3D
@@ -25,6 +30,8 @@ var safety: Node
 var player: Node3D
 var hud: CanvasLayer
 var build_ms := {}
+var systems_ready := false
+var _ready_queue: Array[Callable] = []
 
 
 func _ready() -> void:
@@ -78,6 +85,18 @@ func _ready() -> void:
 	add_child(vehicles)
 	campaign.vehicles = vehicles
 	Game.vehicles = vehicles
+	tv = CameraWall.new()
+	tv.name = "CameraWall"
+	add_child(tv)
+	Game.tv = tv
+	arcade = ArcadeService.new()
+	arcade.name = "Arcade"
+	add_child(arcade)
+	Game.arcade = arcade
+	comfort = CamperComfort.new()
+	comfort.name = "CamperComfort"
+	add_child(comfort)
+	Game.comfort = comfort
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()
@@ -92,9 +111,10 @@ func _ready() -> void:
 			c.call("build")
 			return c)
 	if camp:
-		var dog := CampDog.new()
+		dog = CampDog.new()
 		dog.name = "Dog"
 		add_child(dog)
+		Game.dog = dog
 	if ResourceLoader.exists("res://scripts/systems/safety_service.gd"):
 		safety = load("res://scripts/systems/safety_service.gd").new()
 		safety.name = "Safety"
@@ -135,11 +155,31 @@ func _build_crew_world() -> void:
 	var t := Time.get_ticks_msec()
 	crew.build_world()
 	build_ms["crew_nav"] = Time.get_ticks_msec() - t
+	dock_site = DockSite.new()
+	dock_site.name = "DockSite"
+	add_child(dock_site)
+	dock_site.build(crew)
+	Game.dock_site = dock_site
 	var t2 := Time.get_ticks_msec()
 	vehicles.build_world()
 	build_ms["drive_nav"] = Time.get_ticks_msec() - t2
+	tv.setup()
+	comfort.setup()
+	arcade.hook_cabinets()
+	systems_ready = true
+	for f in _ready_queue:
+		f.call()
+	_ready_queue.clear()
 	print("Drive routes built: %d ms (%dx%d cells)" % [build_ms.drive_nav, vehicles.nav.dims.x, vehicles.nav.dims.y])
 	print("Crew navigation built: %d ms (island %dx%d cells, camp %dx%d)" % [build_ms.crew_nav, crew.nav.dims.x, crew.nav.dims.y, crew.nav.camp_dims.x, crew.nav.camp_dims.y])
+
+
+## Runs f once crew/dock/vehicles/TV/comfort/arcade exist (now or later).
+func when_systems_ready(f: Callable) -> void:
+	if systems_ready:
+		f.call()
+	else:
+		_ready_queue.append(f)
 
 
 func _timed(label: String, f: Callable) -> Node:

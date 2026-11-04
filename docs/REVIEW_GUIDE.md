@@ -1,4 +1,4 @@
-# Review guide (Phases 0-4, about 30 minutes)
+# Review guide (Phases 0-5, about 40 minutes)
 
 Start a test build (README → "Play a test build"), then choose **Preview Tour** on the title screen.
 
@@ -22,6 +22,10 @@ Start a test build (README → "Play a test build"), then choose **Preview Tour*
 | 9d | Tour → **Day & Economy Test → Start session** (in memory, never saved) | The top of the screen shows the day, phase and countdown in words, plus cash. Deliver a log at the rack: **+$ credited** at once. **J** opens the journal (contract, payroll fixtures, ledger). Press **Open shop**, buy the medium axe, then press 2 and chop to feel x1.40. **Jump to dusk** shows the dusk warning and lighting change. **Sleep now** (or E on the camper bed after dusk) gives one report and then morning. **Unpaid wages** then sleeping twice shows arrears and one quit request. **Day 30 dusk** / **Prepared loss** let the contract close at nightfall without sleeping, showing the honest Phase 6 handoff. **Prepared win** shows the fulfilled screen. |
 | 9e | Title → **Play the contract** → a slot → **New contract** | A real campaign: exact 15 + 5 minute days, $2,000 starting cash (provisional), two crew records waiting for Phase 4 (no wages yet), axes at the tool rack, and sleep in the camper bed. Quit and **Continue** the slot: trees, logs, money, time and day are kept. |
 | 9f | Tour → **Crew Demonstration → Start crew demo** (in memory) | The two starters leave the cabin and work. You can watch a full fell → buck → carry → rack cycle: they retreat before a fall and the money credits when a log reaches the rack. Three hires (timid + observant, level-headed + sociable, skeptical + hard-working) arrive by skiff at the dock. Press **E** on a worker to talk. Try **Figure at trees** or **Voice mimic**, then ask "Noticed anything strange?": the skeptic only changes their mind after seeing it themselves. Compare the timid and level-headed reactions. **Jump to dusk** shows the return warnings and walk home; at night they lie in their beds (two are in the new extension bedroom). **J → Crew**: assign jobs, work near me, hire, fire (confirmation, then a real walk to the boat). |
+| 9g | Tour → **Phase 5 stops → Driving & hauling** (in memory) | Two pickups appear in the bays. E at the driver's door, drive out the north gate (camp speed limit, then faster), H lights, reverse. Fell and buck a tree, carry logs to the tailgate, E to load (bed shows strapped logs), drive back to the drop-off beside the rack and E at the tailgate: paid once. J → Crew → **Send a team to log near me**: watch them board, drive, load, return and unload on their own; **Call the team home** while it drives: it brakes to a stop first. |
+| 9h | Tour → **Dock & dog** | The finished dock (cleats, fenders, ladder, rail, lamp, sign), the utility building (door, shelves, panel, radio desk; E on the teal beacon console) and Biscuit's alcove. **Dog: refuge** sends the dog there on foot; **Dog: home now** walks it back and in through the flap in the camper door. Pet Biscuit (E). |
+| 9i | Tour → **Surveillance** | You sit on the couch facing the TV: four live feeds, one tile changes every 5 s. A surveyor in a hi-vis jacket walks past CAM-03 and the north fence (preview only). Click a tile to focus it (sharper, louder microphone), A/D to change camera, right-click back, C for Timber Tales, M mutes the camera microphones, [ ] changes the swap speed. Chop near a camera and listen for it from the TV. |
+| 9j | Tour → **Arcade** | E on a cabinet: the world pauses (banner says so). Play Log Stacker and Flapjack Flip, press H for help, Esc to leave; the high score stays. |
 | 10 | Tour → **Character Preview** | Human: Idle, Walk, Axe swing, Walk a circle, Next look (4 workers). Dog: Idle, Walk, Lie & sleep. Speed slider, joint/foot-contact debug, Day/Sunset/Night. |
 
 Optional:
@@ -34,6 +38,7 @@ These names match `Viewpoints.all()` and the tour buttons:
 - `camp`, `camp_sunset`, `camper`, `camper_night`, `cabin`
 - `beach`, `shallows`, `coast_day`
 - `forest`, `river`, `rapids`, `pond`, `pond2`, `ridge`
+- Phase 5: `tv_wall` (also `tv_focus` / `tv_entertainment` in the capture tool), `dock`, `dock_end`, `dog_alcove`, `utility_inside`, `dog_close`
 
 Developers can render any of them with:
 

@@ -43,6 +43,10 @@ var _last_safe := Vector3.ZERO
 var axe: AxeController
 var carry: CarryController
 var vehicle: Node3D = null          # Phase 5: the truck we sit in
+var couch: Node3D = null            # Phase 5: couch seat marker while seated
+var _couch_yaw := 0.0
+var _sit_blend := 1.0
+var _sit_from := Vector3.ZERO
 var vehicle_seat := ""
 var _veh_yaw := 0.0
 var _shake := 0.0
@@ -133,6 +137,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if vehicle != null:
 		_vehicle_input(event)
+		return
+	if couch != null:
+		_couch_input(event)
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
@@ -255,6 +262,144 @@ func _vehicle_process(_delta: float) -> void:
 	velocity = Vector3.ZERO
 
 
+# ------------------------------------------------------------------ couch
+
+## Sits on a couch seat marker (faces the TV). Looking around stays free;
+## the stand-up point is verified clear before leaving.
+func sit_on_couch(marker: Node3D) -> void:
+	if vehicle != null or couch != null or carry.is_carrying():
+		if carry.is_carrying():
+			show_message("Put the wood down first.")
+		return
+	couch = marker
+	_couch_yaw = 0.0
+	_pitch = deg_to_rad(-4.0)
+	_sit_blend = 0.0
+	_sit_from = global_position + Vector3(0, head.position.y, 0)
+	collision_layer = 0
+	collision_mask = 0
+	velocity = Vector3.ZERO
+	if _crouching:
+		_crouching = false
+	_interact_target = null
+	interact_target_changed.emit("")
+	show_message("On the couch: click a camera tile to focus it, right-click back to the wall, A/D or wheel switch camera in focus, C channel, [ ] swap speed / freeze, M mute cameras, -/+ volume, P TV power, E or Space stand up.")
+
+
+func stand_from_couch() -> void:
+	if couch == null:
+		return
+	var fwd := -couch.global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	var side := couch.global_basis.x
+	var base := couch.global_position
+	var spot := Vector3.INF
+	for off in [0.6, 0.45, 0.8]:
+		for lat in [0.0, 0.3, -0.3]:
+			var c: Vector3 = base + fwd * float(off) + side * float(lat)
+			c.y = couch.global_position.y - 0.55
+			if _stand_clear(c):
+				spot = c
+				break
+		if spot != Vector3.INF:
+			break
+	if spot == Vector3.INF:
+		show_message("No room to stand here.")
+		return
+	var yaw := couch.global_rotation.y + _couch_yaw
+	couch = null
+	collision_layer = 2
+	collision_mask = 1
+	_yaw = yaw
+	teleport_feet(spot, yaw)
+
+
+func _stand_clear(feet: Vector3) -> bool:
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = _capsule
+	q.transform = Transform3D(Basis(), feet + Vector3(0, HEIGHT * 0.5 + 0.05, 0))
+	q.collision_mask = 1
+	q.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+
+
+func _couch_input(event: InputEvent) -> void:
+	var tv: CameraWall = Game.tv
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var s: float = Settings.get_v("mouse_sensitivity") * 0.01
+		var inv := -1.0 if Settings.get_v("invert_y") else 1.0
+		_couch_yaw = clampf(_couch_yaw - event.relative.x * s, deg_to_rad(-110.0), deg_to_rad(110.0))
+		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-55.0), deg_to_rad(60.0))
+	elif event.is_action_pressed("interact") or event.is_action_pressed("jump"):
+		stand_from_couch()
+	elif tv == null:
+		return
+	elif event.is_action_pressed("attack"):
+		if tv.mode == "quad":
+			var tile := tv.tile_under_ray(camera.global_position, -camera.global_basis.z)
+			if tile >= 0:
+				tv.focus_tile(tile)
+	elif event is InputEventMouseButton and event.pressed:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_RIGHT and tv.mode == "focus":
+			tv.back_to_quad()
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and tv.mode == "focus":
+			tv.focus_step(-1)
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and tv.mode == "focus":
+			tv.focus_step(1)
+	elif event is InputEventKey and event.pressed and not event.echo:
+		var k := (event as InputEventKey).physical_keycode
+		match k:
+			KEY_A, KEY_LEFT:
+				if tv.mode == "focus":
+					tv.focus_step(-1)
+			KEY_D, KEY_RIGHT:
+				if tv.mode == "focus":
+					tv.focus_step(1)
+			KEY_BACKSPACE:
+				if tv.mode == "focus":
+					tv.back_to_quad()
+			KEY_C:
+				tv.cycle_mode()
+			KEY_BRACKETLEFT, KEY_BRACKETRIGHT:
+				# Accessibility: slower swaps or freeze (0 = frozen); saved in Settings.
+				var steps := [0.0, 5.0, 10.0, 20.0, 40.0]
+				var i := maxi(steps.find(tv.interval), 1)
+				i = clampi(i + (1 if k == KEY_BRACKETRIGHT else -1), 0, steps.size() - 1)
+				tv.set_interval(steps[i])
+				Settings.set_v("tv_interval", steps[i])
+				show_message("Camera wall: " + ("frozen (no automatic swaps)" if steps[i] == 0.0 else "one tile every %d s" % int(steps[i])))
+			KEY_M:
+				tv.set_mic_muted(not tv.mic_muted)
+				show_message("Camera microphones %s (the room still sounds normal)." % ("muted" if tv.mic_muted else "on"))
+			KEY_MINUS, KEY_KP_SUBTRACT:
+				tv.set_volume(tv.tv_volume - 0.1)
+				show_message("TV volume %d%%" % roundi(tv.tv_volume * 100.0))
+			KEY_EQUAL, KEY_KP_ADD:
+				tv.set_volume(tv.tv_volume + 0.1)
+				show_message("TV volume %d%%" % roundi(tv.tv_volume * 100.0))
+			KEY_P:
+				tv.set_power(not tv.powered)
+			KEY_1, KEY_2, KEY_3, KEY_4:
+				if tv.mode == "quad":
+					tv.focus_tile(k - KEY_1)
+
+
+func _couch_process(delta: float) -> void:
+	_sit_blend = minf(_sit_blend + delta / 0.45, 1.0)
+	var eye := couch.global_transform * Vector3(0, 0.62, 0.12)
+	var e := smoothstep(0.0, 1.0, _sit_blend)
+	global_position = _sit_from.lerp(eye, e) - Vector3(0, head.position.y, 0)
+	rotation = Vector3(0, couch.global_rotation.y + _couch_yaw, 0)
+	head.rotation = Vector3(_pitch, 0, 0)
+	velocity = Vector3.ZERO
+
+
+func refresh_interaction() -> void:
+	_interact_target = null
+
+
 func try_pick_up(body: TimberBody) -> void:
 	carry.try_pick_up(body)
 
@@ -272,6 +417,9 @@ func reset_to_safe() -> void:
 func _physics_process(delta: float) -> void:
 	if vehicle != null:
 		_vehicle_process(delta)
+		return
+	if couch != null:
+		_couch_process(delta)
 		return
 	if fly_mode:
 		_fly(delta)

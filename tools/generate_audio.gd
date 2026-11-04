@@ -37,6 +37,14 @@ func _init() -> void:
 		_save("tree_impact_%d" % v, _impact(v), false)
 	_save("tree_crack", _crack(), false)
 	_save("tree_rustle", _whoosh(9, 1.6, 1800.0, 4500.0, 0.4), false)
+	# Dog (Phase 5) - separate seed so earlier sounds are unchanged.
+	rng.seed = 505
+	for v in 2:
+		_save("dog_whine_%d" % v, _whine(v), false)
+		_save("dog_bark_%d" % v, _bark(v), false)
+	_save("dog_growl", _growl(), false)
+	_save("dog_flap", _flap(), false)
+	_save("dog_pant", _pant(2.0), true)
 	print("audio generated")
 	quit()
 
@@ -447,3 +455,79 @@ func _click() -> PackedFloat32Array:
 		var t := float(i) / RATE
 		d.append(sin(TAU * 1800.0 * t) * exp(-t * 120.0))
 	return d
+
+
+# ------------------------------------------------------------------ dog
+
+## Soft nasal whine: a gliding tone with harmonics and a little vibrato.
+func _whine(v: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var dur := 0.7 + v * 0.35
+	var n := int(dur * RATE)
+	var f0 := 820.0 + v * 140.0
+	var phase := 0.0
+	var bp := _bq("bandpass", 1400.0, 1.2)
+	for i in n:
+		var t := float(i) / n
+		var f := f0 * (1.0 + 0.25 * sin(PI * t)) - 180.0 * t * t + 18.0 * sin(TAU * 6.0 * float(i) / RATE)
+		phase += TAU * f / RATE
+		var env := smoothstep(0.0, 0.12, t) * (1.0 - smoothstep(0.7, 1.0, t))
+		var x := sin(phase) + 0.45 * sin(phase * 2.0) + 0.2 * sin(phase * 3.0) + 0.05 * _white()
+		d.append(bp.run(x) * env + x * 0.15 * env)
+	return d
+
+
+## A low, muffled woof: short noisy formant burst over a falling pitch.
+func _bark(v: int) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var n := int((0.22 + v * 0.05) * RATE)
+	var phase := 0.0
+	var lp := _bq("lowpass", 1300.0, 0.9)
+	var bp := _bq("bandpass", 650.0 + v * 120.0, 2.0)
+	for i in n:
+		var t := float(i) / n
+		var f := lerpf(330.0 + v * 40.0, 190.0, t)
+		phase += TAU * f / RATE
+		var env := smoothstep(0.0, 0.05, t) * exp(-t * 4.0)
+		var src := signf(sin(phase)) * 0.6 + sin(phase) * 0.4 + _white() * 0.35
+		d.append((lp.run(src) * 0.6 + bp.run(src) * 0.8) * env)
+	return d
+
+
+## Low rumbling growl: amplitude-modulated filtered noise plus a buzz.
+func _growl() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var n := int(1.3 * RATE)
+	var lp := _bq("lowpass", 420.0, 1.1)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / n
+		phase += TAU * (95.0 + 10.0 * sin(TAU * 1.5 * t)) / RATE
+		var am := 0.6 + 0.4 * sin(TAU * 23.0 * float(i) / RATE)
+		var env := smoothstep(0.0, 0.15, t) * (1.0 - smoothstep(0.75, 1.0, t))
+		d.append(lp.run(_white() * 0.8 + signf(sin(phase)) * 0.5) * am * env)
+	return d
+
+
+## Dog flap swinging closed: a light plastic clack and rattle.
+func _flap() -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var bp := _bq("bandpass", 2300.0, 3.0)
+	for i in int(0.35 * RATE):
+		var t := float(i) / RATE
+		var hit := exp(-t * 60.0) + 0.5 * exp(-maxf(t - 0.11, 0.0) * 70.0) * (1.0 if t > 0.11 else 0.0) + 0.25 * exp(-maxf(t - 0.19, 0.0) * 80.0) * (1.0 if t > 0.19 else 0.0)
+		d.append(bp.run(_white()) * hit)
+	return d
+
+
+## Gentle panting loop (two breaths per second).
+func _pant(sec: float) -> PackedFloat32Array:
+	var d := PackedFloat32Array()
+	var n := int(sec * RATE)
+	var bp := _bq("bandpass", 1800.0, 0.8)
+	for i in n:
+		var t := float(i) / RATE
+		var ph := fposmod(t * 2.2, 1.0)
+		var env := pow(sin(PI * ph), 3.0) * (1.0 if ph < 0.5 else 0.6)
+		d.append(bp.run(_white()) * env)
+	return _loopify(d, int(0.05 * RATE))
