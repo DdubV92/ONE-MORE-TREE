@@ -153,6 +153,13 @@ func _ready() -> void:
 	var off := OffshoreSurvey.new()
 	add_child(off)
 	Game.offshore = off
+	# Phase 20: missed-night recordings and rare sleep interruptions.
+	var nr := NightRecorder.new()
+	add_child(nr)
+	Game.night_recorder = nr
+	var si := SleepInterrupts.new()
+	add_child(si)
+	Game.sleep_interrupts = si
 	comfort = CamperComfort.new()
 	comfort.name = "CamperComfort"
 	add_child(comfort)

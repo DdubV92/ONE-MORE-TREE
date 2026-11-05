@@ -634,6 +634,23 @@ static func speaking(actor: Node3D) -> bool:
 
 # ------------------------------------------------------------------ replay
 
+## Phase 20: stops a replay (pause/seek): pending RECORDING events are
+## dropped and playing RECORDING voices released. Never touches live sound.
+static func cancel_replay() -> int:
+	var s := instance()
+	if s == null:
+		return 0
+	var n := 0
+	s._delayed = s._delayed.filter(func(d: Array) -> bool: return int((d[3] as Dictionary).get("origin", Origin.WORLD)) != Origin.RECORDING)
+	for v in s.voices:
+		var vv := v as Voice
+		if vv.busy and vv.origin == Origin.RECORDING:
+			vv.p.stop()
+			s._release(vv)
+			n += 1
+	return n
+
+
 ## Replays recorded world events through a local speaker (desk monitor):
 ## RECORDING origin - no live evidence, no capture, no recorder entry, no
 ## gameplay. `t0` = the record time that maps to "now"; returns voices.

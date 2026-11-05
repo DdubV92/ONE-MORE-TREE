@@ -61,6 +61,8 @@ jobs:
   windows-build:
     name: Windows test build
     needs: validate
+    outputs:
+      label: ${{ steps.label.outputs.label }}
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/phase-')))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -95,7 +97,7 @@ jobs:
           DEST=~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE}
           mkdir -p "$DEST"
           curl -fsSL -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_RELEASE}/Godot_v${GODOT_VERSION}-${GODOT_RELEASE}_export_templates.tpz"
-          unzip -j -o /tmp/templates.tpz "templates/version.txt" "templates/windows_release_x86_64.exe" "templates/windows_release_x86_64_console.exe" "templates/windows_debug_x86_64.exe" "templates/windows_debug_x86_64_console.exe" -d "$DEST"
+          unzip -j -o /tmp/templates.tpz "templates/version.txt" "templates/windows_release_x86_64.exe" "templates/windows_release_x86_64_console.exe" "templates/windows_debug_x86_64.exe" "templates/windows_debug_x86_64_console.exe" "templates/linux_release.x86_64" "templates/linux_debug.x86_64" -d "$DEST"
           rm /tmp/templates.tpz
           cat "$DEST/version.txt"
 
@@ -127,6 +129,21 @@ jobs:
           test -f build/windows/OneMoreTree.exe
           test -f build/windows/OneMoreTree.pck
 
+      - name: Export Linux x86_64 and launch it from a clean folder (Phase 20 RC smoke)
+        run: |
+          mkdir -p build/linux
+          timeout 900 ~/godot/godot --headless --export-release "Linux" build/linux/OneMoreTree.x86_64
+          ls -la build/linux
+          CLEAN=$(mktemp -d)
+          cp build/linux/OneMoreTree.x86_64 build/linux/OneMoreTree.pck "$CLEAN"/
+          cd "$CLEAN"
+          chmod +x OneMoreTree.x86_64
+          timeout 900 ./OneMoreTree.x86_64 --headless -- --rc-smoke 2>&1 | tee smoke.log | grep -E "RC_SMOKE|ERROR" || true
+          grep -q "RC_SMOKE PASS" smoke.log
+
+      - name: Add notices
+        run: cp docs/NOTICES.txt build/windows/NOTICES.txt
+
       - name: Add tester readme
         run: |
           cat > build/windows/README.txt <<EOF
@@ -148,3 +165,30 @@ jobs:
           path: build/windows/
           retention-days: 30
           compression-level: 6
+
+  windows-launch:
+    name: Launch the Windows build from a clean folder (Phase 20 RC smoke)
+    needs: windows-build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download the exact test build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.windows-build.outputs.label }} - build ${{ github.run_number }} (Windows)
+          path: ${{ runner.temp }}\rc
+      - name: Contents
+        shell: pwsh
+        run: Get-ChildItem "$env:RUNNER_TEMP\rc" | Format-Table Name, Length
+      - name: Offline boot, settings, new standard campaign, controls, save, load, quit
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "rc"
+          $exe = Join-Path $dir "OneMoreTree.console.exe"
+          if (-not (Test-Path $exe)) { $exe = Join-Path $dir "OneMoreTree.exe" }
+          & $exe --headless -- --rc-smoke *>&1 | Tee-Object -FilePath smoke.log | Select-String "RC_SMOKE"
+          $rep = Join-Path $env:APPDATA "Godot\app_userdata\One More Tree\rc_smoke.json"
+          if (Test-Path $rep) { Get-Content $rep }
+          if (-not (Select-String -Path smoke.log -Pattern "RC_SMOKE PASS" -Quiet)) {
+            if (-not ((Test-Path $rep) -and ((Get-Content $rep -Raw) -match '"result": "PASS"'))) { exit 1 }
+          }

@@ -1,0 +1,35 @@
+ONE MORE TREE - notices and attributions (test build)
+
+Engine
+  Godot Engine 4.5.1-stable (MIT License). Copyright (c) 2014-present Godot Engine
+  contributors; (c) 2007-2014 Juan Linietsky, Ariel Manzur. https://godotengine.org/license
+  The Godot export templates include third-party components listed at
+  https://github.com/godotengine/godot/blob/4.5.1-stable/COPYRIGHT.txt
+
+Third-party assets
+  Poly Haven (CC0 1.0, https://polyhaven.com/license): the furniture, tool, storage,
+  lighting and outdoor models and the surface textures listed in docs/ASSET_PROVENANCE.md
+  and assets/polyhaven/provenance.json (some baked into derived textures). CC0 requires no
+  attribution; it is given here as a courtesy.
+
+  Adobe Mixamo motion (owner-supplied): five animations retargeted onto this game's own
+  rig. Only the derived per-joint rotations ship (data/anim/mixamo_retarget.json); the raw
+  Mixamo files are not distributed.
+
+Original to this project
+  Island, terrain, trees, rocks, buildings, characters and animations, the survey vessel,
+  helicopter, field sheds and other models; all shaders; every sound effect and ambience
+  (procedural synthesis, no field recordings); all written text (crew dialogue, the fictional
+  internet, offshore observations, night recordings and interruptions).
+
+Voices
+  Crew voices are ORIGINAL SYNTHETIC VOICES generated offline with eSpeak NG (formant
+  synthesis). No recorded performer, no cloned or imitated real person. eSpeak NG
+  (GPL-3.0-or-later) is a development tool only and is NOT included in this build; its
+  generated speech carries no license restriction.
+
+Fiction
+  All people, companies, vessels, accounts and places are fictional. The offshore vessel and
+  helicopter carry no real markings or affiliation.
+
+Details: docs/ASSET_PROVENANCE.md and docs/editorial/VOICE_CAST.md in the repository.

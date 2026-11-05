@@ -505,7 +505,7 @@ func rotate_once() -> void:
 	_last_removed = old
 	tiles[tile] = pick
 	_place(_quad_cams[tile], pick)
-	_tile_labels[tile].text = "%s  %s" % [cam_id(pick), cam_name(pick)]
+	_tile_labels[tile].text = "LIVE  %s  %s" % [cam_id(pick), cam_name(pick)]
 	_next_tile = (_next_tile + 1) % 4
 	_update_anchors()
 
@@ -542,7 +542,7 @@ func _update_remote_weather() -> void:
 func _apply_tiles() -> void:
 	for i in 4:
 		_place(_quad_cams[i], tiles[i])
-		_tile_labels[i].text = "%s  %s" % [cam_id(tiles[i]), cam_name(tiles[i])]
+		_tile_labels[i].text = "LIVE  %s  %s" % [cam_id(tiles[i]), cam_name(tiles[i])]
 
 
 func _place(cam: Camera3D, index: int) -> void:

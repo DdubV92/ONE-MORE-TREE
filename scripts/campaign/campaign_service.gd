@@ -263,6 +263,8 @@ func can_sleep() -> Dictionary:
 		return {"ok": false, "reason": "The contract has ended."}
 	if _sleeping:
 		return {"ok": false, "reason": ""}
+	if Game.sleep_interrupts and Game.sleep_interrupts.busy():
+		return {"ok": false, "reason": ""}
 	if Game.dog_rescue and Game.dog_rescue.blocks_sleep():
 		var dr: DogRescue = Game.dog_rescue
 		var left := maxf(DogRescue.ASSIST_AFTER - dr.t, 0.0) if dr.state == "SEARCH" else -1.0
@@ -287,6 +289,10 @@ func sleep() -> Dictionary:
 		contract._close_deadline()
 		_sleeping = false
 		return {"ok": true, "terminal": true}
+	# Phase 20: the night may leave a camera recording - decided once, staged
+	# from the world as it is now, BEFORE the morning settlement.
+	if Game.night_recorder:
+		Game.night_recorder.on_night(d)
 	var settlement := payroll.settle_day(d)
 	# Phase 16: the night's recovery, once per day (same locked transition).
 	var rest_night: Dictionary = Game.rest.on_sleep(d) if Game.rest else {}
@@ -299,6 +305,10 @@ func sleep() -> Dictionary:
 	var report := build_report(d, settlement)
 	if not rest_night.is_empty():
 		report["rest"] = rest_night
+	var night_note := Game.sleep_interrupts.morning_note(d) if Game.sleep_interrupts else ""
+	var rec_id := str(Game.night_recorder.nights.get(str(d), "")) if Game.night_recorder else ""
+	if night_note != "" or rec_id != "":
+		report["night"] = {"interruption": night_note, "recording": rec_id}
 	# Phase 16: the crew review is a SNAPSHOT stored with the report, so
 	# reopening it never re-awards merit, pays or resets anything.
 	if Game.crew and Game.crew.enabled:
@@ -316,6 +326,8 @@ func sleep() -> Dictionary:
 		Game.director.morning_cleanup()
 	if Game.threat:
 		Game.threat.on_morning()
+	if Game.night_recorder:
+		Game.night_recorder.on_morning()
 	if Game.world_root and Game.world_root.has_method("save_campaign"):
 		Game.world_root.save_campaign()
 		Game.world_root.save_checkpoint("morning")

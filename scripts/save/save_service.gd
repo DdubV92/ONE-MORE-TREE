@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 13
+const SCHEMA_VERSION := 14
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -188,6 +188,10 @@ static func capture_state(world: Node) -> Dictionary:
 		# crew's day routine (roles, transport plan, midday break).
 		"phase19": {"offshore": Game.offshore.capture() if Game.offshore else {},
 			"routine": Game.crew.routine.capture() if Game.crew and Game.crew.routine else {}},
+		# Phase 20: missed-night recordings (clips, decided nights, marks) and
+		# sleep interruptions (state, one-shot nights, cooldowns).
+		"phase20": {"recordings": Game.night_recorder.capture_state() if Game.night_recorder else {},
+			"sleep": Game.sleep_interrupts.capture_state() if Game.sleep_interrupts else {}},
 		"time_of_day": env.get("hour") if env else 12.0,
 		# Modified original trees only, keyed by stable ID (state, notch work,
 		# cut side, fall intent, felled guard, trunk pose/velocity).
@@ -388,6 +392,11 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# visit day simply happens), no routine yet (planned next morning).
 		data["phase19"] = {}
 		data["schema"] = 13
+		v = 13
+	if v == 13:
+		# Phase 19 saves: no recordings or interruptions yet.
+		data["phase20"] = {}
+		data["schema"] = 14
 	return data
 
 
@@ -442,6 +451,11 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 		Game.offshore.restore(p19.get("offshore", {}))
 	if Game.crew and Game.crew.routine:
 		Game.crew.routine.restore(p19.get("routine", {}))
+	var p20: Dictionary = data.get("phase20", {})
+	if Game.night_recorder:
+		Game.night_recorder.restore_state(p20.get("recordings", {}))
+	if Game.sleep_interrupts:
+		Game.sleep_interrupts.restore_state(p20.get("sleep", {}))
 	var hunt_n: Object = world.get("hunt")
 	if hunt_n and str((p6.get("hunt", {}) as Dictionary).get("mode", "none")) != "none":
 		hunt_n.set("pending_restore", true)

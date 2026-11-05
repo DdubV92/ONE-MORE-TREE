@@ -30,6 +30,10 @@ func interact(by: Node) -> void:
 	var c: CampaignService = Game.campaign
 	if c == null or not c.active or blocked_reason != "":
 		return
+	# Phase 20: a rare interruption may play first (then sleep is available
+	# again and the night settles once, normally).
+	if Game.sleep_interrupts and Game.sleep_interrupts.intercept(by):
+		return
 	var res := c.sleep()
 	if not bool(res.get("ok", false)) and by.has_method("show_message") and str(res.get("reason", "")) != "":
 		by.show_message(str(res.reason))

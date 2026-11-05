@@ -32,6 +32,8 @@ var rest: RestService                # Phase 16 player restedness
 var feed: FeedService                # Phase 17 fictional internet (camper computer)
 var offshore: OffshoreSurvey         # Phase 19 offshore survey visits (ambient)
 var survival_cover: SurvivalCover    # Phase 19 extra hides + region audit
+var night_recorder: NightRecorder    # Phase 20 missed-night recordings
+var sleep_interrupts: SleepInterrupts  # Phase 20 rare sleep interruptions
 var trees: TreeService
 var timber: TimberService
 var yard: YardService                # Phase 13 logging yard
@@ -66,6 +68,9 @@ var startup_ms := 0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	startup_ms = Time.get_ticks_msec()
+	# Phase 20: release-candidate smoke route for exported builds.
+	if "--rc-smoke" in OS.get_cmdline_user_args():
+		add_child(RCSmoke.new())
 
 
 func _process(delta: float) -> void:

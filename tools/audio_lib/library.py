@@ -471,6 +471,43 @@ def rotor_beat(g):
     return loopify(y, 0.5)
 
 
+def door_impact(g):
+    """Phase 20: one heavy blow on a light camper door - a dull low thud,
+    the panel's ring, the latch and frame rattling, then nothing."""
+    sec = 1.4
+    n = int(sec * RATE)
+    y = modal(sec, [62, 118, 236, 410, 760], [0.22, 0.16, 0.09, 0.05, 0.03], [1.0, 0.7, 0.45, 0.25, 0.15], g, "soft", 0.006)
+    y += 0.6 * lp(white(n, g), 260) * env_exp(n, 0.05, 0.001)
+    rattle = padto(grains(0.35, 55, g, lambda gg: click_grain(gg, 900, 3200, (0.002, 0.006), (0.1, 0.4))), n)
+    y += 0.35 * np.roll(rattle, int(0.03 * RATE))
+    return fade(y, 0.001, 0.2)
+
+
+def far_call(g):
+    """Phase 20: a faint two-syllable call from outside, distance-filtered;
+    no words, no identifiable voice."""
+    sec = 1.25
+    n = int(sec * RATE)
+    t = np.arange(n) / RATE
+    env = np.clip(np.sin(np.pi * np.clip(t / 0.5, 0, 1)), 0, 1) * (t < 0.5) + np.clip(np.sin(np.pi * np.clip((t - 0.62) / 0.55, 0, 1)), 0, 1) * (t >= 0.62)
+    curve = lambda u: np.where(u < 0.45, 1.05 - 0.1 * u, 0.92 - 0.12 * (u - 0.45))
+    y = formant(sec, 168, [(560, 9, 1.0), (1150, 10, 0.5), (2450, 12, 0.15)], g, breath=0.25, vibrato=0.01, f0_curve=curve, amp_env=env)
+    y = lp(y, 1400, 2) + 0.02 * bp(white(n, g), 300, 900)
+    return fade(y, 0.01, 0.1)
+
+
+def cam_alert_chime(g):
+    """Phase 20: the desk computer's soft two-tone camera alert."""
+    sec = 0.7
+    n = int(sec * RATE)
+    t = np.arange(n) / RATE
+    a = np.sin(2 * np.pi * 880 * t) * env_exp(n, 0.12, 0.004) * (t < 0.3)
+    b = np.sin(2 * np.pi * 660 * t) * env_exp(n, 0.2, 0.004)
+    b = np.roll(b, int(0.22 * RATE))
+    b[: int(0.22 * RATE)] = 0
+    return fade(0.6 * a + 0.5 * b, 0.002, 0.08)
+
+
 # ---------------------------------------------------------- movement / dog
 
 def cloth(v):
@@ -1209,6 +1246,9 @@ def build_catalog():
     add("vehicle", "skiff_outboard_loop", True, "outboard engine + water", outboard)
     add("vehicle", "ship_diesel_far_loop", True, "large marine diesel far offshore (Phase 19)", ship_diesel)
     add("vehicle", "rotor_beat_loop", True, "helicopter rotor slap + turbine (Phase 19)", rotor_beat)
+    add("horror", "door_impact", False, "one heavy blow on the camper door (Phase 20)", door_impact)
+    add("horror", "far_call", False, "faint two-syllable call, distance-filtered (Phase 20)", far_call)
+    add("domestic", "cam_alert_chime", False, "desk camera alert chime (Phase 20)", cam_alert_chime)
     # MOVEMENT / DOG (25)
     for v in range(3):
         add("movement", "cloth_rustle_%d" % v, False, "cloth band noise + fibre ticks", cloth(v))

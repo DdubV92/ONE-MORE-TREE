@@ -407,6 +407,18 @@
   "seconds": 2.879,
   "seed": 2033135405
  },
+ "cam_alert_chime": {
+  "auditioned": false,
+  "category": "domestic",
+  "file": "res://audio/lib/domestic/cam_alert_chime.wav",
+  "license": "project original",
+  "loop": false,
+  "model": "desk camera alert chime (Phase 20)",
+  "origin": "original procedural synthesis (tools/audio_lib)",
+  "recording": false,
+  "seconds": 0.7,
+  "seed": 1593847430
+ },
  "cargo_log_thud": {
   "auditioned": false,
   "category": "vehicle",
@@ -755,6 +767,18 @@
   "seconds": 1.27,
   "seed": 3230057801
  },
+ "door_impact": {
+  "auditioned": false,
+  "category": "horror",
+  "file": "res://audio/lib/horror/door_impact.wav",
+  "license": "project original",
+  "loop": false,
+  "model": "one heavy blow on the camper door (Phase 20)",
+  "origin": "original procedural synthesis (tools/audio_lib)",
+  "recording": false,
+  "seconds": 1.4,
+  "seed": 1721707465
+ },
  "door_latch": {
   "auditioned": false,
   "category": "domestic",
@@ -886,6 +910,18 @@
   "recording": false,
   "seconds": 4.6,
   "seed": 2085175029
+ },
+ "far_call": {
+  "auditioned": false,
+  "category": "horror",
+  "file": "res://audio/lib/horror/far_call.wav",
+  "license": "project original",
+  "loop": false,
+  "model": "faint two-syllable call, distance-filtered (Phase 20)",
+  "origin": "original procedural synthesis (tools/audio_lib)",
+  "recording": false,
+  "seconds": 1.249,
+  "seed": 1325676022
  },
  "fence_rattle": {
   "auditioned": false,

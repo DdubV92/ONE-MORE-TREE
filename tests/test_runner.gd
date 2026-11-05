@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P20"):
+		_run("phase 20 units", _t_phase20_units)
+		await _run_async("phase 20 night world", _t_phase20_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P19"):
 		_run("phase 19 units", _t_phase19_units)
 		await _run_async("phase 19 offshore world", _t_phase19_world)
@@ -5877,4 +5883,284 @@ func _p19_routine() -> String:
 	r2.restore(JSON.parse_string(JSON.stringify(cap)))
 	if r2.roles != r.roles or str(r2.brk.state) != "done":
 		return "routine save/restore wrong"
+	return ""
+
+
+# ---------------------------------------------------------------- Phase 20
+
+func _t_phase20_units() -> String:
+	var rec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/terror/recordings.json"))
+	var sc: Array = rec.get("scenarios", [])
+	if sc.size() < 36:
+		return "recording scenarios %d < 36" % sc.size()
+	var beats := {}
+	var cams := ["CAM_01", "CAM_02", "CAM_03", "CAM_04", "CAM_05", "CAM_06", "CAM_07", "CAM_08", "CAM_09", "CAM_10"]
+	for s in sc:
+		for k in ["id", "cameras", "requires", "hour", "duration", "actor", "props", "audio", "consequence", "cooldown", "beat"]:
+			if not s.has(k):
+				return "%s lacks %s" % [s.get("id", "?"), k]
+		beats[str(s.beat)] = true
+		for c in s.cameras:
+			if not cams.has(str(c)):
+				return "%s: unknown camera %s" % [s.id, c]
+		for a in s.audio:
+			if not SoundBank.EVENTS.has(str(a[1])):
+				return "%s: unknown sound %s" % [s.id, a[1]]
+	if beats.size() != sc.size():
+		return "duplicate dramatic beats"
+	var si: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/terror/sleep_interruptions.json"))
+	var qs: Array = si.get("sequences", [])
+	if qs.size() < 24:
+		return "sleep interruptions %d < 24" % qs.size()
+	for q in qs:
+		for st in q.steps:
+			if not SoundBank.EVENTS.has(str(st[1])):
+				return "%s: unknown sound %s" % [q.id, st[1]]
+			if float(st[3]) > 2.0:
+				return "%s: unbounded gain" % q.id
+		if str(q.caption) == "":
+			return "%s: no caption for muted play" % q.id
+	return ""
+
+
+func _t_phase20_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or Game.campaign == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 20:
+		await get_tree().physics_frame
+	var err := await _p20_checks(world)
+	print("P20 REPORT ", JSON.stringify(p20_report))
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+var p20_report := {}
+
+
+func _p20_checks(world: IslandWorld) -> String:
+	var cs: CampaignService = Game.campaign
+	cs.start_test_route(true, true)
+	var g := 0
+	while Game.crew.workers.size() < 2 and g < 900:
+		await get_tree().physics_frame
+		g += 1
+	cs.clock.day = 6
+	var nr: NightRecorder = Game.night_recorder
+	var si: SleepInterrupts = Game.sleep_interrupts
+	if nr == null or si == null:
+		return "night services missing"
+	# Fixture for prerequisites, staged in the real world: a truck in its
+	# bay, weather per scenario, and (cleared alternatives) real felling
+	# around each camera plus a labelled cleared-percentage override.
+	if (Game.vehicles.trucks as Dictionary).is_empty():
+		Game.vehicles._spawn("TRUCK_FX", Game.vehicles.bay_pose(0))
+	await get_tree().physics_frame
+	var wallet0: int = cs.wallet.cash
+	var ok := []
+	var fail := {}
+	for s in nr.scenarios:
+		var req: Array = s.requires
+		var wx := "clear"
+		if req.has("rain"):
+			wx = "light_rain"
+		elif req.has("wind"):
+			wx = "storm"
+		Game.weather.set_override(wx, true)
+		var removed := []
+		if req.has("open_ground"):
+			for cid in s.cameras:
+				var cam := nr.camera(str(cid))
+				if cam == null:
+					continue
+				var p: Vector3 = cam.global_position + (-cam.global_basis.z) * 45.0
+				for i in World.tree_count():
+					var id := int(World.trees.id[i])
+					if not World.removed_trees.has(id) and Vector2(World.trees.x[i] - p.x, World.trees.z[i] - p.z).length() < 40.0:
+						World.removed_trees[id] = true
+						removed.append(id)
+		nr.set_meta("fixture_cleared", req.has("cleared>=40"))
+		var clip := nr.on_night(cs.clock.day, str(s.id))
+		for id in removed:
+			World.removed_trees.erase(id)
+		nr.remove_meta("fixture_cleared")
+		if clip.is_empty():
+			fail[str(s.id)] = nr.stats.rejected.duplicate()
+			nr.stats.rejected.clear()
+		else:
+			ok.append([str(s.id), str(clip.camera)])
+	Game.weather.set_override("", true)
+	p20_report["recordings"] = {"captured": ok.size(), "of": nr.scenarios.size(), "failed": fail}
+	if not fail.is_empty():
+		return "scenarios that could not be staged: %s" % str(fail)
+	if cs.wallet.cash != wallet0:
+		return "a night incident changed the money"
+	# Morning: notice + cosmetic mark, gone by midday.
+	var marked := nr.clip_by_id(str(nr.clips[nr.clips.size() - 1].id))
+	nr.marks.clear()
+	nr.pending_notice.clear()
+	var mclip := nr.on_night(cs.clock.day + 3, "rec09")
+	cs.clock.day = int(mclip.day) + 1        # as in sleep(): morning after the night
+	cs.clock.t = 100.0
+	nr.on_morning()
+	var marks_morning := get_tree().get_nodes_in_group("night_marks").size()
+	cs.clock.t = 500.0
+	nr.refresh_marks()
+	await get_tree().process_frame
+	var marks_noon := get_tree().get_nodes_in_group("night_marks").filter(func(n: Node) -> bool: return not n.is_queued_for_deletion()).size()
+	p20_report["marks"] = [marks_morning, marks_noon]
+	if marks_morning < 1 or marks_noon != 0:
+		return "cosmetic marks %d at dawn / %d at noon" % [marks_morning, marks_noon]
+	cs.clock.day = 6
+	cs.clock.t = 100.0
+	# Reconstruction: historic trees, deterministic seek, no side effects.
+	var clip: Dictionary = {}
+	for c in nr.clips:
+		if str(c.actor.kind) == "figure":
+			clip = c
+			break
+	var pl := RecordingPlayer.new()
+	add_child(pl)
+	var mon := get_tree().get_nodes_in_group("camper_monitor")
+	pl.speaker = mon[0] if not mon.is_empty() else null
+	pl.load_clip(clip)
+	var shown0 := int(pl.get_meta("trees_shown", 0))
+	# Fell a tree near that camera AFTER the capture: playback must still
+	# show it (it stood that night).
+	var cpos := Vector3(clip.xform[0], clip.xform[1], clip.xform[2])
+	var fell_id := -1
+	for i in World.tree_count():
+		var id2 := int(World.trees.id[i])
+		if not World.removed_trees.has(id2) and World.is_native(id2) and World.tree_position(i).distance_to(cpos) < 50.0:
+			fell_id = id2
+			World.removed_trees[id2] = true
+			break
+	pl.load_clip(clip)
+	var shown1 := int(pl.get_meta("trees_shown", 0))
+	World.removed_trees.erase(fell_id)
+	var a1 := pl.pose(3.0)
+	pl.seek(7.0)
+	pl.seek(3.0)
+	var a2 := pl.pose(3.0)
+	pl.play()
+	await get_tree().process_frame
+	var pending := SoundService.instance()._delayed.filter(func(d: Array) -> bool: return int((d[3] as Dictionary).get("origin", 0)) == SoundService.Origin.RECORDING).size()
+	pl.pause()
+	var after := SoundService.instance()._delayed.filter(func(d: Array) -> bool: return int((d[3] as Dictionary).get("origin", 0)) == SoundService.Origin.RECORDING).size()
+	p20_report["playback"] = {"trees_shown": shown0, "after_later_felling": shown1, "camp_meshes": pl.get_meta("camp_meshes", 0), "seek_same": JSON.stringify(a1) == JSON.stringify(a2), "replay_events": pending, "after_pause": after}
+	pl.queue_free()
+	if shown1 != shown0:
+		return "playback lost a tree felled after the recording (%d -> %d)" % [shown0, shown1]
+	if JSON.stringify(a1) != JSON.stringify(a2):
+		return "seek is not deterministic"
+	if after != 0:
+		return "pause left replayed sound pending"
+	if cs.wallet.cash != wallet0:
+		return "playback changed the money"
+	# Save/load: clips and decided nights persist; no re-roll.
+	var st := nr.capture_state()
+	var n2 := NightRecorder.new()
+	add_child(n2)
+	n2.restore_state(JSON.parse_string(JSON.stringify(st)))
+	var re := n2.on_night(int(mclip.day))
+	var same := n2.clips.size() == nr.clips.size() and re.is_empty()
+	n2.queue_free()
+	if not same:
+		return "recordings did not survive a reload or a night re-rolled"
+	# ---- sleep interruptions
+	var player := Game.player as Node3D
+	var home := player.global_position
+	var door := Game.world_root.find_child("CamperDoor", true, false)
+	var door_open0 = door.get("is_open") if door else null
+	cs.clock.day = 9
+	cs.clock.t = WorkdayClock.DAYLIGHT_SECONDS + 399.0
+	cs.clock.advance(1.0)               # let the clock reach its night phase
+	si.rolled.clear()
+	si.state = "idle"
+	var day0 := cs.clock.day
+	var reports0 := cs.reports.size()
+	si.start("si01", day0)
+	var seen := [si.state]
+	var played0 := int(SoundService.instance().stats.played)
+	for k in 200:
+		si.step(0.1)
+		if seen[seen.size() - 1] != si.state:
+			seen.append(si.state)
+		if si.state == "available":
+			break
+	var played := int(SoundService.instance().stats.played) - played0
+	var can_mid := cs.can_sleep()
+	var moved := player.global_position.distance_to(home)
+	var door_open1 = door.get("is_open") if door else null
+	p20_report["sleep"] = {"states": seen, "sounds": played, "moved_m": snappedf(moved, 0.01), "door_open": [door_open0, door_open1]}
+	if seen != ["settling", "interrupted", "resolving", "available"]:
+		return "interruption states %s" % str(seen)
+	if played < 1:
+		return "interruption played no sound"
+	if moved > 0.05 or door_open0 != door_open1:
+		return "interruption moved the boss or opened the door"
+	if not bool(can_mid.ok):
+		return "sleep not available after the interruption: %s" % str(can_mid.get("reason", ""))
+	# The next sleep request settles once (no second roll that night).
+	var consumed := si.intercept(player)
+	var res := cs.sleep()
+	p20_report["sleep"]["settled"] = [consumed, bool(res.get("ok", false)), cs.reports.size() - reports0, cs.clock.day - day0]
+	if consumed or not bool(res.get("ok", false)) or cs.reports.size() - reports0 != 1 or cs.clock.day - day0 != 1:
+		return "sleep after an interruption did not settle exactly once"
+	# Mid-sequence save resumes as "available" without another interruption.
+	cs.clock.t = WorkdayClock.DAYLIGHT_SECONDS + 399.0
+	cs.clock.advance(1.0)
+	si.start("si05", cs.clock.day)
+	si.step(SleepInterrupts.SETTLE_S + 0.1)
+	var mid := si.capture_state()
+	var s2 := SleepInterrupts.new()
+	add_child(s2)
+	s2.restore_state(JSON.parse_string(JSON.stringify(mid)))
+	var resumed := s2.state
+	s2.queue_free()
+	si.restore_state(JSON.parse_string(JSON.stringify(mid)))
+	var again := si.intercept(player)
+	p20_report["sleep"]["restore"] = [str(mid.state), resumed, again]
+	if resumed != "available" or again:
+		return "interruption save/load did not resume as available"
+	si.state = "idle"
+	# Pacing over a whole contract: rare, spaced, never early or on day 30.
+	var r2 := SleepInterrupts.new()
+	add_child(r2)
+	var days := []
+	var majors := []
+	for d in range(1, 31):
+		cs.clock.day = d
+		var pk := r2.roll(d)
+		if pk != "":
+			r2.start(pk, d)
+			r2.state = "idle"
+			days.append(d)
+			if bool(r2.by_id[pk].major):
+				majors.append(d)
+	r2.queue_free()
+	p20_report["sleep"]["pacing"] = {"nights": days, "majors": majors}
+	for i in range(1, days.size()):
+		if int(days[i]) - int(days[i - 1]) < SleepInterrupts.MIN_GAP + 1:
+			return "interruptions too close: %s" % str(days)
+	for i in range(1, majors.size()):
+		if int(majors[i]) - int(majors[i - 1]) < SleepInterrupts.MAJOR_GAP:
+			return "major interruptions too close: %s" % str(majors)
+	if days.any(func(d: int) -> bool: return d < 4 or d == 30) or days.size() > 8:
+		return "interruption pacing wrong: %s" % str(days)
 	return ""

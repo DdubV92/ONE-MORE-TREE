@@ -18,7 +18,10 @@ extends Node
 ##              live supplier order status from the real order records.
 ##   News, Forums, Archives - Phase 17: the fictional internet published by
 ##              the campaign clock (FeedService / FeedReader).
-##   Recordings - a labelled Phase 19 placeholder (never fake content).
+##   Recordings - Phase 20: the missed-night recording archive (NightRecorder
+##              clips): list, play/pause, seek, previous/next incident,
+##              volume; playback is an isolated reconstruction
+##              (RecordingPlayer), labelled PLAYBACK - never a live view.
 ## A small quad inset keeps the cameras at the edge of attention in other
 ## apps (same four-feed budget: it is the same composite texture).
 ## Live: time keeps running while you use it; the real pause menu pauses.
@@ -27,9 +30,7 @@ signal app_changed(app: String)
 
 const SIZE := Vector2i(1024, 576)
 const APPS := ["Cameras", "Supplier", "Gear", "Mail", "News", "Forums", "Archives", "Recordings"]
-const LATER := {
-	"Recordings": "The camera recording archive arrives in a later update (Phase 19). Nothing is being recorded yet.",
-}
+const LATER := {}
 
 var monitor: Node3D
 var screen: MeshInstance3D
@@ -53,6 +54,13 @@ var _shop_box: VBoxContainer
 var cart: Array = []                # Supplier cart lines {"key", "qty"}
 var _req := [""]                    # current order request id (idempotency)
 var clicks := 0                # tile clicks handled (tests)
+var flagged := {}               # Phase 20: recording ids not yet viewed
+var player: RecordingPlayer     # Phase 20: playback (only while the app is open)
+var rec_index := -1
+var _rec_view: TextureRect
+var _rec_label: Label
+var _rec_seek: HSlider
+var _rec_time: Label
 
 
 func setup() -> void:
@@ -177,6 +185,9 @@ func _build_shell() -> void:
 
 
 func open_app(a: String) -> void:
+	if a != "Recordings" and player:
+		player.queue_free()          # no hidden 3D render when not watching
+		player = null
 	app = a
 	for c in _content.get_children():
 		c.queue_free()
@@ -191,6 +202,8 @@ func open_app(a: String) -> void:
 		"Mail", "News", "Forums", "Archives":
 			# Phase 17: the authored, clock-published internet.
 			FeedReader.build(_content, a, self)
+		"Recordings":
+			_build_recordings()
 		_:
 			var l := UITheme.label(str(LATER.get(a, "")), 18)
 			l.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -202,6 +215,121 @@ func open_app(a: String) -> void:
 	for k in _buttons:
 		(_buttons[k] as Button).modulate = Color(1.2, 1.1, 0.7) if k == a else Color.WHITE
 	app_changed.emit(a)
+
+
+# ------------------------------------------------- Phase 20 recordings
+
+func flag_recording(id: String) -> void:
+	flagged[id] = true
+	var p := monitor.global_position if monitor else NightAnchors.point("desk")
+	if p != Vector3.INF:
+		SoundService.play("desk.cam.alert", p, {"priority": 2})
+
+
+func _clips() -> Array:
+	var cl: Array = Game.night_recorder.clips.duplicate() if Game.night_recorder else []
+	cl.reverse()            # newest first
+	return cl
+
+
+func _build_recordings() -> void:
+	var h := HBoxContainer.new()
+	h.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_content.add_child(h)
+	var list := VBoxContainer.new()
+	list.custom_minimum_size = Vector2(300, 0)
+	h.add_child(list)
+	list.add_child(UITheme.label("Recordings (motion and sound bookmarks)", 16))
+	var clips := _clips()
+	if clips.is_empty():
+		var l := UITheme.label("No recordings yet. When a camp camera flags something on a night you slept through, it is kept here.", 14)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		list.add_child(l)
+	for i in clips.size():
+		var c: Dictionary = clips[i]
+		var txt := "%sNight of day %d  %s  %s (%s)" % ["* " if flagged.has(str(c.id)) else "", int(c.day), str(c.clock), str(c.camera), str(c.bookmark)]
+		list.add_child(UITheme.button(txt, func() -> void: _rec_open(i), 290))
+	var right := VBoxContainer.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(right)
+	_rec_label = UITheme.label("PLAYBACK - pick a recording", 14)
+	_rec_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.35))
+	right.add_child(_rec_label)
+	_rec_view = TextureRect.new()
+	_rec_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_rec_view.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_rec_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var sh := ShaderMaterial.new()
+	sh.shader = Shader.new()
+	sh.shader.code = "shader_type canvas_item;\nuniform float tm = 0.0;\nfloat h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }\nvoid fragment(){ vec4 c = texture(TEXTURE, UV); float g = dot(c.rgb, vec3(0.3,0.59,0.11)); g = pow(g, 0.8) * 1.5; g += (h(UV * 640.0 + tm) - 0.5) * 0.08; float v = smoothstep(0.85, 0.35, distance(UV, vec2(0.5))); COLOR = vec4(vec3(g * 0.85, g, g * 0.85) * v, 1.0); }"
+	_rec_view.material = sh
+	right.add_child(_rec_view)
+	_rec_seek = HSlider.new()
+	_rec_seek.step = 0.1
+	_rec_seek.value_changed.connect(func(v: float) -> void:
+		if player and absf(v - player.t) > 0.25:
+			player.seek(v))
+	right.add_child(_rec_seek)
+	var row := HBoxContainer.new()
+	right.add_child(row)
+	row.add_child(UITheme.button("|< Prev", func() -> void: _rec_open(rec_index + 1), 0))
+	row.add_child(UITheme.button("Play / Pause", _rec_toggle, 0))
+	row.add_child(UITheme.button("Next >|", func() -> void: _rec_open(rec_index - 1), 0))
+	row.add_child(UITheme.button("Vol -", func() -> void: _rec_vol(-3.0), 0))
+	row.add_child(UITheme.button("Vol +", func() -> void: _rec_vol(3.0), 0))
+	_rec_time = UITheme.label("", 14)
+	row.add_child(_rec_time)
+	if not clips.is_empty():
+		_rec_open(0)
+
+
+func _rec_open(i: int) -> void:
+	var clips := _clips()
+	if clips.is_empty():
+		return
+	rec_index = clampi(i, 0, clips.size() - 1)
+	var c: Dictionary = clips[rec_index]
+	flagged.erase(str(c.id))
+	if player == null:
+		player = RecordingPlayer.new()
+		add_child(player)
+	player.speaker = monitor if monitor else null
+	player.load_clip(c)
+	if _rec_view:
+		_rec_view.texture = player.texture()
+	if _rec_seek:
+		_rec_seek.max_value = player.duration
+		_rec_seek.value = 0.0
+	if _rec_label:
+		_rec_label.text = "PLAYBACK (recorded)  %s %s  -  night of day %d, %s  -  %s" % [str(c.camera), str(c.category).replace("_", " "), int(c.day), str(c.clock), str(c.bookmark)]
+
+
+func _rec_toggle() -> void:
+	if player == null:
+		return
+	if player.playing:
+		player.pause()
+	else:
+		player.play()
+
+
+func _rec_vol(d: float) -> void:
+	var i := AudioServer.get_bus_index("Relay")
+	if i >= 0:
+		AudioServer.set_bus_volume_db(i, clampf(AudioServer.get_bus_volume_db(i) + d, -40.0, 6.0))
+
+
+func _rec_tick() -> void:
+	if player == null or app != "Recordings":
+		return
+	if _rec_seek and absf(_rec_seek.value - player.t) > 0.05:
+		_rec_seek.set_value_no_signal(player.t)
+	if _rec_time:
+		var c := player.clip
+		var hour := float(c.get("hour", 0.0)) + player.t / 3600.0
+		_rec_time.text = "%s:%02d  (%.1f / %.1f s)" % [NightAnchors.hhmm(hour), int(fposmod(player.t, 60.0)), player.t, player.duration]
+	if _rec_view and _rec_view.material:
+		(_rec_view.material as ShaderMaterial).set_shader_parameter("tm", Time.get_ticks_msec() * 0.001)
 
 
 func _build_cameras() -> void:
@@ -389,6 +517,7 @@ var _unread_t := 0.0
 func _process(_delta: float) -> void:
 	if monitor == null:
 		return
+	_rec_tick()
 	if seated and not glancing and powered and not get_tree().paused and Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var cs: CampaignService = Game.campaign
@@ -408,10 +537,13 @@ func _process(_delta: float) -> void:
 
 
 func capture() -> Dictionary:
-	return {"app": app, "powered": powered}
+	return {"app": app, "powered": powered, "flagged": flagged.keys()}
 
 
 func restore(d: Dictionary) -> void:
+	flagged.clear()
+	for k in d.get("flagged", []):
+		flagged[str(k)] = true
 	var a := str(d.get("app", "Cameras"))
 	if a == "Shop":
 		a = "Supplier"          # Phase 11-13 saves
