@@ -522,6 +522,17 @@ func _build_tour() -> void:
 			tour_panel.visible = false
 			_capture_mouse(), 110))
 	v.add_child(p20)
+	v.add_child(UITheme.label("Phase 21 payroll and pay morale", 16, UITheme.MUTED))
+	var p21 := GridContainer.new()
+	p21.columns = 4
+	for s21 in ReviewStations.STATIONS21:
+		p21.add_child(UITheme.button(s21[0], func() -> void:
+			var msg := ReviewStations.go(self, s21[1])
+			if msg != "":
+				show_message(msg, 12.0)
+			tour_panel.visible = false
+			_capture_mouse(), 110))
+	v.add_child(p21)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))

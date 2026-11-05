@@ -2,6 +2,22 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 21: Payroll, pay mood and quitting (owner request)
+
+Notes: [PHASE21_NOTES.md](PHASE21_NOTES.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Per-worker daily rate, $100 minimum ($25 steps), one-day bonus, performance bonus from real work value | ✅ | Settlement itemised and charged once per worked day |
+| Fair wage in each worker's eyes (personality, level, gear); pay mood; Content / Okay / Unhappy / On the verge of quitting | ✅ | Personality seeded once, saved |
+| Quitting depends on personality: a modest worker lasts 8 nights at $100; a demanding one leaves after 4 (and after 6 even at +$50) | ✅ | Measured in the phase 21 tests |
+| At least one visible day "on the verge" (with a notice) before anyone quits; they leave by the real boat departure | ✅ | |
+| Better gear or a level-up raises the fair wage and can bring a raise request (raise, bonus today, decline) | ✅ | |
+| Payroll app on the camper computer: crew table, detail panel, last-night report, campaign (end-of-game) pay report | ✅ | Screenshots in docs/screenshots/phase21_* |
+| Old saves keep $300 per person; new campaigns start at $100 | ✅ | |
+| Morale stretches breaks (unhappy workers do less) | ✅ | Unchanged at normal morale |
+| Contract feasibility (B1) | ❌ | Unchanged: cheaper wages do not add trees |
+
 ## Phase 20: Release-candidate verification
 
 Full report: [PHASE20_RC_REPORT.md](PHASE20_RC_REPORT.md). Notes: [PHASE20_NOTES.md](PHASE20_NOTES.md). **Verdict: test candidate.**

@@ -20,6 +20,13 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P21"):
+		_run("phase 21 pay units", _t_phase21_units)
+		await _run_async("phase 21 pay world", _t_phase21_world)
+		print("P21 REPORT ", JSON.stringify(p21_report))
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P20"):
 		_run("phase 20 units", _t_phase20_units)
 		await _run_async("phase 20 night world", _t_phase20_world)
@@ -170,6 +177,8 @@ func _ready() -> void:
 	await _run_async("phase 19 world: survival cover (thickets, sheds, chest, clearance, region audit, seen/unseen entries, escapes, dog, hunt timing); offshore lap, 2:1 speed, visibility, helicopter launch/clearance/recovery/rotor, save/load, repeat visit, witnesses, fall-warning precedence, Day 36 independence; camp routine and schema 13", _t_phase19_world)
 	_run("phase 20 units: 36 recording scenarios (cameras, sounds, distinct beats), 24 sleep interruptions (bounded gain, captions)", _t_phase20_units)
 	await _run_async("phase 20 world: 36/36 recordings staged on the real island, morning marks, isolated playback (historic trees, deterministic seek, no side effects), reload; interruption states/no harm/one settlement/save resume/pacing; interrupted save recovery; stale attack after extraction; save growth", _t_phase20_world)
+	_run("phase 21 pay units: $100 minimum, itemised idempotent settlement, raise/cut feelings, personality-dependent quitting (+$50 not always enough), verge before quit, gear raises the fair wage and raise requests, legacy $300 kept, save round trip, report reconciles, morale breaks", _t_phase21_units)
+	await _run_async("phase 21 pay world: real night at each worker's rate, report lines, bonus clears, candidate asking wage, Payroll app rows, quit over pay via departure, save block, preview never writes", _t_phase21_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -1389,7 +1398,8 @@ func _t_sleep_report() -> String:
 		err = "morning not reached (day %d)" % cs.clock.day
 	if err == "" and not bool(rep.get("reconciles", false)):
 		err = "report does not reconcile: %s" % JSON.stringify(rep)
-	if err == "" and (int(rep.opening_cash) != cash0 or int(rep.wages_paid) != 60000 or int(rep.closing_cash) != cash0 - 60000):
+	# Phase 21: a new campaign pays everyone the $100 minimum (two here).
+	if err == "" and (int(rep.opening_cash) != cash0 or int(rep.wages_paid) != 2 * PayMorale.MIN_WAGE or int(rep.closing_cash) != cash0 - 2 * PayMorale.MIN_WAGE):
 		err = "report cash wrong: %s" % JSON.stringify(rep)
 	# Sleeping again in daylight is refused; the report is reopenable without
 	# re-settling.
@@ -3054,14 +3064,14 @@ func _t_phase10_world() -> String:
 	var cash_tx := cs.wallet.transactions.filter(func(tx: Dictionary) -> bool: return str(tx.kind) == "start")
 	if err == "" and (cash_tx.is_empty() or int(cash_tx[0].amount) != 450000):
 		err = "starting cash wrong"
-	if err == "" and cs.payroll.todays_estimate() != 150000:
+	if err == "" and cs.payroll.todays_estimate() != 5 * PayMorale.MIN_WAGE:
 		err = "full-crew payroll estimate %d" % cs.payroll.todays_estimate()
 	# Wages for five settle once per day, even if settlement is asked twice.
 	var w0 := cs.wallet.cash
 	cs.payroll.settle_day(cs.clock.day)
 	var w1 := cs.wallet.cash
 	cs.payroll.settle_day(cs.clock.day)
-	if err == "" and (w0 - w1 != mini(150000, w0) or cs.wallet.cash != w1):
+	if err == "" and (w0 - w1 != mini(5 * PayMorale.MIN_WAGE, w0) or cs.wallet.cash != w1):
 		err = "five-worker settlement wrong or repeated (%d -> %d -> %d)" % [w0, w1, cs.wallet.cash]
 	# Excluded trees: never rendered/collidable/targeted/located.
 	var any_ex := -1
@@ -6243,4 +6253,351 @@ func _p20_rc(world: IslandWorld) -> String:
 	p20_report["save_growth"] = {"bytes": s1.length(), "repeat_bytes": s2.length(), "phase20_stable": stable}
 	if absi(s1.length() - s2.length()) > 64 or not stable:
 		return "save grew on a repeat save or the Phase 20 block changed on reload"
+	return ""
+
+
+# ============================================================ Phase 21 pay
+
+var p21_report := {}
+
+
+## A PayMorale on the bare economy fixture (no world, no crew).
+func _p21_fixture(n := 3) -> Array:
+	var f := _economy_fixture()
+	var p: Payroll = f[1]
+	p.employees = Payroll.starting_crew(n)
+	for e in p.employees:
+		e.status = Payroll.ACTIVE
+		e["fixture"] = true
+	var pm := PayMorale.new()
+	pm.setup(p, f[2], f[3])
+	p.pay = pm
+	pm.init_new()
+	f.append(pm)
+	return f
+
+
+## Nights at a fixed rate for one worker record until they quit (or `cap`).
+func _p21_nights_until_quit(pm: PayMorale, p: Payroll, eid: String, rate: int, cap: int, from_day: int) -> int:
+	pm.rec(eid).rate = rate
+	for k in cap:
+		var d := from_day + k
+		p.settle_day(d)
+		var n := pm.on_settled(d)
+		if (n.quits as Array).has(eid):
+			return k + 1
+	return -1
+
+
+func _t_phase21_units() -> String:
+	var rep := {}
+	# Personality is deterministic per seed key; asking wages stay sane.
+	var a := PayMorale.personality("EMP-03", ["observant"])
+	if JSON.stringify(a) != JSON.stringify(PayMorale.personality("EMP-03", ["observant"])):
+		return "personality not deterministic"
+	var asks := []
+	for i in 40:
+		var w := PayMorale.asking_wage("CAND-%03d" % i, [])
+		asks.append(w)
+		if w < PayMorale.MIN_WAGE or w > 22500 or w % 500 != 0:
+			return "asking wage out of range: %d" % w
+	rep["asks_min_max"] = [asks.min(), asks.max()]
+	var f := _p21_fixture()
+	var w0: Wallet = f[0]
+	var p: Payroll = f[1]
+	var eq: Equipment = f[2]
+	var pm: PayMorale = f[4]
+	w0.grant(10000000, "test", "T", "cash")
+	for e in p.employees:
+		if pm.rate(str(e.id)) != PayMorale.MIN_WAGE:
+			_free_all(f)
+			return "new campaign rate is not the $100 minimum"
+	# The minimum is enforced; a raise helps a little, a cut hurts more.
+	if bool(pm.change_rate("EMP-01", -1).ok):
+		_free_all(f)
+		return "rate went below the minimum"
+	var s0 := pm.sat("EMP-01")
+	pm.change_rate("EMP-01", 1)
+	var s1 := pm.sat("EMP-01")
+	pm.change_rate("EMP-01", -1)
+	var s2 := pm.sat("EMP-01")
+	if not (s1 > s0 and s0 - s2 > 0.0 and (s1 - s2) > (s1 - s0)):
+		_free_all(f)
+		return "raise/cut feelings wrong %.3f %.3f %.3f" % [s0, s1, s2]
+	# Settlement charges exactly rate + bonus (+ performance), itemised, once.
+	pm.change_rate("EMP-02", 2)
+	pm.change_bonus("EMP-02", 1)
+	p.settle_day(1)
+	var li := p._liability("WAGE-D01-EMP-02")
+	if int(li.amount) != 15000 + 2500 or int(li.base) != 15000 or int(li.bonus) != 2500:
+		_free_all(f)
+		return "liability wrong: %s" % JSON.stringify(li)
+	var n1 := pm.on_settled(1)
+	var n1b := pm.on_settled(1)
+	if JSON.stringify(n1) != JSON.stringify(n1b) or int(pm.rec("EMP-02").bonus) != 0:
+		_free_all(f)
+		return "night not idempotent or bonus not cleared"
+	if int((n1.totals as Dictionary).total) != 10000 + 17500 + 10000:
+		_free_all(f)
+		return "night totals %s" % JSON.stringify(n1.totals)
+	_free_all(f)
+	# Personality decides how long the minimum is tolerated. Find a patient,
+	# modest worker and a demanding, impatient one among seeded people.
+	var modest := ""
+	var demanding := ""
+	for i in 300:
+		var k := "SIM-%03d" % i
+		var q := PayMorale.personality(k, [])
+		if modest == "" and float(q.demand) < 0.2 and float(q.patience) > 0.7:
+			modest = k
+		if demanding == "" and float(q.demand) > 0.7 and float(q.patience) < 0.35:
+			demanding = k
+	if modest == "" or demanding == "":
+		return "no test personalities found"
+	var res := {}
+	for who in [modest, demanding]:
+		for rate in [PayMorale.MIN_WAGE, PayMorale.MIN_WAGE + 5000, -1]:
+			var g := _p21_fixture(1)
+			var gp: Payroll = g[1]
+			var gm: PayMorale = g[4]
+			(g[0] as Wallet).grant(10000000, "test", "T", "cash")
+			gm.workers.clear()
+			gm._ensure("EMP-01", PayMorale.MIN_WAGE, who)
+			var r: int = int(rate) if int(rate) > 0 else gm.expected("EMP-01")
+			res["%s@%s" % [who, "fair" if rate < 0 else str(r / 100)]] = _p21_nights_until_quit(gm, gp, "EMP-01", r, 20, 1)
+			if rate == PayMorale.MIN_WAGE + 5000:
+				res["%s_expects" % who] = gm.expected("EMP-01") / 100
+			_free_all(g)
+	rep["nights_until_quit"] = res
+	var m_min := int(res["%s@100" % modest])
+	var d_min := int(res["%s@100" % demanding])
+	var d_150 := int(res["%s@150" % demanding])
+	if not (m_min == -1 or m_min >= 8):
+		return "a modest, patient worker quit too fast at the minimum (%d nights)" % m_min
+	if m_min != -1 and m_min < 8:
+		return "modest worker"
+	if d_min == -1 or d_min > 6:
+		return "a demanding, impatient worker tolerated the minimum (%d nights)" % d_min
+	if d_150 == -1:
+		return "+$50 above the minimum was enough for a demanding worker (expects $%s)" % str(res["%s_expects" % demanding])
+	if int(res["%s@fair" % demanding]) != -1 or int(res["%s@fair" % modest]) != -1:
+		return "someone paid their fair wage still quit: %s" % JSON.stringify(res)
+	# Over a long run the modest worker does leave if never raised.
+	var g2 := _p21_fixture(1)
+	(g2[0] as Wallet).grant(10000000, "test", "T", "cash")
+	(g2[4] as PayMorale).workers.clear()
+	(g2[4] as PayMorale)._ensure("EMP-01", PayMorale.MIN_WAGE, modest)
+	var long_run := _p21_nights_until_quit(g2[4], g2[1], "EMP-01", PayMorale.MIN_WAGE, 30, 1)
+	_free_all(g2)
+	rep["modest_long_run"] = long_run
+	if long_run == -1:
+		return "minimum wage forever never made anyone quit"
+	# Verge comes before quitting, with at least one warning night.
+	var g3 := _p21_fixture(1)
+	(g3[0] as Wallet).grant(10000000, "test", "T", "cash")
+	var gm3: PayMorale = g3[4]
+	gm3.workers.clear()
+	gm3._ensure("EMP-01", PayMorale.MIN_WAGE, demanding)
+	var verge_seen := -1
+	for d in range(1, 15):
+		(g3[1] as Payroll).settle_day(d)
+		var nn := gm3.on_settled(d)
+		if verge_seen < 0 and int(gm3.rec("EMP-01").verge_day) > 0:
+			verge_seen = d
+		if (nn.quits as Array).has("EMP-01"):
+			rep["verge_then_quit"] = [verge_seen, d]
+			if verge_seen < 0 or d <= verge_seen:
+				_free_all(g3)
+				return "quit without a verge warning night"
+			break
+	_free_all(g3)
+	# Raise requests: better gear raises the fair wage; the request (if the
+	# seeded roll asks) is answerable once; bonus clears after the night.
+	var h := _p21_fixture(1)
+	var hw: Wallet = h[0]
+	var hp: Payroll = h[1]
+	var he: Equipment = h[2]
+	var hm: PayMorale = h[4]
+	hw.grant(10000000, "test", "T", "cash")
+	hm.rec("EMP-01").assertive = 1.0
+	var exp0 := hm.expected("EMP-01")
+	var boots := he.add_item("boots", "t3", "EMP-01", "test")
+	he.equip("EMP-01", str(boots.id))
+	var exp1 := hm.expected("EMP-01")
+	if exp1 != exp0 + 3 * 500:
+		_free_all(h)
+		return "gear did not raise the fair wage (%d -> %d)" % [exp0, exp1]
+	var roll := RandomNumberGenerator.new()
+	roll.seed = hash("ask:%s:%s" % ["EMP-01", "gear:3"])
+	var should_ask := roll.randf() <= 0.9 and exp1 - PayMorale.MIN_WAGE >= 1500
+	var q1 := hm.pending_request("EMP-01")
+	if should_ask != (not q1.is_empty()):
+		_free_all(h)
+		return "gear request mismatch (expected %s)" % str(should_ask)
+	if q1.is_empty():
+		hm._req_counter += 0
+		hm.workers["EMP-01"].level = 1
+		hm.on_advanced("EMP-01", "career", 5)
+		q1 = hm.pending_request("EMP-01")
+	rep["request"] = q1
+	if not q1.is_empty():
+		var rate0 := hm.rate("EMP-01")
+		if not bool(hm.answer(str(q1.id), "raise").ok) or hm.rate("EMP-01") != rate0 + int(q1.raise):
+			_free_all(h)
+			return "accepting the raise did not change the rate"
+		if bool(hm.answer(str(q1.id), "decline").ok):
+			_free_all(h)
+			return "a request was answered twice"
+	_free_all(h)
+	# Old saves keep the flat $300 each (no silent pay cut).
+	var m := _p21_fixture(2)
+	var mp: Payroll = m[1]
+	var mm: PayMorale = m[4]
+	(m[0] as Wallet).grant(10000000, "test", "T", "cash")
+	mm.restore({}, mp.wage())
+	if mm.rate("EMP-01") != 30000 or mm.rate("EMP-02") != 30000:
+		_free_all(m)
+		return "legacy save rate not kept at $300"
+	mp.settle_day(3)
+	var mn := mm.on_settled(3)
+	if int(mp._liability("WAGE-D03-EMP-01").amount) != 30000 or mm.sat("EMP-01") < PayMorale.START_SAT:
+		_free_all(m)
+		return "legacy $300 settled wrong or felt underpaid"
+	# Save round trip.
+	var cap := mm.capture()
+	var mm2 := PayMorale.new()
+	mm2.setup(mp, m[2], m[3])
+	mm2.restore(cap, mp.wage())
+	if JSON.stringify(mm2.capture()) != JSON.stringify(cap):
+		mm2.free()
+		_free_all(m)
+		return "pay save round trip changed data"
+	mm2.free()
+	# The campaign report reconciles with the liabilities charged.
+	var cr := mm.campaign_report()
+	var charged := 0
+	for l in mp.liabilities:
+		charged += int(l.amount)
+	if int(cr.totals.total) != charged or int(mn.totals.total) != charged:
+		_free_all(m)
+		return "campaign pay report %d != charged %d" % [int(cr.totals.total), charged]
+	_free_all(m)
+	# Morale stretches breaks: unchanged at 0.6, up to twice as long.
+	var pr := CrewProgression.new(MeritLedger.new())
+	pr.ensure_profile("EMP-09", [])
+	var base := pr.pause_after_job("EMP-09")
+	pr.morale["EMP-09"] = 0.05
+	var low := pr.pause_after_job("EMP-09")
+	pr.morale["EMP-09"] = 0.9
+	if absf(pr.pause_after_job("EMP-09") - base) > 0.001 or low / base < 1.8:
+		return "morale pause factor wrong (%.2f -> %.2f)" % [base, low]
+	p21_report["units"] = rep
+	return ""
+
+
+func _t_phase21_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or Game.campaign == null or not world.systems_ready) and guard < 2000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := await _p21_checks(world)
+	print("P21 REPORT ", JSON.stringify(p21_report))
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p21_checks(world: IslandWorld) -> String:
+	var cs: CampaignService = Game.campaign
+	cs.start_test_route(true, true)
+	for k in 30:
+		await get_tree().physics_frame
+	var crew: CrewService = Game.crew
+	var rep := {}
+	if cs.payroll.employees.size() != 5:
+		return "crew size %d" % cs.payroll.employees.size()
+	for e in cs.payroll.employees:
+		if cs.pay.rate(str(e.id)) != PayMorale.MIN_WAGE:
+			return "starting rate not $100"
+	if cs.payroll.todays_estimate() != 5 * PayMorale.MIN_WAGE:
+		return "tonight's estimate %d" % cs.payroll.todays_estimate()
+	# Candidates ask their own wage, and a hire starts at it.
+	crew.refresh_candidates()
+	var cand: Dictionary = crew.candidates[0]
+	if int(cand.wage) != PayMorale.asking_wage(str(cand.cid), cand.traits):
+		return "candidate wage %d is not their asking wage" % int(cand.wage)
+	# The Payroll app shows every worker.
+	if Game.desk:
+		Game.desk.open_app("Payroll")
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var app: PayrollApp = null
+		for c in Game.desk._content.get_children():
+			if c is PayrollApp:
+				app = c
+		if app == null:
+			return "Payroll app not opened"
+		var names := 0
+		for l in app.find_children("*", "Label", true, false):
+			for e in cs.payroll.employees:
+				if (l as Label).text.ends_with(str(e.name)):
+					names += 1
+		rep["app_rows"] = names
+		if names < 5:
+			return "Payroll app shows %d of 5 workers" % names
+	# A real night: one charge per worker at their own rate, report attached.
+	cs.pay.change_rate("EMP-02", 2)
+	cs.pay.change_bonus("EMP-03", 1)
+	cs.wallet.grant(500000, "test", "T", "cash")
+	cs.clock.restore({"day": 4, "t": WorkdayClock.NIGHT_AT + 5.0, "running": true})
+	cs._begin_day_stats()
+	var cash0 := cs.wallet.cash
+	var r := cs.sleep()
+	var rp: Dictionary = r.get("report", {})
+	var pn: Dictionary = rp.get("pay", {})
+	rep["night_totals"] = pn.get("totals", {})
+	if (pn.get("lines", []) as Array).size() != 5:
+		return "pay report lines %d" % (pn.get("lines", []) as Array).size()
+	var want := 3 * PayMorale.MIN_WAGE + 15000 + PayMorale.MIN_WAGE + 2500
+	if int(rp.get("wages_paid", -1)) != want or cash0 - cs.wallet.cash != want or int(pn.totals.total) != want:
+		return "night wages %d (cash -%d) != %d" % [int(rp.get("wages_paid", -1)), cash0 - cs.wallet.cash, want]
+	if int(cs.pay.rec("EMP-03").bonus) != 0:
+		return "one-day bonus not cleared after the night"
+	# Quitting over pay goes through the real departure (walk to the dock).
+	var rr := cs.pay.rec("EMP-04")
+	rr.sat = 0.05
+	rr.verge_day = cs.clock.day - 1
+	cs.clock.restore({"day": cs.clock.day, "t": WorkdayClock.NIGHT_AT + 5.0, "running": true})
+	var r2 := cs.sleep()
+	var e4 := cs.payroll.employee("EMP-04")
+	rep["quit"] = [str(e4.status), str(e4.get("departure_reason", "")), (r2.get("report", {}).get("pay", {}).get("quits", []) as Array)]
+	if not str(e4.status) in ["departing", "departed"] or str(e4.get("departure_reason", "")) != "low pay":
+		return "pay quit did not start a departure: %s" % str(rep.quit)
+	# Saves carry the pay block, and the campaign report reconciles.
+	var econ := cs.capture_economy()
+	if not econ.has("pay") or JSON.stringify(econ.pay) != JSON.stringify(cs.pay.capture()):
+		return "pay block missing from the save"
+	var charged := 0
+	for l in cs.payroll.liabilities:
+		charged += int(l.amount)
+	var cr := cs.pay.campaign_report()
+	rep["campaign_total"] = int(cr.totals.total)
+	if int(cr.totals.total) != charged:
+		return "campaign report %d != liabilities %d" % [int(cr.totals.total), charged]
+	if Game.can_write_campaign_save():
+		return "preview could write a campaign save"
+	p21_report["world"] = rep
 	return ""

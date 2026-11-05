@@ -8,6 +8,7 @@
 - Cut every original tree on the island. Process the fallen timber, then dispose of it in the camp burn pit.
 - Felling trees during the day earns money. Spend it on a medium or large axe.
 - Later, hire up to four workers. Each costs a hiring fee plus daily wages, and workers use the same axe tiers.
+  - **Phase 21 (owner request):** wages are per worker, from a $100 minimum, with optional bonuses. Pay below what a worker feels is fair lowers their pay mood and can make them quit; see [PHASE21_NOTES.md](PHASE21_NOTES.md).
 - Trees never regenerate. Cleared forest stays cleared, and fallen timber persists until it is legitimately burned.
 - The game must remain completable after large-scale clearing, with long worker trips, at low funds, and across save/load cycles.
 

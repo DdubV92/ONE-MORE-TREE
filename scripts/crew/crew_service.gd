@@ -79,6 +79,10 @@ func setup(c: CampaignService) -> void:
 		trees.tree_warning.connect(coord.on_warning)
 		trees.tree_felled.connect(coord.on_felled)
 	payroll.quit_due_to_arrears.connect(func(eid: String) -> void: start_departure(eid, "unpaid wages"))
+	# Phase 21: a worker who has had enough of their pay leaves the same way.
+	if c.pay:
+		c.pay.quit_over_pay.connect(func(eid: String) -> void: start_departure(eid, "low pay"))
+		progression.advanced.connect(c.pay.on_advanced)
 	c.clock.day_started.connect(_on_morning)
 	c.clock.night_started.connect(_on_night)
 	if timber:
@@ -246,7 +250,7 @@ func refresh_candidates(force := false) -> void:
 			if t2 == t1 or ([t1, t2] as Array) in WorkerMind.CLASH or ([t2, t1] as Array) in WorkerMind.CLASH:
 				t2 = ""
 		var tr: Array = [t1] if t2 == "" else [t1, t2]
-		candidates.append({"cid": "CAND-%03d" % _cand_counter, "name": "%s %s" % [FIRST[r.randi() % FIRST.size()], LAST[r.randi() % LAST.size()]], "traits": tr, "look_seed": r.randi() & 0x7fffffff, "fee": econ.hire_fee_cents, "wage": econ.wage_cents})
+		candidates.append({"cid": "CAND-%03d" % _cand_counter, "name": "%s %s" % [FIRST[r.randi() % FIRST.size()], LAST[r.randi() % LAST.size()]], "traits": tr, "look_seed": r.randi() & 0x7fffffff, "fee": econ.hire_fee_cents, "wage": PayMorale.asking_wage("CAND-%03d" % _cand_counter, tr)})
 
 
 func can_hire() -> Dictionary:
@@ -286,6 +290,8 @@ func hire(cid: String) -> Dictionary:
 	payroll.employees.append(e)
 	minds[eid] = WorkerMind.with_traits(cand.traits)
 	_ensure_axe(eid)
+	if campaign.pay:
+		campaign.pay.on_hired(eid, str(cand.cid), cand.traits)     # starts at their asking wage
 	candidates.erase(cand)
 	refresh_candidates()
 	roster_changed.emit()
@@ -324,7 +330,7 @@ func start_departure(eid: String, reason: String) -> void:
 		stage_load(w)
 		w.refresh_kit_visuals()
 		_send_to_dock(w)
-		w.say("fired" if reason.begins_with("fired") else ("quit_wages" if reason == "unpaid wages" else "quit_fear"), true)
+		w.say("fired" if reason.begins_with("fired") else ("quit_wages" if reason in ["unpaid wages", "low pay"] else "quit_fear"), true)
 	else:
 		# Never arrived: the boat simply takes them back.
 		_finish_departure(e)

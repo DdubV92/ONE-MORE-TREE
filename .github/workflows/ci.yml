@@ -149,7 +149,9 @@ jobs:
           timeout 1200 ~/godot/godot --headless res://tools/rc/make_fixture_saves.tscn 2>&1 | tee fixtures.log | grep -E "FIXTURE" || true
           test "$(grep -c '^FIXTURE_VERIFY .* ok' fixtures.log)" = "3"
           mkdir -p build/windows/prepared_saves
-          cp ~/.local/share/godot/app_userdata/"One More Tree"/fixtures/slot_2_*.json build/windows/prepared_saves/
+          for fx in terminal_day30 offshore_day3 extraction_day35; do
+            cp ~/.local/share/godot/app_userdata/"One More Tree"/fixtures/slot_2_${fx}.json build/windows/prepared_saves/
+          done
           cat > build/windows/prepared_saves/README.txt <<'EOF2'
           Prepared fixture saves (Phase 20). Each one is a real new standard
           campaign moved to a test point; it is labelled "fixture" inside the

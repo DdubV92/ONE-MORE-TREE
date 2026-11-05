@@ -57,7 +57,7 @@ func _start() -> void:
 		crew.candidates.clear()
 		for i in 3:
 			crew._cand_counter += 1
-			crew.candidates.append({"cid": "DEMO-%d" % i, "name": ["Ines Vance", "Kofi Brandt", "Wren Salo"][i], "traits": sets[i], "look_seed": 4242 + i * 77, "fee": crew.econ.hire_fee_cents, "wage": crew.econ.wage_cents})
+			crew.candidates.append({"cid": "DEMO-%d" % i, "name": ["Ines Vance", "Kofi Brandt", "Wren Salo"][i], "traits": sets[i], "look_seed": 4242 + i * 77, "fee": crew.econ.hire_fee_cents, "wage": PayMorale.asking_wage("DEMO-%d" % i, sets[i])})
 		for i in 3:
 			crew.hire("DEMO-%d" % i)
 		_msg("Crew demo: two starters at camp, three hires (timid+observant, level-headed+sociable, skeptical+hard-working) arriving by boat at the dock. In memory only."))

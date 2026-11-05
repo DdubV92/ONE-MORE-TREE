@@ -21,6 +21,8 @@ const RULE_SET := "contract_v1"
 var clock: WorkdayClock
 var wallet: Wallet
 var payroll: Payroll
+## Phase 21: per-worker rates, bonuses, pay satisfaction and quitting.
+var pay: PayMorale
 var equipment: Equipment
 var supplier: Supplier             # Phase 14 camp supplier (orders, parcels)
 var contract: ContractService
@@ -60,6 +62,9 @@ func _ready() -> void:
 	supplier = Supplier.new()
 	supplier.name = "Supplier"
 	add_child(supplier)
+	pay = PayMorale.new()
+	pay.name = "PayMorale"
+	add_child(pay)
 
 
 ## Phase 9 first-day guide (per save).
@@ -75,6 +80,8 @@ func setup() -> void:
 	equipment.setup(wallet, config)
 	contract.setup(Game.trees, Game.timber, clock)
 	supplier.setup(equipment, wallet, clock, contract, payroll)
+	pay.setup(payroll, equipment, clock)
+	payroll.pay = pay
 	contract.outcome.connect(func(_s: String, _o: String) -> void:
 		var n := supplier.refund_undelivered()
 		if n > 0:
@@ -128,6 +135,7 @@ func new_campaign() -> void:
 	for e in payroll.employees:
 		ids.append(e.id)
 	equipment.init_new(ids)
+	pay.init_new()                 # Phase 21: everyone starts at the $100 minimum
 	supplier.restore({})
 	contract.restore({"state": ContractService.ACTIVE})
 	if onboarding:
@@ -294,6 +302,8 @@ func sleep() -> Dictionary:
 	if Game.night_recorder:
 		Game.night_recorder.on_night(d)
 	var settlement := payroll.settle_day(d)
+	# Phase 21: pay satisfaction moves once per settled day; quits decided.
+	var pay_night := pay.on_settled(d)
 	# Phase 16: the night's recovery, once per day (same locked transition).
 	var rest_night: Dictionary = Game.rest.on_sleep(d) if Game.rest else {}
 	# Phase 17: what was left of today's feed publishes now (read tomorrow
@@ -303,6 +313,7 @@ func sleep() -> Dictionary:
 	if Game.timber:
 		Game.timber.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS)
 	var report := build_report(d, settlement)
+	report["pay"] = pay_night
 	if not rest_night.is_empty():
 		report["rest"] = rest_night
 	var night_note := Game.sleep_interrupts.morning_note(d) if Game.sleep_interrupts else ""
@@ -458,7 +469,7 @@ func capture_campaign() -> Dictionary:
 
 
 func capture_economy() -> Dictionary:
-	return {"wallet": wallet.capture(), "payroll": payroll.capture(), "equipment": equipment.capture(), "supplier": supplier.capture(), "phase2_migrated": phase2_migrated}
+	return {"wallet": wallet.capture(), "payroll": payroll.capture(), "equipment": equipment.capture(), "supplier": supplier.capture(), "pay": pay.capture(), "phase2_migrated": phase2_migrated}
 
 
 ## Restores both blocks. Returns true if the player must choose rules
@@ -471,6 +482,8 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 	supplier.restore(economy.get("supplier", {}))
 	if payroll.employees.is_empty():
 		payroll.employees = Payroll.starting_crew()
+	# Phase 21: saves from before negotiated pay keep the flat $300 each.
+	pay.restore(economy.get("pay", {}), payroll.wage())
 	phase2_migrated = bool(economy.get("phase2_migrated", false))
 	# Phase 2 tracked delivery entitlements without paying them: credit each
 	# genuine accepted receipt exactly once, with a conversion marker.

@@ -3,8 +3,10 @@ extends RefCounted
 ## Phase 10: versioned, data-driven campaign rulesets. A campaign stores its
 ## ruleset (id + parameters) in its save and keeps it for life; new rules
 ## never rewrite an existing campaign. Fixed terms shared by every ruleset:
-## 30 days, 900 s daylight + 300 s dusk, $100 per original tree, $300 per
-## active employee-day, 2 pickups x 3 seats x 3 tree-equivalents.
+## 30 days, 900 s daylight + 300 s dusk, $100 per original tree, 2 pickups
+## x 3 seats x 3 tree-equivalents. Wages: Phase 21 (owner request) replaced
+## the flat $300 per employee-day with per-worker pay from a $100 minimum
+## (PayMorale); campaigns saved before that keep $300 per person.
 ##
 ## expanded_v1 (new standard campaigns, revised Phase 10):
 ##   - exactly 10,000 original native trees: a deterministic subset of the

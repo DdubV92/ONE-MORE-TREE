@@ -18,6 +18,8 @@ extends Node
 ##              live supplier order status from the real order records.
 ##   News, Forums, Archives - Phase 17: the fictional internet published by
 ##              the campaign clock (FeedService / FeedReader).
+##   Payroll  - Phase 21: per-worker pay, pay mood, productivity, raise
+##              requests and the nightly / campaign pay reports (PayrollApp).
 ##   Recordings - Phase 20: the missed-night recording archive (NightRecorder
 ##              clips): list, play/pause, seek, previous/next incident,
 ##              volume; playback is an isolated reconstruction
@@ -29,7 +31,7 @@ extends Node
 signal app_changed(app: String)
 
 const SIZE := Vector2i(1024, 576)
-const APPS := ["Cameras", "Supplier", "Gear", "Mail", "News", "Forums", "Archives", "Recordings"]
+const APPS := ["Cameras", "Supplier", "Gear", "Payroll", "Mail", "News", "Forums", "Archives", "Recordings"]
 const LATER := {}
 
 var monitor: Node3D
@@ -147,21 +149,22 @@ func _build_shell() -> void:
 	v.offset_bottom = -6
 	_shell.add_child(v)
 	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 4)
 	v.add_child(bar)
-	bar.add_child(UITheme.label("CampOS", 18, UITheme.ACCENT))
+	bar.add_child(UITheme.label("CampOS", 17, UITheme.ACCENT))
 	for a in APPS:
-		var b := UITheme.button(a + ("" if not LATER.has(a) else " (later)"), func() -> void: open_app(a), 0)
+		var b := _bar_button(a + ("" if not LATER.has(a) else " (later)"), func() -> void: open_app(a))
 		b.focus_mode = Control.FOCUS_ALL
 		_buttons[a] = b
 		bar.add_child(b)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(sp)
-	_clock = UITheme.label("", 15, UITheme.MUTED)
+	_clock = UITheme.label("", 14, UITheme.MUTED)
 	bar.add_child(_clock)
-	bar.add_child(UITheme.button("Stand up", func() -> void:
+	bar.add_child(_bar_button("Stand up", func() -> void:
 		if Game.player and Game.player.has_method("stand_from_couch"):
-			Game.player.stand_from_couch(), 0))
+			Game.player.stand_from_couch()))
 	_content = Control.new()
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.clip_contents = true
@@ -184,6 +187,20 @@ func _build_shell() -> void:
 	_shell.add_child(_inset)
 
 
+## Compact app-bar button (nine apps plus the clock and Stand up must fit
+## the 1024 px desktop).
+func _bar_button(text: String, cb: Callable) -> Button:
+	var b := UITheme.button(text, cb, 0)
+	b.custom_minimum_size = Vector2(0, 34)
+	b.add_theme_font_size_override("font_size", 14)
+	for st in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var sb := (UITheme.get_theme().get_stylebox(st, "Button") as StyleBoxFlat).duplicate() as StyleBoxFlat
+		sb.content_margin_left = 5
+		sb.content_margin_right = 5
+		b.add_theme_stylebox_override(st, sb)
+	return b
+
+
 func open_app(a: String) -> void:
 	if a != "Recordings" and player:
 		player.queue_free()          # no hidden 3D render when not watching
@@ -195,7 +212,7 @@ func open_app(a: String) -> void:
 	_inset.texture = wall.composite.get_texture() if wall and wall.composite else null
 	# No live inset over the Cameras app itself, nor over a recording (it
 	# would cover the playback controls and mix LIVE with PLAYBACK).
-	_inset.visible = a != "Cameras" and a != "Recordings" and wall != null and wall.powered
+	_inset.visible = not a in ["Cameras", "Recordings", "Payroll"] and wall != null and wall.powered
 	match a:
 		"Cameras":
 			_build_cameras()
@@ -206,6 +223,12 @@ func open_app(a: String) -> void:
 			FeedReader.build(_content, a, self)
 		"Recordings":
 			_build_recordings()
+		"Payroll":
+			_content.add_child(PayrollApp.create(func(t: String) -> void:
+				if _status:
+					_status.text = t))
+			if _status:
+				_status.text = "Payroll: click a worker for details. Pay changes apply to tonight's settlement; a raise feels good at once, a cut hurts more."
 		_:
 			var l := UITheme.label(str(LATER.get(a, "")), 18)
 			l.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -532,7 +555,7 @@ func _process(_delta: float) -> void:
 		for a2 in ["Mail", "News", "Forums", "Archives"]:
 			if _buttons.has(a2):
 				var n: int = Game.feed.unread(a2)
-				(_buttons[a2] as Button).text = a2 + (" (%d)" % n if n > 0 else "")
+				(_buttons[a2] as Button).text = a2 + ((" (%s)" % (str(n) if n < 100 else "99+")) if n > 0 else "")
 	var wall: CameraWall = Game.tv
 	if _status and app == "Cameras" and wall:
 		_status.text = ("Focus: %s %s · LIVE · right-click or Wall (4) to go back" % [wall.cam_id(wall.focus_index), wall.cam_name(wall.focus_index)]) if wall.mode == "focus" else "Wall: four live cameras, one swaps every %s · click a feed to focus it%s" % ["(frozen)" if wall.interval <= 0.0 else "%d s" % int(wall.interval), " · mics muted" if wall.mic_muted else ""]

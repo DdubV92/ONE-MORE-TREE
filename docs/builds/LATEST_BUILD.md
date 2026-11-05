@@ -1,10 +1,30 @@
-# ONE MORE TREE LATEST BUILD PHASE 20 (release-candidate verification: TEST CANDIDATE)
+# ONE MORE TREE LATEST BUILD PHASE 21 (payroll and pay mood)
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 20 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 21 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
 
-## New in Phase 20
+## New in Phase 21 (your payroll request)
+
+- **Cheaper, negotiated wages.** Each worker has their own daily rate, from a **$100 minimum** (was a flat $300). New campaigns start everyone at $100; older saves keep $300 so nobody's pay is cut.
+- **Payroll app** on the camper computer (sit at the desk → Payroll):
+  - **The crew table:** each worker's pay mood, useful work and work done today, what that work is worth, their rate, bonus, performance bonus and tonight's pay.
+  - **Click a worker for the details:**
+    - the pay they think is fair;
+    - how many nights they have been on the minimum;
+    - **+/- $25** rate buttons, a one-day bonus and a performance bonus (10 / 25 / 50% of the value of the work they really did).
+  - **Last night:** that night's pay report.
+  - **Campaign report:** the end-of-game pay report (who earned what, the value of their work, who left and why).
+- **Pay mood and quitting:**
+  - Everyone has a fair wage in their own eyes, from their personality, level and gear.
+  - Paid below it, their mood drops. A patient, modest worker puts up with the minimum for about a week; a demanding one leaves after a few nights, and sometimes even +$50 is not enough.
+  - You always get at least one day of "on the verge of quitting" warning first.
+  - Unhappy workers also take longer breaks.
+- **Raise requests:** after better gear or a level-up, a worker may ask for a raise. Give it, pay a one-day bonus instead, or decline: some take a refusal harder than others.
+- **Review:** Preview → Tab → "Phase 21 payroll" (open the app, a worker about to quit, a raise request, simulate a pay night).
+- **Still true:** the contract math (blocker B1) is unchanged. Cheaper wages keep your cash alive much longer, but the crew still cannot fell 10,000 trees in 30 days.
+
+## Phase 20 (previous build)
 
 - **Nights you sleep through can leave evidence.**
   - Sometimes a camp camera flags something while you sleep (36 different incidents).

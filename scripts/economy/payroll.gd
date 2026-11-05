@@ -1,7 +1,8 @@
 class_name Payroll
 extends Node
-## Wages and arrears (Phase 3). Each ACTIVE employee earns exactly $300 for
-## each active working day. Settlement at the end of a day creates one
+## Wages and arrears (Phase 3). Each ACTIVE employee earns their day's pay
+## for each active working day (Phase 21: their own rate from $100, plus any
+## one-day and performance bonus - PayMorale; before that a flat $300). Settlement at the end of a day creates one
 ## liability per active employee-day, due at the end of the FOLLOWING
 ## workday, then pays what cash allows, oldest due first (deterministic).
 ## A liability still unpaid after its due day closes produces exactly one
@@ -29,6 +30,9 @@ var settlements := {}              # day (str) -> settlement id
 var quit_requests := {}            # employee id -> day requested
 var wallet: Wallet
 var config: EconomyConfig
+## Phase 21: per-employee pay (rate + one-day bonus + performance bonus).
+## Without it (bare tests) everyone earns the flat config wage.
+var pay: PayMorale
 
 
 func setup(w: Wallet, cfg: EconomyConfig) -> void:
@@ -70,17 +74,27 @@ func active_employees() -> Array[Dictionary]:
 	return out
 
 
+## The flat pre-Phase-21 wage ($300): legacy saves keep it as their rate.
 func wage() -> int:
 	return config.wage_cents if config else 30000
 
 
+## What one employee's day `day` costs (Phase 21: their own rate, today's
+## bonus and their performance bonus).
+func planned_for(e: Dictionary, day: int) -> Dictionary:
+	if pay:
+		return pay.planned_for(str(e.id), day)
+	return {"base": wage(), "bonus": 0, "perf": 0, "total": wage()}
+
+
 ## Today's estimated payroll (what settlement will add tonight).
 func todays_estimate() -> int:
+	var d := pay.clock.day if pay and pay.clock else 0
 	var n := 0
 	for e in employees:
 		if str(e.status) in [ACTIVE, "departing"]:
-			n += 1
-	return n * wage()
+			n += int(planned_for(e, d).total)
+	return n
 
 
 func owed_total() -> int:
@@ -135,7 +149,8 @@ func settle_day(day: int) -> Dictionary:
 		var lid := "WAGE-D%02d-%s" % [day, e.id]
 		if _liability(lid).is_empty():
 			var due := day if in_grace.has(str(e.id)) else day + 1
-			liabilities.append({"id": lid, "emp": e.id, "day": day, "due_day": due, "amount": wage(), "paid": 0})
+			var pl := planned_for(e, day)
+			liabilities.append({"id": lid, "emp": e.id, "day": day, "due_day": due, "amount": int(pl.total), "paid": 0, "base": int(pl.base), "bonus": int(pl.bonus), "perf": int(pl.perf)})
 			(e.active_days as Array).append(day)
 			new_l += 1
 	var paid := pay_oldest(-1, sid)

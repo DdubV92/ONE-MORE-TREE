@@ -3,6 +3,8 @@ extends RefCounted
 ## Phase 16: persistent per-employee character and growth, kept apart from
 ## payroll (wages never change here) and from mood/fear (WorkerMind):
 ##
+##  - (Phase 21: wages DO change now, in PayMorale; pay satisfaction is
+##    written into `morale` and stretches breaks between jobs.)
 ##  - profile: work ethic, reliability, chattiness, preferred work. Made
 ##    ONCE per employee id (deterministic seed), saved, never rerolled.
 ##  - career level 1-20 and four skills from the MeritLedger (useful work
@@ -94,9 +96,12 @@ static func reliability_word(v: float) -> String:
 
 ## Short break after finishing a job: 0.5 s (tireless) to 4 s (unhurried).
 ## Only ever counted as "pause" if there WAS work to go back to.
+## Phase 21: morale (pay satisfaction) stretches it: unchanged at 0.6 and
+## above, up to twice as long when they are about to quit.
 func pause_after_job(eid: String) -> float:
 	var e := float((profiles.get(eid, {}) as Dictionary).get("ethic", 0.7))
-	return lerpf(4.0, 0.5, clampf((e - 0.45) / 0.5, 0.0, 1.0))
+	var m := float(morale.get(eid, 0.6))
+	return lerpf(4.0, 0.5, clampf((e - 0.45) / 0.5, 0.0, 1.0)) * lerpf(2.0, 1.0, clampf(m / 0.6, 0.0, 1.0))
 
 
 # ----------------------------------------------------------- levels/skills

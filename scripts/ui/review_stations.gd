@@ -106,6 +106,11 @@ const STATIONS20 := [
 	["1 Night recording (random)", "p20_rec"], ["2 Recording: the gate", "p20_rec01"], ["3 Recording: behind the crest", "p20_rec10"],
 	["4 Sleep interruption", "p20_sleep"], ["5 The door (major)", "p20_si01"], ["6 Release checklist", "p20_rc"],
 ]
+## Phase 21: payroll and pay morale (owner request).
+const STATIONS21 := [
+	["1 Payroll app (camper desk)", "p21_app"], ["2 Worker about to quit", "p21_verge"],
+	["3 Raise request", "p21_request"], ["4 Simulate a pay night", "p21_night"],
+]
 static var _p20_i := 0
 static var _feed_day := 0
 static var _clear_i := 0
@@ -489,6 +494,43 @@ static func go(hud: Node, which: String) -> String:
 			si20.state = "idle"
 			si20.start(pick, Game.campaign.clock.day if Game.campaign else 1)
 			return "Preview interruption %s: %s. Watch the states: settling -> interrupted -> resolving -> sleep available. You cannot be hurt in the camper; nothing forces you out." % [pick, str(si20.by_id[pick].title)]
+		"p21_app", "p21_verge", "p21_request", "p21_night":
+			var cs21: CampaignService = Game.campaign
+			if cs21 == null or cs21.pay == null:
+				return ""
+			if Game.crew == null or Game.crew.workers.size() < 2:
+				cs21.start_test_route(true, true)
+				cs21.wallet.grant(300000, "test", "P21", "preview cash")
+			match which:
+				"p21_app":
+					w.teleport_to("camper")
+					return "Payroll: sit at the camper desk (the computer) -> Payroll. One row per worker: pay mood, useful work and work done today, its value, rate, bonus, performance %, tonight's pay. Click a row for details and controls. (Preview: never saved.)"
+				"p21_verge":
+					var r21 := cs21.pay.rec("EMP-04")
+					r21.sat = 0.22
+					r21.min_days = 4
+					r21.verge_day = cs21.clock.day
+					return "Preview: %s has had four nights at the bare minimum and is on the verge of quitting (fair pay in their eyes about $%s). Raise them in Payroll, or simulate a night to see what happens. (Preview: never saved.)" % [str(cs21.payroll.employee("EMP-04").get("name", "EMP-04")), Money.format_cents(cs21.pay.expected_band("EMP-04")[1])]
+				"p21_request":
+					var r2 := cs21.pay.rec("EMP-02")
+					r2.assertive = 1.0
+					var lvl := int(r2.level) + 1
+					cs21.pay.on_advanced("EMP-02", "career", lvl)
+					var q21 := cs21.pay.pending_request("EMP-02")
+					if q21.is_empty():
+						return "Preview: no raise request - their pay already matches what they feel is fair."
+					return "Preview: %s reached level %d and asks for +$%s a day, or a $%s bonus today. Answer it in Payroll. (Preview: never saved.)" % [str(cs21.payroll.employee("EMP-02").get("name", "EMP-02")), lvl, Money.format_cents(int(q21.raise)), Money.format_cents(int(q21.bonus))]
+				"p21_night":
+					cs21.clock.restore({"day": cs21.clock.day, "t": WorkdayClock.NIGHT_AT + 1.0, "running": true})
+					var rr21 := cs21.sleep()
+					var pn21: Dictionary = (rr21.get("report", {}) as Dictionary).get("pay", {})
+					if pn21.is_empty():
+						return "Preview: the night could not be settled: %s" % str(rr21.get("reason", ""))
+					var moods := PackedStringArray()
+					for l21 in pn21.lines:
+						moods.append("%s %s" % [str(l21.name).split(" ")[0], ("QUIT" if bool(l21.quit) else str(l21.status).to_lower())])
+					return "Preview night settled: wages $%s. %s. Full report: Payroll -> Last night. (Preview: never saved.)" % [Money.format_cents(int(pn21.totals.total)), ", ".join(moods)]
+			return ""
 		"p20_rc":
 			return "Release checklist: docs/PHASE20_RC_REPORT.md (pass / fail / blocked / unrun per requirement). Content: %d crew lines, %d recording scenarios, %d sleep interruptions, %d offshore lines, %d voice clips indexed." % [CrewBank.get_bank().lines.size(), Game.night_recorder.scenarios.size() if Game.night_recorder else 0, Game.sleep_interrupts.sequences.size() if Game.sleep_interrupts else 0, (CrewBank.get_bank().offshore.values() as Array).reduce(func(a: int, b: Array) -> int: return a + b.size(), 0), VoiceBank.count()]
 		"p18_counts":
@@ -831,7 +873,7 @@ static func busy_camp_fixture() -> void:
 		for i in 3:
 			crew._cand_counter += 1
 			var cid := "P8-%d-%d" % [i, crew._cand_counter]
-			crew.candidates.append({"cid": cid, "name": ["Ines Vance", "Kofi Brandt", "Wren Salo"][i], "traits": sets[i], "look_seed": 9100 + i * 131, "fee": crew.econ.hire_fee_cents, "wage": crew.econ.wage_cents})
+			crew.candidates.append({"cid": cid, "name": ["Ines Vance", "Kofi Brandt", "Wren Salo"][i], "traits": sets[i], "look_seed": 9100 + i * 131, "fee": crew.econ.hire_fee_cents, "wage": PayMorale.asking_wage(cid, sets[i])})
 			crew.hire(cid))
 
 

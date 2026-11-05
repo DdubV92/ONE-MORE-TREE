@@ -307,17 +307,20 @@ func _journal_rest() -> Control:
 func _journal_payroll() -> Control:
 	var s := _scroll("Payroll")
 	var v: VBoxContainer = s[1]
-	_text(v, "Wages: $300 per employee per active working day, settled when you sleep. Unpaid wages must be cleared by the end of the following workday (including that day's wage) or the employee quits. Cash never goes negative; unpaid wages stay owed.", 15, UITheme.MUTED)
-	_text(v, "Example: %d working employees cost $%s a day. Delivering %d whole trees that day earns $%s - the break-even. Every employee needs to deliver more than three trees' worth of logs a day to pay for themselves." % [svc.payroll.active_employees().size(), Money.format_cents(svc.payroll.active_employees().size() * 30000), svc.payroll.active_employees().size() * 3, Money.format_cents(svc.payroll.active_employees().size() * 30000)], 14, UITheme.MUTED)
+	_text(v, "Wages: each employee's own daily rate (at least $100) plus any bonuses, set in the Payroll app on the camper computer, settled when you sleep. Unpaid wages must be cleared by the end of the following workday (including that day's wage) or the employee quits. Cash never goes negative; unpaid wages stay owed.", 15, UITheme.MUTED)
+	var est := svc.payroll.todays_estimate()
+	_text(v, "Example: tonight's %d working employees cost $%s. Delivering %d whole trees earns that back (break-even at $100 a tree)." % [svc.payroll.active_employees().size(), Money.format_cents(est), int(ceil(est / 10000.0))], 14, UITheme.MUTED)
 	_text(v, "Cash $%s  ·  tonight's payroll $%s  ·  owed now $%s" % [Money.format_cents(svc.wallet.cash), Money.format_cents(svc.payroll.todays_estimate()), Money.format_cents(svc.payroll.owed_total())])
 	for e in svc.payroll.employees:
 		var status := str(e.status)
 		var note := ""
+		if svc.pay and status == Payroll.ACTIVE:
+			note = "$%s/day, %s · " % [Money.format_cents(svc.pay.rate(str(e.id))), svc.pay.status(str(e.id)).to_lower()]
 		match status:
 			Payroll.PENDING:
 				note = "on the way by boat - not working yet, no wages yet"
 			Payroll.ACTIVE:
-				note = "working" + ("  (development fixture)" if e.get("fixture", false) else "")
+				note += "working" + ("  (development fixture)" if e.get("fixture", false) else "")
 			Payroll.QUIT_REQUESTED:
 				note = "QUIT over unpaid wages: leaves on the next boat; still owed what they earned"
 			_:
@@ -435,6 +438,15 @@ func show_report(r: Dictionary) -> void:
 		else:
 			lines.append("%s: paid up" % a.name)
 	_text(v, "Payroll: %d new wage liabilit%s.\n%s%s" % [int(r.new_liabilities), "y" if int(r.new_liabilities) == 1 else "ies", "\n".join(lines), ("\nQUIT over arrears: " + ", ".join(PackedStringArray(r.quits))) if not (r.quits as Array).is_empty() else ""], 15)
+	# Phase 21: tonight's pay per worker and how they feel about it.
+	var pn: Dictionary = r.get("pay", {})
+	if not (pn.get("lines", []) as Array).is_empty():
+		var pl := PackedStringArray()
+		for l in pn.lines:
+			var bon := int(l.bonus) + int(l.perf)
+			pl.append("%s $%s%s · %s%s" % [str(l.name).split(" ")[0], Money.format_cents(int(l.total)), (" (incl. $%s bonus)" % Money.format_cents(bon)) if bon > 0 else "", str(l.status).to_lower(), "  -> QUITS over pay, leaves on the boat" if bool(l.quit) else ""])
+		_text(v, "Pay tonight: %s.
+Full pay report and pay settings: camper computer -> Payroll." % ";  ".join(pl), 15)
 	_text(v, "Contract: %s  ·  stumps left %d  ·  undelivered %.2f tree-eq  ·  tomorrow's payroll $%s" % [("legacy, no deadline" if bool(r.legacy) else "%d days remaining" % int(r.days_remaining)), int(r.stumps), int(r.undelivered_mte) / 1000.0, Money.format_cents(int(r.next_day_payroll))], 15)
 	if r.has("rest"):
 		var rn: Dictionary = r.rest
@@ -533,7 +545,7 @@ func _journal_crew() -> Control:
 	var s := _scroll("Crew")
 	var v: VBoxContainer = s[1]
 	var crew: CrewService = Game.crew
-	_text(v, "Crew %d / %d  ·  beds in use %d / %d  ·  wages $300 per person per day worked." % [crew.slots_used(), CrewService.MAX_EMPLOYEES, CrewService.BEDS - _free_beds(crew), CrewService.BEDS], 15, UITheme.MUTED)
+	_text(v, "Crew %d / %d  ·  beds in use %d / %d  ·  pay per person per day worked: see Payroll on the camper computer." % [crew.slots_used(), CrewService.MAX_EMPLOYEES, CrewService.BEDS - _free_beds(crew), CrewService.BEDS], 15, UITheme.MUTED)
 	for e in svc.payroll.employees:
 		var eid := str(e.id)
 		var st := str(e.status)
@@ -590,14 +602,14 @@ func _journal_crew() -> Control:
 	_trucks_section(v, crew)
 	# Hiring
 	_text(v, "")
-	_text(v, "Hire (fee $%s, wage $300/day; arrives by the daylight boat)" % Money.format_cents(crew.econ.hire_fee_cents), 17, UITheme.ACCENT)
+	_text(v, "Hire (fee $%s; each asks their own daily wage; arrives by the daylight boat)" % Money.format_cents(crew.econ.hire_fee_cents), 17, UITheme.ACCENT)
 	var ok := crew.can_hire()
 	if not bool(ok.ok):
 		_text(v, str(ok.reason), 15, UITheme.MUTED)
 	crew.refresh_candidates()
 	for c in crew.candidates:
 		var row := HBoxContainer.new()
-		var l := UITheme.label("%s  ·  %s" % [c.name, ", ".join(PackedStringArray(c.traits)).replace("_", " ")], 15)
+		var l := UITheme.label("%s  ·  %s  ·  asks $%s/day" % [c.name, ", ".join(PackedStringArray(c.traits)).replace("_", " "), Money.format_cents(int(c.get("wage", PayMorale.MIN_WAGE)))], 15)
 		l.custom_minimum_size = Vector2(430, 0)
 		row.add_child(l)
 		var cid := str(c.cid)
@@ -694,7 +706,7 @@ func confirm_fire(eid: String) -> void:
 	var f := _frame("Fire %s?" % pv.name, 560)
 	var p: PanelContainer = f[0]
 	var v: VBoxContainer = f[1]
-	_text(v, "• Wages already earned stay owed: $%s%s.\n• %s\n• Their %s axe goes back to the company rack.\n• Logs they carry (%d) are set down; their jobs are cancelled.\n• They walk to the dock and leave on %s. Their bed frees when they have left.\n• A replacement costs $%s to hire." % [Money.format_cents(int(pv.owed)), (" (due end of day %d)" % int(pv.due)) if int(pv.owed) > 0 else "", "Today counts as a day worked: tonight's $300 is still earned." if bool(pv.worked_today) else "They have not worked today, so no wage for today.", pv.axe, int(pv.carrying), pv.boat, Money.format_cents(int(pv.fee))], 15)
+	_text(v, "• Wages already earned stay owed: $%s%s.\n• %s\n• Their %s axe goes back to the company rack.\n• Logs they carry (%d) are set down; their jobs are cancelled.\n• They walk to the dock and leave on %s. Their bed frees when they have left.\n• A replacement costs $%s to hire." % [Money.format_cents(int(pv.owed)), (" (due end of day %d)" % int(pv.due)) if int(pv.owed) > 0 else "", "Today counts as a day worked: tonight's pay is still earned." if bool(pv.worked_today) else "They have not worked today, so no wage for today.", pv.axe, int(pv.carrying), pv.boat, Money.format_cents(int(pv.fee))], 15)
 	var row := HBoxContainer.new()
 	row.add_child(UITheme.button("Fire them", func() -> void:
 		crew.fire(eid)

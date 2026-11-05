@@ -10,6 +10,7 @@
 - **Island r2 (Phase 12, new campaigns):** `data/world/r2/*` is generated and frozen too. After changing `scripts/world/island_r2.gd`, the base world, rocks or camera/trail layout, run `godot --headless --script res://tools/generate_island_r2.gd` (must place exactly 10,000 trees), and commit the data. CI runs it with `-- --check`. Existing saves keep their island; never re-plan on load.
 - **Motion capture:** `data/anim/mixamo_retarget.json` comes from `tools/bake_mixamo.gd` and the owner's FBX files in `assets/mixamo_src/`. That folder is git-ignored; Adobe's terms forbid redistributing the raw files, so never commit them.
 - **Camp placement:** `scripts/camp/camp_layout.gd` is the single source of truth for camp positions.
+- **Wages:** `PayMorale` (Phase 21) decides each worker's pay; `Payroll.settle_day` charges `planned_for()` exactly once per worked day. Saves without a `pay` block keep $300 per person.
 - **Night safety:** `SafetyService.query()` is authoritative. Never grant safety from lighting or emissives.
 - **Preview mode:** must never write saves or change campaign state. Use `Game.can_write_campaign_save()`.
 - **Before committing, run:**
