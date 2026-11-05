@@ -146,6 +146,19 @@ All placement is derived at runtime from the frozen r2 data. Nothing in `data/wo
 - **Muted play:** subtitles carry a relative direction cue such as "[to your left, offshore]".
 - **Later conversation:** later and secondhand lines join ordinary conversation after a visit (`sea:after`). Telling someone passes the claim on, not the sighting.
 
+## Renders (software renderer, lavapipe, 1600x900)
+
+`docs/screenshots/phase19_*.jpg`:
+
+| Shot | What it shows |
+|---|---|
+| `ship_shore` | From the dock at eye height: a clear silhouette on the horizon. |
+| `ship_close` | The model: raked bow, superstructure, funnel, mast, crane, stern helipad; no markings. |
+| `ship_yard` | From the yard at eye height: line of sight is clear, but the ship is small, through the beach-gate gap in the fence. The shore and dock are the strong viewpoints. |
+| `heli` | The helicopter banking over camp, with the rotor blur disc. |
+
+The first close render showed blotchy hull shading, caused by faces emitted twice with averaged normals. The hull now uses one face per quad, explicit outward normals and a double-sided material (fixed and re-rendered).
+
 ## 4. Counts (from the data)
 
 | What | Count |

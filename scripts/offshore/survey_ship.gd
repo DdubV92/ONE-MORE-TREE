@@ -96,20 +96,28 @@ func _hull_mesh() -> ArrayMesh:
 		_quad(st, a[m - 1], a[0], b[0], b[m - 1])
 	for k in m / 2 - 1:
 		_quad(st, last[k], last[k + 1], last[m - 2 - k], last[m - 1 - k])
-	st.generate_normals()
 	return st.commit()
 
 
+## One face per quad with an explicit OUTWARD flat normal (away from the
+## hull's centre line), so shading is clean; the material is double-sided.
 static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
-	# Double-sided is not needed: winding is chosen per face; generate both
-	# windings cheaply so the hull reads from any side (no back-face holes).
-	for tri in [[a, b, c], [a, c, d], [a, c, b], [a, d, c]]:
-		for v in tri:
-			st.add_vertex(v)
+	var n := (b - a).cross(c - a)
+	if n.length() < 1e-6:
+		n = (c - a).cross(d - a)
+	n = n.normalized()
+	var ctr := (a + b + c + d) * 0.25
+	var inside := Vector3(0.0, 2.0, clampf(ctr.z, -L * 0.5 + 10.0, L * 0.5 - 1.0))
+	if n.dot(ctr - inside) < 0.0:
+		n = -n
+	for v in [a, b, c, a, c, d]:
+		st.set_normal(n)
+		st.add_vertex(v)
 
 
 func _build() -> void:
 	var hull_m := _m(Color(0.16, 0.19, 0.23), 0.55, 0.3)
+	hull_m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var anti := _m(Color(0.35, 0.12, 0.1), 0.7, 0.1)
 	var white := _m(Color(0.86, 0.87, 0.86), 0.45, 0.05)
 	var grey := _m(Color(0.52, 0.54, 0.55), 0.5, 0.4)
