@@ -1,10 +1,26 @@
-# ONE MORE TREE LATEST BUILD PHASE 16
+# ONE MORE TREE LATEST BUILD PHASE 17
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 16 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 17 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 16
+## New in Phase 17
+
+- **The crew talks.**
+  - Nearly 1,700 written lines in five distinct personalities: work, tools, weather, banter, groups, camp life, wages, dusk, strange things and survival.
+  - Workers talk when they are actually together and it fits what they are doing and what they know. A rumor stays a rumor; only someone who saw something describes it.
+  - They go quiet around a running saw, a falling tree or danger.
+  - Subtitles show only when you could hear them. Settings → "Crew subtitle duration" controls how long they stay up.
+- **Talking to a worker** now uses these lines, with "Anything holding you up?" and "Good work today" (which thanks a real piece of work, once).
+- **The camper computer** has **Mail, News, Forums and Archives**: an offline fictional internet of over 5,500 posts, articles, emails, notices and archive entries.
+  - New material arrives by day, at dusk and at night; anything you miss is waiting the next morning with a short digest.
+  - Bookmarks and unread marks; your place in a thread is remembered.
+  - Reading is optional and live time.
+- **Review:** Preview → Tab → "Phase 17 crew talk & the camper internet".
+
+**Not yet:** voices (Phase 18). Simulated and validated, not yet played by a person.
+
+## Phase 16 (previous build)
 
 - **Your crew grows through real work.**
   - Each tree is worth up to 1,000 "merit", shared by whoever felled, sectioned, de-stumped, carried, drove, stacked or fed it. Your own work stays yours.

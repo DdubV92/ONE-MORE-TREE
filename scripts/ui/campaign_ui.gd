@@ -274,6 +274,7 @@ func _journal_help() -> Control:
 	_text(v, "NIGHTS\n" + HelpText.night(), 14)
 	_text(v, "WHAT PAUSES\n" + HelpText.time_rules(), 14)
 	_text(v, "CREW GROWTH & YOUR REST\n" + HelpText.growth_and_rest(), 14)
+	_text(v, "CREW TALK & THE COMPUTER\n" + HelpText.talk_and_computer(), 14)
 	_text(v, "RECENT MESSAGES", 16, UITheme.ACCENT)
 	var notes: Notifications = hud.get("notes") if hud else null
 	if notes:

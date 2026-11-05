@@ -2,6 +2,25 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 17: Crew conversations and the camper internet
+
+Full detail: [PHASE17_NOTES.md](PHASE17_NOTES.md). Manifest: [editorial/CONTENT_MANIFEST.md](editorial/CONTENT_MANIFEST.md). Calendar: [editorial/FEED_CALENDAR.md](editorial/FEED_CALENDAR.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Crew bank >= 1,200 lines, >= 100 per category, >= 150 per starting worker | ✅ | 1,676 lines; 277-289 per worker; 0 errors / 0 near-duplicates |
+| Cast sheet, schema, stable ids, voice profile keys | ✅ | docs/editorial |
+| Conversation runtime: eligibility, pairing, per-turn re-checks, responses, cooldowns saved | ✅ | Tested in a live world |
+| Knowledge: firsthand vs told, rumor transfer, knowers from context facts | ✅ | Tested |
+| Suppression: saw, fall warning, team carry, hunt danger, departed/hidden | ✅ | Interruption tested |
+| Hearing-gated subtitles with duration setting; boss talk menu from the bank | ✅ | |
+| Fictional internet >= 5,500 units within kind minimums; 94 accounts | ✅ | 0 validator errors |
+| Clock publication, sleep catch-up, cap 240, branches, flags, edits, moderation | ✅ | Calendar simulated; reload/refresh tested |
+| Mail/News/Forums/Archives reader with unread, digest, bookmarks, positions | ✅ | Headless only |
+| cl01 window warning with director reservation and fallback | ✅ | Fallback tested; staging unplayed |
+| cl02-cl12 authored and handed to Phase 19 | 🟡 | Recorded as opportunities only |
+| Voices | ⛔ | Phase 18 |
+
 ## Phase 16: Crew merit, personality, skills and the boss's restedness
 
 Full detail: [PHASE16_NOTES.md](PHASE16_NOTES.md).

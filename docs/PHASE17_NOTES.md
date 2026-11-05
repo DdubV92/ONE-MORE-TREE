@@ -78,12 +78,87 @@ Counts below come from the parsed data files (`tools/content/manifest.py`). They
 
 ## The camper internet
 
-**[FEED NUMBERS FILLED IN AT THE END]**
+- **The bank.** The fictional internet (`data/feed/*.json`, accounts in `data/feed/accounts.json`) holds **__FEED__ authored units** in 11 day-range batches. Every unit is one substantive email, news paragraph or live update, forum post, advisory or archive entry.
 
-## Computer-linked patterns
+  | Kind | Units | Minimum |
+  |---|---:|---:|
+  __KINDS__
 
-**[FILLED IN AT THE END]**
+  - **Accounts:** **94 recurring fictional accounts**, each with an occupation, region, time zone, posting window, voice, knowledge, claims, relations and a trajectory. They include moderators, skeptics, night workers in six other time zones, Dellow Court residents, harbour and ferry crew, linemen, recordists, historians, and the boss's mailbox cast.
+  - **Validator** (`tools/content/validate_feed.py`):
+    - 0 errors;
+    - every author exists;
+    - every reply follows a published parent in the same thread and branch;
+    - every quote and link points to an earlier unit;
+    - titles are present, slots and flags are valid;
+    - no exact or near-duplicates (word-trigram Jaccard ≥ 0.5, across the whole bank).
+  - **Editorial bible:** [editorial/FEED_BIBLE.md](editorial/FEED_BIBLE.md), covering the world, sites, the ten arcs A–J with day beats, and the rules. The calendar is [editorial/FEED_CALENDAR.md](editorial/FEED_CALENDAR.md) and the batch manifest is [editorial/CONTENT_MANIFEST.md](editorial/CONTENT_MANIFEST.md).
+- **Publication** (`FeedService`), from the authoritative clock:
+  - daytime units appear at their second of the workday, dusk units after 900 s, and night units as the boss stays awake into the bounded night;
+  - **whatever is left of a day publishes when the day ends at sleep**, so the next morning brings a short "since you last looked" digest rather than a burst of alerts;
+  - survival days 31–35 follow the continuous hunt clock and only appear in a failed contract (`if:hunt`);
+  - at most 240 units count against one day; extras roll over;
+  - `mx:` alternatives are fixed per campaign;
+  - `if:`/`unless:` flags (wages owed, a worker left, dog rescued, truck or saw owned, clearing progress, late reading, a night event, hunt, rescue) are decided once, when the unit falls due;
+  - replies whose parent wasn't published are skipped with it;
+  - refreshing never rerolls anything;
+  - edits apply after their delay, and removed posts show a moderation note.
+- **Simulation results:**
+  - **Calendar** (`tools/content/feed_calendar.py`): __CAL__.
+  - **Unit test:** early sleep and live late-night reading end each day with the same published set (observed). A mid-campaign save/load republishes nothing. Repeated refresh adds nothing. No day exceeds the cap, no reply appears before its parent, and no quote spoils an unpublished post.
+- **Reading** (camper computer: **Mail, News, Forums, Archives**; Recordings stays a labelled Phase 19 placeholder):
+  - unread counts on the app buttons;
+  - a catch-up digest;
+  - bounded pages of 30 threads;
+  - bookmarks;
+  - reply depth;
+  - quoted context;
+  - edit and moderation notes;
+  - back navigation and restored scroll position.
+
+  Mail also shows the live supplier order status from the real order records (company and personal mail is authored, and flag-gated where it depends on state). Reading is live time and optional: it never blocks wages, bedtime, completion or rescue. A gentle "new messages" notice appears at most every 3 minutes while you are in the camper.
+
+## Computer-linked patterns (handoff to Phase 19)
+
+| Hook | Status |
+|---|---|
+| cl01, the window warning | **Implemented.** |
+| cl02 – cl12 | Authored once each (__HOOKS__). Recorded as opportunities through `TerrorDirector.computer_hint()` for the Phase 19 catalog; they never trigger anything by themselves. |
+
+How cl01 works:
+- The Lamp Hours thread turns over days 22–24 on one campaign side (`mx:window:a`). The other side ends ordinarily.
+- At the moment the final message is due, `FeedService.window_reservation()` checks:
+  - the boss is reading at the desk;
+  - they are not already glancing out;
+  - it is contract night;
+  - the curtains are open;
+  - a Phase 11 staging spot outside the right-hand window exists;
+  - it isn't a camper interior;
+  - no awake worker within 25 m would plainly see it;
+  - the director is free and the global pacing allows it.
+- The director then has to really start an **ordinary** camper-context window event (intensity ≤ 2) through its normal placement and reservation.
+- Only then is the warning published. Otherwise the authored fallback continuation ("Sorry. That was a stupid thing to post…") appears instead.
+- Unit test: without a valid reservation the warning never publishes (observed). The camera is never moved, nothing spawns inside the camper, and camper immunity is unchanged.
+
+## Preview review route
+
+Preview → Tab → **"Phase 17 crew talk & the camper internet"**:
+
+| # | Stop | What it does |
+|---|---|---|
+| 1 | Start a crew conversation | Two workers in front of you; the opening line id is shown |
+| 2 | Conversation inspector | Why the nearest worker can or can't say lines right now |
+| 3 | Feed: publish next day | Preview only |
+| 4 | Feed counts & digest | |
+| 5 | Window-warning check | The live reservation answer and reason |
+| 6 | How to read the feed | |
 
 ## Known limits (honest)
 
-**[FILLED IN AT THE END]**
+- **No voices yet.** Lines are text only. Stable ids and the `SoundService.speak` hook are ready for Phase 18.
+- **Simplified knowledge.** Knowledge comes from WorkerMind memories plus the Phase 16 context facts, so a worker can't yet discuss specific internet posts (nobody reads the boss's computer).
+- **Hearing** is distance plus one ray, not the full acoustic path.
+- **One conversation at a time.** Only one conversation runs per camp (deliberately sparse). Groups are capped at 4.
+- **Unplayed by a person.** The reader UI was built and exercised headless only (no human playtest, no screenshot pass). Long reading sessions at 5,000+ published units were not profiled on real hardware.
+- **Phase 19 hooks.** cl02 – cl12 are authored hooks only; Phase 19 executes them.
+- **Archived posts** are not searchable.

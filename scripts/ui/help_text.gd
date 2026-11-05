@@ -73,3 +73,11 @@ static func growth_and_rest() -> String:
 		"Your rest: a workday costs about 30-40 rest. After nightfall each awake minute costs about 5 more and makes tonight's sleep less restful (sleep quality falls to 25 % after 8 minutes). Going to bed before nightfall fully restores a normal day; one late night is recovered in a night or two. Below 70 rest you walk up to 15 % slower and cut up to 20 % weaker (at 0). The bed shows what tomorrow will be like before you sleep. Tiredness never hurts you and never makes the camper unsafe.",
 		"Survival days: no sleeping to morning. Sitting still on the couch or staying hidden recovers a little (time keeps running).",
 	])
+
+
+## Phase 17: crew talk and the camper computer.
+static func talk_and_computer() -> String:
+	return "\n".join([
+		"The crew talks when people are actually together and it fits what they're doing and what they know. Someone who only heard a story repeats it as a story. They go quiet near a running chainsaw, a falling tree or danger. Talk to a worker (Interact) to ask about their work, what's holding them up, strange things or wages, or to thank them for a specific job.",
+		"The camper computer's Mail, News, Forums and Archives are a fictional local internet that changes day by day and night by night. Nothing there is required; anything you miss is waiting the next morning. Reading is live time.",
+	])
