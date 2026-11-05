@@ -20,6 +20,11 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P22"):
+		await _run_async("phase 22 CampOS", _t_phase22_os)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P21"):
 		_run("phase 21 pay units", _t_phase21_units)
 		await _run_async("phase 21 pay world", _t_phase21_world)
@@ -179,6 +184,7 @@ func _ready() -> void:
 	await _run_async("phase 20 world: 36/36 recordings staged on the real island, morning marks, isolated playback (historic trees, deterministic seek, no side effects), reload; interruption states/no harm/one settlement/save resume/pacing; interrupted save recovery; stale attack after extraction; save growth", _t_phase20_world)
 	_run("phase 21 pay units: $100 minimum, itemised idempotent settlement, raise/cut feelings, personality-dependent quitting (+$50 not always enough), verge before quit, gear raises the fair wage and raise requests, legacy $300 kept, save round trip, report reconciles, morale breaks", _t_phase21_units)
 	await _run_async("phase 21 pay world: real night at each worker's rate, report lines, bonus clears, candidate asking wage, Payroll app rows, quit over pay via departure, save block, preview never writes", _t_phase21_world)
+	await _run_async("phase 22 CampOS: 1280x720 desktop, several program windows, click-to-raise, title-bar drag, maximize/restore, taskbar minimize/restore, close, saved layout and older saves, on-screen pointer, boot on switch-on, reading apps refresh in place", _t_phase22_os)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -6605,4 +6611,127 @@ func _p21_checks(world: IslandWorld) -> String:
 	if Game.can_write_campaign_save():
 		return "preview could write a campaign save"
 	p21_report["world"] = rep
+	return ""
+
+
+# ============================================================ Phase 22 OS
+
+func _t_phase22_os() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.desk == null or Game.campaign == null or not world.systems_ready) and guard < 2000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := await _p22_checks(Game.desk)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p22_checks(desk: DeskComputer) -> String:
+	Game.campaign.start_test_route(true, true)
+	if DeskComputer.SIZE != Vector2i(1280, 720):
+		return "desktop is not 1280 x 720"
+	# Several programs open at once, each in its own window.
+	for a in ["Payroll", "Mail", "Cameras"]:
+		desk.open_app(a)
+		await get_tree().process_frame
+	if desk.windows.size() < 3 or desk.app != "Cameras":
+		return "windows %s, focused %s" % [str(desk.windows.keys()), desk.app]
+	var pw: CampWindow = desk.windows["Payroll"]
+	var mw: CampWindow = desk.windows["Mail"]
+	var cw: CampWindow = desk.windows["Cameras"]
+	if not (cw.active and not pw.active and cw.get_index() > pw.get_index()):
+		return "the newest window is not in front"
+	if desk.window_content("Payroll").get_child_count() == 0 or desk.window_content("Mail").get_child_count() == 0:
+		return "a program window is empty"
+	# Clicking a window raises it (the topmost window under the point).
+	var only_p := Vector2(pw.position.x + 12, pw.position.y + 200)
+	if desk.window_at(only_p) != pw and desk.window_at(only_p) != null:
+		# Payroll may be covered there; find a point covered only by Payroll.
+		only_p = pw.position + Vector2(pw.size.x - 12, pw.size.y - 40)
+	if desk.window_at(only_p) == pw:
+		desk.press_at(only_p)
+		if desk.app != "Payroll" or not pw.active or pw.get_index() < cw.get_index():
+			return "clicking Payroll did not raise it"
+	# Drag by the title bar: relative motion moves the window.
+	desk.focus(mw)
+	if mw.maximized:
+		mw.toggle_maximize()
+	var p0 := mw.position
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	mw._title_input(press)
+	var mv := InputEventMouseMotion.new()
+	mv.relative = Vector2(-40, 25)
+	mw._title_input(mv)
+	press.pressed = false
+	mw._title_input(press)
+	if mw.position.distance_to(p0 + Vector2(-40, 25)) > 0.5:
+		return "dragging moved %s -> %s" % [str(p0), str(mw.position)]
+	# Maximize fills the workspace above the taskbar; again restores.
+	var r0 := Rect2(mw.position, mw.size)
+	mw.toggle_maximize()
+	if mw.size != DeskComputer.WORKSPACE.size:
+		return "maximize size %s" % str(mw.size)
+	mw.toggle_maximize()
+	if Rect2(mw.position, mw.size) != r0:
+		return "restore after maximize changed the window"
+	# Minimize from the taskbar and back; closing frees the window.
+	desk._task_click("Mail")
+	if not mw.minimized or mw.visible or desk.app == "Mail":
+		return "taskbar did not minimize the focused window"
+	desk._task_click("Mail")
+	if mw.minimized or not mw.visible or desk.app != "Mail":
+		return "taskbar did not restore the window"
+	# Saved layout comes back (positions, minimized, focus).
+	desk.minimize_app("Cameras")
+	var saved := desk.capture()
+	desk.close_app("Payroll")
+	await get_tree().process_frame
+	if desk.windows.has("Payroll") or desk._task_buttons.has("Payroll"):
+		return "closing left the window or its taskbar button"
+	desk.restore(saved)
+	await get_tree().process_frame
+	if not desk.windows.has("Payroll") or not (desk.windows["Cameras"] as CampWindow).minimized or desk.app != "Mail":
+		return "layout not restored: %s focus %s" % [str(desk.windows.keys()), desk.app]
+	var m2: CampWindow = desk.windows["Mail"]
+	if m2.position.distance_to(p0 + Vector2(-40, 25)) > 0.5:
+		return "restored window moved"
+	# Older saves (one app, no window list) open that program.
+	desk.restore({"app": "Shop", "powered": true})
+	if desk.windows.keys() != ["Supplier"]:
+		return "pre-Phase-22 save opened %s" % str(desk.windows.keys())
+	# The pointer is part of the screen image and follows the mouse.
+	desk.pointer_to(Vector2(321, 222))
+	if desk._cursor.position != Vector2(321, 222) or desk._cursor.get_parent() != desk._shell or desk._cursor.get_index() != desk._shell.get_child_count() - 1:
+		return "pointer not drawn on top of the desktop"
+	# Switching the screen on boots CampOS, then the desktop is usable.
+	desk.set_power(false)
+	desk.set_power(true)
+	if not desk.booting or not desk._boot.visible:
+		return "no boot screen on switch-on"
+	desk._tick_boot(DeskComputer.BOOT_SECONDS + 0.1)
+	if desk.booting or desk._boot.visible:
+		return "boot did not finish"
+	# Reading apps navigate inside their own window.
+	desk.open_app("News")
+	var nw: CampWindow = desk.windows["News"]
+	desk.refresh_app("News")
+	await get_tree().process_frame
+	if desk.windows["News"] != nw or nw.content.get_child_count() == 0:
+		return "reading app refresh replaced its window"
 	return ""

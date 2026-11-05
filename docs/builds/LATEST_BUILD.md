@@ -1,4 +1,4 @@
-# ONE MORE TREE LATEST BUILD PHASE 22 (longer workdays)
+# ONE MORE TREE LATEST BUILD PHASE 22 (longer workdays, CampOS desktop)
 
 The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 22 - build N (Windows)").
 
@@ -10,6 +10,15 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 - Everything timed within the day moves with it: the midday break, the weather (afternoon showers stay in the afternoon), the internet's posting times, the supplier's hours and the lighting.
 - A full day doesn't tire you more than before. The hunt nights are unchanged.
 - Older saves: a save made at night stays night; a daytime save simply has more daylight left.
+- **The camper computer is now a real desktop ("CampOS"):**
+  - **Desktop:** icons for every program (double-click to open), with red badges for unread mail, news, raise requests and flagged recordings, plus a small live view of the four cameras.
+  - **Windows:** open several programs at once. Drag a window by its title bar, resize it from the bottom-right corner, and use minimize / maximize / close (or double-click the title bar to maximize). Clicking a window brings it to the front.
+  - **Taskbar:**
+    - the **CampOS** start menu, listing every program plus "Turn off the screen";
+    - a button for each open program (click to minimize or bring it back);
+    - the tray, with unread mail, flagged recordings and the camp clock.
+  - **Pointer and boot:** the computer has its own mouse pointer, which you can also see on the monitor from across the room. Switching the screen on shows a short boot screen.
+  - The screen is sharper: 1280 × 720 (was 1024 × 576).
 
 ## Phase 21 (previous build): your payroll request
 

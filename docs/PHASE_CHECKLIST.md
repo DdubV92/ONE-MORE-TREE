@@ -13,6 +13,13 @@ The contract stays at 30 days; each workday gains 5 real minutes of daylight (20
 | A full day tires you as before (per-minute drain × 20/25); hunt drain unchanged | ✅ | |
 | Older saves: a save made at night stays night; daytime saves keep their seconds (more daylight left) | ✅ | `WorkdayClock.migrate_saved`, tested |
 | Contract feasibility (B1) | ❌ | About +33% crew work per day; still far from 10,000 trees |
+| **CampOS** (owner request): the camper computer runs like a windowed OS at 1280 × 720 | ✅ | `DeskComputer` desktop shell, `CampWindow`, `CampIcon` |
+| Desktop icons (double-click), unread badges, live-camera desktop widget | ✅ | |
+| Program windows: several open at once, click-to-raise, title-bar drag, corner resize, minimize / maximize / close, double-click title to maximize | ✅ | One window per program |
+| Taskbar: start menu (all programs, turn off the screen), a button per open program (click to minimize / restore), tray (mail, flagged recordings, camp clock), Stand up | ✅ | |
+| On-screen mouse pointer drawn into the screen image (shows on the monitor in the room); the real cursor hides over the screen | ✅ | Busy spinner while booting |
+| Boot screen when the screen is switched on; a loaded game does not reboot | ✅ | |
+| Window layout saved and restored; older saves open their one app | ✅ | Tested |
 
 ## Phase 21: Payroll, pay mood and quitting (owner request)
 

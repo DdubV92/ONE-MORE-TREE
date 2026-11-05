@@ -35,7 +35,9 @@ static func _label(t: String, size := 15, color := UITheme.TEXT) -> Label:
 
 
 static func _refresh(desk: Node, app: String) -> void:
-	if desk and desk.has_method("open_app"):
+	if desk and desk.has_method("refresh_app"):
+		desk.call("refresh_app", app)      # Phase 22: rebuild inside its window
+	elif desk and desk.has_method("open_app"):
 		desk.call("open_app", app)
 
 
