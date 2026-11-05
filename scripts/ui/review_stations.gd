@@ -91,6 +91,11 @@ const STATIONS17 := [
 	["3 Feed: publish next day", "p17_next_day"], ["4 Feed counts & digest", "p17_counts"],
 	["5 Window-warning check", "p17_window"], ["6 How to read the feed", "p17_howto"],
 ]
+const STATIONS18 := [
+	["1 Marta", "p18_EMP-01"], ["2 Dale", "p18_EMP-02"], ["3 Priya", "p18_EMP-03"],
+	["4 Tomas", "p18_EMP-04"], ["5 Joan", "p18_EMP-05"], ["6 Two-person exchange", "p18_exchange"],
+	["7 Distance ladder", "p18_distance"], ["8 Five-voice lineup", "p18_lineup"], ["9 Voice coverage", "p18_counts"],
+]
 static var _feed_day := 0
 static var _clear_i := 0
 static var _density_i := 0
@@ -352,6 +357,11 @@ static func go(hud: Node, which: String) -> String:
 			if Game.campaign_ui:
 				Game.campaign_ui.toggle_journal(0)
 			return "Journal -> Crew: level, merit to the next level, each skill's real effect, today's time split with causes, and 'Thank them' buttons for specific work."
+		"p18_counts":
+			return "Voice bank: %d clips for %d authored lines (all required line/profile mappings). Generated offline with eSpeak NG (original synthetic voices; no recorded or cloned person). Runtime loads clips on demand; missing clips fall back to subtitles. The internet stays text only." % [VoiceBank.count(), CrewBank.get_bank().lines.size()]
+		"p18_EMP-01", "p18_EMP-02", "p18_EMP-03", "p18_EMP-04", "p18_EMP-05", "p18_exchange", "p18_distance", "p18_lineup":
+			w.teleport_to("camp")
+			return VoiceAudition.start(w, which.trim_prefix("p18_"))
 		"p17_talk", "p17_inspect":
 			var cs17: CampaignService = Game.campaign
 			if Game.crew == null or Game.crew.workers.size() < 2:

@@ -1,10 +1,23 @@
-# ONE MORE TREE LATEST BUILD PHASE 17
+# ONE MORE TREE LATEST BUILD PHASE 18
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 17 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 18 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 17
+## New in Phase 18 (headphones recommended)
+
+- **The crew speaks.**
+  - Every crew line is voiced: five distinct voices for Marta, Dale, Priya, Tomas and Joan, plus two for anyone you hire later.
+  - Lines are calm, strained while working, uneasy, frightened, or whispered when hiding.
+- **Voices come from the speaker** and move with them, through doors and walls like other sounds.
+- **Subtitles** stay up exactly as long as the line.
+- **Mouths move** while workers speak.
+- **Camera microphones** pick up speech on the desk computer, without doubling what you already hear.
+- **Review:** Preview → Tab → "Phase 18 crew voices" (each worker, an exchange, a distance ladder, a lineup).
+
+**Honest limits:** the voices are computer-generated (eSpeak NG), clearly synthetic, and **not yet listened to** (no audio output on the build machine). Please report any line that sounds wrong.
+
+## Phase 17 (previous build)
 
 - **The crew talks.**
   - Nearly 1,700 written lines in five distinct personalities: work, tools, weather, banter, groups, camp life, wages, dusk, strange things and survival.

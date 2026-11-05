@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P18"):
+		_run("phase 18 units", _t_phase18_units)
+		await _run_async("phase 18 world", _t_phase18_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P17"):
 		_run("phase 17 units", _t_phase17_units)
 		await _run_async("phase 17 world", _t_phase17_world)
@@ -146,6 +152,8 @@ func _ready() -> void:
 	await _run_async("phase 16 world: worker/boss felling merit split, read-only review, profile survives save/restore, acceptance remainder once, idle causes, rest debuffs reach the real tool/walk effects and leave the camper safe, schema 11 migration", _t_phase16_world)
 	_run("phase 17 units: crew bank >= 1,200 lines (>= 100 per category, >= 150 per starting worker, responses resolve), feed bank >= 5,500 units within kind minimums, 80+ accounts, publication: early sleep = live reading by day end, reload/refresh never republish or reroll, nightly cap, replies after visible parents, quotes never spoil, cl01 falls back safely", _t_phase17_units)
 	await _run_async("phase 17 world: two workers converse from the bank with turn re-checks, knowledge gates (told vs firsthand), rumor transfer, missing listener / departed / interrupted / chainsaw suppression, boss replies, cooldowns survive save/restore, feed publishes by the real clock and the reader builds", _t_phase17_world)
+	_run("phase 18 units: every required line/profile mapping has an imported clip (character lines -> own profile, shared lines -> each selectable profile), sampled clips decode at their manifest length, deliveries valid, replacement voices persistent, internet unvoiced", _t_phase18_units)
+	await _run_async("phase 18 world: a voiced turn plays from the speaker's head with synced caption and mouth motion, interruption stops audio + mouth, missing clip keeps text, boss reply voiced, no doubled playback", _t_phase18_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -5101,4 +5109,164 @@ func _p17_checks(world: IslandWorld) -> String:
 	var st := SaveService.capture_state(world)
 	if not (st.get("phase17", {}) as Dictionary).has("feed"):
 		return "save lacks phase17.feed"
+	return ""
+
+
+
+# ------------------------------------------------------------------ Phase 18
+
+const P18_ROSTER_TRAITS := {"EMP-01": ["hard_working", "sociable"], "EMP-02": ["stronger", "skeptical"], "EMP-03": ["observant", "level_headed"], "EMP-04": ["timid", "reliable_driver"], "EMP-05": ["sociable", "skeptical"]}
+
+
+func _p18_profiles(ln: Dictionary) -> Array:
+	var sp := str(ln.get("speaker", "any"))
+	if CrewBank.SPEAKER_VOICE.has(sp):
+		return [CrewBank.SPEAKER_VOICE[sp]]
+	var out: Array = []
+	for e in ["EMP-01", "EMP-02", "EMP-03", "EMP-04", "EMP-05"]:
+		if sp == "any" or (sp.begins_with("trait:") and sp.substr(6) in P18_ROSTER_TRAITS[e]):
+			out.append(CrewBank.SPEAKER_VOICE[e])
+	return out + ["crew_m", "crew_f"]
+
+
+func _t_phase18_units() -> String:
+	var bank := CrewBank.get_bank()
+	var required := 0
+	var missing: PackedStringArray = []
+	for id in bank.lines:
+		for prof in _p18_profiles(bank.lines[id]):
+			required += 1
+			if not VoiceBank.has(prof, str(id)):
+				missing.append("%s/%s" % [prof, id])
+	if not missing.is_empty():
+		return "%d of %d required mappings have no clip (e.g. %s)" % [missing.size(), required, ", ".join(missing.slice(0, 4))]
+	if VoiceBank.count() != required:
+		return "voice index has %d clips for %d required mappings (stale entries?)" % [VoiceBank.count(), required]
+	# Decode a deterministic sample of clips and compare with the manifest.
+	var keys: Array = VoiceBank._clips.keys()
+	keys.sort()
+	var checked := 0
+	for k in range(0, keys.size(), 47):
+		var parts := str(keys[k]).split("/")
+		var st: AudioStream = load(VoiceBank.path(parts[0], parts[1]))
+		if st == null:
+			return "clip %s did not load" % keys[k]
+		var want := float(VoiceBank.info(parts[0], parts[1]).duration)
+		if absf(st.get_length() - want) > 0.08 or st.get_length() < 0.3:
+			return "clip %s decodes to %.2f s (manifest %.2f)" % [keys[k], st.get_length(), want]
+		checked += 1
+	if checked < 50:
+		return "only %d clips sampled" % checked
+	for k in keys:
+		var d := str(VoiceBank._clips[k][1])
+		if not d in VoiceBank.DB:
+			return "clip %s has unknown delivery %s" % [k, d]
+	# Replacement hires: persistent, never a roster voice.
+	for eid in ["EMP-06", "EMP-07", "EMP-11", "EMP-42"]:
+		var v := CrewBank.voice_of(eid)
+		if v != CrewBank.voice_of(eid) or not v in ["crew_m", "crew_f"]:
+			return "replacement %s got voice %s" % [eid, v]
+	# The fictional internet stays text only.
+	if DirAccess.dir_exists_absolute("res://audio/voice/feed"):
+		return "the internet bank was voiced"
+	return ""
+
+
+func _t_phase18_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or Game.campaign == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 20:
+		await get_tree().physics_frame
+	var err := await _p18_checks(world)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p18_checks(world: IslandWorld) -> String:
+	var crew: CrewService = Game.crew
+	Game.campaign.start_test_route(true, true)
+	var g := 0
+	while crew.workers.size() < 2 and g < 900:
+		await get_tree().physics_frame
+		g += 1
+	if crew.workers.size() < 2:
+		return "no crew"
+	var talk := crew.talk
+	var a: Worker = crew.workers.get("EMP-01", crew.workers.values()[0])
+	var b: Worker = crew.workers.values()[1] if crew.workers.values()[0] == a else crew.workers.values()[0]
+	var at := World.camp_origin() + Vector3(4, 0, 6)
+	at.y = World.height_at(at.x, at.z)
+	a.global_position = at
+	b.global_position = at + Vector3(1.5, 0, 0)
+	Game.player.global_position = at + Vector3(0, 0, 3)
+	# A character line with a clip: it plays from the speaker, the mouth moves.
+	var line_id := ""
+	for id in talk.bank.lines:
+		var ln: Dictionary = talk.bank.lines[id]
+		if str(ln.speaker) == a.id and VoiceBank.has(CrewBank.voice_of(a.id), str(id)):
+			line_id = str(id)
+			break
+	if line_id == "":
+		return "no clip for %s" % a.id
+	var voiced0 := int(talk.stats.get("voiced", 0))
+	talk.active = {"members": [a, b], "queue": [], "next_at": talk.clock, "gkey": "g:test", "cat": "test", "paused_at": -1.0, "turns": 0}
+	talk._speak(line_id, a, [b])
+	var clip_s := float(talk.active.get("clip_s", 0.0))
+	await get_tree().process_frame
+	if int(talk.stats.get("voiced", 0)) != voiced0 + 1:
+		return "the voiced line did not play (stats %s)" % str(talk.stats)
+	if not SoundService.speaking(a):
+		return "no speech source playing for the speaker"
+	if not a.body_char.speaking_mouth():
+		return "the mouth did not move"
+	var playing := 0
+	for v in SoundService.instance().voices:
+		if (v as SoundService.Voice).busy and str((v as SoundService.Voice).event).begins_with("voice."):
+			playing += 1
+	if playing != 1:
+		return "%d speech voices playing (doubled playback?)" % playing
+	if absf(clip_s - float(VoiceBank.info(CrewBank.voice_of(a.id), line_id).duration)) > 0.1:
+		return "turn timing did not use the clip length (%.2f)" % clip_s
+	talk.active = {"members": [a, b], "queue": [], "next_at": talk.clock + 99.0, "gkey": "g:test", "cat": "test", "paused_at": -1.0, "turns": 0, "speaker": a}
+	# Interruption stops audio and mouth at once.
+	talk._stop_current()
+	await get_tree().process_frame
+	if SoundService.speaking(a) or a.body_char.speaking_mouth():
+		return "interrupted line kept playing or the mouth kept moving"
+	talk.active.clear()
+	# A missing clip keeps the text presentation and exits cleanly.
+	var other := ""
+	for id in talk.bank.lines:
+		if str(talk.bank.lines[id].speaker) == b.id:
+			other = str(id)
+			break
+	var miss0 := int(talk.stats.get("voiced", 0))
+	if other != "" and not VoiceBank.has(CrewBank.voice_of(a.id), other):
+		talk._speak(other, a, [b])          # a's profile has no clip for b's line
+		if int(talk.stats.get("voiced", 0)) != miss0 or SoundService.speaking(a):
+			return "a missing clip produced audio"
+	SoundService.stop_speech(a)
+	# Boss reply voiced (when an authored greeting exists with a clip).
+	var rep := talk.boss_reply(a, "greet")
+	if rep == "":
+		return "no greeting"
+	await get_tree().process_frame
+	SoundService.stop_speech(a)
+	a.body_char.stop_mouth()
 	return ""

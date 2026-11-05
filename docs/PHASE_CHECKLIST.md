@@ -2,6 +2,21 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 18: The crew speaks
+
+Full detail: [PHASE18_NOTES.md](PHASE18_NOTES.md). Cast: [editorial/VOICE_CAST.md](editorial/VOICE_CAST.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Five persistent worker voice profiles + two replacement voices | ✅ | Original synthetic (eSpeak NG); no cloned person |
+| Every required line/profile mapping voiced (2,828 for 1,676 lines) | ✅ | 2,824 validated, 4 flagged; 0 missing |
+| Reproducible cached pipeline + manifest + runtime index | ✅ | `tools/voice/build_voices.py` |
+| Positional playback from the speaker, clip-timed captions and turns | ✅ | Tested |
+| Interruption stops audio + mouth; missing clip keeps text | ✅ | Tested |
+| Mouth motion from clip envelope | ✅ | Bounded to 30 m |
+| Camera relay of speech without doubling | ✅ | Existing Phase 15 relay rules |
+| Heard by a person; neural-quality voices | ⛔ | No audio device; neural model download refused |
+
 ## Phase 17: Crew conversations and the camper internet
 
 Full detail: [PHASE17_NOTES.md](PHASE17_NOTES.md). Manifest: [editorial/CONTENT_MANIFEST.md](editorial/CONTENT_MANIFEST.md). Calendar: [editorial/FEED_CALENDAR.md](editorial/FEED_CALENDAR.md).
