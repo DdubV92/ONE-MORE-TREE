@@ -1,0 +1,2479 @@
+{
+ "category": "offshore",
+ "batch": "offshore-p19",
+ "review": "authored (addendum texts verbatim)",
+ "lines": [
+  {
+   "id": "sea.marta.001",
+   "cat": "offshore",
+   "n": 1,
+   "speaker": "EMP-01",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Boss. Past the surf. Look at the size of that hull.",
+   "directs": true
+  },
+  {
+   "id": "sea.tomas.002",
+   "cat": "offshore",
+   "n": 2,
+   "speaker": "EMP-04",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:hazy",
+    "where:camp"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Something just came out of the haze beyond camp.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.003",
+   "cat": "offshore",
+   "n": 3,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:hazy"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Take a look offshore while there's still a gap in the fog.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.004",
+   "cat": "offshore",
+   "n": 4,
+   "speaker": "trait:sociable",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:among_trees"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Big ship out there. You can see it between the trees.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.005",
+   "cat": "offshore",
+   "n": 5,
+   "speaker": "trait:observant",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:broadside"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "See the long dark line beyond the waves? That's a deck.",
+   "directs": true
+  },
+  {
+   "id": "sea.dale.006",
+   "cat": "offshore",
+   "n": 6,
+   "speaker": "EMP-02",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:hazy"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I thought that was a cloud bank until I saw the wake."
+  },
+  {
+   "id": "sea.marta.007",
+   "cat": "offshore",
+   "n": 7,
+   "speaker": "EMP-01",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:broadside",
+    "where:camp"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "There's a ship broadside to us. Look up from the logs.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.008",
+   "cat": "offshore",
+   "n": 8,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "where:camp"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "If you stand by me, you can see it over the yard fence.",
+   "directs": true
+  },
+  {
+   "id": "sea.dale.009",
+   "cat": "offshore",
+   "n": 9,
+   "speaker": "EMP-02",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "That's farther out than it looks. The thing's enormous."
+  },
+  {
+   "id": "sea.tomas.010",
+   "cat": "offshore",
+   "n": 10,
+   "speaker": "EMP-04",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "weather:wind"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Hang on a second. There's a whole ship behind that swell.",
+   "directs": true
+  },
+  {
+   "id": "sea.priya.011",
+   "cat": "offshore",
+   "n": 11,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:near_view"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I can make out the bridge. Can't see a name from here."
+  },
+  {
+   "id": "sea.any.012",
+   "cat": "offshore",
+   "n": 12,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:toward_sun"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Look where the water goes silver. It's just beyond that.",
+   "directs": true
+  },
+  {
+   "id": "sea.dale.013",
+   "cat": "offshore",
+   "n": 13,
+   "speaker": "EMP-02",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "That ship would dwarf anything I've seen come up to our dock."
+  },
+  {
+   "id": "sea.any.014",
+   "cat": "offshore",
+   "n": 14,
+   "speaker": "trait:observant",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:deck_seen",
+    "sea:near_view"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "There's a square platform right at the back of it."
+  },
+  {
+   "id": "sea.any.015",
+   "cat": "offshore",
+   "n": 15,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "weather:wind"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Wait for the next swell. The deck comes back into view.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.016",
+   "cat": "offshore",
+   "n": 16,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "act:yard"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I caught it in the corner of my eye while I was stacking."
+  },
+  {
+   "id": "sea.priya.017",
+   "cat": "offshore",
+   "n": 17,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:broadside"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "From here it looks like it's following the coast."
+  },
+  {
+   "id": "sea.any.018",
+   "cat": "offshore",
+   "n": 18,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:edge"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Get a look before it goes behind the point.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.019",
+   "cat": "offshore",
+   "n": 19,
+   "speaker": "trait:observant",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "That's a clean white wake for something moving that slowly."
+  },
+  {
+   "id": "sea.any.020",
+   "cat": "offshore",
+   "n": 20,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:toward_sun",
+    "weather:dry"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I can see its windows flashing in the sun."
+  },
+  {
+   "id": "sea.any.021",
+   "cat": "offshore",
+   "n": 21,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_fast_then_slow"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It was moving quicker a minute ago."
+  },
+  {
+   "id": "sea.any.022",
+   "cat": "offshore",
+   "n": 22,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow",
+    "sea:lap_late"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "There's the ship again. It's taking its time past our stretch.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.023",
+   "cat": "offshore",
+   "n": 23,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "You've got time to see it. The wake's dropped right off.",
+   "directs": true
+  },
+  {
+   "id": "sea.priya.024",
+   "cat": "offshore",
+   "n": 24,
+   "speaker": "EMP-03",
+   "to": "pair",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "sea:saw_slowdown"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I watched it ease down as it came level with us.",
+   "resp": [
+    "sea.any.109"
+   ]
+  },
+  {
+   "id": "sea.joan.025",
+   "cat": "offshore",
+   "n": 25,
+   "speaker": "EMP-05",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_long"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Still out there. I thought it'd have gone by now."
+  },
+  {
+   "id": "sea.priya.026",
+   "cat": "offshore",
+   "n": 26,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow",
+    "sea:broadside"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It hasn't turned in. It's just creeping along outside the bay."
+  },
+  {
+   "id": "sea.any.027",
+   "cat": "offshore",
+   "n": 27,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow",
+    "sea:player_missed"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "If you missed it earlier, look now. It's barely moving.",
+   "directs": true
+  },
+  {
+   "id": "sea.joan.028",
+   "cat": "offshore",
+   "n": 28,
+   "speaker": "EMP-05",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_slowdown"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Whole lot of ocean out there and it chooses this bit to slow down."
+  },
+  {
+   "id": "sea.dale.029",
+   "cat": "offshore",
+   "n": 29,
+   "speaker": "EMP-02",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "Maybe the captain likes the view. I've seen better views."
+  },
+  {
+   "id": "sea.marta.030",
+   "cat": "offshore",
+   "n": 30,
+   "speaker": "EMP-01",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow",
+    "where:camp"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "You could finish that stack before it gets past the point."
+  },
+  {
+   "id": "sea.priya.031",
+   "cat": "offshore",
+   "n": 31,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow",
+    "sea:deck_seen"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I can see the back deck clearly now that it's slowed."
+  },
+  {
+   "id": "sea.any.032",
+   "cat": "offshore",
+   "n": 32,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "No boat coming down from it that I can see."
+  },
+  {
+   "id": "sea.any.033",
+   "cat": "offshore",
+   "n": 33,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_unseen",
+    "sea:opening_soon",
+    "sea:among_trees"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "It'll pass the opening in the trees in a second. Watch.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.034",
+   "cat": "offshore",
+   "n": 34,
+   "speaker": "trait:observant",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Look at the gap it's keeping from shore.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.035",
+   "cat": "offshore",
+   "n": 35,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow",
+    "sea:broadside"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "The bow's still pointed along the coast."
+  },
+  {
+   "id": "sea.any.036",
+   "cat": "offshore",
+   "n": 36,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "Might be waiting on something out there."
+  },
+  {
+   "id": "sea.joan.037",
+   "cat": "offshore",
+   "n": 37,
+   "speaker": "EMP-05",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "Wish I knew what counted as normal ship speed."
+  },
+  {
+   "id": "sea.joan.038",
+   "cat": "offshore",
+   "n": 38,
+   "speaker": "EMP-05",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow",
+    "where:camp"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "If it's checking the coast, it's getting a long look at this yard."
+  },
+  {
+   "id": "sea.any.039",
+   "cat": "offshore",
+   "n": 39,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:engine_heard"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I didn't think I'd be able to hear it from this far out."
+  },
+  {
+   "id": "sea.marta.040",
+   "cat": "offshore",
+   "n": 40,
+   "speaker": "EMP-01",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:speeding"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "It's picking up again. That's the last clear look from here.",
+   "directs": true
+  },
+  {
+   "id": "sea.marta.041",
+   "cat": "offshore",
+   "n": 41,
+   "speaker": "EMP-01",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "sea:saw_running"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Kill the saw when you can. Hear that chopping sound?",
+   "directs": true
+  },
+  {
+   "id": "sea.any.042",
+   "cat": "offshore",
+   "n": 42,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:heli_unseen_heard",
+    "sea:among_trees"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Hold up. There's a thump coming in over the trees.",
+   "directs": true
+  },
+  {
+   "id": "sea.tomas.043",
+   "cat": "offshore",
+   "n": 43,
+   "speaker": "EMP-04",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:heli_unseen_heard"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Anyone else hear something overhead?",
+   "directs": true
+  },
+  {
+   "id": "sea.tomas.044",
+   "cat": "offshore",
+   "n": 44,
+   "speaker": "EMP-04",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "That's a rotor, isn't it?"
+  },
+  {
+   "id": "sea.any.045",
+   "cat": "offshore",
+   "n": 45,
+   "speaker": "trait:observant",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "weather:wind"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Listen for the beat underneath the wind.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.046",
+   "cat": "offshore",
+   "n": 46,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:heli_unseen_heard",
+    "sea:rotor_rising"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Sounds like a helicopter coming closer.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.047",
+   "cat": "offshore",
+   "n": 47,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "act:cut",
+    "sea:rotor_rising"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I heard it between cuts. It kept getting louder."
+  },
+  {
+   "id": "sea.any.048",
+   "cat": "offshore",
+   "n": 48,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:heli_unseen_heard",
+    "sea:among_trees"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "That noise is moving. Look up if you get a clear patch.",
+   "directs": true
+  },
+  {
+   "id": "sea.dale.049",
+   "cat": "offshore",
+   "n": 49,
+   "speaker": "EMP-02",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "sea:truck_near"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "For a second I thought something was loose on the truck."
+  },
+  {
+   "id": "sea.any.050",
+   "cat": "offshore",
+   "n": 50,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "sea:engine_noise"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Hear it? There's a low beat behind the engine noise.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.051",
+   "cat": "offshore",
+   "n": 51,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "sea:rotor_close",
+    "where:shore"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Whatever's overhead is drowning out the surf."
+  },
+  {
+   "id": "sea.any.052",
+   "cat": "offshore",
+   "n": 52,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "where:cabin"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I can hear it through the cabin wall."
+  },
+  {
+   "id": "sea.marta.053",
+   "cat": "offshore",
+   "n": 53,
+   "speaker": "EMP-01",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "act:carry"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Wait until this load's down. Then have a listen.",
+   "directs": true
+  },
+  {
+   "id": "sea.tomas.054",
+   "cat": "offshore",
+   "n": 54,
+   "speaker": "EMP-04",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:heli_unseen_heard",
+    "sea:rotor_rising"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "That rumble's getting closer. I can't see what's making it."
+  },
+  {
+   "id": "sea.priya.055",
+   "cat": "offshore",
+   "n": 55,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "sea:from_water"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Sounded like it came in off the water."
+  },
+  {
+   "id": "sea.any.056",
+   "cat": "offshore",
+   "n": 56,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor_lost",
+    "sea:heli_behind_ridge"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I lost the sound behind the ridge. Might come round again."
+  },
+  {
+   "id": "sea.any.057",
+   "cat": "offshore",
+   "n": 57,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "weather:wind"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It's still there when the wind drops."
+  },
+  {
+   "id": "sea.any.058",
+   "cat": "offshore",
+   "n": 58,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor",
+    "where:camp",
+    "sea:away_from_pit"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I've got a better listen here away from the pit."
+  },
+  {
+   "id": "sea.priya.059",
+   "cat": "offshore",
+   "n": 59,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor_long"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "That's got a rhythm to it. Been hearing it for half a minute."
+  },
+  {
+   "id": "sea.any.060",
+   "cat": "offshore",
+   "n": 60,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "rotor",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:rotor_lost"
+   ],
+   "needs": [
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "It went quiet quick. Must be farther off now."
+  },
+  {
+   "id": "sea.any.061",
+   "cat": "offshore",
+   "n": 61,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "where:camp"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Up over the treeline. You've got a helicopter coming past.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.062",
+   "cat": "offshore",
+   "n": 62,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:over_camp"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "There it goes over camp. Look up.",
+   "directs": true
+  },
+  {
+   "id": "sea.priya.063",
+   "cat": "offshore",
+   "n": 63,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:banking",
+    "sea:over_water"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I can see it banking out over the water.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.064",
+   "cat": "offshore",
+   "n": 64,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:over_cleared"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "It's crossing the clearing. You've got a few seconds.",
+   "directs": true
+  },
+  {
+   "id": "sea.priya.065",
+   "cat": "offshore",
+   "n": 65,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:overhead"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I can see the underside from here. Can't read anything on it."
+  },
+  {
+   "id": "sea.any.066",
+   "cat": "offshore",
+   "n": 66,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:over_ridge"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "There it is, just above the ridge.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.067",
+   "cat": "offshore",
+   "n": 67,
+   "speaker": "any",
+   "to": "pair",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "sea:saw_heli_camp",
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It turned after it passed the yard."
+  },
+  {
+   "id": "sea.marta.068",
+   "cat": "offshore",
+   "n": 68,
+   "speaker": "EMP-01",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:sweep"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "It's making another sweep. Watch the open sky.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.069",
+   "cat": "offshore",
+   "n": 69,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:turned",
+    "sea:heli_far"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I saw it go over the far slope and turn back in."
+  },
+  {
+   "id": "sea.joan.070",
+   "cat": "offshore",
+   "n": 70,
+   "speaker": "EMP-05",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:over_cleared",
+    "cleared>=5"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It came across the whole stand we cleared yesterday."
+  },
+  {
+   "id": "sea.priya.071",
+   "cat": "offshore",
+   "n": 71,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:banking",
+    "sea:turned"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I thought it was heading straight through. Then it banked."
+  },
+  {
+   "id": "sea.any.072",
+   "cat": "offshore",
+   "n": 72,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:over_water",
+    "sea:heli_far"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It's holding out over the coast now.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.073",
+   "cat": "offshore",
+   "n": 73,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:among_trees"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "You can see it between those two tops.",
+   "directs": true
+  },
+  {
+   "id": "sea.tomas.074",
+   "cat": "offshore",
+   "n": 74,
+   "speaker": "EMP-04",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:over_camp"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "That's low enough to get a decent look at camp."
+  },
+  {
+   "id": "sea.any.075",
+   "cat": "offshore",
+   "n": 75,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_behind_ridge"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "I saw the tail vanish behind the ridge. Keep watching that gap.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.076",
+   "cat": "offshore",
+   "n": 76,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:sweep",
+    "sea:inland_next"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Looks like the next pass is taking it farther inland."
+  },
+  {
+   "id": "sea.any.077",
+   "cat": "offshore",
+   "n": 77,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:turned",
+    "sea:inbound"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It went across the bay and curved back toward the island."
+  },
+  {
+   "id": "sea.tomas.078",
+   "cat": "offshore",
+   "n": 78,
+   "speaker": "EMP-04",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:heli_close",
+    "weather:dry",
+    "phase:day"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I'd have missed it if the shadow hadn't moved."
+  },
+  {
+   "id": "sea.any.079",
+   "cat": "offshore",
+   "n": 79,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:near_dock"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I saw it pass the dock. It kept right on going."
+  },
+  {
+   "id": "sea.any.080",
+   "cat": "offshore",
+   "n": 80,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "heli",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen",
+    "sea:seaward",
+    "sea:hazy"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "There it goes toward the water. You can see it against the haze.",
+   "directs": true
+  },
+  {
+   "id": "sea.priya.081",
+   "cat": "offshore",
+   "n": 81,
+   "speaker": "EMP-03",
+   "to": "pair",
+   "trigger": "deck",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_airborne"
+   ],
+   "needs": [
+    "sea:saw_launch"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I saw it lift right off that square at the stern."
+  },
+  {
+   "id": "sea.any.082",
+   "cat": "offshore",
+   "n": 82,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "deck",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:landing",
+    "sea:deck_seen"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 4,
+   "text": "Watch the back of the ship. The helicopter's coming down.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.083",
+   "cat": "offshore",
+   "n": 83,
+   "speaker": "any",
+   "to": "pair",
+   "trigger": "deck",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "sea:saw_recover"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It went back to the same deck it came from."
+  },
+  {
+   "id": "sea.priya.084",
+   "cat": "offshore",
+   "n": 84,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "deck",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:landing",
+    "sea:deck_seen"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "The whole ship's moving and it's lining up with the pad."
+  },
+  {
+   "id": "sea.any.085",
+   "cat": "offshore",
+   "n": 85,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "deck",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:landing",
+    "sea:deck_seen"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It's over the ship now. Looks like they're bringing it in.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.086",
+   "cat": "offshore",
+   "n": 86,
+   "speaker": "trait:observant",
+   "to": "self",
+   "trigger": "deck",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:near_view"
+   ],
+   "needs": [
+    "sea:saw_land"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I could see the rotor clear as anything against the deck."
+  },
+  {
+   "id": "sea.any.087",
+   "cat": "offshore",
+   "n": 87,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:lap_late"
+   ],
+   "needs": [
+    "sea:saw_ship_early"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I watched the ship come round to the same stretch of water."
+  },
+  {
+   "id": "sea.priya.088",
+   "cat": "offshore",
+   "n": 88,
+   "speaker": "EMP-03",
+   "to": "pair",
+   "trigger": "slow",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:lap_late"
+   ],
+   "needs": [
+    "sea:saw_ship_early"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It came back on the bearing where we first saw it."
+  },
+  {
+   "id": "sea.any.089",
+   "cat": "offshore",
+   "n": 89,
+   "speaker": "any",
+   "to": "pair",
+   "trigger": "depart",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "sea:both_sides"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It made the whole round. I caught it on both sides of the island.",
+   "resp": [
+    "sea.any.109"
+   ]
+  },
+  {
+   "id": "sea.any.090",
+   "cat": "offshore",
+   "n": 90,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "repeat",
+   "knowledge": "two_passes",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen"
+   ],
+   "needs": [
+    "sea:two_passes"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Same hull as the one I saw a few days ago."
+  },
+  {
+   "id": "sea.any.091",
+   "cat": "offshore",
+   "n": 91,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "repeat",
+   "knowledge": "two_passes",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:slow"
+   ],
+   "needs": [
+    "sea:prev_slow",
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Last time I watched it slow down at this same stretch."
+  },
+  {
+   "id": "sea.any.092",
+   "cat": "offshore",
+   "n": 92,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "repeat",
+   "knowledge": "two_passes",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "sea:prev_ship_only",
+    "sea:saw_heli"
+   ],
+   "rep": "once",
+   "prio": 3,
+   "text": "The first time I only saw the ship. Today I saw what was on it."
+  },
+  {
+   "id": "sea.priya.093",
+   "cat": "offshore",
+   "n": 93,
+   "speaker": "EMP-03",
+   "to": "self",
+   "trigger": "repeat",
+   "knowledge": "two_passes",
+   "when": [
+    "mode:contract",
+    "sea:heli_seen"
+   ],
+   "needs": [
+    "sea:prev_heli",
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "That helicopter took a different line over the ridge this time."
+  },
+  {
+   "id": "sea.any.094",
+   "cat": "offshore",
+   "n": 94,
+   "speaker": "trait:observant",
+   "to": "self",
+   "trigger": "repeat",
+   "knowledge": "two_passes",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:deck_seen"
+   ],
+   "needs": [
+    "sea:prev_deck"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I remember that big platform at the back. Saw it on the last pass too."
+  },
+  {
+   "id": "sea.any.095",
+   "cat": "offshore",
+   "n": 95,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "depart",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:departing"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "The ship's heading away now. Wake's pointing straight out.",
+   "directs": true
+  },
+  {
+   "id": "sea.any.096",
+   "cat": "offshore",
+   "n": 96,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "depart",
+   "knowledge": "visual_detail",
+   "when": [
+    "mode:contract",
+    "sea:heli_lost_seaward"
+   ],
+   "needs": [
+    "sea:saw_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I lost it after it turned seaward."
+  },
+  {
+   "id": "sea.any.097",
+   "cat": "offshore",
+   "n": 97,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "deck",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "sea:heard_rotor",
+    "sea:knows_recover"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "The rotor sound went with it after the helicopter came down."
+  },
+  {
+   "id": "sea.any.098",
+   "cat": "offshore",
+   "n": 98,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "sight",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:ship_seen",
+    "sea:yesterday_quiet"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Yesterday there was nothing on the horizon from this spot. I checked."
+  },
+  {
+   "id": "sea.any.099",
+   "cat": "offshore",
+   "n": 99,
+   "speaker": "any",
+   "to": "self",
+   "trigger": "depart",
+   "knowledge": "two_passes",
+   "when": [
+    "mode:contract",
+    "sea:ship_lost_point"
+   ],
+   "needs": [
+    "sea:two_passes"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "It's gone around the point again. I wonder how far out it goes after."
+  },
+  {
+   "id": "sea.marta.100",
+   "cat": "offshore",
+   "n": 100,
+   "speaker": "EMP-01",
+   "to": "group",
+   "trigger": "later",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:heard_rotor",
+    "sea:knows_ship"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Next time we hear a rotor, somebody check the water."
+  },
+  {
+   "id": "sea.any.101",
+   "cat": "offshore",
+   "n": 101,
+   "speaker": "trait:sociable",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:heard_only"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "You saw the helicopter. Did you see where it came from?",
+   "resp": [
+    "sea.any.083",
+    "sea.priya.081"
+   ]
+  },
+  {
+   "id": "sea.dale.102",
+   "cat": "offshore",
+   "n": 102,
+   "speaker": "EMP-02",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:heard_only"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I heard it, sure. I couldn't tell you what was painted on it."
+  },
+  {
+   "id": "sea.tomas.103",
+   "cat": "offshore",
+   "n": 103,
+   "speaker": "EMP-04",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:told",
+    "sea:heard_rotor"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Someone said there was a ship. All I got was the noise overhead.",
+   "resp": [
+    "sea.any.089",
+    "sea.any.112"
+   ]
+  },
+  {
+   "id": "sea.joan.104",
+   "cat": "offshore",
+   "n": 104,
+   "speaker": "EMP-05",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:told"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "How far out was it when you saw it slow down?",
+   "resp": [
+    "sea.priya.024"
+   ]
+  },
+  {
+   "id": "sea.dale.105",
+   "cat": "offshore",
+   "n": 105,
+   "speaker": "EMP-02",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Maybe they're looking at the shoreline. People do that for work.",
+   "resp": [
+    "sea.joan.116",
+    "sea.priya.106"
+   ]
+  },
+  {
+   "id": "sea.priya.106",
+   "cat": "offshore",
+   "n": 106,
+   "speaker": "EMP-03",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "If it was a survey, somebody's putting in some long days.",
+   "resp": [
+    "sea.tomas.113",
+    "sea.joan.114"
+   ]
+  },
+  {
+   "id": "sea.any.107",
+   "cat": "offshore",
+   "n": 107,
+   "speaker": "any",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:wake_only"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I went out to look after you called. I only caught the wake.",
+   "resp": [
+    "sea.marta.100"
+   ]
+  },
+  {
+   "id": "sea.any.108",
+   "cat": "offshore",
+   "n": 108,
+   "speaker": "any",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "I've got nothing better than a guess about what they're doing.",
+   "resp": [
+    "sea.dale.105",
+    "sea.marta.117"
+   ]
+  },
+  {
+   "id": "sea.any.109",
+   "cat": "offshore",
+   "n": 109,
+   "speaker": "any",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:told"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "The way you describe it, I'd have sworn they were coming in.",
+   "reply": true
+  },
+  {
+   "id": "sea.tomas.110",
+   "cat": "offshore",
+   "n": 110,
+   "speaker": "EMP-04",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:heard_twice",
+    "sea:no_heli_seen"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Did it make one pass over the yard or did I hear the same pass twice?",
+   "resp": [
+    "sea.any.067"
+   ]
+  },
+  {
+   "id": "sea.tomas.111",
+   "cat": "offshore",
+   "n": 111,
+   "speaker": "EMP-04",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:missed_saw"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I wish I'd looked up when you called. The saw was going.",
+   "resp": [
+    "sea.any.119"
+   ]
+  },
+  {
+   "id": "sea.any.112",
+   "cat": "offshore",
+   "n": 112,
+   "speaker": "trait:skeptical",
+   "to": "group",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "One person sees a boat and by supper we've got an expedition.",
+   "resp": [
+    "sea.any.115"
+   ]
+  },
+  {
+   "id": "sea.tomas.113",
+   "cat": "offshore",
+   "n": 113,
+   "speaker": "EMP-04",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_heli"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "If they saw me from up there, they saw me dropping the same log twice."
+  },
+  {
+   "id": "sea.joan.114",
+   "cat": "offshore",
+   "n": 114,
+   "speaker": "EMP-05",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "hearing",
+   "when": [
+    "mode:contract",
+    "sea:after",
+    "cleared>=5"
+   ],
+   "needs": [
+    "sea:knows_heli"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "They had a view of every stump we left."
+  },
+  {
+   "id": "sea.any.115",
+   "cat": "offshore",
+   "n": 115,
+   "speaker": "trait:skeptical",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I can't tell what anyone wants from a wake and a bit of noise."
+  },
+  {
+   "id": "sea.joan.116",
+   "cat": "offshore",
+   "n": 116,
+   "speaker": "EMP-05",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "You can call it routine. I'd still like to know whose routine.",
+   "resp": [
+    "sea.marta.117"
+   ]
+  },
+  {
+   "id": "sea.marta.117",
+   "cat": "offshore",
+   "n": 117,
+   "speaker": "EMP-01",
+   "to": "group",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "Maybe we're the only interesting thing on this coast."
+  },
+  {
+   "id": "sea.tomas.118",
+   "cat": "offshore",
+   "n": 118,
+   "speaker": "EMP-04",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after",
+    "phase:dusk"
+   ],
+   "needs": [
+    "sea:knows_any"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "I'd rather it passed in daylight again."
+  },
+  {
+   "id": "sea.any.119",
+   "cat": "offshore",
+   "n": 119,
+   "speaker": "any",
+   "to": "pair",
+   "trigger": "later",
+   "knowledge": "secondhand",
+   "when": [
+    "mode:contract",
+    "sea:after"
+   ],
+   "needs": [
+    "sea:missed"
+   ],
+   "rep": "rare",
+   "prio": 3,
+   "text": "Next time, tell me before it gets behind the ridge."
+  },
+  {
+   "id": "sea.joan.120",
+   "cat": "offshore",
+   "n": 120,
+   "speaker": "EMP-05",
+   "to": "group",
+   "trigger": "later",
+   "knowledge": "firsthand_sight",
+   "when": [
+    "mode:contract",
+    "sea:today",
+    "where:camp"
+   ],
+   "needs": [
+    "sea:saw_ship_now"
+   ],
+   "rep": "rare",
+   "prio": 2,
+   "text": "Funny how quiet the yard felt after it went."
+  }
+ ]
+}

@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P19"):
+		_run("phase 19 units", _t_phase19_units)
+		await _run_async("phase 19 offshore world", _t_phase19_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P18"):
 		_run("phase 18 units", _t_phase18_units)
 		await _run_async("phase 18 world", _t_phase18_world)
@@ -5269,4 +5275,371 @@ func _p18_checks(world: IslandWorld) -> String:
 	await get_tree().process_frame
 	SoundService.stop_speech(a)
 	a.body_char.stop_mouth()
+	return ""
+
+
+# ---------------------------------------------------------------- Phase 19
+
+func _t_phase19_units() -> String:
+	# Offshore lines: exactly the 120 authored rows, stable ids, every row
+	# with trigger, knowledge class, speaker, sea: knowledge, cooldown.
+	var bank := CrewBank.get_bank()
+	var rows := []
+	for id in bank.lines:
+		var ln: Dictionary = bank.lines[id]
+		if str(ln.get("cat", "")) == "offshore":
+			rows.append(ln)
+	if rows.size() != 120:
+		return "offshore lines %d != 120" % rows.size()
+	var nums := {}
+	for ln in rows:
+		nums[int(ln.n)] = true
+		if not str(ln.id).begins_with("sea.") or str(ln.get("trigger", "")) == "" or str(ln.get("knowledge", "")) == "" or str(ln.get("rep", "")) == "":
+			return "row incomplete: %s" % ln.id
+		if not (ln.needs as Array).any(func(n: String) -> bool: return n.begins_with("sea:")):
+			return "%s has no sea: knowledge requirement" % ln.id
+	if nums.size() != 120:
+		return "line numbers not 1..120"
+	var trig := 0
+	for k in bank.offshore:
+		trig += (bank.offshore[k] as Array).size()
+	if trig != 120:
+		return "trigger index %d" % trig
+	# Schedule data: every 3 days from day 3, ids persistent.
+	var o := OffshoreSurvey.new()
+	o.load_config()
+	var days := []
+	for d in range(1, 31):
+		if o.is_visit_day(d):
+			days.append(d)
+	o.free()
+	if days != [3, 6, 9, 12, 15, 18, 21, 24, 27, 30]:
+		return "schedule %s" % str(days)
+	return ""
+
+
+func _t_phase19_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or Game.campaign == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 20:
+		await get_tree().physics_frame
+	var err := await _p19_checks(world)
+	if Game.offshore:
+		Game.offshore.stop_preview()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+var p19_report := {}
+
+
+func _p19_checks(world: IslandWorld) -> String:
+	var off: OffshoreSurvey = Game.offshore
+	if off == null:
+		return "no offshore service"
+	off.load_config()
+	# --- route clears island, shoals and dock routes
+	var rc := off.route_clearance()
+	p19_report["route"] = rc
+	if int(rc.bad_samples) > 0 or not bool(rc.routes_ok):
+		return "route does not clear: %s" % str(rc)
+	# --- visibility of the camp-arc silhouette at eye height
+	var vis := {}
+	off.preview_visit(3)
+	off.enabled = false
+	off.visit.state = "lap"
+	off.visit.theta = off.theta_camp
+	off.visit.lap = 0.3
+	off._place_ship()
+	await get_tree().physics_frame
+	var pts := {"yard": CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 6)), "camp_approach": CampLayout.world(Vector3(0, 0, -24)),
+		"beach_gate": CampLayout.world(Vector3(0, 0, 18)), "shoreline": Game.crew.dock_shore, "dock_end": Game.crew.dock_end}
+	for k in pts:
+		var eye: Vector3 = pts[k] + Vector3(0, 1.6, 0)
+		eye.y = maxf(eye.y, World.height_at(eye.x, eye.z) + 1.6)
+		vis[k] = off.ship_block_reason(eye)
+	p19_report["visibility"] = vis
+	p19_report["ship_dist_from_camp"] = snappedf(World.camp_origin().distance_to(off.ship_position()), 1.0)
+	off.stop_preview()
+	# --- a whole visit from logged samples
+	off.preview_visit(3)
+	off.enabled = false
+	off.logging = true
+	off.samples.clear()
+	off._log_t = -1.0
+	var states := {}
+	var heli_states := []
+	var land_err := -1.0
+	var min_clear := INF
+	var max_bank := 0.0
+	var rotor_ok := false
+	var steps := 0
+	var cap := {}
+	while not off.visit.is_empty() and steps < 4000:
+		off.step(1.0)
+		steps += 1
+		if off.visit.is_empty():
+			break
+		states[str(off.visit.state)] = true
+		var hs := off.heli.state
+		if heli_states.is_empty() or heli_states[heli_states.size() - 1] != hs:
+			heli_states.append(hs)
+		if hs == "fly":
+			min_clear = minf(min_clear, off.heli.global_position.y - off.clearance_floor(off.heli.global_position, Vector3.ZERO, 0.0))
+			max_bank = maxf(max_bank, absf(off.heli.bank))
+			if off.heli.rotor_handle > 0 and SoundService.instance().loops.has(off.heli.rotor_handle):
+				var v: SoundService.Voice = SoundService.instance().loops[off.heli.rotor_handle]
+				rotor_ok = v.attach == off.heli
+		if hs == "landed" and land_err < 0.0:
+			land_err = off.heli.global_position.distance_to(off.deck_transform().origin)
+		if cap.is_empty() and hs == "fly" and off.heli.wp_i >= 2:
+			cap = off.capture()
+	var lap := off.samples.filter(func(s: Dictionary) -> bool: return str(s.state) == "lap")
+	var max_dev := 0.0
+	for s in lap:
+		max_dev = maxf(max_dev, absf(Vector2(float(s.x), float(s.z)).distance_to(off.center) - off.R))
+	var lap_total := float(lap[lap.size() - 1].lap) if not lap.is_empty() else 0.0
+	var open := []
+	var slow := []
+	for s in lap:
+		var k := off.slow_k(float(s.theta))
+		if k < 0.001:
+			open.append(float(s.speed))
+		elif k > 0.999:
+			slow.append(float(s.speed))
+	open.sort()
+	slow.sort()
+	var ratio := float(open[open.size() / 2]) / float(slow[slow.size() / 2]) if not open.is_empty() and not slow.is_empty() else 0.0
+	var dep := off.samples.filter(func(s: Dictionary) -> bool: return str(s.state) == "departing")
+	var arr := off.samples.filter(func(s: Dictionary) -> bool: return str(s.state) == "arriving")
+	p19_report["lap"] = {"samples": lap.size(), "max_radius_dev_m": max_dev, "lap_deg": rad_to_deg(lap_total), "lap_s": snappedf(off.lap_seconds(), 0.1),
+		"open_median": open[open.size() / 2] if not open.is_empty() else 0.0, "slow_median": slow[slow.size() / 2] if not slow.is_empty() else 0.0, "ratio": snappedf(ratio, 0.001),
+		"arrival_samples": arr.size(), "departure_samples": dep.size(), "steps": steps}
+	p19_report["heli"] = {"states": heli_states, "land_err_m": land_err, "min_clearance_m": snappedf(min_clear, 0.1), "max_bank_deg": snappedf(rad_to_deg(max_bank), 0.1), "rotor_attached": rotor_ok,
+		"outcome": str(off.visits.get("V03", {}).get("heli_outcome", ""))}
+	print("P19 REPORT ", JSON.stringify(p19_report))
+	if max_dev > 0.01:
+		return "lap left the circle by %.3f m" % max_dev
+	if absf(lap_total - TAU) > 0.0001:
+		return "lap was %.3f deg" % rad_to_deg(lap_total)
+	if absf(ratio - 2.0) > 0.02:
+		return "speed ratio %.3f" % ratio
+	if dep.is_empty() or arr.is_empty():
+		return "arrival/departure legs missing"
+	for s in dep.slice(int(dep.size() * 0.3)):
+		if Vector2(float(s.x), float(s.z)).distance_to(off.center) <= off.R + 1.0:
+			return "departure leg is not distinct from the lap"
+	if not ("landed" in heli_states and "fly" in heli_states and "spool" in heli_states):
+		return "heli did not launch/return: %s" % str(heli_states)
+	if land_err < 0.0 or land_err > 0.05:
+		return "heli landed %.3f m off the pad" % land_err
+	if min_clear < 20.0:
+		return "heli clearance %.1f m" % min_clear
+	if not rotor_ok:
+		return "rotor not a positional source attached to the aircraft"
+	var e2 := await _p19_more(off, cap)
+	print("P19 REPORT2 ", JSON.stringify(p19_report))
+	return e2
+
+
+func _p19_place(w: Worker, p: Vector3) -> void:
+	p.y = World.height_at(p.x, p.z)
+	w.global_position = p
+	w.activity = "idle"
+	w.path.clear()
+
+
+func _p19_more(off: OffshoreSurvey, cap: Dictionary) -> String:
+	# --- save/load mid-flight: same visit, same place, no new visit, no
+	# replayed introduction (registered beats survive).
+	if cap.is_empty():
+		return "no mid-flight capture"
+	var vid := str(cap.visit.id)
+	var beats_before := (cap.visit.beats as Dictionary).keys()
+	off.restore(JSON.parse_string(JSON.stringify(cap)))
+	off.enabled = false
+	await get_tree().physics_frame
+	if off.visit.is_empty() or str(off.visit.id) != vid or off.heli == null or off.heli.state != str(cap.visit.heli.state):
+		return "restore lost the visit or aircraft state"
+	if (off.visit.beats as Dictionary).keys() != beats_before:
+		return "restore changed registered beats"
+	var p_cap: Array = cap.visit.heli.pos
+	if off.heli.global_position.distance_to(Vector3(p_cap[0], p_cap[1], p_cap[2])) > 0.01:
+		return "aircraft restored elsewhere"
+	if absf(float(off.visit.theta) - float(cap.visit.theta)) > 1e-6:
+		return "ship restored off its bearing"
+	var n_before := off.visits.size()
+	off._maybe_start()
+	if off.visits.size() != n_before or str(off.visit.id) != vid:
+		return "reload started another visit"
+	# finish this visit, then a repeat visit (day 6) with a different seed
+	var g := 0
+	while not off.visit.is_empty() and g < 4000:
+		off.step(1.0)
+		g += 1
+	var legs3: Array = off.plan_legs(hash("%d:%s" % [off._seed(), "V03"]))
+	var legs6: Array = off.plan_legs(hash("%d:%s" % [off._seed(), "V06"]))
+	off.preview_force = true
+	off.start_visit(6)
+	off.enabled = false
+	p19_report["repeat"] = {"visits": off.visits.keys(), "n": off.visit.n, "legs_V03": legs3, "legs_V06": legs6}
+	if int(off.visit.n) != 2 or not off.visits.has("V03"):
+		return "repeat visit not recorded as the second"
+	if legs3 == legs6:
+		return "survey order did not vary between visits"
+	# --- witnesses
+	var crew: CrewService = Game.crew
+	Game.campaign.start_test_route(true, true)
+	var w8 := 0
+	while crew.workers.size() < 4 and w8 < 900:
+		await get_tree().physics_frame
+		w8 += 1
+	if crew.workers.size() < 4:
+		return "no crew"
+	off.visit.state = "lap"
+	off.visit.theta = off.theta_camp
+	off.visit.lap = 0.3
+	off._place_ship()
+	var ws: Array = crew.workers.values()
+	var obs: Worker = ws[0]
+	var hid: Worker = ws[1]
+	var ear: Worker = ws[2]
+	var lis: Worker = ws[3]
+	_p19_place(obs, Game.crew.dock_shore)
+	# Occluded: on the far (north) side of the island, behind the ridge.
+	_p19_place(hid, Vector3(300, 0, -330))
+	# Hearing only: inside the cabin with the aircraft overhead.
+	var cab := CampLayout.world(CampLayout.CABIN_POS + Vector3(-2.2, CampLayout.CABIN_FLOOR, -4.0))
+	ear.global_position = cab
+	ear.activity = "idle"
+	_p19_place(lis, World.camp_origin() + Vector3(3, 0, 2))
+	await get_tree().physics_frame
+	off.heli.set_state("fly")
+	off.heli.rotor = 1.0
+	off.heli.global_position = World.camp_origin() + Vector3(20, 90, 10)
+	off.heli.visible = true
+	await get_tree().physics_frame
+	var r_obs := off.eval_worker(obs, 1.0)
+	var r_hid := off.eval_worker(hid, 1.0)
+	var r_ear := off.eval_worker(ear, 1.0)
+	p19_report["witness"] = {"observer": [r_obs.ship, r_obs.get("ship_why", "")], "occluded": [r_hid.ship, r_hid.get("ship_why", "")], "cabin": {"ship": r_ear.ship, "heli": r_ear.heli, "rotor": r_ear.rotor}}
+	if not bool(r_obs.ship):
+		return "observer on the shore cannot see the hull (%s)" % str(r_obs.get("ship_why", ""))
+	if bool(r_hid.ship):
+		return "worker behind the ridge saw the hull"
+	if not bool(r_ear.rotor) or bool(r_ear.heli):
+		return "cabin worker: rotor %s heli %s (want heard, not seen)" % [r_ear.rotor, r_ear.heli]
+	var talk := crew.talk
+	if not off.knows("sea:saw_ship_now", obs) or off.knows("sea:saw_ship_now", hid):
+		return "firsthand knowledge wrong"
+	if not off.knows("sea:heard_only", ear):
+		return "hearing-only knowledge wrong"
+	# Firsthand lines are ineligible for the occluded worker.
+	var l1: Dictionary = talk.bank.line("sea.marta.001") if talk.bank.lines.has("sea.marta.001") else {}
+	var any_sight := ""
+	for id in talk.bank.offshore.get("sight", []):
+		if str(talk.bank.lines[id].speaker) == "any":
+			any_sight = id
+			break
+	if any_sight != "" and talk.eligible(talk.bank.lines[any_sight], hid) == "":
+		return "occluded worker eligible for a sighting line"
+	# Secondhand: the observer tells the listener; the listener can then
+	# discuss it as a claim, never as a sighting.
+	off.on_line_spoken("sea.any.090", obs, [lis])
+	if not off.knows("sea:told", lis) or off.knows("sea:saw_ship_now", lis):
+		return "secondhand transfer wrong"
+	# --- one beat -> at most one immediate callout, then cooldowns
+	off._cd.clear()
+	off.visit.beats.clear()
+	off._live.erase(obs.id)
+	_p19_place(obs, Game.crew.dock_shore)
+	var c_before := int(off.stats.callouts)
+	off.eval_worker(obs, 1.0)          # first sighting -> beat registered
+	off._pending_beats()
+	off._pending_beats()
+	var spoken := int(off.stats.callouts) - c_before
+	p19_report["beat_callouts"] = {"spoken": spoken, "beats": off.visit.beats.keys(), "last": talk.history[talk.history.size() - 1] if not talk.history.is_empty() else {}}
+	if spoken != 1:
+		return "first sighting produced %d callouts (want exactly 1)" % spoken
+	# --- fall warning takes precedence over a callout: the speaker beside
+	# a tree that is coming down stays quiet.
+	var near_tree := -1
+	for i in World.tree_count():
+		var tp := World.tree_position(i)
+		if not World.removed_trees.has(int(World.trees.id[i])) and World.is_native(int(World.trees.id[i])) and tp.distance_to(Game.crew.dock_shore) < 160.0:
+			near_tree = int(World.trees.id[i])
+			_p19_place(obs, tp + Vector3(5, 0, 5))
+			break
+	for o in ws:
+		if o != obs:
+			_p19_place(o, Vector3(300, 0, -330))     # nobody else to speak
+	if near_tree >= 0:
+		talk._warn_t[near_tree] = talk.clock
+		if talk.suppressed_at(obs) != "tree coming down":
+			return "fall warning not active near the speaker"
+		off._cd.clear()
+		var spoke := off.try_callout("sight")
+		talk._warn_t.erase(near_tree)
+		if spoke:
+			return "offshore callout spoke over a fall warning"
+	p19_report["fall_warning_tree"] = near_tree
+	# --- fully cleared fixture: canopy reads zero once trees are gone
+	var cp := Vector3(150, 0, -100)
+	var c0 := off.canopy_at(cp.x, cp.z, 30.0)
+	var removed := []
+	for i in World.tree_count():
+		if Vector2(World.trees.x[i] - cp.x, World.trees.z[i] - cp.z).length() < 45.0 and not World.removed_trees.has(int(World.trees.id[i])):
+			removed.append(int(World.trees.id[i]))
+			World.removed_trees[int(World.trees.id[i])] = true
+	var c1 := off.canopy_at(cp.x, cp.z, 30.0)
+	for id in removed:
+		World.removed_trees.erase(id)
+	p19_report["cleared_canopy"] = [c0, c1]
+	if c0 <= 0.0 or c1 != 0.0:
+		return "canopy clearance does not follow felling (%s -> %s)" % [c0, c1]
+	# --- the Day 36 rescue ship is independent; no visits once the contract ends
+	off.stop_preview()
+	Game.hunt.mode = "rescue"
+	Game.hunt._build_ship()
+	var rescue := Game.hunt.ship
+	off.enabled = true
+	off.visits.erase("V%02d" % Game.campaign.clock.day)
+	for k in 5:
+		await get_tree().physics_frame
+	var surveys := get_tree().root.find_children("SurveyShip*", "", true, false).size()
+	var ok36 := rescue != null and not (rescue is SurveyShip) and off.visit.is_empty()
+	rescue.queue_free()
+	Game.hunt.ship = null
+	Game.hunt.mode = "none"
+	if not ok36:
+		return "rescue ship not independent (survey visit running during the rescue)"
+	p19_report["survey_ships_during_rescue"] = surveys
+	# --- coverage
+	var have := 0
+	var maps := 0
+	for id in talk.bank.offshore.values().reduce(func(a: Array, b: Array) -> Array: return a + b, []):
+		var ln: Dictionary = talk.bank.lines[id]
+		for prof in ["marta", "dale", "priya", "tomas", "joan", "crew_m", "crew_f"]:
+			if VoiceBank.info(prof, id).is_empty():
+				continue
+			maps += 1
+			if VoiceBank.has(prof, id):
+				have += 1
+	p19_report["voice"] = {"mappings": maps, "recorded": have}
 	return ""

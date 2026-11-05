@@ -433,6 +433,44 @@ def outboard(g):
     return loopify(y, 0.4)
 
 
+def ship_diesel(g):
+    """Large slow marine diesel heard from far offshore: a low firing
+    rumble (~9 Hz pulses into a hull/stack resonance) under a broadband
+    sea-and-exhaust wash; distance takes the top off (low-pass)."""
+    sec = 6.0
+    y = engine(sec, 9.0, g, (42, 85, 170), 0.03, rough=0.15)
+    n = len(y)
+    y = lp(y, 320, 2)
+    t = np.arange(n) / RATE
+    y += 0.5 * lp(brown(n, g), 180) * (0.8 + 0.2 * np.sin(2 * np.pi * 0.11 * t))
+    y += 0.12 * bp(pink(n, g), 120, 600)
+    return loopify(y, 0.8)
+
+
+def rotor_beat(g):
+    """Helicopter main rotor: ~5.5 Hz blade-vortex slap (two blades at
+    ~165 rpm), a turbine whine and a tail-rotor buzz, as heard outdoors at
+    a few hundred metres."""
+    sec = 4.0
+    n = int(sec * RATE)
+    t = np.arange(n) / RATE
+    y = np.zeros(n)
+    rate = 5.5
+    k = 0.0
+    while k < sec:
+        i = int(k * RATE)
+        m = min(int(0.09 * RATE), n - i)
+        if m > 0:
+            slap = bp(white(m, g), 80, 900) * env_exp(m, 0.035, 0.004) * g.uniform(0.85, 1.0)
+            slap += 0.8 * np.sin(2 * np.pi * 62 * np.arange(m) / RATE) * env_exp(m, 0.05, 0.003)
+            y[i:i + m] += slap
+        k += 1.0 / rate
+    y += 0.05 * np.sin(2 * np.pi * (1950 + 8 * np.sin(2 * np.pi * 0.3 * t)) * t)
+    y += 0.08 * bp(white(n, g), 380, 520) * (0.6 + 0.4 * np.sin(2 * np.pi * 27.0 * t))
+    y += 0.25 * lp(brown(n, g), 120)
+    return loopify(y, 0.5)
+
+
 # ---------------------------------------------------------- movement / dog
 
 def cloth(v):
@@ -1169,6 +1207,8 @@ def build_catalog():
     add("vehicle", "cart_squeak", False, "axle squeak", cart_squeak)
     add("vehicle", "cart_bump", False, "cart frame bump", cart_bump)
     add("vehicle", "skiff_outboard_loop", True, "outboard engine + water", outboard)
+    add("vehicle", "ship_diesel_far_loop", True, "large marine diesel far offshore (Phase 19)", ship_diesel)
+    add("vehicle", "rotor_beat_loop", True, "helicopter rotor slap + turbine (Phase 19)", rotor_beat)
     # MOVEMENT / DOG (25)
     for v in range(3):
         add("movement", "cloth_rustle_%d" % v, False, "cloth band noise + fibre ticks", cloth(v))

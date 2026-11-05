@@ -8,7 +8,8 @@ import json, os, re, sys, glob, itertools
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CATS = {"cutting": "cut", "hauling": "haul", "tools": "tool", "ethic": "eth", "weather": "wx", "pair": "pair",
-        "group": "grp", "boss": "boss", "camp": "camp", "wages": "wage", "dusk": "dusk", "survival": "surv"}
+        "group": "grp", "boss": "boss", "camp": "camp", "wages": "wage", "dusk": "dusk", "survival": "surv",
+        "offshore": "sea"}
 SPEAKERS = {"EMP-01", "EMP-02", "EMP-03", "EMP-04", "EMP-05", "any"}
 TRAITS = {"timid", "hard_working", "stronger", "level_headed", "sociable", "skeptical", "observant", "reliable_driver"}
 TO = {"pair", "group", "boss", "self"}
@@ -24,6 +25,21 @@ WHEN_FIXED = {"act:cut", "act:fell", "act:buck", "act:stump", "act:carry", "act:
 WHEN_NUM = re.compile(r"^(day>=|day<=|level>=|cleared>=|crew<=)\d+$")
 NEEDS = {"saw:strange", "heard:strange", "know:praised", "know:levelup", "know:colleague_progress", "know:team_carry",
          "know:frustrated", "know:owed_wages", "know:felled_today", "know:delivered_today", "know:departed", "know:dead"}
+
+
+def sea_vocab():
+    """Phase 19: the sea: predicates the runtime actually implements, read
+    from OffshoreSurvey.holds() / knows() (so the validator can't drift)."""
+    src = open(os.path.join(ROOT, "scripts/offshore/offshore_survey.gd"), encoding="utf-8").read()
+    h = src.split("func holds(", 1)[1].split("\nfunc ", 1)[0]
+    k = src.split("func knows(", 1)[1].split("\nfunc ", 1)[0]
+    pat = re.compile(r'^\t\t"(sea:[a-z_]+)":', re.M)
+    return set(pat.findall(h)), set(pat.findall(k))
+
+
+SEA_WHEN, SEA_NEEDS = sea_vocab()
+TRIGGERS = {"sight", "slow", "rotor", "heli", "deck", "depart", "repeat", "later"}
+KNOWLEDGE = {"firsthand_sight", "hearing", "visual_detail", "secondhand", "two_passes"}
 
 
 def norm(t):
@@ -71,11 +87,18 @@ def main():
         if ln.get("rep", "sometimes") not in REP:
             errs.append("%s: bad rep" % i)
         for w in ln.get("when", []):
-            if w not in WHEN_FIXED and not WHEN_NUM.match(w):
+            if w not in WHEN_FIXED and not WHEN_NUM.match(w) and w not in SEA_WHEN:
                 errs.append("%s: unknown when %r" % (i, w))
         for n in ln.get("needs", []):
-            if n not in NEEDS:
+            if n not in NEEDS and n not in SEA_NEEDS:
                 errs.append("%s: unknown needs %r" % (i, n))
+        if c == "offshore":
+            if ln.get("trigger") not in TRIGGERS:
+                errs.append("%s: bad trigger %r" % (i, ln.get("trigger")))
+            if ln.get("knowledge") not in KNOWLEDGE:
+                errs.append("%s: bad knowledge %r" % (i, ln.get("knowledge")))
+            if not any(n.startswith("sea:") for n in ln.get("needs", [])):
+                errs.append("%s: offshore line needs a sea: knowledge requirement" % i)
         t = ln.get("text", "")
         if not t or len(t.split()) < 2 or len(t.split()) > 60:
             errs.append("%s: text length %d words" % (i, len(t.split())))

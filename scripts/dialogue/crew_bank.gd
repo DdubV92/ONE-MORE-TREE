@@ -13,6 +13,7 @@ static var _inst: CrewBank
 var lines := {}            # id -> line dict
 var openers: Array = []    # ids that may open (pair/group/self, not reply)
 var boss := {}             # ask -> [ids]
+var offshore := {}         # Phase 19: trigger -> [ids] (offshore beat callouts)
 var problems: PackedStringArray = []
 var files := 0
 
@@ -28,6 +29,7 @@ func load_all() -> void:
 	lines.clear()
 	openers.clear()
 	boss.clear()
+	offshore.clear()
 	problems.clear()
 	var d := DirAccess.open(DIR)
 	if d == null:
@@ -54,6 +56,11 @@ func load_all() -> void:
 			if not lines.has(str(r)):
 				problems.append("%s: response %s missing" % [id, r])
 		var to := str(ln.get("to", ""))
+		if str(ln.get("cat", "")) == "offshore":
+			var trig := str(ln.get("trigger", "later"))
+			if not offshore.has(trig):
+				offshore[trig] = []
+			offshore[trig].append(id)
 		if to == "boss":
 			var ask := str(ln.get("ask", "chat"))
 			if not boss.has(ask):
@@ -62,6 +69,8 @@ func load_all() -> void:
 		elif not bool(ln.get("reply", false)):
 			openers.append(id)
 	openers.sort()
+	for k in offshore:
+		(offshore[k] as Array).sort()
 
 
 func line(id: String) -> Dictionary:

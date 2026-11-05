@@ -214,6 +214,8 @@ func _day() -> int:
 
 ## Does predicate `p` hold for worker `w` now?
 func holds(p: String, w: Worker) -> bool:
+	if p.begins_with("sea:"):
+		return Game.offshore != null and Game.offshore.holds(p, w)
 	if p.begins_with("act:"):
 		return p in _acts(w)
 	if p.begins_with("phase:"):
@@ -308,6 +310,8 @@ func holds(p: String, w: Worker) -> bool:
 
 ## Does the speaker actually know `n`?
 func knows(n: String, w: Worker) -> bool:
+	if n.begins_with("sea:"):
+		return Game.offshore != null and Game.offshore.knows(n, w)
 	var pg := crew.progression
 	var d := crew.campaign.clock.day if crew.campaign else 1
 	match n:
@@ -408,6 +412,10 @@ func _try_start() -> void:
 		var ln: Dictionary = bank.lines[id]
 		var to := str(ln.get("to", ""))
 		if to == "self":
+			continue
+		# Phase 19: offshore beat lines are spoken only at their beat; the
+		# later/secondhand ones join ordinary conversation.
+		if str(ln.get("cat", "")) == "offshore" and str(ln.get("trigger", "later")) != "later":
 			continue
 		var members: Array = pair if to == "pair" else (group if group.size() >= 3 else [])
 		if members.is_empty():
@@ -519,7 +527,7 @@ static func line_seconds(ln: Dictionary) -> float:
 	return clampf(1.2 + 0.06 * str(ln.get("text", "")).length(), 1.6, 9.0)
 
 
-func _speak(id: String, sp: Worker, listeners: Array) -> void:
+func _speak(id: String, sp: Worker, listeners: Array, cue := "") -> void:
 	var ln: Dictionary = bank.lines[id]
 	var rep := str(ln.get("rep", "sometimes"))
 	if rep == "once":
@@ -563,11 +571,13 @@ func _speak(id: String, sp: Worker, listeners: Array) -> void:
 		var cap := subtitle_seconds(ln)
 		if clip > 0.0 and not _voices_muted():
 			cap = clip + 0.6            # synchronized with the actual clip
-		crew.notice.emit("%s%s: \"%s\"" % [str(sp.emp.name).split(" ")[0], to, text], cap)
+		crew.notice.emit("%s%s: \"%s\"%s" % [str(sp.emp.name).split(" ")[0], to, text, "  [%s]" % cue if cue != "" else ""], cap)
 	history.append({"t": snappedf(clock, 0.1), "id": id, "by": sp.id, "to": listeners.map(func(m: Worker) -> String: return m.id), "heard": heard})
 	if history.size() > 60:
 		history.pop_front()
 	TerrorDirector.remember_voice(str(sp.emp.name), text, sp.global_position)
+	if str(ln.get("cat", "")) == "offshore" and Game.offshore:
+		Game.offshore.on_line_spoken(id, sp, listeners)
 	# Telling someone what you saw passes on a CLAIM, not the evidence.
 	if "saw:strange" in (ln.get("needs", []) as Array):
 		var mem := sp.mind.strongest_memory()
@@ -619,6 +629,8 @@ func _try_callout() -> void:
 	var cands := []
 	for id in bank.openers:
 		var ln: Dictionary = bank.lines[id]
+		if str(ln.get("cat", "")) == "offshore":
+			continue
 		if str(ln.get("to", "")) == "self" and eligible(ln, best) == "" and float(cooldown.get("c:" + str(ln.get("cat", "")), 0.0)) <= clock:
 			cands.append([id, best, [best]])
 	for id in bank.boss.get("report", []):
@@ -629,6 +641,28 @@ func _try_callout() -> void:
 	var pk: Array = _weighted(cands)
 	_speak(str(pk[0]), best, [])
 	cooldown["c:" + str(bank.lines[pk[0]].get("cat", ""))] = clock + TOPIC_CD
+
+
+## Phase 19: an immediate offshore callout chosen by OffshoreSurvey for a
+## beat (already checked with eligible() and suppressed_at()). Ordinary
+## chatter yields to it; urgent lines (prio >= 5) and danger never do.
+func offshore_say(id: String, sp: Worker, listeners: Array, cue := "") -> bool:
+	var ln: Dictionary = bank.lines.get(id, {})
+	if ln.is_empty():
+		return false
+	if not active.is_empty():
+		var q: Array = active.get("queue", [])
+		var cur: Dictionary = bank.lines.get(str(q[0][0]), {}) if not q.is_empty() else {}
+		if int(cur.get("prio", 3)) >= 5:
+			return false
+		stats.dropped += 1
+		_stop_current()
+		active.clear()
+	SoundService.stop_speech(sp)
+	_speak(id, sp, listeners, cue)
+	stats.offshore = int(stats.get("offshore", 0)) + 1
+	_next_try = maxf(_next_try, clock + 12.0)
+	return true
 
 
 ## The boss asked `w` about `ask` (talk menu). Returns the authored reply

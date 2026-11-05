@@ -148,6 +148,11 @@ func _ready() -> void:
 	hunt.name = "Hunt"
 	add_child(hunt)
 	Game.hunt = hunt
+	# Phase 19: the offshore survey visits (separate from the Day 36 rescue
+	# ship; ambient, contract days only).
+	var off := OffshoreSurvey.new()
+	add_child(off)
+	Game.offshore = off
 	comfort = CamperComfort.new()
 	comfort.name = "CamperComfort"
 	add_child(comfort)

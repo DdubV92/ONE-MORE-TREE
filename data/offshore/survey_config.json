@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "_doc": "Phase 19 offshore survey visits. Ambient only: no marker, contact, combat or reward. docs/PHASE19_NOTES.md",
+  "schedule": {
+    "first_day": 3,
+    "interval_days": 3,
+    "last_day": 30,
+    "start_t": 40.0,
+    "_start_t": "campaign daylight seconds (0..900) at which the ship begins its offshore entry leg"
+  },
+  "route": {
+    "center": [0.0, 0.0],
+    "radius": 1050.0,
+    "direction": 1,
+    "camp_arc_deg": 50.0,
+    "blend_deg": 10.0,
+    "start_in_arc": 0.25,
+    "speed": 12.0,
+    "slow_factor": 0.5,
+    "arrival_m": 650.0,
+    "departure_m": 1500.0,
+    "departure_turn_deg": 35.0,
+    "retire_min_m": 900.0,
+    "clear_margin_m": 200.0,
+    "min_depth_m": 8.0
+  },
+  "ship": {
+    "length": 112.0,
+    "beam": 18.0,
+    "roll_deg": 0.7,
+    "pitch_deg": 0.35,
+    "heave_m": 0.35
+  },
+  "heli": {
+    "launch_after_visible_s": 45.0,
+    "launch_latest_lap_s": 200.0,
+    "spool_s": 12.0,
+    "lift_s": 9.0,
+    "lift_h": 18.0,
+    "cruise": 36.0,
+    "survey_speed": 28.0,
+    "clearance_m": 45.0,
+    "camp_pass_agl": 65.0,
+    "max_bank_deg": 28.0,
+    "turn_rate_deg": 14.0,
+    "climb_rate": 6.0,
+    "final_s": 16.0,
+    "spin_down_s": 20.0,
+    "recover_by_arc_margin_deg": 30.0,
+    "legs_per_visit": 3
+  },
+  "witness": {
+    "ship_sight_m": 3400.0,
+    "heli_sight_m": 2400.0,
+    "rotor_hear_m": 1500.0,
+    "rotor_hear_masked_m": 320.0,
+    "engine_hear_m": 950.0,
+    "valid_pass_s": 5.0
+  },
+  "callouts": {
+    "global_cd": 20.0,
+    "beat_cd": 70.0,
+    "later_cd": 900.0
+  }
+}

@@ -21,6 +21,8 @@ const CAL := {
 	"domestic": {"unit": 2.2, "max": 26.0, "max_db": 0.0, "delay": false},
 	"ambient": {"unit": 12.0, "max": 220.0, "max_db": 0.0, "delay": false}, # surf, river, wind emitters
 	"distant": {"unit": 30.0, "max": 900.0, "max_db": 0.0, "delay": true},  # far thunder, far cracks
+	"vessel": {"unit": 70.0, "max": 2600.0, "max_db": 0.0, "delay": false}, # Phase 19 survey ship (loop)
+	"aircraft": {"unit": 45.0, "max": 2200.0, "max_db": 3.0, "delay": false}, # Phase 19 helicopter rotor (loop)
 }
 
 const EVENTS := {
@@ -110,6 +112,8 @@ const EVENTS := {
 	"dog.growl": {"files": ["dog_growl2"], "bus": "Characters", "cal": "voice", "db": -10.0, "label": "Biscuit growling"},
 	# ---- environment (emitters placed by AmbientAudio) ----
 	"amb.surf.near": {"files": ["surf_near_loop"], "bus": "Ambience", "cal": "ambient", "db": -2.0, "loop": true},
+	"offshore.ship.engine": {"files": ["ship_diesel_far_loop"], "bus": "Ambience", "cal": "vessel", "db": -3.0, "loop": true, "emit": false, "label": "a ship's engine"},
+	"offshore.heli.rotor": {"files": ["rotor_beat_loop"], "bus": "Ambience", "cal": "aircraft", "db": 0.0, "loop": true, "emit": true, "label": "a helicopter"},
 	"amb.surf.far": {"files": ["surf_far_loop"], "bus": "Ambience", "cal": "distant", "db": -6.0, "loop": true},
 	"amb.shore.wash": {"files": ["shore_wash_0", "shore_wash_1"], "bus": "Ambience", "cal": "ambient", "db": -8.0},
 	"amb.river.fast": {"files": ["water_fast_loop"], "bus": "Ambience", "cal": "ambient", "db": -4.0, "loop": true},

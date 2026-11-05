@@ -1727,6 +1727,18 @@
   "seconds": 5.5,
   "seed": 3993712369
  },
+ "rotor_beat_loop": {
+  "auditioned": false,
+  "category": "vehicle",
+  "file": "res://audio/lib/vehicle/rotor_beat_loop.ogg",
+  "license": "project original",
+  "loop": true,
+  "model": "helicopter rotor slap + turbine (Phase 19)",
+  "origin": "original procedural synthesis (tools/audio_lib)",
+  "recording": false,
+  "seconds": 3.5,
+  "seed": 3020042
+ },
  "saw2_idle": {
   "auditioned": false,
   "category": "work",
@@ -1798,6 +1810,18 @@
   "recording": false,
   "seconds": 1.2,
   "seed": 1900712488
+ },
+ "ship_diesel_far_loop": {
+  "auditioned": false,
+  "category": "vehicle",
+  "file": "res://audio/lib/vehicle/ship_diesel_far_loop.ogg",
+  "license": "project original",
+  "loop": true,
+  "model": "large marine diesel far offshore (Phase 19)",
+  "origin": "original procedural synthesis (tools/audio_lib)",
+  "recording": false,
+  "seconds": 5.2,
+  "seed": 2597935514
  },
  "shore_wash_0": {
   "auditioned": false,

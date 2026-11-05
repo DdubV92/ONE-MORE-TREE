@@ -319,6 +319,23 @@ func _presentation(delta: float) -> void:
 		body_char.play_action(clip, body_char.rest_clip if body_char.rest_clip != "" else "idle")
 
 
+## Phase 19 look gesture: turn toward a sighting for a few seconds (body
+## yaw when idle or talking; working hands keep working) and glance.
+var look_point := Vector3.INF
+var look_until := 0.0
+
+
+func look_toward(p: Vector3, secs: float) -> void:
+	look_point = p
+	look_until = crew.now() + secs if crew else secs
+	if body_char and body_char.action == "" and activity in ["idle", "retreat_wait", "move", "follow"]:
+		body_char.play_action("glance", body_char.rest_clip if body_char.rest_clip != "" else "idle")
+
+
+func _looking() -> bool:
+	return look_point != Vector3.INF and crew != null and look_until > crew.now()
+
+
 func driving_seat() -> bool:
 	var p := get_parent()
 	return p != null and str(p.name).to_lower().contains("driver")
@@ -479,9 +496,13 @@ func _physics_process(delta: float) -> void:
 		# something firsthand talks guarded; a skeptic talks loose.
 		if body_char.action == "":
 			body_char.play("talk_shaken" if witnessed_firsthand() else "talk", 0.3)
-		if Game.player:
+		if _looking():
+			_face(Vector3(look_point.x - global_position.x, 0, look_point.z - global_position.z).normalized(), delta)
+		elif Game.player:
 			_face(Vector3(Game.player.global_position.x - global_position.x, 0, Game.player.global_position.z - global_position.z).normalized(), delta)
 		return
+	if _looking() and activity in ["idle", "retreat_wait"]:
+		_face(Vector3(look_point.x - global_position.x, 0, look_point.z - global_position.z).normalized(), delta)
 	_update_lod()
 	_saw_upkeep(delta)
 	# Long jobs re-check the clock: a far worker turns back in time, even in
