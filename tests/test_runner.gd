@@ -168,6 +168,8 @@ func _ready() -> void:
 	await _run_async("phase 18 world: a voiced turn plays from the speaker's head with synced caption and mouth motion, interruption stops audio + mouth, missing clip keeps text, boss reply voiced, no doubled playback", _t_phase18_world)
 	_run("phase 19 units: 120 offshore lines with stable ids, triggers, knowledge, cooldowns; visit schedule every 3 days from day 3", _t_phase19_units)
 	await _run_async("phase 19 world: survival cover (thickets, sheds, chest, clearance, region audit, seen/unseen entries, escapes, dog, hunt timing); offshore lap, 2:1 speed, visibility, helicopter launch/clearance/recovery/rotor, save/load, repeat visit, witnesses, fall-warning precedence, Day 36 independence; camp routine and schema 13", _t_phase19_world)
+	_run("phase 20 units: 36 recording scenarios (cameras, sounds, distinct beats), 24 sleep interruptions (bounded gain, captions)", _t_phase20_units)
+	await _run_async("phase 20 world: 36/36 recordings staged on the real island, morning marks, isolated playback (historic trees, deterministic seek, no side effects), reload; interruption states/no harm/one settlement/save resume/pacing; interrupted save recovery; stale attack after extraction; save growth", _t_phase20_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -5839,6 +5841,8 @@ func _p19_routine() -> String:
 		w.path.clear()
 		_p19_place(w, camp + Vector3(-6 + i * 3, 0, -14) if i < 3 else Vector3(300, 0, -330))
 	if Game.dog:
+		Game.dog.path.clear()
+		Game.dog.state = CampDog.State.IDLE
 		Game.dog.global_position = r._seat_point(0) + Vector3(1.2, 0, 1.2)
 	var pets0: int = Game.dog.pets if Game.dog else 0
 	r.start_break(day)

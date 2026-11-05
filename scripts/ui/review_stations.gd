@@ -102,6 +102,11 @@ const STATIONS19 := [
 	["7 Field shed", "p19_shed"], ["8 Dock gear chest", "p19_chest"], ["9 Cover audit", "p19_audit"],
 	["10 Midday gathering", "p19_break"], ["11 Roles & transport", "p19_roles"],
 ]
+const STATIONS20 := [
+	["1 Night recording (random)", "p20_rec"], ["2 Recording: the gate", "p20_rec01"], ["3 Recording: behind the crest", "p20_rec10"],
+	["4 Sleep interruption", "p20_sleep"], ["5 The door (major)", "p20_si01"], ["6 Release checklist", "p20_rc"],
+]
+static var _p20_i := 0
 static var _feed_day := 0
 static var _clear_i := 0
 static var _density_i := 0
@@ -461,6 +466,31 @@ static func go(hud: Node, which: String) -> String:
 			w.teleport_to("camp")
 			rt.start_break(cs19.clock.day)
 			return "Midday gathering: workers near camp walk to the fire seats and talk; far crews break where they are; someone calls Biscuit over. Break time counts as a break, not idleness."
+		"p20_rec", "p20_rec01", "p20_rec10":
+			var nr: NightRecorder = Game.night_recorder
+			var cs20: CampaignService = Game.campaign
+			if nr == null or cs20 == null:
+				return ""
+			var sid := which.trim_prefix("p20_") if which != "p20_rec" else str(nr.scenarios[_p20_i % nr.scenarios.size()].id)
+			_p20_i += 1
+			var clip := nr.on_night(900 + _p20_i, sid)
+			if clip.is_empty():
+				return "Preview: scenario %s could not be staged honestly here right now (prerequisites: %s). Nothing was faked." % [sid, str(nr.by_id[sid].requires)]
+			if Game.desk:
+				Game.desk.flag_recording(str(clip.id))
+			return "Preview recording staged from the live world: %s on %s (%s, %s). Sit at the camper desk -> Recordings to watch the reconstruction. (Preview: never saved.)" % [clip.title, clip.camera, clip.clock, clip.bookmark]
+		"p20_sleep", "p20_si01":
+			var si20: SleepInterrupts = Game.sleep_interrupts
+			if si20 == null:
+				return ""
+			w.teleport_to("camper")
+			var pick: String = "si01" if which == "p20_si01" else str(si20.sequences[_p20_i % si20.sequences.size()].id)
+			_p20_i += 1
+			si20.state = "idle"
+			si20.start(pick, Game.campaign.clock.day if Game.campaign else 1)
+			return "Preview interruption %s: %s. Watch the states: settling -> interrupted -> resolving -> sleep available. You cannot be hurt in the camper; nothing forces you out." % [pick, str(si20.by_id[pick].title)]
+		"p20_rc":
+			return "Release checklist: docs/PHASE20_RC_REPORT.md (pass / fail / blocked / unrun per requirement). Content: %d crew lines, %d recording scenarios, %d sleep interruptions, %d offshore lines, %d voice clips indexed." % [CrewBank.get_bank().lines.size(), Game.night_recorder.scenarios.size() if Game.night_recorder else 0, Game.sleep_interrupts.sequences.size() if Game.sleep_interrupts else 0, (CrewBank.get_bank().offshore.values() as Array).reduce(func(a: int, b: Array) -> int: return a + b.size(), 0), VoiceBank.count()]
 		"p18_counts":
 			return "Voice bank: %d clips for %d authored lines (all required line/profile mappings). Generated offline with eSpeak NG (original synthetic voices; no recorded or cloned person). Runtime loads clips on demand; missing clips fall back to subtitles. The internet stays text only." % [VoiceBank.count(), CrewBank.get_bank().lines.size()]
 		"p18_EMP-01", "p18_EMP-02", "p18_EMP-03", "p18_EMP-04", "p18_EMP-05", "p18_exchange", "p18_distance", "p18_lineup":

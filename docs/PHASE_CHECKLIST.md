@@ -2,6 +2,25 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 20: Release-candidate verification
+
+Full report: [PHASE20_RC_REPORT.md](PHASE20_RC_REPORT.md). Notes: [PHASE20_NOTES.md](PHASE20_NOTES.md). **Verdict: test candidate.**
+
+| Item | Status | Notes |
+|---|---|---|
+| Candidate record, fixtures, labelled shortcuts | ✅ | Report sections 1–2 |
+| Content audit (crew 1,796 / internet 5,946 / accounts 94 / voices 3,316 / terror 1,300+312+36 / cl 12 / recordings 36 / interruptions 24 / offshore 120) | ✅ | `tools/rc/content_audit.py` |
+| 36 missed-night recordings + Recordings app (isolated reconstruction) | ✅ | Built in Phase 20 (Phase 19 expansion gap); 36/36 staged |
+| 24 sleep interruptions (states, one per night, save-safe, one settlement) | ✅ | Built in Phase 20 |
+| Stale attack after extraction | ✅ fixed | Was a defect (Phase 6) |
+| Interrupted save write recovery | ✅ fixed | Was a defect (save writer) |
+| Exported Windows build launched from a clean folder (CI windows-latest) | ✅ | Headless smoke route |
+| Exported Linux build launched from a clean folder (CI) | ✅ | Headless smoke route |
+| Notices shipped (NOTICES.txt) | ✅ | |
+| Performance on a real GPU at 1080p/60 | ⛔ | Headless and software-renderer numbers only |
+| 30-day contract feasible under the fixed rules | ❌ | Blocker B1; needs the owner's decision |
+| Human playthrough, listening, real-GPU look | ⛔ | Owner's machine |
+
 ## Phase 19: Camp routines, fair survival cover, and the offshore survey
 
 Full detail: [PHASE19_NOTES.md](PHASE19_NOTES.md). Lines: [editorial/CREW_SCHEMA.md](editorial/CREW_SCHEMA.md) (offshore category).

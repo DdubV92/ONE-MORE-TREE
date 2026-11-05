@@ -1,10 +1,27 @@
-# ONE MORE TREE LATEST BUILD PHASE 19
+# ONE MORE TREE LATEST BUILD PHASE 20 (release-candidate verification: TEST CANDIDATE)
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 19 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 20 - build N (Windows)").
 
-Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
+Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
 
-## New in Phase 19
+## New in Phase 20
+
+- **Nights you sleep through can leave evidence.**
+  - Sometimes a camp camera flags something while you sleep (36 different incidents).
+  - In the morning you get a notice, and sometimes a harmless mark: wet prints, a moved chain, a branch at the gate. It is gone by midday.
+  - Watch it on the camper computer under **Recordings**: a reconstruction of that night, labelled PLAYBACK, with play/pause, seek and previous/next.
+- **Rare sleep interruptions** (24 kinds, many nights stay quiet):
+  - a heavy blow on the door, something brushing the wall, a call outside, and more;
+  - you are always safe in the camper, and you can go back to sleep right after.
+- **Fixes:**
+  - a late attack can no longer undo a successful escape;
+  - a crash during saving no longer loses your newest save.
+- **Verified:** this exact build launched on a clean Windows machine and a clean Linux machine. It booted, kept settings, started a 10,000-tree campaign with five employees, walked, saved and loaded.
+- **Review:** Preview → Tab → "Phase 20 …" (stage a recording, play an interruption, the release checklist).
+
+**Honest status: TEST CANDIDATE.** The 30-day contract cannot currently be completed under the fixed rules: the crew manages a few trees a day, not the ~333 a day the contract needs. Every campaign ends in the five-night survival. This needs your decision; see docs/PHASE20_RC_REPORT.md. Not yet seen on a real GPU or heard on real audio.
+
+## Phase 19 (previous build)
 
 - **A crew day has a shape.**
   - Each worker gets a role for the day (felling, sawing, hauling, the yard), chosen from their tools, traits and what is waiting. Jobs you assign still win.

@@ -7,12 +7,14 @@ extends Node
 ##   godot res://tools/rc/perf_probe.tscn            (with a renderer)
 ## Writes user://perf_probe.json and prints PERF lines.
 
-const FRAMES := 240
+var FRAMES := 240
 
 var results := {}
 
 
 func _ready() -> void:
+	if OS.has_environment("FRAMES"):
+		FRAMES = int(OS.get_environment("FRAMES"))
 	Game.mode = Game.Mode.PREVIEW
 	Game.preview_variant = "island_r2"
 	Game.pending_teleport = "camp"
@@ -82,7 +84,7 @@ func _ready() -> void:
 	fm.global_position = c2 + Vector3(25, 0, 10)
 	fm.global_position.y = World.height_at(fm.global_position.x, fm.global_position.z)
 	await _measure("active_pursuit")
-	var f := FileAccess.open("user://perf_probe.json", FileAccess.WRITE)
+	var f := FileAccess.open("user://perf_probe%s.json" % ("" if results.headless else "_rendered"), FileAccess.WRITE)
 	f.store_string(JSON.stringify(results, " "))
 	f.close()
 	print("PERF_JSON ", JSON.stringify(results))

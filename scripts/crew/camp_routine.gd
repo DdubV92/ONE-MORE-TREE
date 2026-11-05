@@ -225,11 +225,15 @@ func _settle_attendees() -> void:
 		var here := (brk.attendees as Array).filter(func(e: String) -> bool: return crew.workers.has(e) and (crew.workers[e] as Worker).activity == "break_sit")
 		if here.size() >= 2:
 			share_progress(here)
-	# Biscuit: the nearest attendee pets her once.
+	# Biscuit: keep calling a free dog over until an attendee has petted her.
 	if str(brk.petted) == "" and Game.dog and is_instance_valid(Game.dog):
+		var now := crew.now()
+		if now >= float(brk.get("dog_call_at", 0.0)):
+			brk.dog_call_at = now + 4.0
+			_call_dog()
 		for eid in brk.attendees:
 			var w2: Worker = crew.workers.get(eid)
-			if w2 and w2.activity == "break_sit" and (Game.dog as Node3D).global_position.distance_to(w2.global_position) < 3.5:
+			if w2 and w2.activity == "break_sit" and (Game.dog as Node3D).global_position.distance_to(w2.global_position) < 4.0:
 				Game.dog.pet(w2)
 				brk.petted = eid
 				crew.progression.add_context("dog", eid, "petted Biscuit", (brk.attendees as Array).duplicate())
