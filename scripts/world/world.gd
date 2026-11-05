@@ -61,6 +61,12 @@ func _ready() -> void:
 	var snd := SoundService.new()
 	add_child(snd)
 	Game.sound = snd
+	# Phase 16: the boss's restedness (one authority; ticks only in a
+	# running campaign, stops with a true pause).
+	var rs := RestService.new()
+	rs.name = "Rest"
+	add_child(rs)
+	Game.rest = rs
 	environment = _timed("environment", func() -> Node: var e := EnvironmentController.new(); e.name = "Environment"; add_child(e); e.build(); return e)
 	Game.environment = environment
 	weather = WeatherService.new()

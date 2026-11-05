@@ -50,6 +50,14 @@ var talking_until := 0.0
 var _far := false
 var _time_check := 0.0
 var seated := false
+## Phase 16: why this worker is idle (set by the crew's decision with the
+## real cause: no_task / yard_full / missing_tool / blocked / fear / pause).
+var idle_reason := ""
+var _hold_t := 0.0                 # bounded pickup handling time left
+var _sync_t := -1.0                # two-person lift sync countdown
+## Base handling and lift-sync times (shortened by handling / teamwork).
+const PICK_HANDLE_S := 0.9
+const TEAM_SYNC_S := 1.4
 
 
 func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
@@ -539,7 +547,21 @@ func _update_lod() -> void:
 
 ## Ends the current activity safely: claims released, load kept (the crew
 ## service decides whether to stage it), swing stopped.
+## Phase 16: a job reached its useful end. A short break follows (ethic);
+## it only counts as a break if there was work waiting afterwards.
+func job_done(kind: String) -> void:
+	crew.progression.on_job_finished(id, kind)
+	idle_reason = "pause"
+	_decide_cd = crew.progression.pause_after_job(id)
+
+
 func abandon(reason: String) -> void:
+	if reason in ["cut done", "stump out"]:
+		crew.progression.on_job_finished(id, reason)
+		idle_reason = "pause"
+		_decide_cd = crew.progression.pause_after_job(id)
+	elif not reason in ["time to go home", "departing", "dead", "boarding", "hiding"]:
+		crew.progression.on_job_dropped(id, {"stuck": "blocked route", "refusing risk": "fear"}.get(reason, reason))
 	crew.coord.break_team_of(self, reason)
 	crew.release_claims(self)
 	path.clear()
@@ -553,6 +575,7 @@ func abandon(reason: String) -> void:
 # ---------------------------------------------------------- felling action
 
 func start_fell(tree_id: int, stand: Vector3, retreat: Vector3) -> bool:
+	crew.progression.on_job_started(id, "fell")
 	target = {"tree": tree_id, "stand": stand, "retreat": retreat, "label": "a tree"}
 	if global_position.distance_to(stand) > 0.6:
 		if not go_to(stand, "fell", "a tree"):
@@ -602,7 +625,7 @@ func _do_fell(delta: float) -> void:
 	_face(Vector3(base.x - global_position.x, 0, base.z - global_position.z).normalized(), delta * 3.0)
 	var wk := _work_step(delta)
 	if wk > 0.0:
-		var res := Game.trees.apply_contact(tid, global_position, wk)
+		var res := Game.trees.apply_contact(tid, global_position, wk, id)
 		if bool(res.get("accepted", false)):
 			crew.contributions.add_work(id, wk)
 		if saw.state == SawMachine.S.STOPPED:
@@ -632,11 +655,13 @@ func _do_retreat_wait(_delta: float) -> void:
 	var st := Game.trees.state_of(tid)
 	if st >= TreeService.State.SECTIONED or crew.now() - float(target.get("since", 0.0)) > 20.0:
 		activity = "idle"
+		job_done("fell")
 
 
 # ---------------------------------------------------------- bucking action
 
 func start_buck(body: TimberBody, y: float, stand: Vector3) -> bool:
+	crew.progression.on_job_started(id, "buck")
 	var tree_id := body.tree_id
 	if global_position.distance_to(stand) > 0.6:
 		if not go_to(stand, "buck", "a fallen trunk"):
@@ -663,7 +688,7 @@ func _do_buck(delta: float) -> void:
 		return
 	var wk := _work_step(delta)
 	if wk > 0.0:
-		var res := crew.timber.apply_cut(body, y, wk)
+		var res := crew.timber.apply_cut(body, y, wk, id)
 		if str(res.get("reason", "")) == "wait":
 			return
 		if not bool(res.get("accepted", false)):
@@ -679,6 +704,7 @@ func _do_buck(delta: float) -> void:
 
 ## Phase 7: chop out a stump (shared claims; same swing and work rate).
 func start_stump(tree_id: int, base: Vector3, stand: Vector3) -> bool:
+	crew.progression.on_job_started(id, "stump")
 	target["tree"] = tree_id
 	target["stump_at"] = base
 	target["stand"] = stand
@@ -698,7 +724,7 @@ func _do_stump(delta: float) -> void:
 		return
 	var wk := _work_step(delta)
 	if wk > 0.0:
-		var res := crew.trees.apply_stump_work(tid, wk)
+		var res := crew.trees.apply_stump_work(tid, wk, id)
 		if not bool(res.get("accepted", false)):
 			abandon("no stump there")
 			return
@@ -713,6 +739,7 @@ func _do_stump(delta: float) -> void:
 # --------------------------------------------------------- hauling actions
 
 func start_pick(sids: Array) -> bool:
+	crew.progression.on_job_started(id, "pick")
 	target = {"pick": sids.duplicate(), "label": "logs"}
 	return _next_pick()
 
@@ -752,9 +779,29 @@ func _do_pick() -> void:
 	# Phase 14 team carry: both people in place before the lift.
 	if team != "" and crew.coord.teams.has(team) and str(crew.coord.teams[team].state) == "gather" and not crew.coord.follower_ready(team):
 		body_char.set_locomotion(0.0)
+		_sync_t = -1.0
 		return
+	# Phase 16: then a short "on three" (teamwork of both shortens it).
+	if team != "" and crew.coord.teams.has(team) and str(crew.coord.teams[team].state) == "gather":
+		if _sync_t < 0.0:
+			var fid := str(crew.coord.teams[team].follower)
+			_sync_t = TEAM_SYNC_S * 0.5 * (crew.progression.team_wait(id) + crew.progression.team_wait(fid))
+		_sync_t -= get_physics_process_delta_time()
+		body_char.set_locomotion(0.0)
+		if _sync_t > 0.0:
+			return
+		_sync_t = -1.0
 	if team != "" and not crew.coord.teams.has(team):
 		team = ""
+	# Phase 16: getting a grip and lifting takes a moment before each piece
+	# (handling skill shortens it, bounded).
+	if str(target.get("hold_for", "")) != str(list[0]):
+		target["hold_for"] = str(list[0])
+		_hold_t = PICK_HANDLE_S * crew.progression.handling_time(id)
+	if _hold_t > 0.0:
+		_hold_t -= get_physics_process_delta_time()
+		body_char.set_locomotion(0.0)
+		return
 	var sid: String = list.pop_front()
 	var b := crew.timber.body_of(sid)
 	if b != null:
@@ -786,6 +833,7 @@ func _do_deliver() -> void:
 		_set_down_unpaid()
 	crew.release_rack_slot(self)
 	activity = "idle"
+	job_done("deliver")
 	target.erase("drag")
 
 
@@ -813,6 +861,7 @@ func _do_deliver_deck() -> void:
 		if not rs.is_empty():
 			body_char.play_action("setdown")
 	activity = "idle"
+	job_done("deliver_deck")
 	target.erase("drag")
 
 
@@ -842,6 +891,7 @@ func _do_yard_drop() -> void:
 	var y: YardService = Game.yard
 	var held: Array = crew.timber.load_of(id).duplicate()
 	activity = "idle"
+	job_done("yard_drop")
 	if y == null or held.is_empty():
 		return
 	var sid: String = held[0]
@@ -871,6 +921,7 @@ func _do_load_truck() -> void:
 			crew.on_delivered_to_truck(self, n)
 			body_char.play_action("setdown")
 	activity = "idle"
+	job_done("load_truck")
 	if is_carrying():
 		crew.send_to_rack(self)
 

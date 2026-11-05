@@ -305,6 +305,8 @@ func lifted(tid: String) -> void:
 	if teams.has(tid):
 		teams[tid].state = "carry"
 		stats.team_lifts += 1
+		var t: Dictionary = teams[tid]
+		crew.progression.add_context("team_carry", str(t.leader), str(t.follower), [str(t.leader), str(t.follower)])
 
 
 ## The pair's walking speed: the slower partner's carry speed x TEAM_FACTOR.

@@ -331,7 +331,7 @@ func _set_state(sid: String, st: int) -> void:
 
 ## Axe contact on a timber body near local length `y` (m from the base along
 ## the trunk axis). Returns {"accepted", "progress", "separated", "reason"}.
-func apply_cut(body: TimberBody, y: float, work: float) -> Dictionary:
+func apply_cut(body: TimberBody, y: float, work: float, actor := "") -> Dictionary:
 	if not body.is_resting():
 		return {"accepted": false, "reason": "wait"}
 	var rec: Dictionary = records[body.tree_id]
@@ -342,6 +342,9 @@ func apply_cut(body: TimberBody, y: float, work: float) -> Dictionary:
 		var c: Dictionary = rec.crown
 		c.work = float(c.work) + work
 		var pr := clampf(float(c.work) / float(c.required), 0.0, 1.0)
+		var mlc := MeritLedger.active()
+		if mlc:
+			mlc.on_section(body.tree_id, "crown", float(c.required) / section_total(body.tree_id), pr, actor)
 		body.refresh_cut(-1)
 		if pr >= 1.0:
 			_clear_crown(body)
@@ -350,12 +353,29 @@ func apply_cut(body: TimberBody, y: float, work: float) -> Dictionary:
 	var bd: Dictionary = rec.bounds[target.k]
 	bd.work = float(bd.work) + work
 	var p := clampf(float(bd.work) / float(bd.required), 0.0, 1.0)
+	var ml := MeritLedger.active()
+	if ml:
+		ml.on_section(body.tree_id, str(target.k), float(bd.required) / section_total(body.tree_id), p, actor)
 	body.refresh_cut(int(target.k))
 	if p >= 1.0 and not bool(bd.cut):
 		bd.cut = true
 		_split(body, int(target.k))
 		return {"accepted": true, "progress": 1.0, "separated": true}
 	return {"accepted": true, "progress": p, "separated": false}
+
+
+## Phase 16: the tree's whole sectioning work (every cut + the crown), so
+## each cut's share of the 200-merit sectioning budget is fixed per tree.
+func section_total(tid: int) -> float:
+	var rec: Dictionary = records.get(tid, {})
+	if rec.is_empty():
+		return 1.0
+	var t := 0.0
+	for bd in rec.bounds:
+		t += float(bd.required)
+	if not (rec.crown as Dictionary).is_empty():
+		t += float(rec.crown.get("required", 0.0))
+	return maxf(t, 0.001)
 
 
 func _nearest_boundary(body: TimberBody, y: float) -> Dictionary:

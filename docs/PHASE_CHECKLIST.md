@@ -2,6 +2,25 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 16: Crew merit, personality, skills and the boss's restedness
+
+Full detail: [PHASE16_NOTES.md](PHASE16_NOTES.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| Persistent profiles (ethic, reliability, chattiness, preference), made once, never rerolled | ✅ | Tested across save/restore |
+| Time ledger with real causes (yard full, blocked, missing tool, fear, waiting, break only if work waited) | ✅ | Tested |
+| Conserved merit ledger: 300/200/100/300/100 per tree, proportional split, boss bucket, no repeats/circles/shuffles | ✅ | Tested; whole tree = exactly 1,000 |
+| Saw earns the same merit per tree as an axe | ✅ | Tested |
+| Career levels 1-20 (summary only) + four skills with capped effects (x1.35) through ToolEffects | ✅ | Tested |
+| Roster/daily review with reasons, read-only snapshots; praise once per real contribution | ✅ | Tested; UI reviewed headless only |
+| Phase 17 context facts with knowers | ✅ | Data hooks only |
+| Restedness: drain, bedtime quality, forecast, once-per-day sleep settlement, bounded debuffs | ✅ | Curves tested (early/late/repeated/recovery) |
+| Rest never makes the camper unsafe; true pause stops drain | ✅ | Tested |
+| Hunt: continuous rest on the couch/hidden (4/min to 70), no skipping | ✅ | Five-cycle model tested; not played |
+| Schema 11 migration (rest 100, level 1, no retroactive merit) | ✅ | Tested |
+| Multi-day balance with compounding skills; human play | ⛔ | Unrun |
+
 ## Phase 15: Sound library, source-based spatial audio, occlusion and rooms
 
 Full detail: [PHASE15_NOTES.md](PHASE15_NOTES.md). Coverage matrix: [audio/SOUND_COVERAGE.md](audio/SOUND_COVERAGE.md).

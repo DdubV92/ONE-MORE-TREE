@@ -69,6 +69,8 @@ func _process(_delta: float) -> void:
 			txt = "Day 36 dawn  ·  the rescue ship is coming in to the dock"
 		elif hunt.ship_state == "docked":
 			txt = "RESCUE SHIP AT THE DOCK  ·  boarding closes in %s  ·  Biscuit boards automatically" % CampaignService.fmt_time(maxf(HuntService.BOARDING_WINDOW - hunt.ship_t, 0.0))
+		if Game.rest:
+			txt += "  ·  rest %d%s" % [int(round(Game.rest.rest)), "  (resting)" if Game.rest.resting else ""]
 		clock_label.text = txt
 		cash_label.text = "Company services closed: no hiring, boats or wages until rescue."
 		return
@@ -89,6 +91,9 @@ func _process(_delta: float) -> void:
 		txt += "  ·  FINAL DAY: contract closes at nightfall"
 	if svc.test_route:
 		txt += "  ·  TEST x%d" % int(c.speed)
+	# Phase 16: restedness appears only once it matters (text, not colour).
+	if Game.rest and Game.rest.rest < 70.0:
+		txt += "  ·  %s (rest %d)" % [RestService.band_of(Game.rest.rest), int(round(Game.rest.rest))]
 	clock_label.text = txt
 	if svc.wallet.cash != _last_cash:
 		_last_cash = svc.wallet.cash
@@ -167,6 +172,8 @@ func toggle_journal(tab := 0) -> void:
 	tabs.add_child(_journal_payroll())
 	tabs.add_child(_journal_ledger())
 	tabs.add_child(_journal_reports())
+	if Game.rest and svc and svc.active:
+		tabs.add_child(_journal_rest())
 	tabs.add_child(_journal_help())
 	tabs.current_tab = tab
 	v.add_child(UITheme.button("Close", close_panel, 200))
@@ -266,6 +273,7 @@ func _journal_help() -> Control:
 	_text(v, "THE CONTRACT\n" + HelpText.contract(), 14)
 	_text(v, "NIGHTS\n" + HelpText.night(), 14)
 	_text(v, "WHAT PAUSES\n" + HelpText.time_rules(), 14)
+	_text(v, "CREW GROWTH & YOUR REST\n" + HelpText.growth_and_rest(), 14)
 	_text(v, "RECENT MESSAGES", 16, UITheme.ACCENT)
 	var notes: Notifications = hud.get("notes") if hud else null
 	if notes:
@@ -273,6 +281,25 @@ func _journal_help() -> Control:
 		rec.reverse()
 		for e in rec:
 			_text(v, "%sDay %d, %s into the day: %s%s" % [Notifications.TAGS[int(e.p)], int(e.day), CampaignService.fmt_time(float(e.t)), str(e.text), (" (x%d)" % int(e.count)) if int(e.count) > 1 else ""], 13)
+	return s[0]
+
+
+## Phase 16: restedness, the bedtime forecast and recent nights.
+func _journal_rest() -> Control:
+	var s := _scroll("Rest")
+	var v: VBoxContainer = s[1]
+	var rs: RestService = Game.rest
+	_text(v, rs.describe_forecast(), 16)
+	var fx: Dictionary = Game.player.axe.effects() if Game.player and Game.player.get("axe") else {}
+	if not fx.is_empty():
+		_text(v, "Right now: walking x%.2f, cutting work per hit x%.2f (tiredness only; boots and tools are separate)." % [rs.walk_factor(), rs.cut_factor()], 15, UITheme.MUTED)
+	_text(v, "How it works: a workday costs about 30-40 rest. After nightfall every awake minute costs about 5 more and lowers tonight's sleep quality (down to 25%% after 8 minutes). Sleeping before nightfall fully restores a normal day. Below 70 rest you walk up to 15%% slower and cut up to 20%% weaker at 0. Being tired never hurts you, never stops you saving and never makes the camper unsafe. Pausing stops the clock; the computer and TV are live time.", 14, UITheme.MUTED)
+	if Game.hunt and Game.hunt.hunt_active():
+		_text(v, "Survival days: no sleeping through to morning. Sitting still on the couch or staying hidden recovers about 4 rest a minute up to 70 while time keeps running - it is never safe and never skips anything.", 14, UITheme.ACCENT)
+	if not rs.history.is_empty():
+		_text(v, "Recent nights:", 15, UITheme.ACCENT)
+		for h in rs.history.slice(-5):
+			_text(v, "  Day %d: bed at %d, %s -> woke at %d" % [int(h.day), int(round(float(h.bed))), ("%.0f min late, quality %d%%" % [float(h.late_min), int(round(float(h.q) * 100.0))]) if float(h.late_min) > 0.05 else "early", int(round(float(h.morning)))], 14)
 	return s[0]
 
 
@@ -408,6 +435,12 @@ func show_report(r: Dictionary) -> void:
 			lines.append("%s: paid up" % a.name)
 	_text(v, "Payroll: %d new wage liabilit%s.\n%s%s" % [int(r.new_liabilities), "y" if int(r.new_liabilities) == 1 else "ies", "\n".join(lines), ("\nQUIT over arrears: " + ", ".join(PackedStringArray(r.quits))) if not (r.quits as Array).is_empty() else ""], 15)
 	_text(v, "Contract: %s  ·  stumps left %d  ·  undelivered %.2f tree-eq  ·  tomorrow's payroll $%s" % [("legacy, no deadline" if bool(r.legacy) else "%d days remaining" % int(r.days_remaining)), int(r.stumps), int(r.undelivered_mte) / 1000.0, Money.format_cents(int(r.next_day_payroll))], 15)
+	if r.has("rest"):
+		var rn: Dictionary = r.rest
+		_text(v, "Your rest: went to bed at %d, %s -> woke at %d (%s)." % [int(round(float(rn.bed))), ("%.0f min after nightfall, sleep quality %d%%" % [float(rn.late_min), int(round(float(rn.q) * 100.0))]) if float(rn.late_min) > 0.05 else "before nightfall (full recovery)", int(round(float(rn.morning))), RestService.band_of(float(rn.morning))], 15)
+	for rv in r.get("crew_review", []):
+		_text(v, "%s  ·  level %d  ·  +%d merit today (%s)
+  %s%s" % [rv.name, int(rv.level), int(round(float(rv.merit_today))), ", ".join(PackedStringArray((rv.merit_by_stage as Dictionary).keys().map(func(k) -> String: return "%s %d" % [k, int(round(float(rv.merit_by_stage[k])))]))) if not (rv.merit_by_stage as Dictionary).is_empty() else "no stage completed", str(rv.time_split) if str(rv.time_split) != "" else "no time logged", ("\n  Note: " + str(rv.tip)) if str(rv.tip) != "" else ""], 14, UITheme.MUTED)
 	v.add_child(UITheme.button("Start the day", close_panel, 220))
 	_open(p)
 
@@ -512,7 +545,27 @@ func _journal_crew() -> Control:
 		var lines := "%s  ·  %s\n%s · %s · bed %d · %s axe%s" % [e.name, ", ".join(PackedStringArray(e.traits)).replace("_", " "), {"active": "working", "pending_arrival": "arriving on the next daylight boat", "departing": "leaving (%s)" % e.get("departure_reason", ""), "pending_integration": "arriving"}.get(st, st), (w.activity_words() if w else "-"), int(e.get("bed", 0)), str(axe.get("tier", "no")), ("  ·  owed $%s by day %d" % [Money.format_cents(owed), svc.payroll.due_day_for(eid)]) if owed > 0 else ""]
 		if m:
 			lines += "\nMood: %s  ·  %s" % [m.state_word(), m.belief_word()]
+		if st == Payroll.ACTIVE:
+			var rv := crew.review(eid, svc.clock.day)
+			lines += "\nLevel %d  ·  merit %d%s  ·  %s, %s; prefers %s" % [int(rv.level), int(round(float(rv.merit))), (" / %d for next" % int(rv.next)) if int(rv.next) > 0 else " (top level)", rv.ethic, rv.reliability, rv.prefers]
+			lines += "\n" + "  ·  ".join(rv.skills)
+			if str(rv.time_split) != "":
+				lines += "\nToday: " + str(rv.time_split)
+			if str(rv.tip) != "":
+				lines += "\nSuggestion: " + str(rv.tip)
 		_text(v, lines, 15)
+		if st == Payroll.ACTIVE:
+			var ops := crew.progression.opportunities(eid)
+			if not ops.is_empty():
+				var prow := HBoxContainer.new()
+				for op in ops.slice(-2):
+					var key := str(op.key)
+					prow.add_child(UITheme.button("Thank them: " + str(op.what), func() -> void:
+						var res := crew.progression.praise(eid, key, m)
+						hud.show_message(("You thanked %s for: %s." % [e.name, str(res.what)]) if bool(res.ok) else str(res.reason))
+						close_panel()
+						toggle_journal(0), 300))
+				v.add_child(prow)
 		if st == Payroll.ACTIVE and w:
 			var row := HBoxContainer.new()
 			for j in [["Auto", "automatic"], ["Fell", "felling"], ["Buck", "processing"], ["Haul", "hauling"], ["Yard", "yard"], ["Follow", "follow"], ["Home", "home"]]:

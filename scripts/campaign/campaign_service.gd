@@ -112,6 +112,8 @@ var island_mismatch := false
 
 ## Fresh timed campaign (the rules are fixed: 30 days, 15 + 5 minutes).
 func new_campaign() -> void:
+	if Game.rest:
+		Game.rest.restore({})      # Phase 16: a new contract starts well rested
 	ruleset = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant)) if World.manifest_variant != "full" else Ruleset.get_def(Ruleset.STANDARD if Game.mode == Game.Mode.CAMPAIGN else Ruleset.LEGACY)
 	rule_set = str(ruleset.id)
 	legacy = false
@@ -252,7 +254,7 @@ func can_sleep() -> Dictionary:
 	if not active:
 		return {"ok": false, "reason": "Sleeping only advances days in the campaign."}
 	if Game.hunt and Game.hunt.hunt_active():
-		return {"ok": false, "reason": "Survival days are continuous: lying down does not skip time. Rest only matters as a hiding place."}
+		return {"ok": false, "reason": "Survival days are continuous: lying down does not skip time. You recover a little while hidden or sitting still on the couch (time keeps running, nothing is safe)."}
 	if contract.state == ContractService.FULFILLED:
 		return {"ok": false, "reason": "The contract is complete: there are no more workdays to sleep through. Explore as long as you like."}
 	if contract.is_closed():
@@ -284,9 +286,21 @@ func sleep() -> Dictionary:
 		_sleeping = false
 		return {"ok": true, "terminal": true}
 	var settlement := payroll.settle_day(d)
+	# Phase 16: the night's recovery, once per day (same locked transition).
+	var rest_night: Dictionary = Game.rest.on_sleep(d) if Game.rest else {}
 	if Game.timber:
 		Game.timber.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS)
 	var report := build_report(d, settlement)
+	if not rest_night.is_empty():
+		report["rest"] = rest_night
+	# Phase 16: the crew review is a SNAPSHOT stored with the report, so
+	# reopening it never re-awards merit, pays or resets anything.
+	if Game.crew and Game.crew.enabled:
+		var rv: Array = []
+		for e in payroll.employees:
+			if str(e.status) == Payroll.ACTIVE:
+				rv.append(Game.crew.review(str(e.id), d))
+		report["crew_review"] = rv
 	if reports.is_empty() or int(reports[reports.size() - 1].day) != d:
 		reports.append(report)
 	clock.start_next_day()

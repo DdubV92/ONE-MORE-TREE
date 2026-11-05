@@ -62,3 +62,14 @@ static func hunt() -> String:
 		"Biscuit is safe in the dock building's dry alcove the whole time and boards the ship automatically. Do not go back for the dog.",
 		"When the ship docks, get yourself and your surviving crew aboard within the boarding window.",
 	])
+
+
+## Phase 16: how the crew grows and how bedtime affects tomorrow.
+static func growth_and_rest() -> String:
+	return "\n".join([
+		"Crew growth: workers earn merit only for useful work - felling, sectioning, stumps, moving logs closer to camp, loading trucks/the cart, and stacking or feeding the fire. Each tree is worth at most 1,000 merit shared by everyone who worked on it; your own work counts for you, not them. Merit never pays money and never changes wages.",
+		"Levels and skills: merit raises a career level (1-20, a summary) and four skills - cutting (+2 % work per hit per level), handling (quicker lifting), driving (smoother corners, same top speed) and teamwork (quicker two-person lifts). All skill effects together are capped at +35 %.",
+		"Reviews: the Journal's Crew tab and each end-of-day report show what everyone did, time spent working versus waiting (and why - a full yard or a blocked route is a logistics problem, not laziness), and a 'Thank them' button for a specific piece of work (once each).",
+		"Your rest: a workday costs about 30-40 rest. After nightfall each awake minute costs about 5 more and makes tonight's sleep less restful (sleep quality falls to 25 % after 8 minutes). Going to bed before nightfall fully restores a normal day; one late night is recovered in a night or two. Below 70 rest you walk up to 15 % slower and cut up to 20 % weaker (at 0). The bed shows what tomorrow will be like before you sleep. Tiredness never hurts you and never makes the camper unsafe.",
+		"Survival days: no sleeping to morning. Sitting still on the couch or staying hidden recovers a little (time keeps running).",
+	])

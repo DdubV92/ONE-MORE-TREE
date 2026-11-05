@@ -56,6 +56,7 @@ var values := {
 	"subtitles": true,              # worker speech text
 	"highlight": 1.0,               # interaction target highlight strength 0..1
 	"hints": true,                  # tutorial / contextual hints
+	"rest_reminders": true,         # Phase 16: gentle bedtime reminders (cooldown; never forced)
 	"binds": {},                    # remapped actions (Keys.capture())
 	# Phase 11 art treatment (characters only; world rendering unchanged)
 	"character_style": "clean",     # clean / pixel

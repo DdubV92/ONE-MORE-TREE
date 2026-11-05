@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P16"):
+		_run("phase 16 units", _t_phase16_units)
+		await _run_async("phase 16 world", _t_phase16_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P15"):
 		_run("phase 15 units", _t_phase15_units)
 		await _run_async("phase 15 world", _t_phase15_world)
@@ -130,6 +136,8 @@ func _ready() -> void:
 	await _run_async("phase 14 world: player saw cuts only real wood, sky = zero, hide/axe stop the saw, worker gear changes only between jobs, worker saw start/stop, fall lanes cost routes and release, team break keeps one cargo owner, parcel locker collects once", _t_phase14_world)
 	_run("phase 15 units: 200+ original sources all bound (60/25/25/45/20/25), no missing files, routing valid, loops use loop sources, hop rule (world only reaches mics), per-category occlusion + room buses", _t_phase15_units)
 	await _run_async("phase 15 world: one listener, one sound per contact, debounce, travel delay frozen by pause, loop lifecycle (owner freed/stop), saw loops end on kill, per-source occlusion indoor vs outdoor, door portal, mute keeps world evidence, replay never becomes live evidence", _t_phase15_world)
+	_run("phase 16 units: merit conserved per stage (fell/section/stump/transport/receive <= 1,000 per tree), shared work split, boss bucket, no repeat/circling/shuffle farming, saw = axe merit, levels 1-20 + capped skills, one multiplier order, stable profiles, praise once, rest curves (early/late/repeated/recovery), idempotent sleep, five-cycle hunt rest bounded", _t_phase16_units)
+	await _run_async("phase 16 world: worker/boss felling merit split, read-only review, profile survives save/restore, acceptance remainder once, idle causes, rest debuffs reach the real tool/walk effects and leave the camper safe, schema 11 migration", _t_phase16_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -3933,7 +3941,7 @@ func _t_phase14_units() -> String:
 	if err != "":
 		return err
 	var mig := SaveService.migrate({"schema": 9, "economy": {"equipment": {"axes": [], "equipped": ""}}})
-	if int(mig.schema) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION != 10:
+	if int(mig.schema) != SaveService.SCHEMA_VERSION or SaveService.SCHEMA_VERSION < 10:
 		return "schema 9 -> 10 migration wrong"
 	return ""
 
@@ -4451,4 +4459,370 @@ func _p15_checks(world: IslandWorld) -> String:
 	var n := SoundService.replay(snd.recorder.duplicate(), mons[0], t1 - 60.0, t1 + 1.0)
 	if n <= 0 or SoundEvents.emitted != e1 or snd.recorder.size() != r1:
 		return "replay leaked into live evidence (%d played, %d emits, %d records)" % [n, SoundEvents.emitted - e1, snd.recorder.size() - r1]
+	return ""
+
+
+
+# ------------------------------------------------------------------ Phase 16
+
+func _close(a: float, b: float, eps := 0.01) -> bool:
+	return absf(a - b) <= eps
+
+
+func _t_phase16_units() -> String:
+	# --- felling: proportional to accepted progress, never twice ---------
+	var m := MeritLedger.new()
+	m.on_fell(7, 0.6, "A")
+	m.on_fell(7, 1.0, "B")
+	if not _close(m.total("A"), 180.0) or not _close(m.total("B"), 120.0):
+		return "fell split A %.1f B %.1f (want 180/120)" % [m.total("A"), m.total("B")]
+	if m.on_fell(7, 1.0, "A") != 0.0 or m.on_fell(7, 0.5, "C") != 0.0:
+		return "a finished felling stage awarded again"
+	# A saw (big steps) and an axe (small steps) earn the same total.
+	var axe := MeritLedger.new()
+	for k in 50:
+		axe.on_fell(1, (k + 1) / 50.0, "A")
+	var saw := MeritLedger.new()
+	for k in 4:
+		saw.on_fell(1, (k + 1) / 4.0, "A")
+	if not _close(axe.total("A"), 300.0) or not _close(saw.total("A"), 300.0):
+		return "axe %.2f vs saw %.2f merit for one tree (both must be 300)" % [axe.total("A"), saw.total("A")]
+	# --- sectioning shares, stump -----------------------------------------
+	m.on_section(7, "0", 0.6, 1.0, "A")
+	m.on_section(7, "crown", 0.4, 0.5, "B")
+	m.on_section(7, "crown", 0.4, 1.0, "C")
+	m.on_section(7, "crown", 0.4, 1.0, "C")
+	m.on_stump(7, 1.0, "C")
+	if not _close(m.total("A"), 300.0) or not _close(m.total("B"), 160.0) or not _close(m.total("C"), 140.0):
+		return "section/stump split A %.1f B %.1f C %.1f" % [m.total("A"), m.total("B"), m.total("C")]
+	# --- transport: only new closest approaches; circles earn nothing ----
+	var sid := "T7_S0"
+	var mte := 400
+	var tb := 300.0 * mte / 1000.0
+	m.sample_transport(sid, mte, 100.0, {"A": 1.0}, "hand")      # baseline
+	m.sample_transport(sid, mte, 50.0, {"A": 1.0}, "hand")
+	var a_tr := float(m.by_stage.A.get("transport", 0.0))
+	if not _close(a_tr, tb * 0.85 * 0.5):
+		return "half-way transport %.2f (want %.2f)" % [a_tr, tb * 0.85 * 0.5]
+	for k in 30:     # walk away and back, over and over
+		m.sample_transport(sid, mte, 80.0, {"A": 1.0}, "hand")
+		m.sample_transport(sid, mte, 50.0, {"A": 1.0}, "hand")
+	if not _close(float(m.by_stage.A.transport), a_tr):
+		return "circling earned transport merit (%.2f -> %.2f)" % [a_tr, float(m.by_stage.A.transport)]
+	m.sample_transport(sid, mte, 25.0, {"A": 0.5, "B": 0.5}, "team")
+	m.on_loaded(sid, mte, "B")
+	m.on_loaded(sid, mte, "A")
+	var tr_sum := float(m.by_stage.A.transport) + float(m.by_stage.get("B", {}).get("transport", 0.0))
+	m.on_accepted(sid, mte, "C", "hand")
+	m.on_accepted(sid, mte, "C", "hand")
+	var tr_total := 0.0
+	for a in ["A", "B", "C"]:
+		tr_total += float((m.by_stage.get(a, {}) as Dictionary).get("transport", 0.0))
+	if not _close(tr_total, tb):
+		return "transport for one share totals %.2f (want exactly %.2f)" % [tr_total, tb]
+	if float(m.by_stage.C.transport) > tb * 0.5:
+		return "the deliverer took most of the transport credit (%.1f of %.1f)" % [float(m.by_stage.C.transport), tb]
+	if m.skill_points("B", "teamwork") <= 0.0 or m.skill_points("A", "teamwork") <= 0.0:
+		return "team carry gave no teamwork skill"
+	if tr_sum <= 0.0:
+		return "no transport credit before delivery"
+	# --- receiving: rack once, feed the rest, never twice ----------------
+	m.on_receive(sid, mte, "D", "racked")
+	m.on_receive(sid, mte, "D", "racked")
+	m.on_receive(sid, mte, "E", "fed")
+	m.on_receive(sid, mte, "E", "fed")
+	if not _close(m.total("D"), 20.0) or not _close(m.total("E"), 20.0):
+		return "receive split D %.1f E %.1f (want 20/20)" % [m.total("D"), m.total("E")]
+	# --- a whole tree never exceeds 1,000 ---------------------------------
+	var full := MeritLedger.new()
+	full.on_fell(3, 1.0, "A")
+	full.on_section(3, "0", 0.5, 1.0, "A")
+	full.on_section(3, "crown", 0.5, 1.0, "B")
+	full.on_stump(3, 1.0, "B")
+	for k in 3:
+		var s3 := "T3_S%d" % k
+		var mm: int = [333, 333, 334][k]
+		full.sample_transport(s3, mm, 90.0, {"A": 1.0}, "hand")
+		full.sample_transport(s3, mm, 10.0, {"A": 1.0}, "hand")
+		full.on_accepted(s3, mm, "A", "hand")
+		full.on_receive(s3, mm, "B", "racked")
+		full.on_receive(s3, mm, "B", "fed")
+	if not _close(full.tree_total(3), 1000.0, 0.05):
+		return "a fully processed tree committed %.2f merit (want 1000)" % full.tree_total(3)
+	# --- the boss is recorded separately, never employee merit -----------
+	var bm := MeritLedger.new()
+	bm.on_fell(9, 1.0, MeritLedger.BOSS)
+	if not _close(bm.total(MeritLedger.BOSS), 300.0) or bm.skills.has(MeritLedger.BOSS):
+		return "boss merit not separated"
+	# --- save/restore keeps commitments (no fresh budget after reload) ---
+	var cp := MeritLedger.new()
+	cp.restore(JSON.parse_string(JSON.stringify(m.capture())))
+	if cp.on_fell(7, 1.0, "Z") != 0.0 or cp.on_accepted(sid, mte, "Z", "hand") != 0.0 or not _close(cp.total("A"), m.total("A")):
+		return "restored ledger re-opened committed budgets"
+	# --- levels and skills -------------------------------------------------
+	if CrewProgression.career_threshold(1) != 0 or CrewProgression.career_threshold(2) != int(CrewProgression.CAREER_SCALE):
+		return "career thresholds start wrong"
+	for l in range(2, 21):
+		if CrewProgression.career_threshold(l) <= CrewProgression.career_threshold(l - 1):
+			return "career thresholds not increasing at %d" % l
+		if CrewProgression.level_for(CrewProgression.career_threshold(l)) != l:
+			return "level_for(threshold(%d)) wrong" % l
+	if CrewProgression.level_for(1e12) != 20:
+		return "career level not capped at 20"
+	var pg := CrewProgression.new(MeritLedger.new())
+	pg.ensure_profile("EMP-X", ["hard_working"])
+	pg.merit.skills["EMP-X"] = {"cutting": 1e9, "handling": 1e9, "driving": 1e9, "teamwork": 1e9}
+	if pg.cut_factor("EMP-X") > ToolEffects.MAX_SKILL or not _close(pg.cut_factor("EMP-X"), 1.20) or pg.handling_time("EMP-X") < 1.0 / ToolEffects.MAX_SKILL:
+		return "skill effects not capped (cut %.2f, handling %.2f)" % [pg.cut_factor("EMP-X"), pg.handling_time("EMP-X")]
+	# --- one multiplier calculation, each factor once ---------------------
+	var b := ToolEffects.breakdown({"tool": "axe", "tier": "medium", "hard_working": true, "skill": 1.1, "helmet": "t2", "gloves": "t3", "fatigue": 0.9, "rest_walk": 0.9, "boots": "t1"})
+	var want_wpc := 1.4 * 1.25 * 1.1 * (1.0 + float(GearCatalog.HELMET_WORK.get("t2", 0.0))) * 0.9
+	var want_cyc := ToolEffects.AXE_CYCLE / (1.0 + float(GearCatalog.GLOVES_CADENCE.get("t3", 0.0)))
+	if not _close(float(b.work_per_contact), want_wpc, 0.0005) or not _close(float(b.cycle_s), want_cyc, 0.0005):
+		return "axe breakdown %.4f/%.4f vs %.4f/%.4f (fatigue must hit work per contact only)" % [float(b.work_per_contact), float(b.cycle_s), want_wpc, want_cyc]
+	if not _close(float(b.walk_mult), (1.0 + float(GearCatalog.BOOTS_WALK.get("t1", 0.0))) * 0.9, 0.0005):
+		return "walking = boots x rest expected"
+	if float(ToolEffects.breakdown({"tool": "axe", "skill": 9.0}).work_per_contact) > ToolEffects.MAX_SKILL + 0.0001:
+		return "ToolEffects did not clamp the skill factor"
+	var sb := ToolEffects.breakdown({"tool": "chainsaw", "helmet": "t3"})
+	var sb0 := ToolEffects.breakdown({"tool": "chainsaw"})
+	if not _close(float(sb.saw_rate), float(sb0.saw_rate), 0.0001):
+		return "a helmet changed the chainsaw rate"
+	# --- profiles: once, stable, distinct ---------------------------------
+	var p1 := pg.ensure_profile("EMP-A", ["timid"]).duplicate()
+	var p2 := pg.ensure_profile("EMP-A", ["stronger"])
+	var pg2 := CrewProgression.new(MeritLedger.new())
+	if p1 != p2 or pg2.ensure_profile("EMP-A", ["timid"]) != p1:
+		return "profile rerolled"
+	var pr2 := CrewProgression.new(MeritLedger.new())
+	pr2.restore(JSON.parse_string(JSON.stringify(pg.capture())))
+	if JSON.stringify(pr2.profiles.get("EMP-A"), "", true) != JSON.stringify(p1, "", true):
+		return "profile changed through save/restore"
+	# --- break time: only a "pause" if work was waiting -------------------
+	pg.add_time("EMP-A", "pause", 3.0)
+	pg.settle_pause("EMP-A", false, "yard_full")
+	pg.add_time("EMP-A", "pause", 2.0)
+	pg.settle_pause("EMP-A", true)
+	var dt := pg.day_time("EMP-A", pg.merit.day)
+	if not _close(float(dt.get("yard_full", 0.0)), 3.0) or not _close(float(dt.get("pause", 0.0)), 2.0):
+		return "break-time classification %s" % str(dt)
+	# --- praise: one specific contribution, once --------------------------
+	var mind := WorkerMind.with_traits(["timid"])
+	var t0 := mind.trust
+	pg.merit.on_fell(11, 1.0, "EMP-A")
+	var ops := pg.opportunities("EMP-A")
+	if ops.is_empty():
+		return "no recognition opportunity after real work"
+	var key := str(ops[0].key)
+	var r1 := pg.praise("EMP-A", key, mind)
+	var r2 := pg.praise("EMP-A", key, mind)
+	if not bool(r1.ok) or bool(r2.ok) or not _close(mind.trust - t0, CrewProgression.PRAISE_TRUST, 0.0001):
+		return "praise not once-only (%s / %s, trust +%.3f)" % [str(r1), str(r2), mind.trust - t0]
+	if pg.merit.total("EMP-A") != 300.0:
+		return "praise changed merit"
+	return _p16_rest_units()
+
+
+func _p16_rest_units() -> String:
+	var r := RestService.new()
+	# A normal workday, early sleep: fully restored.
+	r.step(1200.0, false, 0.5)
+	var bed := r.rest
+	if bed < 55.0 or bed > 72.0:
+		return "a normal 20-minute workday cost %.1f rest (want ~30-40)" % (100.0 - bed)
+	var f := r.forecast()
+	r.on_sleep(1)
+	if not _close(r.rest, 100.0, 0.01) or not _close(float(f.morning), 100.0, 0.01):
+		return "early sleep did not fully restore (%.1f)" % r.rest
+	if not r.on_sleep(1).is_empty() or not _close(r.rest, 100.0):
+		return "a second sleep for the same night applied again"
+	# Very late (8+ min after nightfall): quality floor, capped morning.
+	r.step(1200.0, false, 0.5)
+	r.step(9.0 * 60.0, true, 0.0)
+	var q := RestService.quality(r.late_s / 60.0)
+	var late := r.on_sleep(2)
+	if not _close(q, RestService.Q_FLOOR) or float(late.morning) > 70.0 + 0.01 or float(late.morning) > 45.0:
+		return "very late night: Q %.2f morning %.1f" % [q, float(late.morning)]
+	# Repeated late nights compound, then early nights recover in <= 2.
+	var low := r.rest
+	r.step(1200.0, false, 0.5)
+	r.step(9.0 * 60.0, true, 0.0)
+	r.on_sleep(3)
+	if r.rest > low:
+		return "a second late night did not compound (%.1f -> %.1f)" % [low, r.rest]
+	var nights := 0
+	while r.rest < 99.0 and nights < 4:
+		r.step(1200.0, false, 0.5)
+		r.on_sleep(4 + nights)
+		nights += 1
+	if nights > 2 or r.rest < 99.0:
+		return "early nights took %d nights to recover (rest %.1f)" % [nights, r.rest]
+	# Worst penalties: exactly 15 % walking, 20 % cutting, never below.
+	r.rest = 0.0
+	if not _close(r.walk_factor(), 0.85, 0.0001) or not _close(r.cut_factor(), 0.80, 0.0001):
+		return "worst penalties walk %.3f cut %.3f" % [r.walk_factor(), r.cut_factor()]
+	r.step(3600.0, true, 1.0)
+	if r.rest < 0.0:
+		return "rest went below zero"
+	if r.fear_weight() < 1.0 or r.fear_weight() > 1.0 + RestService.FEAR_WEIGHT + 0.0001:
+		return "fear weight out of bounds"
+	r.rest = 100.0
+	if r.walk_factor() != 1.0 or r.cut_factor() != 1.0:
+		return "well rested still penalised"
+	# Interruption hook: bounded, applied once with the night.
+	var ri := RestService.new()
+	ri.step(1200.0, false, 0.5)
+	ri.interrupt(1, 40.0)
+	ri.interrupt(1, 40.0)
+	var ni := ri.on_sleep(1)
+	if float(ni.morning) < 100.0 - RestService.INTERRUPT_MAX - 0.01:
+		return "an interrupted night cost more than the cap"
+	# Five continuous hunt cycles with real rest opportunities.
+	var h := RestService.new()
+	h.rest = 60.0
+	var lowest := 100.0
+	for c in 5:
+		h.step(600.0, false, 0.6, true, false)      # moving about by day
+		h.step(300.0, false, 0.0, true, true)       # sitting still / hidden
+		h.step(300.0, false, 0.3, true, false)      # dusk
+		h.step(150.0, true, 0.0, true, false)       # night, moving
+		h.step(150.0, true, 0.0, true, true)        # night, hidden
+		lowest = minf(lowest, h.rest)
+		if h.rest > RestService.HUNT_CEILING + 0.001 and h.resting:
+			return "hunt rest exceeded its ceiling"
+	if lowest <= 0.0 or h.late_s != 0.0:
+		return "five hunt cycles: lowest rest %.1f, late %.1f (hunt nights must not count as a bedtime)" % [lowest, h.late_s]
+	if RestService.new().forecast().get("morning", 0.0) != 100.0:
+		return "fresh service forecast wrong"
+	r.free()
+	ri.free()
+	h.free()
+	return ""
+
+
+func _t_phase16_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or Game.campaign == null or Game.rest == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 20:
+		await get_tree().physics_frame
+	var err := await _p16_checks(world)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p16_checks(world: IslandWorld) -> String:
+	var crew: CrewService = Game.crew
+	Game.campaign.start_test_route(true, true)
+	var g2 := 0
+	while crew.workers.size() < 2 and g2 < 600:
+		await get_tree().physics_frame
+		g2 += 1
+	if crew.workers.is_empty():
+		return "no workers in the test route crew"
+	var w: Worker = crew.workers.values()[0]
+	var ml := crew.merit
+	# Felling: a worker's accepted progress and the boss's are kept apart.
+	var o := World.camp_origin()
+	var best := -1
+	var bd := INF
+	for i in World.tree_count():
+		var d := Vector2(World.trees.x[i] - o.x, World.trees.z[i] - o.z).length()
+		if d > 50.0 and d < bd and Game.trees.state_of(int(World.trees.id[i])) == TreeService.State.STANDING:
+			bd = d
+			best = i
+	var tid: int = World.trees.id[best]
+	var req := float(Game.trees.record(tid).required)
+	var stand := PlacementValidator.cut_stands(best)[0]
+	var w0 := ml.total(w.id)
+	var b0 := ml.total(MeritLedger.BOSS)
+	Game.trees.apply_contact(tid, stand, req * 0.6, w.id)
+	Game.trees.apply_contact(tid, stand, req, MeritLedger.BOSS)
+	Game.trees.apply_contact(tid, stand, req, w.id)
+	if not _close(ml.total(w.id) - w0, 180.0, 0.5) or not _close(ml.total(MeritLedger.BOSS) - b0, 120.0, 0.5):
+		return "felling merit worker +%.1f boss +%.1f (want 180/120)" % [ml.total(w.id) - w0, ml.total(MeritLedger.BOSS) - b0]
+	# The worker's cutting skill reaches the real tool effects (and nothing
+	# else): kit carries the capped skill factor.
+	var k := crew.kit(w)
+	if not _close(float(k.skill), crew.progression.cut_factor(w.id), 0.0001):
+		return "worker kit skill %.3f vs progression %.3f" % [float(k.skill), crew.progression.cut_factor(w.id)]
+	# Review is read-only.
+	var day := Game.campaign.clock.day
+	var r1 := crew.review(w.id, day)
+	var r2 := crew.review(w.id, day)
+	if str(r1) != str(r2) or not _close(ml.total(w.id) - w0, 180.0, 0.5):
+		return "opening the review changed something"
+	# Acceptance remainder once (receipt-driven).
+	var sid := "T%d_S0" % tid
+	var before := ml.total(w.id)
+	crew._merit_on_accepted({"sid": sid, "source": "rack:" + w.id, "mte": 300})
+	var got := ml.total(w.id) - before
+	crew._merit_on_accepted({"sid": sid, "source": "rack:" + w.id, "mte": 300})
+	if not _close(got, 90.0, 0.5) or not _close(ml.total(w.id) - before, got, 0.001):
+		return "acceptance transport merit %.1f (want 90 once)" % got
+	# Save/restore: profile, merit and levels survive exactly.
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(crew.capture()))
+	var prof := (crew.progression.profiles[w.id] as Dictionary).duplicate()
+	var tot := ml.total(w.id)
+	crew.merit.restore(snap.merit)
+	crew.progression.restore(snap.progression)
+	if JSON.stringify(crew.progression.profiles.get(w.id), "", true) != JSON.stringify(prof, "", true) or not _close(crew.merit.total(w.id), tot, 0.001):
+		return "merit/profile changed across capture/restore (%s vs %s; %.3f vs %.3f)" % [str(crew.progression.profiles.get(w.id)), str(prof), crew.merit.total(w.id), tot]
+	if crew.merit.on_fell(tid, 1.0, "EMP-99") != 0.0:
+		return "restored ledger re-awarded a felled tree"
+	# Idle causes are logistics, not misconduct.
+	var act := w.activity
+	w.activity = "idle"
+	w.idle_reason = "yard_full"
+	var cat := crew.time_category(w)
+	w.idle_reason = ""
+	w.activity = act
+	if cat != "yard_full":
+		return "idle in a full yard classified as %s" % cat
+	# Rest debuffs reach the player's real tool and walk effects once.
+	var ax: AxeController = world.player.axe
+	var base := ax.effects().duplicate(true)
+	Game.rest.rest = 0.0
+	Game.rest._after_change()
+	var tired := ax.effects()
+	if not _close(float(tired.work_per_contact), float(base.work_per_contact) * 0.8, 0.0005) or not _close(float(tired.cycle_s), float(base.cycle_s), 0.0001) or not _close(float(tired.walk_mult), float(base.walk_mult) * 0.85, 0.0005):
+		return "rest 0: wpc %.3f/%.3f cycle %.3f/%.3f walk %.3f/%.3f" % [float(tired.work_per_contact), float(base.work_per_contact), float(tired.cycle_s), float(base.cycle_s), float(tired.walk_mult), float(base.walk_mult)]
+	# The camper is still safe at zero rest.
+	var camper := CampLayout.world(CampLayout.CAMPER_POS + Vector3(0, CampLayout.CAMPER_FLOOR + 1.0, -3.0))
+	if not world.safety.query(camper).safe:
+		return "the camper stopped being safe at zero rest"
+	Game.rest.rest = 100.0
+	Game.rest._after_change()
+	if not _close(float(ax.effects().work_per_contact), float(base.work_per_contact), 0.0001):
+		return "stale tool effects after resting"
+	# A true pause stops drain.
+	var rbefore := Game.rest.rest
+	get_tree().paused = true
+	for i in 10:
+		await get_tree().process_frame
+	get_tree().paused = false
+	if Game.rest.rest != rbefore:
+		return "rest drained during a true pause"
+	# Saves: phase16 block, v10 -> v11 migration.
+	var st := SaveService.capture_state(world)
+	if not (st.get("phase16", {}) as Dictionary).has("rest"):
+		return "save lacks phase16.rest"
+	var mig := SaveService.migrate({"schema": 10, "phase8": {}, "phase6": {}, "phase5": {}})
+	if int(mig.get("schema", 0)) != 11 or not mig.has("phase16"):
+		return "v10 -> v11 migration missing"
 	return ""

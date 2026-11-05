@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 10
+const SCHEMA_VERSION := 11
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -174,6 +174,10 @@ static func capture_state(world: Node) -> Dictionary:
 		# Phase 8: weather is a pure function of seed + day + clock; only the
 		# seed and the smoothed cosmetic wetness are stored (no reroll on load).
 		"phase8": {"weather": (world.get("weather") as Node).call("capture") if world.get("weather") else {}},
+		# Phase 16: the boss's restedness (rest, late-awake time, the last
+		# settled night, recent nights). Crew merit/progression lives in the
+		# crew block of the campaign (same atomic snapshot).
+		"phase16": {"rest": Game.rest.capture() if Game.rest else {}},
 		"time_of_day": env.get("hour") if env else 12.0,
 		# Modified original trees only, keyed by stable ID (state, notch work,
 		# cut side, fall intent, felled guard, trunk pose/velocity).
@@ -352,6 +356,15 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# granted); no supplier orders; tools keep their per-contact work
 		# (identical work per second - tree progress is never rescaled).
 		data["schema"] = 10
+		v = 10
+	if v == 10:
+		# Phase 10-15 saves: no restedness or merit yet. Rest starts at 100
+		# (never a surprise wake at exhaustion); employees start at career
+		# level 1 with no merit (earlier work had no reliable per-actor
+		# attribution, so none is assigned retroactively); profiles are made
+		# once, deterministically from each employee id.
+		data["phase16"] = {}
+		data["schema"] = 11
 	return data
 
 
@@ -397,6 +410,8 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 	var p5: Dictionary = data.get("phase5", {})
 	var p6: Dictionary = data.get("phase6", {})
 	var p8: Dictionary = data.get("phase8", {})
+	if Game.rest:
+		Game.rest.restore((data.get("phase16", {}) as Dictionary).get("rest", {}))
 	var hunt_n: Object = world.get("hunt")
 	if hunt_n and str((p6.get("hunt", {}) as Dictionary).get("mode", "none")) != "none":
 		hunt_n.set("pending_restore", true)

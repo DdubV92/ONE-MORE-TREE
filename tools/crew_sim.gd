@@ -79,6 +79,23 @@ func _ready() -> void:
 	res["coord"] = crew.coord.stats
 	if Game.yard:
 		res["yard_stock_te"] = Game.yard.stock_mte() / 1000.0
+	# Phase 16: merit per worker, levels, time split and conservation.
+	var mer := {}
+	for w in crew.workers.values():
+		var wk2 := w as Worker
+		var tm := crew.progression.day_time(wk2.id, cs.clock.day)
+		var tm_i := {}
+		for k in tm:
+			tm_i[k] = int(tm[k])
+		mer[wk2.id] = {"merit": int(crew.merit.total(wk2.id)), "level": crew.progression.career(wk2.id), "stages": crew.merit.by_stage.get(wk2.id, {}), "skills": crew.merit.skills.get(wk2.id, {}), "time": tm_i}
+	res["merit"] = mer
+	var over := 0
+	for tid in crew.merit.per_tree:
+		if float(crew.merit.per_tree[tid]) > MeritLedger.TREE_MAX + 0.01:
+			over += 1
+	res["merit_trees"] = crew.merit.per_tree.size()
+	res["merit_trees_over_cap"] = over
+	res["merit_rejected_repeats"] = crew.merit.rejected
 	print("CREW_SIM ", JSON.stringify(res))
 	get_tree().quit()
 

@@ -149,7 +149,7 @@ func _scroll_text(v: VBoxContainer, text: String, h := 420) -> void:
 
 func _show_help() -> void:
 	var v := _open_page("Help & Controls")
-	_scroll_text(v, "CONTROLS\n" + HelpText.controls() + "\n\nTHE CONTRACT\n" + HelpText.contract() + "\n\nNIGHTS\n" + HelpText.night() + "\n\nWHAT PAUSES\n" + HelpText.time_rules())
+	_scroll_text(v, "CONTROLS\n" + HelpText.controls() + "\n\nTHE CONTRACT\n" + HelpText.contract() + "\n\nNIGHTS\n" + HelpText.night() + "\n\nWHAT PAUSES\n" + HelpText.time_rules() + "\n\nCREW GROWTH & YOUR REST\n" + HelpText.growth_and_rest())
 	_back_button(v)
 
 

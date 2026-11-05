@@ -17,7 +17,12 @@ func get_interact_text() -> String:
 		return blocked_reason
 	var ok := c.can_sleep()
 	if bool(ok.ok):
-		return "Sleep: end day %d%s" % [c.clock.day, "  (the contract closes)" if c.clock.is_final_day() and not c.legacy else ""]
+		var fc := ""
+		if Game.rest and not (c.clock.is_final_day() and not c.legacy):
+			# Phase 16 bedtime preview (applies nothing).
+			var f := Game.rest.forecast()
+			fc = "  ·  rest %d now -> about %d tomorrow (%s)" % [int(round(Game.rest.rest)), int(round(float(f.morning))), str(f.band)]
+		return "Sleep: end day %d%s%s" % [c.clock.day, "  (the contract closes)" if c.clock.is_final_day() and not c.legacy else "", fc]
 	return str(ok.reason)
 
 

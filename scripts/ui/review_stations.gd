@@ -80,6 +80,12 @@ const STATIONS15 := [
 	["11 Quiet night event", "p15_night"], ["12 Worst overlap", "p15_worst"],
 	["Active voices (dev)", "p15_debug"],
 ]
+const STATIONS16 := [
+	["1 Crew progress (roster)", "p16_roster"], ["2 Shared tree, split merit", "p16_shared"],
+	["3 Merit & level numbers", "p16_numbers"], ["4 Daily review (read-only)", "p16_review"],
+	["5 Rest: early night", "p16_rest_early"], ["6 Rest: very late night", "p16_rest_late"],
+	["7 Rest: exhausted day", "p16_rest_low"], ["8 Hunt rest (how it works)", "p16_hunt_rest"],
+]
 static var _clear_i := 0
 static var _density_i := 0
 static var _overlay12: CoverOverlay
@@ -323,6 +329,50 @@ static func go(hud: Node, which: String) -> String:
 			return "\n".join(out)
 		"p15_debug":
 			return Audition.debug_list()
+		"p16_roster", "p16_shared", "p16_review":
+			var cs16: CampaignService = Game.campaign
+			if Game.crew == null or Game.crew.workers.is_empty():
+				cs16.start_test_route(true, true)
+				return "Crew starting (they arrive on the boat). Pick this stop again in a moment."
+			if which == "p16_shared":
+				return shared_tree_fixture(w)
+			if which == "p16_review":
+				var out16 := PackedStringArray()
+				for e in cs16.payroll.employees:
+					if str(e.status) == Payroll.ACTIVE:
+						var rv := Game.crew.review(str(e.id), cs16.clock.day)
+						out16.append("%s L%d (%d merit, +%d today) · %s · %s, %s%s" % [rv.name, int(rv.level), int(round(float(rv.merit))), int(round(float(rv.merit_today))), str(rv.time_split), rv.ethic, rv.reliability, ("\n   " + str(rv.tip)) if str(rv.tip) != "" else ""])
+				return "Today's crew review (opening it again changes nothing):\n" + "\n".join(out16)
+			if Game.campaign_ui:
+				Game.campaign_ui.toggle_journal(0)
+			return "Journal -> Crew: level, merit to the next level, each skill's real effect, today's time split with causes, and 'Thank them' buttons for specific work."
+		"p16_numbers":
+			var lv := PackedStringArray()
+			for l in [2, 3, 5, 8, 10, 12, 15, 20]:
+				lv.append("L%d %d" % [l, CrewProgression.career_threshold(l)])
+			var sk := PackedStringArray()
+			for l in [1, 3, 5, 7, 10]:
+				sk.append("%d: %d" % [l, CrewProgression.skill_threshold(l)])
+			return "Merit per original tree (max 1,000): felling 300, sectioning 200, stump 100, transport 300 (new closest approach to camp; 15%% for loading a truck/cart; the rest to the deliverer), receiving 100 (deck, then fire pile). Shared work splits by participation; the boss's share never becomes employee merit; repeats, circles and shuffles earn 0.\nCareer (cumulative merit): %s.\nSkill points: %s.\nSkill effects (combined cap x%.2f): cutting +2%%/level, handling -3%%/level lift time, driving +1.5%%/level smoother corners, teamwork -4%%/level lift sync. Career level multiplies nothing. Merit never pays money or changes wages." % [", ".join(lv), ", ".join(sk), ToolEffects.MAX_SKILL]
+		"p16_rest_early", "p16_rest_late", "p16_rest_low":
+			var rs: RestService = Game.rest
+			if rs == null:
+				return ""
+			match which:
+				"p16_rest_early":
+					rs.rest = 64.0
+					rs.late_s = 0.0
+				"p16_rest_late":
+					rs.rest = 38.0
+					rs.late_s = 6.0 * 60.0
+				"p16_rest_low":
+					rs.rest = 0.0
+					rs.late_s = 0.0
+			rs._after_change()
+			var fx16 := p.axe.effects()
+			return "%s\nNow: walking x%.2f, cutting work per hit x%.2f (axe cadence unchanged). The camper is still safe at any rest." % [rs.describe_forecast(), float(fx16.factors.rest_walk), float(fx16.factors.fatigue)]
+		"p16_hunt_rest":
+			return "Survival days 31-35 run continuously: no bed-to-morning. Sit still on the couch or stay hidden in a real hiding place to recover about %d rest a minute up to %d - time keeps running, the Foreman keeps searching, and you can get up and run at once. Browsing the computer, chopping or driving is not rest." % [int(RestService.HUNT_REST), int(RestService.HUNT_CEILING)]
 		"p15_distance", "p15_orbit", "p15_door", "p15_in_out", "p15_work", "p15_saw", "p15_truck_dog", "p15_ambience", "p15_relay", "p15_replay", "p15_night", "p15_worst":
 			if which in ["p15_distance", "p15_orbit", "p15_work", "p15_saw", "p15_truck_dog", "p15_worst"]:
 				w.teleport_to("camp")
@@ -582,3 +632,33 @@ static func busy_camp_fixture() -> void:
 			var cid := "P8-%d-%d" % [i, crew._cand_counter]
 			crew.candidates.append({"cid": cid, "name": ["Ines Vance", "Kofi Brandt", "Wren Salo"][i], "traits": sets[i], "look_seed": 9100 + i * 131, "fee": crew.econ.hire_fee_cents, "wage": crew.econ.wage_cents})
 			crew.hire(cid))
+
+
+## Phase 16: two workers each do real felling work on one nearby tree
+## (through TreeService, the authoritative path) - merit splits 60/40.
+static func shared_tree_fixture(w: IslandWorld) -> String:
+	var crew: CrewService = Game.crew
+	if crew.workers.size() < 2:
+		return "Needs two workers on site."
+	var ws: Array = crew.workers.values()
+	var a: Worker = ws[0]
+	var b: Worker = ws[1]
+	var o := World.camp_origin()
+	var best := -1
+	var bd := INF
+	for i in World.tree_count():
+		var d := Vector2(World.trees.x[i] - o.x, World.trees.z[i] - o.z).length()
+		if d > 50.0 and d < bd and Game.trees.state_of(int(World.trees.id[i])) == TreeService.State.STANDING:
+			bd = d
+			best = i
+	if best < 0:
+		return "No standing tree found."
+	var tid: int = World.trees.id[best]
+	var req := float(Game.trees.record(tid).required)
+	var st := PlacementValidator.cut_stands(best)[0]
+	var ma := crew.merit.total(a.id)
+	var mb := crew.merit.total(b.id)
+	Game.trees.apply_contact(tid, st, req * 0.6, a.id)
+	Game.trees.apply_contact(tid, st, req * 0.4, b.id)
+	Game.trees.apply_contact(tid, st, req, a.id)
+	return "%s cut 60%% of the notch and %s 40%%: felling merit %+.0f / %+.0f (300 per tree, split by accepted work). A third contact on the felled tree earned 0. The tree stood %.0f m from camp." % [a.emp.name, b.emp.name, crew.merit.total(a.id) - ma, crew.merit.total(b.id) - mb, bd]

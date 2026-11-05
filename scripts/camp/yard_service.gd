@@ -387,6 +387,11 @@ func return_to_origin(sid: String) -> void:
 func _contribute(carrier: String, stage: String, sid: String) -> void:
 	if Game.crew and Game.crew.get("contributions") and carrier != "player":
 		Game.crew.contributions.stage(carrier, stage, sid)
+	# Phase 16 merit: the receiving budget of this share, once per stage
+	# (moving it between decks again finds the budget already committed).
+	var ml := MeritLedger.active()
+	if ml and Game.timber:
+		ml.on_receive(sid, int(Game.timber.segment(sid).get("mte", 0)), MeritLedger.BOSS if carrier == "player" else carrier, stage)
 
 
 func _day_stat(k: String, n: int) -> void:

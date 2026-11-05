@@ -52,6 +52,10 @@ var _pending: Array[Callable] = []
 
 ## Phase 14 coordination (felling lanes, claim reaper, team carry).
 var coord: CrewCoordinator
+## Phase 16: conserved merit ledger + persistent profiles/levels/skills.
+var merit := MeritLedger.new()
+var progression := CrewProgression.new(merit)
+var _tr_t := 0.0
 
 
 func setup(c: CampaignService) -> void:
@@ -73,6 +77,8 @@ func setup(c: CampaignService) -> void:
 	c.clock.night_started.connect(_on_night)
 	if timber:
 		timber.body_settled_hook = _on_log_settled
+		timber.delivery_accepted.connect(_merit_on_accepted)
+	progression.advanced.connect(_on_advanced)
 
 
 ## Builds navigation once the camp's collision exists (deferred by the world).
@@ -171,6 +177,7 @@ func _activate(e: Dictionary, why: String) -> void:
 		e["bed"] = free_bed()
 	if not minds.has(str(e.id)):
 		minds[str(e.id)] = WorkerMind.with_traits(e.traits)
+	progression.ensure_profile(str(e.id), e.traits)
 	_ensure_axe(str(e.id))
 	_spawn_at_porch(e)
 
@@ -506,6 +513,9 @@ func _physics_process(delta: float) -> void:
 	for id in workers:
 		var w: Worker = workers[id]
 		_check_fear_transitions(w)
+	merit.day = c.day
+	_sample_transport(delta)
+	_tick_time_ledger(delta)
 
 
 var _last_fear_state := {}
@@ -567,7 +577,21 @@ func _share_stories() -> void:
 # ------------------------------------------------------------ job choices
 
 ## Central decision for an idle worker (also the late-day safety gate).
+## Phase 16 wrapper: after each decision the worker's pending break is
+## settled - a break if work was waiting, otherwise the REAL cause (yard
+## full, missing tool, blocked route, fear, nothing to do).
 func decide(w: Worker) -> void:
+	_decide_inner(w)
+	if w.activity != "idle":
+		w.idle_reason = ""
+		progression.settle_pause(w.id, true)
+	else:
+		var cause := idle_cause(w)
+		progression.settle_pause(w.id, false, cause)
+		w.idle_reason = cause
+
+
+func _decide_inner(w: Worker) -> void:
 	var e := w.emp
 	var c := campaign.clock
 	if w.seated:
@@ -777,6 +801,9 @@ func apply_pending_equip(w: Worker) -> void:
 func kit(w: Worker) -> Dictionary:
 	var k: Dictionary = campaign.equipment.kit_of(w.id) if campaign and campaign.equipment else {"tool": "axe", "tier": "small"}
 	k["hard_working"] = w.mind != null and w.mind.has("hard_working")
+	# Phase 16: the ONE capped skill factor (cutting skill; career level
+	# multiplies nothing). Recomputed when a skill level changes.
+	k["skill"] = progression.cut_factor(w.id)
 	return k
 
 
@@ -1268,6 +1295,10 @@ func on_home(w: Worker) -> void:
 
 
 func _on_night(_d: int) -> void:
+	for e in payroll.employees:
+		if str(e.status) == Payroll.ACTIVE and payroll.owed_for(str(e.id)) > 0:
+			progression.add_context("owed_wages", str(e.id), "$%s" % Money.format_cents(payroll.owed_for(str(e.id))), [str(e.id)])
+	_note_waiting_frustration()
 	for w in workers.values():
 		var wk := w as Worker
 		if wk.activity == "sit":
@@ -1429,6 +1460,8 @@ func emit_stimulus(stim: Dictionary) -> Array:
 		var mem := wk.mind.perceive(stim, now(), info)
 		if not mem.is_empty():
 			who.append(wk.id)
+			# Phase 17 context: only this worker knows what they perceived.
+			progression.add_context("strange_" + str(stim.get("modality", "sound")), wk.id, str(stim.get("kind", "")), [wk.id])
 			if wk.mind.severe_while_warning(float(stim.get("severity", 0.0))):
 				start_departure(wk.id, wk.mind.quit_reason)
 	return who
@@ -1452,7 +1485,7 @@ func capture() -> Dictionary:
 	var ms := {}
 	for id in minds:
 		ms[id] = (minds[id] as WorkerMind).capture()
-	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture()}
+	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture()}
 
 
 ## Restores the crew without duplicating anyone: one Worker per active or
@@ -1471,6 +1504,11 @@ func restore(d: Dictionary) -> void:
 	_cand_counter = int(d.get("cand_counter", 0))
 	_emp_counter = int(d.get("emp_counter", 2))
 	contributions.restore(d.get("contributions", {}))
+	# Phase 16: saved merit/progression restore exactly; a save without them
+	# starts every employee at level 1 with no merit (older work had no
+	# reliable per-actor attribution, so none is assigned retroactively).
+	merit.restore(d.get("merit", {}))
+	progression.restore(d.get("progression", {}))
 	stats = (d.get("stats", {}) as Dictionary).duplicate(true)
 	enabled = true
 	var saved: Dictionary = d.get("workers", {})
@@ -1480,6 +1518,7 @@ func restore(d: Dictionary) -> void:
 			continue
 		if not minds.has(eid):
 			minds[eid] = WorkerMind.with_traits(e.get("traits", []))
+		progression.ensure_profile(eid, e.get("traits", []))
 		var s: Dictionary = saved.get(eid, {})
 		var at := World.camp_origin()
 		if s.has("pos"):
@@ -1500,3 +1539,252 @@ func restore(d: Dictionary) -> void:
 	skiff_state = "away" if str(sk.get("state", "away")) != "docked" else "away"
 	refresh_candidates()
 	roster_changed.emit()
+
+
+# ------------------------------------------------- Phase 16 merit / time
+
+func _on_advanced(eid: String, what: String, _level: int) -> void:
+	_fx.erase(eid)          # no stale cached multipliers after a level-up
+	var w: Worker = workers.get(eid)
+	if w and what == "career":
+		progression.add_context("colleague_progress", eid, "career level %d" % _level, knowers_near(w))
+
+
+func _actor_of(holder: Node) -> String:
+	if holder == null:
+		return ""
+	if holder == Game.player:
+		return MeritLedger.BOSS
+	if holder is Worker:
+		return (holder as Worker).id
+	return ""
+
+
+## Twice a second: every share someone is moving (player's hands, worker
+## loads, team carries, the handcart, trucks being driven) reports its
+## distance to the receiving cradle; only new closest approaches earn.
+func _sample_transport(delta: float) -> void:
+	_tr_t -= delta
+	if _tr_t > 0.0 or timber == null:
+		return
+	_tr_t = 0.5
+	var dest := CampLayout.world(CampLayout.DELIVERY_RACK_POS)
+	if Game.player and not timber.carried.is_empty():
+		_tr_hold(timber.carried, Game.player.global_position, {MeritLedger.BOSS: 1.0}, "hand", dest, false)
+	for c in timber.loads:
+		var sids: Array = timber.loads[c]
+		if sids.is_empty():
+			continue
+		var cs := str(c)
+		if cs.begins_with("truck:"):
+			var tr: Truck = null
+			if Game.vehicles:
+				for t in Game.vehicles.trucks.values():
+					if (t as Truck).carrier() == cs:
+						tr = t
+			if tr == null:
+				continue
+			var drv := str(tr.seats.driver)
+			var who := {} if drv == "" else {(MeritLedger.BOSS if drv == "boss" else drv): 1.0}
+			_tr_hold(sids, tr.global_position, who, "truck", dest, true)
+		elif cs == TimberCart.CARRIER:
+			var cart: TimberCart = Game.cart
+			if cart == null:
+				continue
+			var a := _actor_of(cart.pusher)
+			_tr_hold(sids, cart.global_position, {} if a == "" else {a: 1.0}, "hand", dest, true)
+		elif workers.has(cs):
+			var w: Worker = workers[cs]
+			var tid := coord.team_of(w)
+			var team: Dictionary = coord.teams.get(tid, {})
+			if not team.is_empty() and str(team.get("state", "")) == "carry" and workers.has(str(team.follower)):
+				_tr_hold(sids, w.global_position, {cs: 0.5, str(team.follower): 0.5}, "team", dest, false)
+			else:
+				_tr_hold(sids, w.global_position, {cs: 1.0}, "hand", dest, false)
+
+
+func _tr_hold(sids: Array, at: Vector3, who: Dictionary, mode: String, dest: Vector3, vehicle: bool) -> void:
+	var d := Vector2(at.x - dest.x, at.z - dest.z).length()
+	for sid in sids:
+		var sg := timber.segment(str(sid))
+		if sg.is_empty():
+			continue
+		var mte := int(sg.mte)
+		if vehicle and float(merit.committed.get("trl:" + str(sid), 0.0)) < 1.0:
+			var loader := merit.last_mover(str(sid))
+			if loader == "":
+				loader = who.keys()[0] if not who.is_empty() else ""
+			merit.on_loaded(str(sid), mte, loader)
+		if who.is_empty():
+			continue          # parked truck / unattended cart: no one moving it
+		merit.sample_transport(str(sid), mte, d, who, mode)
+
+
+func _merit_on_accepted(r: Dictionary) -> void:
+	var src := str(r.get("source", ""))
+	var sid := str(r.get("sid", ""))
+	if sid == "" or src == "fixture":
+		return
+	var actor := ""
+	var mode := "hand"
+	if src.begins_with("rack:") or src.begins_with("deck:"):
+		actor = src.split(":")[1]
+		if actor == "player":
+			actor = MeritLedger.BOSS
+		if str((merit.transport.get(sid, {}) as Dictionary).get("mode", "")) == "team":
+			mode = "team"
+	elif src == "cart":
+		actor = _actor_of(Game.cart.pusher) if Game.cart else ""
+		if actor == "":
+			actor = merit.last_mover(sid)
+	else:
+		actor = merit.last_mover(sid)
+		mode = "truck"
+	merit.on_accepted(sid, int(r.get("mte", 0)), actor, mode)
+
+
+## Per-worker time ledger with real causes (work hours only).
+func _tick_time_ledger(delta: float) -> void:
+	if campaign == null or not campaign.active or campaign.clock.phase() == WorkdayClock.Phase.NIGHT:
+		return
+	if Game.hunt and Game.hunt.hunt_active():
+		return
+	for id in workers:
+		var w: Worker = workers[id]
+		if str(w.emp.get("status", "")) != Payroll.ACTIVE:
+			continue
+		var cat := time_category(w)
+		if cat != "":
+			progression.add_time(w.id, cat, delta)
+
+
+func time_category(w: Worker) -> String:
+	if w.talking_until > now():
+		return "waiting"
+	match w.activity:
+		"fell", "buck", "stump":
+			return "useful"
+		"retreat_wait", "pick", "deliver", "deliver_deck", "yard_take", "yard_drop", "load_truck":
+			return "travel"
+		"team_follow":
+			return "useful" if w.is_carrying() or not coord.team_of(w).is_empty() and str((coord.teams.get(coord.team_of(w), {}) as Dictionary).get("state", "")) == "carry" else "waiting"
+		"move":
+			if w._after_move in ["home_arrived", "depart_wait"]:
+				return "dusk"
+			return "useful" if w.is_carrying() else "travel"
+		"follow", "aboard", "seated", "board", "depart_wait":
+			return "waiting"
+		"sleep", "sit":
+			return "dusk"
+		"hidden", "hide_enter", "dead", "departed":
+			return ""
+		"idle":
+			return str(w.idle_reason) if w.idle_reason != "" else "no_task"
+	return "travel"
+
+
+## Why a worker found nothing to do (management/logistics, not misconduct).
+func idle_cause(w: Worker) -> String:
+	if w.mind.refuses_risk():
+		return "fear"
+	if Game.yard and Game.yard.cradle_free() == 0 and Game.yard.deck_free_estimate() < 10:
+		return "yard_full"
+	if not axe_ok(w) and not _trunks(work_focus(w), w).is_empty():
+		return "missing_tool"
+	for i in range(stuck_log.size() - 1, maxi(stuck_log.size() - 8, 0) - 1, -1):
+		var sl: Dictionary = stuck_log[i]
+		if str(sl.get("worker", "")) == w.id and int(sl.get("day", -1)) == campaign.clock.day and campaign.clock.t - float(sl.get("t", -999.0)) < 30.0:
+			return "blocked"
+	return "no_task"
+
+
+## Phase 17 context: a long day of waiting on logistics (not their fault)
+## is remembered by that worker, once per day.
+func _note_waiting_frustration() -> void:
+	var d := campaign.clock.day
+	for e in payroll.employees:
+		var eid := str(e.id)
+		var t := progression.day_time(eid, d)
+		var stuck := float(t.get("yard_full", 0.0)) + float(t.get("blocked", 0.0)) + float(t.get("waiting", 0.0))
+		if stuck > 90.0:
+			progression.add_context("frustrated_waiting", eid, "%d s waiting on the yard/routes/others" % int(stuck), [eid])
+
+
+## Colleagues within earshot notice someone's progress (only them).
+func knowers_near(w: Worker, r := 25.0) -> Array:
+	var out := [w.id]
+	for o in workers.values():
+		if o != w and (o as Worker).global_position.distance_to(w.global_position) < r:
+			out.append((o as Worker).id)
+	return out
+
+
+const SKILL_EFFECT := {
+	"cutting": "work per hit / saw cut +%d%%",
+	"handling": "lifting & loading %d%% quicker",
+	"driving": "corners %d%% smoother (same top speed)",
+	"teamwork": "two-person lifts %d%% quicker to start",
+}
+
+
+func skill_effect_text(eid: String, sk: String) -> String:
+	var l := progression.skill(eid, sk)
+	var pct := 0.0
+	match sk:
+		"cutting":
+			pct = (progression.cut_factor(eid) - 1.0) * 100.0
+		"handling":
+			pct = (1.0 - progression.handling_time(eid)) * 100.0
+		"driving":
+			pct = (progression.drive_factor(eid) - 1.0) * 100.0
+		"teamwork":
+			pct = (1.0 - progression.team_wait(eid)) * 100.0
+	var nxt := CrewProgression.skill_threshold(l + 1) if l < CrewProgression.SKILL_MAX else -1
+	return "%s %d%s%s" % [sk.capitalize(), l, (": " + (SKILL_EFFECT[sk] % int(round(pct)))) if l > 0 else "", ("  (next at %d)" % nxt) if nxt > 0 else "  (max)"]
+
+
+## One employee's review for day `d`: a read-only summary (opening it never
+## awards, pays or resets anything).
+func review(eid: String, d: int) -> Dictionary:
+	var e := emp(eid)
+	var prof: Dictionary = progression.profiles.get(eid, {})
+	var tm := progression.day_time(eid, d)
+	var total := 0.0
+	for k in tm:
+		total += float(tm[k])
+	var parts := []
+	for k in CrewProgression.CATEGORIES:
+		if float(tm.get(k, 0.0)) > 0.0:
+			parts.append([k, float(tm[k])])
+	parts.sort_custom(func(a, b) -> bool: return float(a[1]) > float(b[1]))
+	var split := PackedStringArray()
+	for pr in parts.slice(0, 4):
+		split.append("%s %d%%" % [CrewProgression.CATEGORY_WORDS[pr[0]], int(round(100.0 * float(pr[1]) / maxf(total, 1.0)))])
+	var worst := ""
+	var worst_s := 0.0
+	for k in ["yard_full", "missing_tool", "blocked", "no_task", "fear", "waiting"]:
+		if float(tm.get(k, 0.0)) > worst_s:
+			worst_s = float(tm.get(k, 0.0))
+			worst = k
+	var tip := ""
+	if worst != "" and worst_s > maxf(60.0, total * 0.12):
+		tip = {"yard_full": "Waited for room in the yard: move logs to the decks or the fire pile, or set someone to Yard.",
+			"missing_tool": "Had no usable axe for the work nearby: issue one at the tool rack or the Gear app.",
+			"blocked": "Got stuck on a route: try 'Work near me' somewhere easier to reach.",
+			"no_task": "Ran out of nearby work they could do: point them somewhere with 'Work near me'.",
+			"fear": "Refused risky work after something they experienced: reassurance helps only with real reasons.",
+			"waiting": "Spent a while waiting on others (team lifts, truck seats, talking)."}[worst]
+	var md := merit.today(eid, d)
+	var mt := 0.0
+	for k in md:
+		mt += float(md[k])
+	var nx := progression.next_career(eid)
+	var jb: Dictionary = progression.jobs.get(eid, {})
+	return {
+		"eid": eid, "name": str(e.get("name", eid)), "level": int(nx.level), "merit": merit.total(eid), "next": int(nx.next),
+		"merit_today": mt, "merit_by_stage": md, "time_split": ", ".join(split), "tip": tip,
+		"ethic": CrewProgression.ethic_word(float(prof.get("ethic", 0.7))), "reliability": CrewProgression.reliability_word(float(prof.get("reliability", 0.7))), "prefers": str(prof.get("prefers", "")),
+		"skills": PackedStringArray(MeritLedger.SKILLS.map(func(sk: String) -> String: return skill_effect_text(eid, sk))),
+		"jobs": "%d started, %d finished" % [int(jb.get("started", 0)), int(jb.get("finished", 0))],
+		"owed": payroll.owed_for(eid),
+	}

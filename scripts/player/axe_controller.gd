@@ -108,6 +108,11 @@ func kit() -> Dictionary:
 		for s in preview_gear:
 			k[s] = preview_gear[s]
 	k["hard_working"] = false      # traits are employees' (the boss has none)
+	# Phase 16: the boss's restedness (once each: cutting work per contact,
+	# walking); 1.0 when well rested or outside a campaign.
+	if Game.rest:
+		k["fatigue"] = Game.rest.cut_factor()
+		k["rest_walk"] = Game.rest.walk_factor()
 	return k
 
 
@@ -245,30 +250,36 @@ func apply_saw_tick(p: Dictionary) -> bool:
 	var ok := false
 	match str(p.kind):
 		"tree":
-			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work)
+			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work, MeritLedger.BOSS)
 			ok = bool(res.get("accepted", false))
 			if ok:
 				var bark := Color(0.35, 0.25, 0.18) if int(World.trees.species[Game.vegetation.tree_index_by_id.get(p.id, p.id)]) != 2 else Color(0.85, 0.83, 0.78)
 				if saw_ticks_applied % 2 == 0:
 					LoggingFX.chips(p.point, p.normal, bark)
 				hit_result.emit("tree", res)
+				if Game.rest:
+					Game.rest.note_effort_hit()
 				_target_info = _describe(p.id)
 				target_changed.emit(_target_info)
 		"timber":
-			var res2: Dictionary = Game.timber.apply_cut(p.body, float(p.y), work) if Game.timber else {"accepted": false}
+			var res2: Dictionary = Game.timber.apply_cut(p.body, float(p.y), work, MeritLedger.BOSS) if Game.timber else {"accepted": false}
 			ok = bool(res2.get("accepted", false))
 			if ok:
 				if saw_ticks_applied % 2 == 0:
 					LoggingFX.chips(p.point, p.normal, Color(0.86, 0.74, 0.52))
 				hit_result.emit("timber", res2)
+				if Game.rest:
+					Game.rest.note_effort_hit()
 				target_tree = -3
 		"stump":
-			var res3: Dictionary = Game.trees.apply_stump_work(int(p.id), work)
+			var res3: Dictionary = Game.trees.apply_stump_work(int(p.id), work, MeritLedger.BOSS)
 			ok = bool(res3.get("accepted", false))
 			if ok:
 				if saw_ticks_applied % 2 == 0:
 					LoggingFX.chips(p.point, p.normal, Color(0.8, 0.66, 0.45))
 				hit_result.emit("stump", res3)
+				if Game.rest:
+					Game.rest.note_effort_hit()
 				target_tree = -3
 	if ok:
 		saw_ticks_applied += 1
@@ -358,18 +369,20 @@ func _contact() -> void:
 	match p.kind:
 		"tree":
 			var work: float = float(effects().work_per_contact)
-			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work)
+			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work, MeritLedger.BOSS)
 			var bark := Color(0.35, 0.25, 0.18) if int(World.trees.species[Game.vegetation.tree_index_by_id.get(p.id, p.id)]) != 2 else Color(0.85, 0.83, 0.78)
 			LoggingFX.chips(p.point, p.normal, bark)
 			LoggingFX.play(LoggingFX.Sound.CHOP, p.point, 0.0, {"tree": int(p.id)})
 			if Settings.get_v("camera_shake"):
 				player.add_shake(0.012 if tier == "small" else 0.018)
 			hit_result.emit("tree", res)
+			if Game.rest:
+				Game.rest.note_effort_hit()
 			_target_info = _describe(p.id)
 			target_changed.emit(_target_info)
 		"timber":
 			var tb: TimberBody = p.body
-			var res: Dictionary = Game.timber.apply_cut(tb, float(p.y), float(effects().work_per_contact)) if Game.timber else {"accepted": false}
+			var res: Dictionary = Game.timber.apply_cut(tb, float(p.y), float(effects().work_per_contact), MeritLedger.BOSS) if Game.timber else {"accepted": false}
 			if bool(res.get("accepted", false)):
 				LoggingFX.chips(p.point, p.normal, Color(0.86, 0.74, 0.52))
 				LoggingFX.play(LoggingFX.Sound.CHOP, p.point, 0.0, {"event": "work.axe.buck"})
@@ -378,21 +391,29 @@ func _contact() -> void:
 			else:
 				LoggingFX.play(LoggingFX.Sound.CLUNK, p.point, -4.0, {"event": "work.axe.buck"})
 			hit_result.emit("timber", res)
+			if Game.rest:
+				Game.rest.note_effort_hit()
 			target_tree = -3
 		"stump":
-			var sres: Dictionary = Game.trees.apply_stump_work(int(p.id), float(effects().work_per_contact))
+			var sres: Dictionary = Game.trees.apply_stump_work(int(p.id), float(effects().work_per_contact), MeritLedger.BOSS)
 			if bool(sres.accepted):
 				LoggingFX.chips(p.point, p.normal, Color(0.8, 0.66, 0.45))
 				LoggingFX.play(LoggingFX.Sound.CHOP, p.point, 0.0, {"event": "work.axe.stump"})
 			else:
 				LoggingFX.play(LoggingFX.Sound.CLUNK, p.point, -4.0, {"event": "work.axe.buck"})
 			hit_result.emit("stump", sres)
+			if Game.rest:
+				Game.rest.note_effort_hit()
 			target_tree = -3
 		"hard":
 			LoggingFX.play(LoggingFX.Sound.CLUNK, p.point, 0.0, {"event": "work.axe.hard"})
 			if Settings.get_v("camera_shake"):
 				player.add_shake(0.02)
 			hit_result.emit("hard", {})
+			if Game.rest:
+				Game.rest.note_effort_hit()
 		_:
 			LoggingFX.play(LoggingFX.Sound.MISS, player.camera.global_position - player.camera.global_basis.z * 0.6)
 			hit_result.emit("miss", {})
+			if Game.rest:
+				Game.rest.note_effort_hit()

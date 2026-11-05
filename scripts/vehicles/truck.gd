@@ -395,7 +395,12 @@ func _drive_auto(delta: float) -> void:
 	if absf(turn) > 1.2 and to.length() < 8.0:
 		_auto_speed = minf(_auto_speed, 1.2)
 	var in_camp := Game.crew != null and Game.crew.nav.in_camp(p)
-	var want := (CAMP_SPEED if in_camp else 6.5) * clampf(1.0 - absf(turn) / 1.6, 0.25, 1.0)
+	# Phase 16: a worker's driving skill smooths cornering (less slowdown
+	# for the same turn); the straight-line cruise speed never changes.
+	var corner := 1.6
+	if Game.crew and seats.driver != "" and seats.driver != "boss":
+		corner *= Game.crew.progression.drive_factor(str(seats.driver))
+	var want := (CAMP_SPEED if in_camp else 6.5) * clampf(1.0 - absf(turn) / corner, 0.25, 1.0)
 	if _ri >= route.size() - 1:
 		want = minf(want, maxf(to.length() * 0.8, 1.0))
 	if _obstacle_ahead(fwd):

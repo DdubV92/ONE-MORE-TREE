@@ -118,7 +118,11 @@ func _process(delta: float) -> void:
 		return
 	next_in -= delta
 	if next_in <= 0.0:
-		next_in = _rng.randf_range(QUIET_MIN, QUIET_MAX)
+		# Phase 16: a tired, late-awake boss gets ordinary encounters a
+		# little more often (up to x1.25), never below the quiet minimum;
+		# peak/startle cooldowns are untouched.
+		var w: float = Game.rest.fear_weight() if Game.rest else 1.0
+		next_in = maxf(_rng.randf_range(QUIET_MIN, QUIET_MAX) / w, QUIET_MIN)
 		offer()
 
 

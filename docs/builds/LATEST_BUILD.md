@@ -1,10 +1,35 @@
-# ONE MORE TREE LATEST BUILD PHASE 15
+# ONE MORE TREE LATEST BUILD PHASE 16
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 15 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 16 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 15 (sound). Headphones recommended
+## New in Phase 16
+
+- **Your crew grows through real work.**
+  - Each tree is worth up to 1,000 "merit", shared by whoever felled, sectioned, de-stumped, carried, drove, stacked or fed it. Your own work stays yours.
+  - Merit raises a career level (1–20) and four skills: cutting, handling, driving and teamwork. Each skill has a small, real, capped effect.
+  - Merit never pays money and never changes wages.
+- **Journal → Crew** shows, for each worker:
+  - level and merit to the next level;
+  - each skill's effect;
+  - today's time split, with the real reasons for waiting (a full yard is a logistics problem, not laziness);
+  - a suggestion;
+  - "Thank them" buttons for specific work (once each).
+
+  Each end-of-day report now includes a short crew review.
+- **Your restedness.**
+  - A workday costs about a third of your rest.
+  - Staying up after nightfall costs more and makes tonight's sleep less restful.
+  - The bed shows what tomorrow will be like before you sleep. Journal → Rest has the full forecast.
+  - When tired you walk up to 15 % slower and cut up to 20 % weaker, and the clock line says "Tired". Going to bed before nightfall fully restores you.
+  - Tiredness never hurts you or makes the camper unsafe.
+- **Survival days.** Sitting still on the couch or hiding recovers a little rest while time keeps running.
+- **Review.** Preview (title screen) → Tab → "Phase 16 crew growth & restedness" (8 stops).
+
+**Checks:** see PHASE16_NOTES.md. Simulated, not yet played by a person.
+
+## Phase 15 (previous build): sound
 
 - **About 200 new sounds:**
   - axe bites by species and thickness;
