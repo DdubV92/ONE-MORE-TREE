@@ -87,6 +87,42 @@ func _ready() -> void:
 				if ys != "":
 					Game.yard.load_pit("capture", ys)
 			Game.yard.refresh()
+		if vp_name.begins_with("p19_") and Game.offshore:
+			# Phase 19: the survey ship on the camp-facing arc (and its
+			# helicopter over camp), seen at player eye height.
+			var off: OffshoreSurvey = Game.offshore
+			off.stop_preview()
+			off.preview_visit(3)
+			off.enabled = false
+			off.visit.state = "lap"
+			off.visit.theta = off.theta_camp
+			off.visit.lap = 0.4
+			off._place_ship()
+			var sp := off.ship_position() + Vector3(0, 9, 0)
+			var shore: Vector3 = Game.crew.dock_shore if Game.crew else World.camp_origin() + Vector3(0, 0, 60)
+			match vp_name:
+				"p19_ship_shore":
+					vps[vp_name] = {"pos": shore + Vector3(0, 1.65, 0), "look": sp}
+				"p19_ship_yard":
+					var y := CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 6))
+					vps[vp_name] = {"pos": y + Vector3(0, 1.65, 0), "look": sp}
+				"p19_ship_close":
+					var side := off.ship_forward().cross(Vector3.UP).normalized()
+					var eye := off.ship_position() + side * 170.0 - off.ship_forward() * 40.0 + Vector3(0, 6, 0)
+					vps[vp_name] = {"pos": eye, "look": off.ship_position() + Vector3(0, 8, 0)}
+				"p19_heli":
+					off.visit.launched = true
+					off.heli.set_state("fly")
+					off.heli.rotor = 1.0
+					off.heli.wps = off.leg_points("camp")
+					off.heli.wp_i = 1
+					off.heli.global_position = World.camp_origin() + Vector3(40, 62, 60)
+					off.heli.yaw = PI * 0.8
+					off.heli.bank = deg_to_rad(18.0)
+					off.heli.global_basis = Basis.from_euler(Vector3(-0.05, off.heli.yaw, -off.heli.bank), EULER_ORDER_YXZ)
+					vps[vp_name] = {"pos": CampLayout.world(Vector3(0, 0, 4)) + Vector3(0, 1.65, 0), "look": off.heli.global_position}
+			for k in 3:
+				await get_tree().process_frame
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue
