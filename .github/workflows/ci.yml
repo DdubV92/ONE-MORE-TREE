@@ -144,6 +144,28 @@ jobs:
       - name: Add notices
         run: cp docs/NOTICES.txt build/windows/NOTICES.txt
 
+      - name: Prepared fixture saves for testers (made and verified by playing them)
+        run: |
+          timeout 1200 ~/godot/godot --headless res://tools/rc/make_fixture_saves.tscn 2>&1 | tee fixtures.log | grep -E "FIXTURE" || true
+          test "$(grep -c '^FIXTURE_VERIFY .* ok' fixtures.log)" = "3"
+          mkdir -p build/windows/prepared_saves
+          cp ~/.local/share/godot/app_userdata/"One More Tree"/fixtures/slot_2_*.json build/windows/prepared_saves/
+          cat > build/windows/prepared_saves/README.txt <<'EOF2'
+          Prepared fixture saves (Phase 20). Each one is a real new standard
+          campaign moved to a test point; it is labelled "fixture" inside the
+          file and is not real play. CI loaded each one and played it until
+          the expected event happened.
+
+            slot_2_terminal_day30.json    day 30, 50 s before the cutoff (contract close)
+            slot_2_offshore_day3.json     day 3, on the shore before the first survey ship visit
+            slot_2_extraction_day35.json  hunt night 35, about a minute before the day 36 rescue
+
+          To use one: copy it to
+            %APPDATA%\Godot\app_userdata\One More Tree\saves\slot_2.json
+          (this replaces whatever is in slot 2), then Load > Slot 2.
+          EOF2
+          ls -la build/windows/prepared_saves
+
       - name: Add tester readme
         run: |
           cat > build/windows/README.txt <<EOF

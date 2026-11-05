@@ -49,10 +49,46 @@ The verdict, evidence and backlog are in [PHASE20_RC_REPORT.md](PHASE20_RC_REPOR
 - The rest cost is small and bounded (`RestService.interrupt`).
 - A save taken mid-sequence resumes as "available".
 
+## The forest-entrance gate (`CampLayout.GATE_*`, `camp_builder._build_gate`)
+
+**Why it was added.** Until Phase 20 the north entrance was only a 13 m opening, yet recordings, a morning mark and a sleep interruption all used "the gate". The screenshots showed a slab floating in the field.
+
+**What it is now.** A real galvanized five-bar tube gate:
+- One 3.0 × 1.7 m leaf on the west post of the opening.
+- It stands open, folded flat 0.18 m inside the fence west of the opening, with its free end chained back.
+- It is visual only: the fence's own collision already closes that side. The opening, truck bays, turning circle, yard walkway and worker routes are unchanged.
+
+**What uses it.**
+- **Anchors:** `gate` (the chained free end), `gate_hinge`, `gate_mid`.
+- **Recordings:**
+  - "One swing of the gate" (rec01) and "The chain moved" (rec20) now come from the corner cameras CAM_04 or CAM_05.
+  - Capture checks line of sight to the leaf.
+  - Playback copies the real leaf's meshes and swings them about the hinge.
+  - The frozen copy is left out while the clip moves it.
+- **Morning mark:** the "chain moved" mark shows the same chain looped on the far side of the stile, and the usual chain is hidden until the mark clears.
+- **Sleep interruption:** "The gate" clank now plays at the leaf.
+
+**Recording sounds.** An audio entry may carry its own anchor as a sixth field.
+
+## Prepared tester saves (`tools/rc/make_fixture_saves.tscn`)
+
+**How they are made.** Each save is a new standard campaign moved to a test point and written through the normal writer. It carries a `"fixture"` label inside the file.
+
+**How they are checked.** The tool reloads each save through the normal load path and plays it until the expected event happens:
+- the cutoff closes the contract;
+- the offshore visit starts;
+- the rescue ship comes at dawn on day 36.
+
+**Where they ship.** CI fails the build if any of the three doesn't verify, and ships them in `prepared_saves/` with a README.
+
 ## Fixes
 
 - **Extraction is final** (`HuntService.on_kill`). Once escaped, stranded or dead, late attack callbacks are ignored, and so are attacks on workers who already boarded.
 - **Save recovery** (`SaveService.read_best`). The order is main → completed `.tmp` → `.bak`. Slot summaries follow the same order.
+- **Recording playback.**
+  - The replay world no longer contains any security-camera housing. The replay camera sits where the real one hangs, so the box and lens had filled the frame.
+  - The live-camera inset is hidden in Recordings, because it covered the controls and mixed LIVE with PLAYBACK.
+  - Recordings has its own status line.
 
 ## Release tooling
 

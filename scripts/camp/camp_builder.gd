@@ -118,6 +118,37 @@ func _build_fence() -> void:
 			rail.rotation = Vector3(0, -atan2(dir.y, dir.x), PI * 0.5)
 			_post(root, g0, k == 0)
 		_post(root, _ground(Vector3(b.x, 0, b.y)), true)
+	_build_gate(root)
+
+
+## The forest-entrance gate leaf (see CampLayout.GATE_HINGE): a galvanized
+## five-bar tube gate standing open against the inside of the fence, its free
+## end chained back. Visual only: it lies 0.18 m inside the fence line, whose
+## own collision already closes that side.
+func _build_gate(fence_root: Node3D) -> void:
+	var gate := Node3D.new()
+	gate.name = "GateLeaf"
+	gate.add_to_group("camp_gate_leaf")
+	fence_root.add_child(gate)
+	var h := L.GATE_HINGE
+	gate.position = Vector3(h.x, _ground(Vector3(h.x, 0, h.z)).y, h.z)
+	var ln := L.GATE_LEAF.x
+	var ht := L.GATE_LEAF.y
+	var y0 := L.GATE_CLEARANCE
+	# Stiles at both ends, five rails, one diagonal brace; leaf runs along -X.
+	for x in [-0.05, -ln + 0.05]:
+		BuildKit.cylinder(gate, 0.034, ht, Vector3(x, y0 + ht * 0.5, 0), "galvanized", false, 8)
+	for k in 5:
+		var r := BuildKit.cylinder(gate, 0.026, ln - 0.1, Vector3(-ln * 0.5, y0 + 0.06 + (ht - 0.12) * k / 4.0, 0), "galvanized", false, 8)
+		r.rotation.z = PI * 0.5
+	var brace := BuildKit.cylinder(gate, 0.022, sqrt(ln * ln + ht * ht) - 0.2, Vector3(-ln * 0.5, y0 + ht * 0.5, 0), "galvanized", false, 6)
+	brace.rotation.z = atan2(ln, ht)
+	# Hinge collars on the west post of the opening.
+	for y in [y0 + 0.25, y0 + ht - 0.25]:
+		BuildKit.cylinder(gate, 0.05, 0.08, Vector3(0.0, y, -0.09), "steel", false, 8)
+	# Holdback chain: from the free stile to the fence behind it.
+	var chain := BuildKit.box(gate, Vector3(0.035, 0.32, 0.18), Vector3(-ln + 0.05, y0 + ht * 0.55, -0.09), "steel", false, 0.0, "GateChain")
+	chain.add_to_group("camp_gate_chain")
 
 
 func _post(parent: Node3D, at: Vector3, terminal: bool) -> void:

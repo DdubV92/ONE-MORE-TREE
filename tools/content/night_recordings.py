@@ -15,7 +15,7 @@ Fields:
   hour         clock hour of the event (night), duration seconds
   actor        {kind: figure|dog|none, track: [[t, x, z], ...], hidden: [[t0, t1]...]}
   props        [{kind, ...}] visual reconstruction elements
-  audio        [[t, event_id, x, z, y]]   (y = height above ground)
+  audio        [[t, event_id, x, z, y(, anchor)]]   (y = height above ground; optional anchor overrides the actor anchor)
   consequence  {kind: notice|marks|prop, text, mark}
   cooldown     nights before it may recur;  weight  selection weight
   beat         the distinct dramatic beat (editorial)
@@ -37,10 +37,12 @@ def sc(n, title, cameras, hour, dur, beat, actor=None, props=None, audio=None, r
 
 
 # ---------------------------------------------------------------- seeds 1-12
-sc(1, "One swing of the gate", ["CAM_03"], 23.9, 8.0,
+# The gate is the real leaf at the west post of the forest entrance
+# (CampLayout.GATE_*), seen along the north fence by the corner cameras.
+sc(1, "One swing of the gate", ["CAM_04", "CAM_05"], 23.9, 8.0,
    "The gate swings once; the chain never goes slack.",
-   props=[{"kind": "gate_swing", "x": 0.0, "z": 3.0, "track": [[0.0, 0.0], [2.0, 0.0], [3.2, 0.35], [5.0, 0.0]]}],
-   audio=[[2.1, "camp.gate.clank", 0.0, 3.0, 1.0], [5.0, "camp.gate.clank", 0.0, 3.0, 1.0]],
+   props=[{"kind": "gate_swing", "anchor": "gate_hinge", "track": [[0.0, 0.0], [2.0, 0.0], [3.2, 0.35], [5.0, 0.0]]}],
+   audio=[[2.1, "camp.gate.clank", 0.0, 0.0, 0.0, "gate"], [5.0, "camp.gate.clank", 0.0, 0.0, 0.0, "gate"]],
    consequence={"kind": "notice", "text": "The gate is latched the way you left it."})
 sc(2, "Behind the cabin window", ["CAM_02"], 0.4, 9.0,
    "A worker-shaped silhouette crosses behind the sleeping cabin's window, never inside.",
@@ -119,10 +121,10 @@ sc(19, "Closer between flickers", ["CAM_09", "CAM_08"], 3.1, 9.0,
    requires=["trees_near"], props=[{"kind": "ir_flicker", "times": [2.0, 4.0, 6.0]}],
    actor={"kind": "figure", "track": [[0.0, 1.0, 42.0], [2.0, 1.0, 42.0], [2.01, 0.6, 34.0], [4.0, 0.6, 34.0], [4.01, 0.3, 27.0], [6.0, 0.3, 27.0]], "hidden": [[6.0, 9.0]]},
    cooldown=14)
-sc(20, "The chain moved", ["CAM_03"], 1.9, 7.0,
+sc(20, "The chain moved", ["CAM_04", "CAM_05"], 1.9, 7.0,
    "The gate chain is lifted and set down again on the other side of the post.",
-   props=[{"kind": "chain", "x": 0.6, "z": 3.0, "track": [[0.0, 0.0], [2.0, 0.0], [3.0, 1.0], [7.0, 1.0]]}],
-   audio=[[2.2, "camp.gate.clank", 0.6, 3.0, 1.0], [3.0, "camp.gate.clank", 0.6, 3.0, 1.0]],
+   props=[{"kind": "chain", "anchor": "gate", "track": [[0.0, 0.0], [2.0, 0.0], [3.0, 1.0], [7.0, 1.0]]}],
+   audio=[[2.2, "camp.gate.clank", 0.0, 0.0, 0.0, "gate"], [3.0, "camp.gate.clank", 0.0, 0.0, 0.0, "gate"]],
    consequence={"kind": "prop", "mark": "gate_chain", "anchor": "gate", "text": "The gate chain hangs on the other side of the post."})
 sc(21, "The lamp dims", ["CAM_06", "CAM_07", "CAM_05"], 0.8, 8.0,
    "A camp-edge lamp dims as if something stood in front of it, then brightens again.",

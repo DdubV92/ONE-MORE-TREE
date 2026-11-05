@@ -155,7 +155,8 @@ func capture(s: Dictionary, d: int) -> Dictionary:
 			continue
 		var audio := []
 		for a in s.audio:
-			var anchor := str(s.actor.get("anchor", ""))
+			# Optional 6th field: the sound's own anchor (e.g. the real gate).
+			var anchor := str(a[5]) if a.size() > 5 else str(s.actor.get("anchor", ""))
 			var wp := _to_world(frame, float(a[2]), float(a[3]), anchor, cam) + Vector3(0, float(a[4]), 0)
 			if not SoundBank.EVENTS.has(str(a[1])):
 				bad = "sound " + str(a[1])
@@ -317,6 +318,17 @@ func _convert_prop(p: Dictionary, cam: Node3D, fr: Dictionary) -> Dictionary:
 			if lamp == Vector3.INF:
 				return {"fail": "no lamp in view"}
 			o["pos"] = [lamp.x, lamp.y, lamp.z]
+		"gate_swing", "chain":
+			# The real gate leaf and its chain (CampLayout.GATE_*): on the
+			# ground at the anchor, and the camera must actually see the leaf.
+			if anchor != "" and not (p.has("x") and p.has("z")):
+				var gp := Vector3(float(o.pos[0]), 0.0, float(o.pos[2]))
+				o["pos"] = [gp.x, World.height_at(gp.x, gp.z), gp.z]
+				var why := _visible(cam, NightAnchors.point("gate_mid"), 0.6)
+				if why != "":
+					return {"fail": "gate " + why}
+				var leaf := cam.get_tree().get_first_node_in_group("camp_gate_leaf") as Node3D
+				o["yaw0"] = leaf.global_rotation.y if leaf else 0.0
 		"truck_door":
 			var tp := NightAnchors.point("truck")
 			if tp == Vector3.INF:
@@ -450,9 +462,14 @@ func refresh_marks() -> void:
 	var day := c.clock.day if c else 0
 	var t := c.clock.t if c else 0.0
 	marks = marks.filter(func(m: Dictionary) -> bool: return int(m.day) == day and t < MARK_UNTIL_T)
+	var chain_moved := false
 	for m in marks:
 		var p: Array = m.pos
 		_mark_nodes.append(_spawn_mark(str(m.mark), Vector3(p[0], p[1], p[2])))
+		chain_moved = chain_moved or str(m.mark) == "gate_chain"
+	# The moved chain IS the gate's chain: hide the usual one meanwhile.
+	for ch in get_tree().get_nodes_in_group("camp_gate_chain"):
+		(ch as Node3D).visible = not chain_moved
 
 
 func _process(_dt: float) -> void:
@@ -476,7 +493,9 @@ func _spawn_mark(kind: String, at: Vector3) -> Node3D:
 				var a := TAU * k / 10.0
 				BuildKit.box(n, Vector3(0.1, 0.005, 0.24), Vector3(cos(a) * 2.4, 0.0, sin(a) * 2.4), dark, false, -a)
 		"gate_chain":
-			BuildKit.box(n, Vector3(0.05, 0.4, 0.05), Vector3(0.6, 0.9, 0.0), "steel", false)
+			# Same chain, looped over the far side of the stile (west of it).
+			var cy := CampLayout.GATE_CLEARANCE + CampLayout.GATE_LEAF.y * 0.55
+			BuildKit.box(n, Vector3(0.035, 0.32, 0.18), Vector3(-0.12, cy, 0.09), "steel", false)
 		"branch":
 			var b := BuildKit.cylinder(n, 0.05, 1.6, Vector3.ZERO, "bark", false, 6)
 			b.rotation = Vector3(PI * 0.5, 0.4, 0.0)

@@ -324,11 +324,23 @@ func _camp(c: Vector3) -> void:
 	if camp == null:
 		return
 	var n := 0
+	var kinds := (clip.get("props", []) as Array).map(func(p: Dictionary) -> String: return str(p.kind))
+	var moves_gate := kinds.has("gate_swing")
+	var moves_chain := moves_gate or kinds.has("chain")
 	for mi in camp.find_children("*", "MeshInstance3D", true, false):
 		var m := mi as MeshInstance3D
 		if m.mesh == null or not m.is_visible_in_tree():
 			continue
 		if m.global_position.distance_to(c) > RADIUS + 10.0 and m.get_aabb().size.length() < 30.0:
+			continue
+		# Never the recording camera's own housing (or any camera body): the
+		# replay camera sits exactly where the real one hangs, so its box and
+		# lens would fill the frame from the inside.
+		if _is_camera_part(m) or (m.global_transform * m.get_aabb()).grow(0.25).has_point(c):
+			continue
+		# The gate leaf / chain are replayed by their own props when the
+		# clip moves them (no frozen duplicate beside the moving one).
+		if (moves_gate and _in_group_up(m, "camp_gate_leaf")) or (moves_chain and _in_group_up(m, "camp_gate_chain")):
 			continue
 		var copy := MeshInstance3D.new()
 		copy.mesh = m.mesh
@@ -339,6 +351,19 @@ func _camp(c: Vector3) -> void:
 		if n > 900:
 			break
 	set_meta("camp_meshes", n)
+
+
+static func _is_camera_part(n: Node) -> bool:
+	return _in_group_up(n, "security_camera")
+
+
+static func _in_group_up(n: Node, group: String) -> bool:
+	var p := n
+	while p:
+		if p.is_in_group(group):
+			return true
+		p = p.get_parent()
+	return false
 
 
 func _event_nodes() -> void:
@@ -383,6 +408,26 @@ func _event_nodes() -> void:
 		_root.add_child(node)
 		node.global_position = at
 		match str(p.kind):
+			"gate_swing" when p.has("yaw0"):
+				# The real leaf: hinge at the node, running along local -X.
+				node.rotation.y = float(p.yaw0)
+				# Copies of the real leaf's meshes (frame, chain-link, chain).
+				var real := get_tree().get_first_node_in_group("camp_gate_leaf") as Node3D
+				if real:
+					var inv := real.global_transform.affine_inverse()
+					for m2 in real.find_children("*", "MeshInstance3D", true, false):
+						var src := m2 as MeshInstance3D
+						var cp := MeshInstance3D.new()
+						cp.mesh = src.mesh
+						cp.material_override = src.material_override
+						node.add_child(cp)
+						cp.transform = inv * src.global_transform
+				else:
+					var ln := CampLayout.GATE_LEAF.x
+					var ht := CampLayout.GATE_LEAF.y
+					BuildKit.box(node, Vector3(ln, ht, 0.05), Vector3(-ln * 0.5, CampLayout.GATE_CLEARANCE + ht * 0.5, 0), "galvanized", false)
+			"chain" when p.has("yaw0"):
+				BuildKit.box(node, Vector3(0.035, 0.32, 0.18), Vector3(0.05, CampLayout.GATE_CLEARANCE + CampLayout.GATE_LEAF.y * 0.55, -0.09), "steel", false)
 			"gate_swing", "rack_cover", "truck_door":
 				var panel := BuildKit.box(node, Vector3(1.4 if p.kind == "gate_swing" else 1.0, 1.4 if p.kind != "rack_cover" else 0.05, 0.06), Vector3(0.7, 0.75, 0), "steel" if p.kind != "rack_cover" else "dark_wood", false)
 				panel.name = "Panel"
@@ -464,11 +509,12 @@ func apply_pose(tt: float) -> void:
 			continue
 		match str(p.kind):
 			"gate_swing", "truck_door":
-				node.rotation.y = v
+				node.rotation.y = float(p.get("yaw0", 0.0)) + v
 			"rack_cover":
 				node.rotation.x = -v
 			"chain":
-				node.position.x = v * 0.6
+				var base := Vector3(p.pos[0], p.pos[1], p.pos[2]) if p.has("pos") else Vector3.ZERO
+				node.global_position = base + Vector3(-0.17 * v if p.has("yaw0") else 0.6 * v, 0, 0.18 * v if p.has("yaw0") else 0.0)
 			"fence_shiver":
 				node.rotation.z = sin(tt * 40.0) * 0.01 * v
 			"reflection":

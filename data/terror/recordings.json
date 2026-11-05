@@ -7,7 +7,8 @@
    "n": 1,
    "title": "One swing of the gate",
    "cameras": [
-    "CAM_03"
+    "CAM_04",
+    "CAM_05"
    ],
    "requires": [],
    "hour": 23.9,
@@ -19,8 +20,7 @@
    "props": [
     {
      "kind": "gate_swing",
-     "x": 0.0,
-     "z": 3.0,
+     "anchor": "gate_hinge",
      "track": [
       [
        0.0,
@@ -46,15 +46,17 @@
      2.1,
      "camp.gate.clank",
      0.0,
-     3.0,
-     1.0
+     0.0,
+     0.0,
+     "gate"
     ],
     [
      5.0,
      "camp.gate.clank",
      0.0,
-     3.0,
-     1.0
+     0.0,
+     0.0,
+     "gate"
     ]
    ],
    "consequence": {
@@ -1005,7 +1007,8 @@
    "n": 20,
    "title": "The chain moved",
    "cameras": [
-    "CAM_03"
+    "CAM_04",
+    "CAM_05"
    ],
    "requires": [],
    "hour": 1.9,
@@ -1017,8 +1020,7 @@
    "props": [
     {
      "kind": "chain",
-     "x": 0.6,
-     "z": 3.0,
+     "anchor": "gate",
      "track": [
       [
        0.0,
@@ -1043,16 +1045,18 @@
     [
      2.2,
      "camp.gate.clank",
-     0.6,
-     3.0,
-     1.0
+     0.0,
+     0.0,
+     0.0,
+     "gate"
     ],
     [
      3.0,
      "camp.gate.clank",
-     0.6,
-     3.0,
-     1.0
+     0.0,
+     0.0,
+     0.0,
+     "gate"
     ]
    ],
    "consequence": {

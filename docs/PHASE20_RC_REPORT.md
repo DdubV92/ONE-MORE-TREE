@@ -33,6 +33,10 @@ Status key:
 | Interrupted save | A write cut between "remove old" and "rename new", plus a torn `.tmp` | `path_override` test slot |
 | Hide recovery, dock extraction | Survival-cover and hunt tests (hunt preview) | `hunt_preview` |
 | Ship mid-lap | `OffshoreSurvey.preview_visit` stepped manually | Preview visit |
+| **Prepared saves for testers** | `tools/rc/make_fixture_saves.tscn` starts a real new standard campaign and moves it to the point. It writes a normal save marked `"fixture"`, then reloads it through the normal load path and plays it until the expected event. CI ships the saves in `prepared_saves/` in the Windows build. | Labelled `fixture` in the file; not real play |
+| &nbsp;&nbsp;`slot_2_terminal_day30.json` | Day 30, 50 s before the cutoff | Verified: the contract closes at the cutoff into `ABANDONMENT_PENDING` |
+| &nbsp;&nbsp;`slot_2_offshore_day3.json` | Day 3, on the shore before the first survey visit | Verified: visit V03 starts at t = 40 s |
+| &nbsp;&nbsp;`slot_2_extraction_day35.json` | Hunt night 35, a minute before the rescue, near the dock | Verified: the rescue ship is approaching at dawn on day 36 |
 | Seeds | World seed 20261103; campaign seeds from the payroll fixture; recorder and interrupt seeds are `hash(seed:day:...)` | |
 
 ## 3. Results by area
@@ -197,7 +201,18 @@ The audit found two required catalogs missing. Both were assigned to Phase 19 by
   - The software renderer (lavapipe) needs seconds per frame at 1080p, so its frame times are not evidence about a real GPU. A short 720p software run, if completed, is listed below as an upper bound only.
   - Owner check: run Preview → "Run 60 s benchmark route" on the target PC and note the GPU, the resolution and the reported frame times.
 
-PLACEHOLDER_RENDER
+**Software rendering at 720p (lavapipe on the CPU; an upper bound only, not GPU evidence).** `FRAMES=30`, same scenarios. The useful numbers are the draw calls, which a real GPU also has to issue.
+
+| Scenario | Draw calls | Objects drawn | Frame time (CPU rasteriser) |
+|---|---:|---:|---:|
+| Dense woods | 1,322 | ~1,300 | ~3.3 s |
+| Busy camp | 3,397 | ~3,400 | ~3.3 s |
+| Heavy rain (storm) | 3,434 | ~3,400 | ~3.2 s |
+| Ship and helicopter | 434 | ~430 | ~1.2 s |
+| Cleared terrain | 855 | ~850 | ~1.6 s |
+| Active pursuit | 935 | ~930 | ~1.6 s |
+
+- **Reading:** a modern desktop GPU handles 3,400 draw calls at 60 FPS, but camp and storm views are the heaviest. That is backlog O6: check them first on the owner's PC, and batch camp props (MultiMesh) if they stutter.
 
 ## 7. Native build launch (CI)
 
@@ -228,11 +243,15 @@ Each entry gives the originating phase, severity, reproduction, impact and the t
 | F2 | Phase 3 save writer | Medium (fixed) | An interrupted write lost the newest complete save (`.tmp` ignored) | Remove main after `.tmp` is complete; load | Lost progress after a crash | Phase 20 world test (added) |
 | F3 | Phase 19 | Medium (fixed) | 36 recording scenarios and 24 sleep interruptions were missing | Content audit | Required content absent | Phase 20 tests and audit |
 | F4 | Phase 19 | Low (fixed) | Survey hull shading artefacts | Close render | Visual | Re-render (docs/screenshots) |
+| F5 | Phase 20 (found in screenshots) | Medium (fixed) | Recording playback was filled by the security camera's own housing (box and lens around the replay camera) | Open any recording | Playback unreadable | Camera housings excluded from the reconstruction; re-captured (`docs/screenshots/phase20_recordings_app.jpg`) |
+| F6 | Phase 11 desk / Phase 20 | Low (fixed) | The live-camera inset covered the Recordings controls, and the Cameras status hint stayed on screen | Open Recordings | Volume buttons hidden; LIVE mixed with PLAYBACK | Inset hidden in Recordings; own status line |
+| F7 | Phase 0 camp / Phase 20 content | Medium (fixed) | No physical gate existed, yet recordings, marks and an interruption used one (a floating slab in rec01 and rec20) | Recordings rec01 and rec20 | Content contradicted the world | A real five-bar tube gate and chain on the west post of the north entrance (`CampLayout.GATE_*`), standing open flush with the fence (routes unchanged). The clips now come from the corner cameras that see it, with line of sight checked. The chain mark moves the real chain. 36/36 still stage |
 | O1 | Phases 8–19 | Medium | No real-GPU or real-audio verification | n/a here | Look, stutter and stereo unknown | Owner plays the Windows build; benchmark route |
 | O2 | Phase 18 | Low | Synthetic voices not auditioned by ear; 6 clips flagged `source_clipped` | VOICE_CAST / manifest | Some lines may sound harsh | Listening pass |
 | O3 | Phase 20 perf | Low | One ~165 ms hitch when teleporting into dense woods (vegetation collision rebuild) | Perf probe, dense woods | A single stutter on a large jump | Probe max under 50 ms |
 | O4 | Phase 19 | Low | Field sheds are built after the crew navigation grid (workers path to the door point) | Code | Rare worker pathing at sheds | Nav test at shed doors |
 | O5 | Phase 20 perf | Low | ~1 GB static memory headless with the r2 island | Perf probe | Memory budget on 8 GB machines | Measure on the target machine |
+| O6 | Phase 20 perf | Medium | About 3,400 draw calls in camp and storm views | Software-render probe | Possible GPU-bound stutter on weaker PCs | Benchmark route on the owner's GPU; batch camp props if needed |
 
 **Format for future requests** (the same for additions):
 - Originating phase.

@@ -13,9 +13,12 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 - **Rare sleep interruptions** (24 kinds, many nights stay quiet):
   - a heavy blow on the door, something brushing the wall, a call outside, and more;
   - you are always safe in the camper, and you can go back to sleep right after.
+- **The forest entrance has a real gate now:** a galvanized tube gate standing open against the fence, with its chain. The night recordings and sounds about "the gate" use it.
+- **Prepared saves for testing** (in `prepared_saves/`, with a README): day 30 just before the deadline, day 3 just before the survey ship, and hunt night 35 just before the rescue. Copy one to save slot 2 and load it.
 - **Fixes:**
   - a late attack can no longer undo a successful escape;
-  - a crash during saving no longer loses your newest save.
+  - a crash during saving no longer loses your newest save;
+  - recording playback is no longer blocked by the camera's own housing, and the live-camera inset no longer covers the playback buttons.
 - **Verified:** this exact build launched on a clean Windows machine and a clean Linux machine. It booted, kept settings, started a 10,000-tree campaign with five employees, walked, saved and loaded.
 - **Review:** Preview → Tab → "Phase 20 …" (stage a recording, play an interruption, the release checklist).
 

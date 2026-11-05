@@ -193,7 +193,9 @@ func open_app(a: String) -> void:
 		c.queue_free()
 	var wall: CameraWall = Game.tv
 	_inset.texture = wall.composite.get_texture() if wall and wall.composite else null
-	_inset.visible = a != "Cameras" and wall != null and wall.powered
+	# No live inset over the Cameras app itself, nor over a recording (it
+	# would cover the playback controls and mix LIVE with PLAYBACK).
+	_inset.visible = a != "Cameras" and a != "Recordings" and wall != null and wall.powered
 	match a:
 		"Cameras":
 			_build_cameras()
@@ -534,6 +536,8 @@ func _process(_delta: float) -> void:
 	var wall: CameraWall = Game.tv
 	if _status and app == "Cameras" and wall:
 		_status.text = ("Focus: %s %s · LIVE · right-click or Wall (4) to go back" % [wall.cam_id(wall.focus_index), wall.cam_name(wall.focus_index)]) if wall.mode == "focus" else "Wall: four live cameras, one swaps every %s · click a feed to focus it%s" % ["(frozen)" if wall.interval <= 0.0 else "%d s" % int(wall.interval), " · mics muted" if wall.mic_muted else ""]
+	elif _status and app == "Recordings":
+		_status.text = "Recordings: saved camera bookmarks from nights you slept through · PLAYBACK, not live · %d saved" % (Game.night_recorder.clips.size() if Game.night_recorder else 0)
 
 
 func capture() -> Dictionary:

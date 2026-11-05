@@ -9,6 +9,15 @@ const FENCE_HALF := Vector2(22.5, 18.5)
 const FENCE_HEIGHT := 2.0
 const ENTRANCE_HALF_WIDTH := 6.5        # north opening (logging entrance)
 const BEACH_GATE_HALF_WIDTH := 1.8      # small south opening to the beach path
+## Phase 20: the forest-entrance gate is a real object. One galvanized tube
+## leaf hangs on the west post of the north opening and normally stands open,
+## folded flat against the inside of the fence (west of the opening), held by
+## a chain at its free end. Folded back it narrows nothing: the opening, the
+## truck bays/turning circle and the yard walkway are unchanged. Night
+## incidents ("the gate swings", "the chain moved") use this leaf and chain.
+const GATE_HINGE := Vector3(-ENTRANCE_HALF_WIDTH, 0.0, -FENCE_HALF.y + 0.18)
+const GATE_LEAF := Vector2(3.0, 1.7)    # leaf length (along -X when open), height
+const GATE_CLEARANCE := 0.1             # leaf bottom above the ground
 
 const CAMPER_POS := Vector3(-15.0, 0.0, 3.0)    # camper origin (unchanged since Phase 0)
 ## Phase 11: +25 % usable floor. Width 3.0 -> 3.26 m (+8.7 %), length
@@ -130,6 +139,11 @@ static func camper_usable_area() -> float:
 
 static func origin() -> Vector3:
 	return World.camp_origin()
+
+
+## Free end of the open gate leaf (where its chain is), camp-local, ground.
+static func gate_latch() -> Vector3:
+	return GATE_HINGE + Vector3(-GATE_LEAF.x, 0.0, 0.0)
 
 
 static func world(local: Vector3) -> Vector3:

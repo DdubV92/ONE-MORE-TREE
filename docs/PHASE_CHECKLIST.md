@@ -12,6 +12,9 @@ Full report: [PHASE20_RC_REPORT.md](PHASE20_RC_REPORT.md). Notes: [PHASE20_NOTES
 | Content audit (crew 1,796 / internet 5,946 / accounts 94 / voices 3,316 / terror 1,300+312+36 / cl 12 / recordings 36 / interruptions 24 / offshore 120) | ✅ | `tools/rc/content_audit.py` |
 | 36 missed-night recordings + Recordings app (isolated reconstruction) | ✅ | Built in Phase 20 (Phase 19 expansion gap); 36/36 staged |
 | 24 sleep interruptions (states, one per night, save-safe, one settlement) | ✅ | Built in Phase 20 |
+| Recording playback readable (no camera housing in frame; no live inset over controls) | ✅ fixed | Found in Phase 20 screenshots |
+| Real forest-entrance gate and chain used by the gate recordings, mark and interruption | ✅ fixed | `CampLayout.GATE_*`; stands open flush with the fence, so routes are unchanged |
+| Prepared tester saves (cutoff day 30, offshore day 3, extraction night 35), made and verified by playing them | ✅ | `tools/rc/make_fixture_saves.tscn`; shipped in `prepared_saves/` |
 | Stale attack after extraction | ✅ fixed | Was a defect (Phase 6) |
 | Interrupted save write recovery | ✅ fixed | Was a defect (save writer) |
 | Exported Windows build launched from a clean folder (CI windows-latest) | ✅ | Headless smoke route |

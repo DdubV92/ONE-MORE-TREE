@@ -51,8 +51,12 @@ static func point(name: String) -> Vector3:
 				q2.y = World.height_at(q2.x, q2.z) + 1.0
 				return q2
 	match base:
-		"gate":
-			return CampLayout.world(Vector3(0.0, 1.0, -CampLayout.FENCE_HALF.y))
+		"gate":          # the gate leaf's chained free end (Phase 20 real gate)
+			return CampLayout.world(CampLayout.gate_latch() + Vector3(0.0, 1.0, 0.0))
+		"gate_hinge":
+			return CampLayout.world(CampLayout.GATE_HINGE)
+		"gate_mid":
+			return CampLayout.world(CampLayout.GATE_HINGE + Vector3(-CampLayout.GATE_LEAF.x * 0.5, 1.0, 0.0))
 		"gate_out":
 			return CampLayout.world(Vector3(0.6, 0.0, -CampLayout.FENCE_HALF.y - 5.0))
 		"fence":
