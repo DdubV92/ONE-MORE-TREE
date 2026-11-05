@@ -186,9 +186,13 @@ jobs:
           $dir = Join-Path $env:RUNNER_TEMP "rc"
           $exe = Join-Path $dir "OneMoreTree.console.exe"
           if (-not (Test-Path $exe)) { $exe = Join-Path $dir "OneMoreTree.exe" }
-          & $exe --headless -- --rc-smoke *>&1 | Tee-Object -FilePath smoke.log | Select-String "RC_SMOKE"
+          $out = & $exe --headless -- --rc-smoke 2>&1 | Out-String
+          $code = $LASTEXITCODE
+          $out -split "`n" | Where-Object { $_ -match "RC_SMOKE|ERROR" } | ForEach-Object { Write-Output $_ }
           $rep = Join-Path $env:APPDATA "Godot\app_userdata\One More Tree\rc_smoke.json"
-          if (Test-Path $rep) { Get-Content $rep }
-          if (-not (Select-String -Path smoke.log -Pattern "RC_SMOKE PASS" -Quiet)) {
-            if (-not ((Test-Path $rep) -and ((Get-Content $rep -Raw) -match '"result": "PASS"'))) { exit 1 }
-          }
+          $json = if (Test-Path $rep) { Get-Content $rep -Raw } else { "" }
+          Write-Output "report file: $rep"
+          Write-Output $json
+          Write-Output "game exit code: $code"
+          $pass = ($out -match "RC_SMOKE PASS") -or ($json -match '"result": "PASS"')
+          if ($pass) { exit 0 } else { exit 1 }

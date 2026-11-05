@@ -6163,4 +6163,80 @@ func _p20_checks(world: IslandWorld) -> String:
 			return "major interruptions too close: %s" % str(majors)
 	if days.any(func(d: int) -> bool: return d < 4 or d == 30) or days.size() > 8:
 		return "interruption pacing wrong: %s" % str(days)
+	return await _p20_rc(world)
+
+
+## Phase 20 release-candidate checks: interrupted save with a ship mid-lap,
+## stale attack after extraction, save growth on repeated saves.
+func _p20_rc(world: IslandWorld) -> String:
+	var off: OffshoreSurvey = Game.offshore
+	off.preview_visit(3)
+	off.enabled = false
+	for k in 300:
+		off.step(1.0)
+	var path := "user://rc_test/slot_rc.json"
+	DirAccess.make_dir_recursive_absolute("user://rc_test")
+	for f in [path, path + ".bak", path + ".tmp"]:
+		if FileAccess.file_exists(f):
+			DirAccess.remove_absolute(f)
+	SaveService.path_override = path
+	var mk := func(tag: String) -> Dictionary:
+		return {"schema": SaveService.SCHEMA_VERSION, "marker": tag, "phase19": {"offshore": off.capture()}}
+	SaveService.write_file(path, mk.call("A"))
+	off.step(20.0)
+	SaveService.write_file(path, mk.call("B"))
+	off.step(20.0)
+	var c_state: Dictionary = mk.call("C")
+	var theta_c := float(c_state.phase19.offshore.visit.theta)
+	# Interrupt the next write exactly as write_file would be cut off: the
+	# backup is refreshed and the .tmp completed, then the old main removed,
+	# and the process "dies" before the rename.
+	DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(path + ".bak"))
+	var f2 := FileAccess.open(path + ".tmp", FileAccess.WRITE)
+	f2.store_string(JSON.stringify(c_state, "\t"))
+	f2.close()
+	DirAccess.remove_absolute(path)
+	var got := SaveService.load_campaign()
+	var rec_ok := str(got.get("marker", "")) == "C" and absf(float(got.phase19.offshore.visit.theta) - theta_c) < 1e-6
+	var summ := SaveService.slot_summary(SaveService.slot)
+	# A torn .tmp (crash during the write itself) -> the previous good save.
+	var f3 := FileAccess.open(path + ".tmp", FileAccess.WRITE)
+	f3.store_string("{\"schema\": 14, \"marker\": \"C\", \"phase19\": {")
+	f3.close()
+	var got2 := SaveService.load_campaign()
+	SaveService.path_override = ""
+	off.stop_preview()
+	p20_report["interrupted_write"] = {"recovered": str(got.get("marker", "")), "theta_ok": rec_ok, "torn_tmp_fallback": str(got2.get("marker", ""))}
+	if not rec_ok:
+		return "interrupted write did not recover the completed pending save (ship mid-lap)"
+	if str(got2.get("marker", "")) != "B":
+		return "torn write did not fall back to the previous good save"
+	# Stale attack after extraction commits.
+	var hunt := Game.hunt
+	hunt.mode = "escaped"
+	hunt.player_dead = false
+	hunt.on_kill(Game.player)
+	var stale_ok := hunt.mode == "escaped" and not hunt.player_dead
+	var w0: Worker = Game.crew.workers.values()[0]
+	hunt.mode = "rescue"
+	hunt.escaped.append(w0.id)
+	hunt.on_kill(w0)
+	var boarded_ok := not hunt.dead_workers.has(w0.id)
+	hunt.escaped.erase(w0.id)
+	hunt.mode = "none"
+	p20_report["stale_attack"] = {"player_after_escape": stale_ok, "boarded_worker": boarded_ok}
+	if not stale_ok or not boarded_ok:
+		return "a stale attack changed the outcome after extraction"
+	# Save growth: repeated saves of an unchanged world are the same size,
+	# and restore -> capture is stable for the Phase 19/20 blocks.
+	var s1 := JSON.stringify(SaveService.capture_state(world))
+	var s2 := JSON.stringify(SaveService.capture_state(world))
+	var st := SaveService.capture_state(world)
+	Game.night_recorder.restore_state(st.phase20.recordings)
+	Game.sleep_interrupts.restore_state(st.phase20.sleep)
+	var again := SaveService.capture_state(world)
+	var stable := JSON.stringify(st.phase20) == JSON.stringify(again.phase20)
+	p20_report["save_growth"] = {"bytes": s1.length(), "repeat_bytes": s2.length(), "phase20_stable": stable}
+	if absi(s1.length() - s2.length()) > 64 or not stable:
+		return "save grew on a repeat save or the Phase 20 block changed on reload"
 	return ""

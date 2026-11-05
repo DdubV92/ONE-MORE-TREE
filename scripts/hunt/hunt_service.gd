@@ -416,6 +416,13 @@ func speaker_gone(name_: String) -> bool:
 
 
 func on_kill(who: Node) -> void:
+	# Phase 20 fix: once extraction is committed (or the hunt is otherwise
+	# over), a stale attack callback cannot change the outcome; a worker who
+	# already reached the gangway is safe.
+	if mode in ["escaped", "stranded", "dead"] or player_dead:
+		return
+	if who is Worker and escaped.has((who as Worker).id):
+		return
 	if who == Game.player:
 		player_dead = true
 		mode = "dead"

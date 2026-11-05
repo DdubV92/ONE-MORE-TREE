@@ -27,9 +27,11 @@ static func slot_summary(n: int) -> Dictionary:
 	var path := slot_path(n)
 	if not FileAccess.file_exists(path) and n == 1 and FileAccess.file_exists(DEFAULT_PATH):
 		path = DEFAULT_PATH
-	if not FileAccess.file_exists(path):
+	if not FileAccess.file_exists(path) and not FileAccess.file_exists(path + ".tmp"):
 		return {}
 	var raw := read_file_raw(path)
+	if raw.is_empty() and FileAccess.file_exists(path + ".tmp"):
+		raw = read_file_raw(path + ".tmp")     # Phase 20: completed pending write
 	if raw.is_empty():
 		return {"corrupt": true, "has_backup": FileAccess.file_exists(path + ".bak")}
 	return summarize(raw, path)
@@ -264,11 +266,27 @@ static func load_campaign() -> Dictionary:
 		# The single pre-slot save becomes slot 1 (the old file is kept).
 		DirAccess.make_dir_recursive_absolute(save_path().get_base_dir())
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(DEFAULT_PATH), ProjectSettings.globalize_path(save_path()))
-	var data := read_file(save_path())
-	if data.is_empty() and FileAccess.file_exists(save_path() + ".bak"):
+	return read_best(save_path())
+
+
+## Phase 20: recovery after an interrupted write. A write stores the new
+## state completely in <path>.tmp and closes it BEFORE the old file is
+## removed and the .tmp renamed. If the game stopped in between, the newest
+## complete state is the .tmp: prefer main, then a complete .tmp, then the
+## previous good .bak. Nothing is deleted here.
+static func read_best(path: String) -> Dictionary:
+	var data := read_file(path)
+	if not data.is_empty():
+		return data
+	if FileAccess.file_exists(path + ".tmp"):
+		var t := read_file(path + ".tmp")
+		if not t.is_empty():
+			push_warning("SaveService: main save missing/unreadable, recovered the completed pending write")
+			return t
+	if FileAccess.file_exists(path + ".bak"):
 		push_warning("SaveService: main save unreadable, using the previous good backup")
-		data = read_file(save_path() + ".bak")
-	return data
+		return read_file(path + ".bak")
+	return {}
 
 
 static func read_file_raw(path: String) -> Dictionary:
