@@ -52,6 +52,27 @@ func setup(c: CrewService) -> void:
 
 func _on_warning(tid: int) -> void:
 	_warn_t[tid] = clock
+	# An urgent fall warning preempts ordinary chatter at once.
+	if not active.is_empty() and active.has("speaker"):
+		var sp: Worker = active.speaker
+		var idx: int = int(Game.vegetation.tree_index_by_id.get(tid, -1)) if Game.vegetation else -1
+		if is_instance_valid(sp) and idx >= 0 and World.tree_position(idx).distance_to(sp.global_position) < 30.0:
+			stats.dropped += 1
+			_stop_current()
+			active.clear()
+
+
+func _stop_current() -> void:
+	var sp: Variant = active.get("speaker")
+	if sp != null and is_instance_valid(sp):
+		SoundService.stop_speech(sp)
+		if (sp as Worker).body_char:
+			(sp as Worker).body_char.stop_mouth()
+
+
+static func _voices_muted() -> bool:
+	var i := AudioServer.get_bus_index("Characters")
+	return i < 0 or AudioServer.is_bus_mute(i) or AudioServer.get_bus_volume_db(i) < -60.0 or AudioServer.is_bus_mute(0)
 
 
 func _seed() -> int:
@@ -457,12 +478,14 @@ func _advance() -> void:
 				active.next_at = clock + 1.0
 				return
 		stats.dropped += 1
+		_stop_current()
 		active.clear()
 		return
 	active.paused_at = -1.0
 	var sp: Worker = q[0][1]
 	if eligible(ln, sp) not in ["", "cooldown"]:
 		stats.dropped += 1
+		_stop_current()
 		active.clear()
 		return
 	q.pop_front()
@@ -503,19 +526,32 @@ func _speak(id: String, sp: Worker, listeners: Array) -> void:
 		once[id] = true
 	else:
 		cooldown["l:" + id] = clock + float(CD.get(rep, CD.sometimes))
+	# Phase 18: the speaker's own voice profile; if a clip exists for this
+	# line and profile it plays from their head (Phase 15 source rules),
+	# its real length drives captions and turn timing, and the mouth moves
+	# with its envelope. A missing clip keeps the text presentation.
+	var prof := CrewBank.voice_of(sp.id)
+	var voiced := VoiceBank.has(prof, id)
 	var text := str(ln.text)
 	if text.contains("{listener}"):
 		var nm := "you"
-		if not listeners.is_empty():
+		if not listeners.is_empty() and not voiced:
 			nm = str((listeners[0] as Worker).emp.name).split(" ")[0]
-		text = text.replace("{listener}", nm)
+		text = text.replace("{listener}", nm)     # voiced clips say "you"
 	stats.lines += 1
-	# Phase 18 hook: a recorded clip (res://audio/voice/<voice>/<id>.ogg)
-	# plays from the speaker's mouth and its real length drives the turn
-	# timing; without one, text timing is used. None exist yet.
-	var clip := SoundService.speak(sp, {"id": id, "voice": CrewBank.voice_of(sp.id), "text": text, "priority": int(ln.get("prio", 3))})
-	if clip > 0.0 and not active.is_empty():
-		active["clip_s"] = clip
+	var clip := 0.0
+	if voiced:
+		var vi := VoiceBank.info(prof, id)
+		clip = SoundService.speak(sp, {"id": id, "voice": prof, "text": text, "priority": int(ln.get("prio", 3)), "db": float(VoiceBank.DB.get(str(vi.get("delivery", "calm")), -4.0))})
+		if clip > 0.0:
+			stats.voiced = int(stats.get("voiced", 0)) + 1
+			if sp.body_char:
+				sp.body_char.start_mouth(str(vi.get("envelope", "")), clip)
+			if not active.is_empty():
+				active["clip_s"] = clip
+				active["speaker"] = sp
+		else:
+			stats.voice_missing = int(stats.get("voice_missing", 0)) + 1
 	var heard := _player_hears(sp, "act:hide" in (ln.get("when", []) as Array))
 	if heard and Settings.get_v("subtitles") == false:
 		heard = false              # muted subtitles: still "said" (same game info elsewhere)
@@ -524,7 +560,10 @@ func _speak(id: String, sp: Worker, listeners: Array) -> void:
 		var to := ""
 		if not listeners.is_empty() and str(ln.get("to", "")) != "self":
 			to = " (to %s)" % ", ".join(PackedStringArray(listeners.map(func(m: Worker) -> String: return str(m.emp.name).split(" ")[0])))
-		crew.notice.emit("%s%s: \"%s\"" % [str(sp.emp.name).split(" ")[0], to, text], subtitle_seconds(ln))
+		var cap := subtitle_seconds(ln)
+		if clip > 0.0 and not _voices_muted():
+			cap = clip + 0.6            # synchronized with the actual clip
+		crew.notice.emit("%s%s: \"%s\"" % [str(sp.emp.name).split(" ")[0], to, text], cap)
 	history.append({"t": snappedf(clock, 0.1), "id": id, "by": sp.id, "to": listeners.map(func(m: Worker) -> String: return m.id), "heard": heard})
 	if history.size() > 60:
 		history.pop_front()
@@ -620,6 +659,14 @@ func boss_reply(w: Worker, ask: String) -> String:
 		cooldown["l:" + str(pk[0])] = clock + minf(float(CD.get(rep, CD.sometimes)), 300.0)
 	stats.boss += 1
 	history.append({"t": snappedf(clock, 0.1), "id": str(pk[0]), "by": w.id, "to": ["boss"], "heard": true})
+	var prof := CrewBank.voice_of(w.id)
+	if VoiceBank.has(prof, str(pk[0])):
+		SoundService.stop_speech(w)
+		var vi := VoiceBank.info(prof, str(pk[0]))
+		var clip := SoundService.speak(w, {"id": str(pk[0]), "voice": prof, "text": str(ln2.text), "priority": 4, "db": float(VoiceBank.DB.get(str(vi.get("delivery", "calm")), -4.0))})
+		if clip > 0.0 and w.body_char:
+			w.body_char.start_mouth(str(vi.get("envelope", "")), clip)
+		return str(ln2.text).replace("{listener}", "you")
 	return str(ln2.text).replace("{listener}", "boss")
 
 
@@ -660,6 +707,10 @@ func restore(d: Dictionary) -> void:
 		once[str(k)] = true
 	_seq = int(d.get("seq", 0))
 	history = (d.get("history", []) as Array).duplicate(true)
+	for w in (crew.workers.values() if crew else []):
+		SoundService.stop_speech(w)
+		if (w as Worker).body_char:
+			(w as Worker).body_char.stop_mouth()
 	active.clear()
 	_next_try = clock + 15.0
 	_next_callout = clock + 30.0

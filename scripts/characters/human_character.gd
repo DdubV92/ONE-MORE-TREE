@@ -1055,7 +1055,68 @@ signal step(side: int)
 var _walk_prev := -1.0
 
 
+# --------------------------------------------------------- Phase 18 speech
+
+## Mouth motion from a clip's 20 Hz amplitude envelope ("0".."9" per step):
+## the lip blob opens and the chin drops a little, smoothed, with quick
+## closure when the clip ends or is interrupted. Updated only within 30 m
+## of the camera (distant faces stay still: bounded cost).
+var _mouth_env := ""
+var _mouth_t := -1.0
+var _mouth_dur := 0.0
+var _mouth_open := 0.0
+var _mouth: Node3D
+var _chin: Node3D
+var _mouth_base := Vector3.ONE
+var _chin_base := Vector3.ZERO
+
+
+func start_mouth(envelope: String, duration: float) -> void:
+	if _mouth == null:
+		var head: Node3D = bones.get("Head")
+		if head == null:
+			return
+		_mouth = head.find_child("Mouth", true, false) as Node3D
+		_chin = head.find_child("Chin", true, false) as Node3D
+		if _mouth:
+			_mouth_base = _mouth.scale
+		if _chin:
+			_chin_base = _chin.position
+	_mouth_env = envelope
+	_mouth_dur = duration
+	_mouth_t = 0.0
+
+
+func stop_mouth() -> void:
+	_mouth_t = -1.0
+
+
+func speaking_mouth() -> bool:
+	return _mouth_t >= 0.0
+
+
+func _update_mouth(delta: float) -> void:
+	if _mouth == null:
+		return
+	var want := 0.0
+	if _mouth_t >= 0.0:
+		_mouth_t += delta
+		if _mouth_t >= _mouth_dur or _mouth_env == "":
+			_mouth_t = -1.0
+		else:
+			var i := clampi(int(_mouth_t * 20.0), 0, _mouth_env.length() - 1)
+			want = clampf(float(_mouth_env.unicode_at(i) - 48) / 9.0, 0.0, 1.0)
+	var cam := get_viewport().get_camera_3d() if get_viewport() else null
+	if cam and cam.global_position.distance_to(global_position) > 30.0 and _mouth_open < 0.01:
+		return
+	_mouth_open = move_toward(_mouth_open, want, delta * (14.0 if want > _mouth_open else 10.0))
+	_mouth.scale = Vector3(_mouth_base.x * (1.0 - 0.15 * _mouth_open), _mouth_base.y * (1.0 + 2.2 * _mouth_open), _mouth_base.z)
+	if _chin:
+		_chin.position = _chin_base - Vector3(0, 0.012 * _mouth_open, 0)
+
+
 func _process(delta: float) -> void:
+	_update_mouth(delta)
 	if action != "":
 		_action_left -= delta * playback_scale
 		if _action_left <= 0.0:

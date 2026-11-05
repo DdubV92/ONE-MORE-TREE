@@ -1,0 +1,23 @@
+{
+  "generator": "espeak-ng",
+  "generator_note": "eSpeak NG 1.51 (Ubuntu package espeak-ng 1.51+dfsg-12build1), formant synthesis, offline. GPL-3.0+ program; the generated audio is program output and carries no licence restriction. Voice data used: gmw/en* accents and the bundled !v variants (part of the same package). No recorded or cloned human voice.",
+  "preset": "p18-v2-16k",
+  "profiles": {
+    "marta": {"worker": "EMP-01", "voice": "en-gb-x-gbclan", "variant": "f4", "pitch": 40, "range": 42, "speed": 168, "gap": 3, "desc": "Brisk, dry Lancashire lead hand; low-mid pitch, clipped rhythm."},
+    "dale":  {"worker": "EMP-02", "voice": "en-gb", "variant": "m3", "pitch": 26, "range": 38, "speed": 148, "gap": 5, "desc": "Big, slow, warm; low pitch, long pauses before punchlines."},
+    "priya": {"worker": "EMP-03", "voice": "en-gb-x-rp", "variant": "f2", "pitch": 56, "range": 50, "speed": 160, "gap": 3, "desc": "Precise, calm, measured; clear RP diction."},
+    "tomas": {"worker": "EMP-04", "voice": "en-us", "variant": "m7", "pitch": 60, "range": 60, "speed": 176, "gap": 2, "desc": "Young, quick, apologetic; lighter male voice, quicker rhythm."},
+    "joan":  {"worker": "EMP-05", "voice": "en-gb-x-gbcwmd", "variant": "f3", "pitch": 44, "range": 58, "speed": 156, "gap": 4, "desc": "Warm, chatty, sardonic; West Midlands, wide melodic range."},
+    "crew_m": {"worker": "", "voice": "en-gb-scotland", "variant": "m2", "pitch": 35, "range": 45, "speed": 160, "gap": 4, "desc": "Generic replacement hire (male)."},
+    "crew_f": {"worker": "", "voice": "en-029", "variant": "f1", "pitch": 50, "range": 50, "speed": 160, "gap": 4, "desc": "Generic replacement hire (female)."}
+  },
+  "deliveries": {
+    "calm":       {"speed": 1.00, "pitch": 0,  "range": 0,   "amp": 100, "rms_db": -20.0},
+    "effort":     {"speed": 1.06, "pitch": 2,  "range": 5,   "amp": 100, "rms_db": -18.5},
+    "uneasy":     {"speed": 0.93, "pitch": -3, "range": -10, "amp": 90,  "rms_db": -21.5},
+    "frightened": {"speed": 1.10, "pitch": 8,  "range": 15,  "amp": 100, "rms_db": -19.0},
+    "whisper":    {"speed": 0.95, "pitch": 0,  "range": -15, "amp": 70,  "rms_db": -28.0, "variant": "whisper", "variant_f": "whisperf"}
+  },
+  "pronounce": {"Priya": "Preeya", "Abernathy": "Abbernathy", "Reyner": "Rayner", "Ostrow": "Osstroh", "Holm": "Hohm", "Gilliver": "Gilliver", "Ammet": "Ammet", "Lund": "Lunnd"},
+  "female": ["marta", "priya", "joan", "crew_f"]
+}

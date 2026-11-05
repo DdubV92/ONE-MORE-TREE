@@ -604,6 +604,34 @@ static func speak(actor: Node3D, line: Dictionary) -> float:
 	return st.get_length()
 
 
+## Phase 18: stop whatever `actor` is saying (interrupted turn, actor gone,
+## load). Returns how many voices stopped.
+static func stop_speech(actor: Node3D) -> int:
+	var s := instance()
+	if s == null:
+		return 0
+	var n := 0
+	for v in s.voices:
+		var vv := v as Voice
+		if vv.busy and vv.attach == actor and str(vv.event).begins_with("voice."):
+			vv.p.stop()
+			s._release(vv)
+			n += 1
+	return n
+
+
+## Phase 18: is `actor` speaking right now?
+static func speaking(actor: Node3D) -> bool:
+	var s := instance()
+	if s == null:
+		return false
+	for v in s.voices:
+		var vv := v as Voice
+		if vv.busy and vv.attach == actor and str(vv.event).begins_with("voice.") and vv.p.playing:
+			return true
+	return false
+
+
 # ------------------------------------------------------------------ replay
 
 ## Replays recorded world events through a local speaker (desk monitor):

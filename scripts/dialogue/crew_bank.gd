@@ -68,10 +68,14 @@ func line(id: String) -> Dictionary:
 	return lines.get(id, {})
 
 
-## Phase 18 voice key for a line spoken by `eid` (role lines use the
-## speaker's own voice profile).
+## Phase 18 voice profile of a worker id: the five starting workers have
+## their own; any replacement hire gets one of the two replacement profiles,
+## decided from the employee id (persistent: the same id always maps the
+## same way, so save/load never changes a voice).
 static func voice_of(eid: String) -> String:
-	return str(SPEAKER_VOICE.get(eid, "crew_generic"))
+	if SPEAKER_VOICE.has(eid):
+		return str(SPEAKER_VOICE[eid])
+	return "crew_f" if (hash("voice:" + eid) & 1) == 1 else "crew_m"
 
 
 func count_by(field: String) -> Dictionary:
