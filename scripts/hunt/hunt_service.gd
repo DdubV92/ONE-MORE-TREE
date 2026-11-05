@@ -176,6 +176,25 @@ func _process(delta: float) -> void:
 	if mode == "rescue":
 		_ship_step(delta)
 	_worker_awareness(delta)
+	_update_objective()
+
+
+## Phase 19: an intelligible survival objective while the hunt runs (never
+## overrides another objective such as finding the dog).
+func survival_objective() -> String:
+	if mode == "hunt":
+		var left := maxi(36 - hunt_day, 0)
+		return "Survive until the rescue ship at dawn on day 36 (%d %s to go). Hide where you aren't seen going in; if you're found, use the other way out." % [left, "dawn" if left == 1 else "dawns"]
+	if mode == "rescue":
+		return "The rescue ship is at the dock. Get there - everyone who reaches the gangway gets aboard."
+	return ""
+
+
+func _update_objective() -> void:
+	var o := survival_objective()
+	var cur := str(Game.objective)
+	if cur == "" or cur.begins_with("Survive until the rescue ship") or cur.begins_with("The rescue ship is at the dock"):
+		Game.objective = o
 
 
 func _on_dawn() -> void:
@@ -293,15 +312,20 @@ func expose(spot: HideSpot) -> void:
 ## Someone enters a hiding place. If the Foreman can see them right now,
 ## that is evidence about this exact spot.
 func on_enter_hide(who: Node3D, spot: HideSpot) -> void:
+	# Phase 19 fix: judge whether the entry is SEEN before the person counts
+	# as hidden (otherwise an indoor hide could never be seen being entered).
+	var seen := foreman != null and is_instance_valid(foreman) and foreman.state != "ARRIVAL" and foreman.can_see(who)
 	spot.occupant = who
 	hidden[who] = spot
 	exposed.erase(who)
-	if foreman and foreman.can_see(who):
+	if seen:
 		seen_entries[spot] = hunt_clock()
 		foreman.hear(spot.global_position, 999.0, "seen_entry", spot)
-	if spot.kind == "closet":
+	if spot.kind in ["closet", "shed", "dock_store"]:
 		hide_noise[spot] = hunt_clock()
-		noise(spot.global_position, 7.0, "closet", "human")
+		noise(spot.global_position, 7.0 if spot.kind != "dock_store" else 8.0, spot.kind, "human")
+	elif spot.kind == "thicket":
+		noise(spot.global_position, 5.0, "brush", "human")
 
 
 func on_exit_hide(who: Node3D, spot: HideSpot) -> void:
@@ -356,6 +380,11 @@ func route_to_spot(spot: HideSpot, from: Vector3) -> Array[Vector3]:
 			out = n.find_path(from, door)
 			out.append(b.global_transform * Vector3(-DockSite.BW + 0.3, 0, -0.75))
 			out.append(spot.approach)
+		_:
+			if spot.kind == "shed" and n != null and spot.has_meta("door_out"):
+				out = n.find_path(from, spot.get_meta("door_out"))
+				out.append(spot.get_meta("door_in"))
+				out.append(spot.approach)
 	return out
 
 

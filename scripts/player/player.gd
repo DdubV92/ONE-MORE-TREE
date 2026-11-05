@@ -485,6 +485,12 @@ func leave_hide() -> void:
 			cands.append(e)
 	if spot.exits.is_empty():
 		cands.append(spot.marker.global_position - fwd * 0.9)
+	# Phase 19: with several real ways out, take the one away from the hunter.
+	if spot.exits.size() > 1 and Game.hunt and Game.hunt.foreman and is_instance_valid(Game.hunt.foreman):
+		var fp := (Game.hunt.foreman as Node3D).global_position
+		var ex := spot.exits.duplicate()
+		ex.sort_custom(func(a: Vector3, b: Vector3) -> bool: return a.distance_to(fp) > b.distance_to(fp))
+		cands = ex + cands.filter(func(c: Vector3) -> bool: return not ex.has(c))
 	for c in cands:
 		if _stand_clear(c):
 			out = c

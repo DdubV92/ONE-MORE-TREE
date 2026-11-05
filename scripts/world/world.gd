@@ -170,6 +170,11 @@ func _ready() -> void:
 		add_child(cover)
 		cover.build(self)
 		Game.cover = cover
+		# Phase 19: thicket hides, far field sheds, the dock gear chest.
+		var sc := SurvivalCover.new()
+		sc.name = "SurvivalCoverService"
+		add_child(sc)
+		Game.survival_cover = sc
 	if ClassDB.class_exists("GroundCover") or ResourceLoader.exists("res://scripts/vegetation/ground_cover.gd"):
 		ground_cover = _timed("ground_cover", func() -> Node:
 			var g: Node3D = load("res://scripts/vegetation/ground_cover.gd").new()
@@ -253,6 +258,11 @@ func _build_crew_world() -> void:
 	add_child(dock_site)
 	dock_site.build(crew)
 	Game.dock_site = dock_site
+	# Phase 19: survival cover needs the crew nav grid (walkable exits) and
+	# the dock.
+	if Game.survival_cover:
+		Game.survival_cover.build(self)
+		Game.survival_cover.build_dock_store(self)
 	var t2 := Time.get_ticks_msec()
 	vehicles.build_world()
 	build_ms["drive_nav"] = Time.get_ticks_msec() - t2

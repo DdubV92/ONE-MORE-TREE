@@ -5350,6 +5350,10 @@ var p19_report := {}
 
 
 func _p19_checks(world: IslandWorld) -> String:
+	var ce := await _p19_cover()
+	print("P19 COVER ", JSON.stringify(p19_report.get("cover", {})))
+	if ce != "":
+		return ce
 	var off: OffshoreSurvey = Game.offshore
 	if off == null:
 		return "no offshore service"
@@ -5642,4 +5646,145 @@ func _p19_more(off: OffshoreSurvey, cap: Dictionary) -> String:
 			if VoiceBank.has(prof, id):
 				have += 1
 	p19_report["voice"] = {"mappings": maps, "recorded": have}
+	return ""
+
+
+func _p19_cover() -> String:
+	var sc: SurvivalCover = Game.survival_cover
+	if sc == null or not sc.built:
+		return "survival cover not built"
+	Game.hunt.build_hide_spots()
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var kinds := {}
+	for h in sc.hides:
+		kinds[h.kind] = int(kinds.get(h.kind, 0)) + 1
+	var rep := {"new_hides": kinds, "rejected": sc.rejected, "sheds": sc.sheds.size()}
+	p19_report["cover"] = rep
+	if int(kinds.get("thicket", 0)) < 12 or int(kinds.get("shed", 0)) < 1 or int(kinds.get("dock_store", 0)) != 1:
+		return "survival hides missing: %s" % str(kinds)
+	# Clearance of the occupant pose (new hides and the rock hides).
+	var bad := []
+	for h in sc.hides + (Game.cover.hides if Game.cover else []):
+		var why := sc.clearance(h)
+		if why != "":
+			bad.append("%s %s: %s" % [h.kind, h.name, why])
+	rep["clearance_failures"] = bad
+	for h in sc.hides:
+		if h.exits.size() < 2:
+			return "%s has no alternate way out" % h.name
+	if not bad.is_empty():
+		return "hide pose clips: %s" % str(bad.slice(0, 4))
+	# Region audit: sparse (no hide guaranteed within 30 m), varied, fair.
+	var au := sc.audit()
+	rep["audit"] = au
+	if float(au.largest_kind_share) > 0.6:
+		return "hides dominated by one kind (%.2f)" % float(au.largest_kind_share)
+	for rk in au.regions:
+		if float(au.regions[rk].hide_within_30m) > 0.5:
+			return "region %s has a hide within 30 m of most points" % rk
+	var far: Dictionary = au.regions.get("far logging (>350 m from camp)", {})
+	var trails: Dictionary = au.regions.get("travel routes (trails)", {})
+	if far.is_empty() or trails.is_empty() or float(far.hide_within_150m) < 0.5 or float(trails.hide_within_150m) < 0.5:
+		return "far areas / routes lack hide opportunity: far %s trails %s" % [str(far), str(trails)]
+	# Evidence-based hides with the real Foreman.
+	var hunt := Game.hunt
+	hunt.hunt_preview = true
+	hunt._spawn_foreman()
+	var fm: Foreman = hunt.foreman
+	await get_tree().physics_frame
+	fm.set_state("ROAM")
+	fm.grace = 0.0
+	var pl := Game.player as Player
+	var T: HideSpot = null
+	for h in sc.hides:
+		if h.kind == "thicket":
+			T = h
+			break
+	var ex0: Vector3 = T.exits[0]
+	pl.global_position = ex0 + Vector3(0, 0.1, 0)
+	# (a) unseen entry: the hunter far away facing elsewhere.
+	fm.global_position = T.global_position + Vector3(60, 0, 0)
+	fm.global_position.y = World.height_at(fm.global_position.x, fm.global_position.z)
+	fm.look_at(fm.global_position + Vector3(1, 0, 0), Vector3.UP)
+	fm.evidence.clear()
+	hunt.seen_entries.clear()
+	pl.hide_in(T)
+	await get_tree().physics_frame
+	var unseen_ok := not hunt.seen_entries.has(T) and hunt.is_hidden(pl)
+	var leak := false
+	for e in fm.evidence:
+		if (e.pos as Vector3).distance_to(T.global_position) < 5.0 or e.get("spot") == T:
+			leak = true
+	# (b) hunter 10 m away looking straight at the thicket: the brush hides.
+	var dir10 := (T.global_position - ex0)
+	dir10.y = 0
+	var seen_at := {}
+	for dist in [10.0, 3.0]:
+		var best := false
+		for k in 6:
+			var a := TAU * k / 6.0
+			var fp: Vector3 = T.global_position + Vector3(cos(a), 0, sin(a)) * float(dist)
+			fp.y = World.height_at(fp.x, fp.z)
+			fm.global_position = fp
+			fm.look_at(Vector3(T.eye.x, fp.y, T.eye.z), Vector3.UP)
+			if fm.can_see(pl):
+				best = true
+		seen_at[str(dist)] = best
+	rep["thicket_hide"] = {"unseen_entry_ok": unseen_ok, "position_leak": leak, "seen_from_10m_any_side": seen_at["10.0"], "seen_from_3m": seen_at["3.0"], "exits": T.exits.size()}
+	if not unseen_ok or leak:
+		return "unseen thicket entry leaked or failed"
+	if not bool(seen_at["3.0"]):
+		return "a hunter at 3 m does not find the thicket hider (cover would be invulnerability)"
+	# (c) alternate escape: leave by the way out away from the hunter.
+	fm.global_position = T.exits[0] + Vector3(0.5, 0, 0)
+	pl.leave_hide()
+	await get_tree().physics_frame
+	var out_d := pl.global_position.distance_to(fm.global_position)
+	rep["escape_exit_dist_from_hunter"] = snappedf(out_d, 0.1)
+	if out_d < T.exits[0].distance_to(fm.global_position) + 1.5:
+		return "left the thicket toward the hunter (no alternate escape used)"
+	# (d) seen entry: the hunter watches; that exact spot becomes evidence.
+	var shed: HideSpot = null
+	for h in sc.hides:
+		if h.kind == "shed":
+			shed = h
+	var door_in: Vector3 = shed.get_meta("door_in")
+	pl.global_position = door_in + Vector3(0, 0.1, 0)
+	var door_out: Vector3 = shed.get_meta("door_out")
+	var watch := door_out + (door_out - door_in).normalized() * 4.0
+	watch.y = World.height_at(watch.x, watch.z)
+	fm.global_position = watch
+	fm.look_at(Vector3(door_in.x, watch.y, door_in.z), Vector3.UP)
+	fm.evidence.clear()
+	hunt.seen_entries.clear()
+	var vis_before := fm.can_see(pl)
+	pl.hide_in(shed)
+	await get_tree().physics_frame
+	var ev_spot := fm.evidence.any(func(e: Dictionary) -> bool: return e.get("spot") == shed)
+	rep["shed_seen_entry"] = {"hunter_saw_entry": vis_before, "seen_entries": hunt.seen_entries.has(shed), "evidence_points_at_spot": ev_spot, "search_bonus": hunt.seen_entry_bonus(shed)}
+	pl.leave_hide()
+	await get_tree().physics_frame
+	if vis_before and (not hunt.seen_entries.has(shed) or not ev_spot):
+		return "a seen entry was not recorded as evidence for that spot"
+	if not vis_before:
+		return "test setup: hunter could not see the shed doorway"
+	# Dock dog immunity; unchanged five-day/night extraction; objective.
+	if Game.dog and fm._humans().has(Game.dog):
+		return "the dog is a hunt target"
+	if HuntService.FIRST_DAY != 31 or HuntService.LAST_DAY != 35 or HuntService.CYCLE != 1500.0:
+		return "five-day hunt timing changed"
+	hunt.mode = "hunt"
+	hunt.hunt_day = 33
+	Game.objective = ""
+	hunt._update_objective()
+	rep["objective"] = Game.objective
+	hunt.mode = "none"
+	Game.objective = ""
+	if not str(rep["objective"]).contains("dawn on day 36"):
+		return "survival objective unclear"
+	fm.queue_free()
+	hunt.foreman = null
+	hunt.hunt_preview = false
+	await get_tree().physics_frame
 	return ""

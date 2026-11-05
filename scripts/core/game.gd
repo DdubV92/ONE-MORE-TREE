@@ -31,6 +31,7 @@ var sound: SoundService              # Phase 15 sound-event service
 var rest: RestService                # Phase 16 player restedness
 var feed: FeedService                # Phase 17 fictional internet (camper computer)
 var offshore: OffshoreSurvey         # Phase 19 offshore survey visits (ambient)
+var survival_cover: SurvivalCover    # Phase 19 extra hides + region audit
 var trees: TreeService
 var timber: TimberService
 var yard: YardService                # Phase 13 logging yard

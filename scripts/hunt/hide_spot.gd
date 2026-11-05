@@ -9,6 +9,7 @@ extends StaticBody3D
 
 var kind := "under_bed"       # under_bed / closet / under_desk / behind_shelves / under_dock
                               # Phase 12: rock_recess / rock_gap (island r2 formations)
+                              # Phase 19: thicket / shed / dock_store (SurvivalCover)
 var building := ""            # camper / cabin / utility / dock / ""
 var marker: Node3D
 var occupant: Node3D
@@ -33,9 +34,11 @@ static func make(m: Node3D, kind_: String, building_: String) -> HideSpot:
 	h.collision_mask = 0
 	var cs := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
-	bs.size = Vector3(1.0, 0.5, 1.0) if kind_ in ["under_bed", "under_dock"] else (Vector3(1.0, 1.1, 1.0) if kind_.begins_with("rock_") else Vector3(0.7, 1.5, 0.7))
+	var low := kind_ in ["under_bed", "under_dock", "dock_store"]
+	var mid := kind_.begins_with("rock_") or kind_ in ["thicket", "shed"]
+	bs.size = Vector3(1.0, 0.5, 1.0) if low else (Vector3(1.0, 1.1, 1.0) if mid else Vector3(0.7, 1.5, 0.7))
 	cs.shape = bs
-	cs.position = Vector3(0, 0.25 if kind_ in ["under_bed", "under_dock"] else (0.55 if kind_.begins_with("rock_") else 0.8), 0)
+	cs.position = Vector3(0, 0.25 if low else (0.55 if mid else 0.8), 0)
 	h.add_child(cs)
 	m.add_child(h)
 	h.add_to_group("hide_spot")
@@ -85,6 +88,12 @@ func get_interact_text() -> String:
 		return "Crouch into the rock recess (one way out)"
 	if kind == "rock_gap":
 		return "Squeeze into the gap between the rocks"
+	if kind == "thicket":
+		return "Push into the thicket and crouch (%d ways out)" % maxi(exits.size(), 1)
+	if kind == "shed":
+		return "Hide behind the bench in the shed (door creaks; back hatch)"
+	if kind == "dock_store":
+		return "Climb into the gear chest (the lid knocks)"
 	return {"under_bed": "Hide under the bed", "closet": "Hide in the closet", "under_desk": "Hide under the desk", "behind_shelves": "Hide behind the shelves", "under_dock": "Hide under the dock"}.get(kind, "Hide")
 
 

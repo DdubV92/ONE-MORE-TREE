@@ -208,7 +208,7 @@ func can_see(who: Node3D) -> bool:
 		# Phase 12: rock hides conceal by geometry - the hunter sees the
 		# crouched eye if its ray reaches it (e.g. through the opening).
 		var spot: HideSpot = Game.hunt.hidden.get(who)
-		if spot == null or not spot.kind.begins_with("rock_"):
+		if spot == null or not (spot.kind.begins_with("rock_") or spot.kind == "thicket"):
 			return false
 		tp = spot.eye
 	var head := _head()
