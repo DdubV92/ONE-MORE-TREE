@@ -78,11 +78,15 @@ Counts below come from the parsed data files (`tools/content/manifest.py`). They
 
 ## The camper internet
 
-- **The bank.** The fictional internet (`data/feed/*.json`, accounts in `data/feed/accounts.json`) holds **__FEED__ authored units** in 11 day-range batches. Every unit is one substantive email, news paragraph or live update, forum post, advisory or archive entry.
+- **The bank.** The fictional internet (`data/feed/*.json`, accounts in `data/feed/accounts.json`) holds **5,946 authored units** in 11 day-range batches. Every unit is one substantive email, news paragraph or live update, forum post, advisory or archive entry.
 
   | Kind | Units | Minimum |
   |---|---:|---:|
-  __KINDS__
+  | Forum | 3,423 | 3,200 |
+  | News | 981 | 900 |
+  | Mail | 647 | 600 |
+  | Advisory | 439 | 400 |
+  | Archive | 456 | 400 |
 
   - **Accounts:** **94 recurring fictional accounts**, each with an occupation, region, time zone, posting window, voice, knowledge, claims, relations and a trajectory. They include moderators, skeptics, night workers in six other time zones, Dellow Court residents, harbour and ferry crew, linemen, recordists, historians, and the boss's mailbox cast.
   - **Validator** (`tools/content/validate_feed.py`):
@@ -104,7 +108,7 @@ Counts below come from the parsed data files (`tools/content/manifest.py`). They
   - refreshing never rerolls anything;
   - edits apply after their delay, and removed posts show a moderation note.
 - **Simulation results:**
-  - **Calendar** (`tools/content/feed_calendar.py`): __CAL__.
+  - **Calendar** (`tools/content/feed_calendar.py`): all 5,946 units are reachable on some path, and none is left unpublished after day 35. The default campaign (one side of every alternative, no state flags, cl01 falling back) publishes 5,567, with at most 214 on any day (cap 240). Days 1–30 average about 185 units; the survival days 31–35 carry 280 (`if:hunt`).
   - **Unit test:** early sleep and live late-night reading end each day with the same published set (observed). A mid-campaign save/load republishes nothing. Repeated refresh adds nothing. No day exceeds the cap, no reply appears before its parent, and no quote spoils an unpublished post.
 - **Reading** (camper computer: **Mail, News, Forums, Archives**; Recordings stays a labelled Phase 19 placeholder):
   - unread counts on the app buttons;
@@ -123,7 +127,7 @@ Counts below come from the parsed data files (`tools/content/manifest.py`). They
 | Hook | Status |
 |---|---|
 | cl01, the window warning | **Implemented.** |
-| cl02 – cl12 | Authored once each (__HOOKS__). Recorded as opportunities through `TerrorDirector.computer_hint()` for the Phase 19 catalog; they never trigger anything by themselves. |
+| cl02 – cl12 | Authored once each (cl02 day 5, cl03 and cl12 days 7–9, cl04 day 11, cl05 days 15 and 24, cl06 day 18, cl10 day 17, cl07 and cl09 day 21, cl08 and cl11 day 26). Recorded as opportunities through `TerrorDirector.computer_hint()` for the Phase 19 catalog; they never trigger anything by themselves. |
 
 How cl01 works:
 - The Lamp Hours thread turns over days 22–24 on one campaign side (`mx:window:a`). The other side ends ordinarily.
