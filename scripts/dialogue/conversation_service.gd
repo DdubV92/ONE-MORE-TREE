@@ -428,7 +428,7 @@ func _begin(id: String, speaker: Worker, members: Array, gkey: String) -> void:
 
 
 func _advance() -> void:
-	if clock < float(active.next_at):
+	if active.is_empty() or clock < float(active.get("next_at", 0.0)):
 		return
 	# Every participant still here, able and not interrupted?
 	var members: Array = active.members
