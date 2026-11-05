@@ -716,7 +716,11 @@ func open_talk(w: Worker) -> void:
 	var p: PanelContainer = f[0]
 	p.process_mode = Node.PROCESS_MODE_ALWAYS
 	var v: VBoxContainer = f[1]
-	var reply := _text(v, "\"%s\"" % w.say("greet"), 17)
+	var talk: ConversationService = Game.crew.talk
+	var authored := func(ask: String, fallback: Callable) -> String:
+		var t := talk.boss_reply(w, ask) if talk else ""
+		return t if t != "" else str(fallback.call())
+	var reply := _text(v, "\"%s\"" % authored.call("greet", func() -> String: return w.say("greet")), 17)
 	var m := w.mind
 	_text(v, "%s · %s · %s" % [w.activity_words(), m.state_word(), ", ".join(PackedStringArray(m.traits)).replace("_", " ")], 14, UITheme.MUTED)
 	var opts := GridContainer.new()
@@ -729,26 +733,43 @@ func open_talk(w: Worker) -> void:
 		opts.add_child(UITheme.button(label, cb, 270))
 	add.call("What are you working on?", func() -> void:
 		var topic: String = {"fell": "work_felling", "buck": "work_processing", "pick": "work_hauling", "deliver": "work_hauling", "deliver_deck": "work_hauling", "yard_take": "work_hauling", "yard_drop": "work_hauling", "home": "work_home", "follow": "work_follow"}.get(w.activity, "work_idle")
-		answer.call(w.say(topic, false, {"target": "this one"})))
+		answer.call(authored.call("work", func() -> String: return w.say(topic, false, {"target": "this one"}))))
+	add.call("Anything holding you up?", func() -> void:
+		var cause := w.idle_reason if w.idle_reason not in ["", "pause"] else Game.crew.idle_cause(w)
+		var fb: String = {"yard_full": "The yard's full. Somebody needs to move logs onto the decks or the fire.", "missing_tool": "I've got no axe I can use for this.", "blocked": "Couldn't find a way through over there.", "fear": "I'm not going out there right now.", "no_task": "Nothing near me I can do. Point me somewhere?"}.get(cause, "No, all good.")
+		answer.call(authored.call("blocker", func() -> String: return fb)))
+	add.call("Good work today", func() -> void:
+		var ops := Game.crew.progression.opportunities(w.id)
+		if ops.is_empty():
+			answer.call(authored.call("chat", func() -> String: return w.say("greet")))
+			hud.show_message("Nothing specific to thank them for yet (thanks are for a real piece of work).", 4.0)
+			return
+		var res := Game.crew.progression.praise(w.id, str(ops[ops.size() - 1].key), w.mind)
+		answer.call(authored.call("thanks", func() -> String: return "Thanks, boss. Appreciate it."))
+		hud.show_message("You thanked %s for: %s." % [w.emp.name, str(res.get("what", ""))] if bool(res.ok) else str(res.reason), 4.0))
 	add.call("How's your axe?", func() -> void:
 		var tier := w.axe_tier()
 		answer.call(w.say("equipment_small" if tier == "small" else "equipment", false, {"axe": tier if tier != "" else "no"})))
 	add.call("About your wages", func() -> void:
 		var owed := svc.payroll.owed_for(w.id)
-		answer.call(w.say("wages_owed" if owed > 0 else "wages_ok", false, {"owed": Money.format_cents(owed), "due": svc.payroll.due_day_for(w.id)})))
+		answer.call(authored.call("wages", func() -> String: return w.say("wages_owed" if owed > 0 else "wages_ok", false, {"owed": Money.format_cents(owed), "due": svc.payroll.due_day_for(w.id)}))))
 	add.call("Noticed anything strange?", func() -> void:
 		var mem := m.strongest_memory()
 		var where := "the trees"
 		if not mem.is_empty() and (mem.pos as Array).size() == 2:
 			where = _where(Vector3(mem.pos[0], 0, mem.pos[1]))
-		if mem.is_empty():
-			answer.call(w.say("strange_none"))
-		elif str(mem.modality) == "voice":
-			answer.call(w.say("strange_voice", false, {"name": str(mem.get("imitated_name", "someone"))}))
-		elif str(mem.status) == "confirmed":
-			answer.call(w.say("strange_confirmed", false, {"where": where}))
-		else:
-			answer.call(w.say("strange_uncertain", false, {"where": where})))
+		# Phase 17: an authored line that fits what THIS worker knows
+		# (firsthand / told / nothing); the older line names the place.
+		var legacy := func() -> String:
+			if mem.is_empty():
+				return w.say("strange_none")
+			elif str(mem.modality) == "voice":
+				return w.say("strange_voice", false, {"name": str(mem.get("imitated_name", "someone"))})
+			elif str(mem.status) == "confirmed":
+				return w.say("strange_confirmed", false, {"where": where})
+			return w.say("strange_uncertain", false, {"where": where})
+		var t: String = authored.call("strange", legacy) if mem.is_empty() or _roll_half() else str(legacy.call())
+		answer.call(t))
 	add.call("I saw something out there.", func() -> void:
 		var r := Game.crew.boss_report(w)
 		if r == "corroborated":
@@ -803,6 +824,14 @@ func _spare_axe_for(w: Worker) -> Dictionary:
 		if Equipment.TIERS.find(str(a.tier)) > Equipment.TIERS.find(mine):
 			return a
 	return {}
+
+
+var _half := false
+
+
+func _roll_half() -> bool:
+	_half = not _half
+	return _half
 
 
 func _where(p: Vector3) -> String:

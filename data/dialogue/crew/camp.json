@@ -1,0 +1,1326 @@
+{
+ "category": "camp",
+ "batch": "camp-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "camp.marta.001",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk",
+    "act:rest"
+   ],
+   "text": "Boots off, gloves on the rail. Same order every night. It's how you find them in the morning."
+  },
+  {
+   "id": "camp.marta.002",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Dinner, sharpen, bed. In that order. Don't let anyone talk you into cards first."
+  },
+  {
+   "id": "camp.marta.003",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "dog_near",
+    "where:camp"
+   ],
+   "text": "Biscuit. Sit. Good. No, that's mine. Go and find Dale."
+  },
+  {
+   "id": "camp.marta.004",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Somebody left a mug in the sink with the teabag still in it. I'm counting mugs now."
+  },
+  {
+   "id": "camp.marta.005",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Joan's put my name on the high-score board. I've never touched the machine. I'm not starting now."
+  },
+  {
+   "id": "camp.marta.006",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:dusk",
+    "weather:dry"
+   ],
+   "text": "Shirts on the line before dark, or they'll smell of smoke all week."
+  },
+  {
+   "id": "camp.marta.007",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "camp.joan.014",
+    "camp.dale.014"
+   ],
+   "text": "Cards tonight? One hand. Then I'm asleep, I mean it."
+  },
+  {
+   "id": "camp.marta.008",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:rest",
+    "where:camp",
+    "phase:day"
+   ],
+   "text": "Ten-minute lunch. Sandwich, water, sharpen. The next tree won't wait."
+  },
+  {
+   "id": "camp.marta.009",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Top bunk's mine. Has been since the first night. I like being able to see the whole room."
+  },
+  {
+   "id": "camp.marta.010",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Dale. It's always Dale. Earplugs are in the drawer by the sink."
+  },
+  {
+   "id": "camp.marta.011",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "phase:dusk"
+   ],
+   "text": "I write the day's count in the back of my diary. That's my letter home, near enough."
+  },
+  {
+   "id": "camp.marta.012",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Kettle's on. Don't touch the big pan. Joan's got plans for it."
+  },
+  {
+   "id": "camp.marta.013",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Tell her you're doing fine. You are. Tell her that bit twice."
+  },
+  {
+   "id": "camp.marta.014",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "You've already eaten, Dale. I watched you."
+  },
+  {
+   "id": "camp.marta.015",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "dog_near",
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Who let the dog on the bunk? Off. Off. Fine. Five minutes, and I'm counting."
+  },
+  {
+   "id": "camp.marta.016",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Everyone in? I'm counting heads before I sit down."
+  },
+  {
+   "id": "camp.marta.017",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Evening, chief. Kettle's on in the cabin if you want one. Don't tell Joan I offered."
+  },
+  {
+   "id": "camp.marta.018",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Fine. Same as always. Why, what did Dale do?"
+  },
+  {
+   "id": "camp.marta.019",
+   "cat": "camp",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Shower gives you two minutes of hot water. I take one. The rest of you can fight over the other."
+  },
+  {
+   "id": "camp.dale.001",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "resp": [
+    "camp.marta.014",
+    "camp.joan.011"
+   ],
+   "text": "What's for dinner? Don't tell me. No, tell me. No, surprise me. Tell me."
+  },
+  {
+   "id": "camp.dale.002",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Biscuit, mate. Never touched an axe, and still the most popular worker on the island."
+  },
+  {
+   "id": "camp.dale.003",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "dog_near",
+    "where:cabin"
+   ],
+   "text": "Biscuit's had half my sausage. To be fair, the other half was always going to Biscuit as well."
+  },
+  {
+   "id": "camp.dale.004",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "camp.joan.012",
+    "camp.tomas.011",
+    "camp.priya.017"
+   ],
+   "text": "I'm doing the eggs tonight. Nobody panic."
+  },
+  {
+   "id": "camp.dale.005",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Third on the high-score board, mate. Bronze. I'll take bronze. Bronze is a metal."
+  },
+  {
+   "id": "camp.dale.006",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Deal me in. I've got a good feeling. Same feeling I always have, mind, and I always lose."
+  },
+  {
+   "id": "camp.dale.007",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "I don't snore. I breathe with enthusiasm."
+  },
+  {
+   "id": "camp.dale.008",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "mode:contract"
+   ],
+   "text": "One clean shirt left, mate. Saving it for the boat. Want to look my best for the boat."
+  },
+  {
+   "id": "camp.dale.009",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "phase:night"
+   ],
+   "text": "This bunk's built for someone half my size. My feet sleep in the hallway."
+  },
+  {
+   "id": "camp.dale.010",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Who finished the biscuits? The food ones. Not the dog. Obviously not the dog."
+  },
+  {
+   "id": "camp.dale.011",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:rest",
+    "where:camp",
+    "phase:day"
+   ],
+   "text": "Break. I've got a sandwich in each pocket. Don't ask how long they've been in there."
+  },
+  {
+   "id": "camp.dale.012",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Tell Ana big Dale says hello. And tell her the food's terrible, except Joan's."
+  },
+  {
+   "id": "camp.dale.013",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Evening, mate. You eaten? You should eat. There's enough in that pot for a small army."
+  },
+  {
+   "id": "camp.dale.014",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "One hand's not a card game, that's a handshake."
+  },
+  {
+   "id": "camp.dale.015",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Bathroom's occupied again. Fine. I'll wash in the kettle."
+  },
+  {
+   "id": "camp.dale.016",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Like a log, mate. A big wet log in a very small bunk."
+  },
+  {
+   "id": "camp.dale.017",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "camp.priya.009",
+    "camp.tomas.012",
+    "camp.joan.018"
+   ],
+   "text": "Arcade tonight. Loser does the washing up. I'm feeling lucky."
+  },
+  {
+   "id": "camp.dale.018",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "dog_near",
+    "where:cabin"
+   ],
+   "text": "Biscuit, mate, that's my boot. You've already had one boot this week."
+  },
+  {
+   "id": "camp.dale.019",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:home",
+    "phase:dusk"
+   ],
+   "text": "Nearly home. I can smell dinner from here. Or I'm imagining it very strongly."
+  },
+  {
+   "id": "camp.dale.020",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "You never lose because you count, mate, and I still can't prove it."
+  },
+  {
+   "id": "camp.dale.021",
+   "cat": "camp",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Does it matter? It's hot, it's stew, and it's mine."
+  },
+  {
+   "id": "camp.priya.001",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk",
+    "act:rest"
+   ],
+   "text": "Notebook time. Today's trees, today's weather. It's oddly calming."
+  },
+  {
+   "id": "camp.priya.002",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Joan holds three places on the high-score board and I hold one. I'm working on the ratio."
+  },
+  {
+   "id": "camp.priya.003",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Dale holds his cards closer when he's got a good hand. I've stopped telling him."
+  },
+  {
+   "id": "camp.priya.004",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Biscuit always sits next to whoever eats slowest. It's a strategy. A good one."
+  },
+  {
+   "id": "camp.priya.005",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk",
+    "day>=3"
+   ],
+   "resp": [
+    "camp.joan.010",
+    "camp.dale.021"
+   ],
+   "text": "Is tonight's stew a new stew, or yesterday's stew continuing?"
+  },
+  {
+   "id": "camp.priya.006",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "weather:dry"
+   ],
+   "text": "Laundry's dry on the line. It smells of woodsmoke, but it's dry."
+  },
+  {
+   "id": "camp.priya.007",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "The bathroom tap drips about once a second. I'll replace the washer tomorrow."
+  },
+  {
+   "id": "camp.priya.008",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Measurably, it's Dale. Though Marta counts in her sleep."
+  },
+  {
+   "id": "camp.priya.009",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "I've been watching the patterns on the second machine. I'd take that bet."
+  },
+  {
+   "id": "camp.priya.010",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Evening, boss. The cabin kettle's getting slower every day. I think it's scale. I've been timing it."
+  },
+  {
+   "id": "camp.priya.011",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest"
+   ],
+   "text": "I write my mother a page a day. She'll get them all at once when the boat comes. She'll love that."
+  },
+  {
+   "id": "camp.priya.012",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:rest",
+    "where:camp",
+    "phase:day"
+   ],
+   "text": "Quick break. Tea, ten minutes, and nobody ask what's in the notebook."
+  },
+  {
+   "id": "camp.priya.013",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Seven hours, roughly. The bunk below mine creaked twice."
+  },
+  {
+   "id": "camp.priya.014",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "The kitchen shelf's labelled now. Please put the salt back where it says salt."
+  },
+  {
+   "id": "camp.priya.015",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "phase:night"
+   ],
+   "text": "It's colder by the window. I've moved my sleeping bag to the other end. Small improvement."
+  },
+  {
+   "id": "camp.priya.016",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "The end of the contract, as far as I know. I'm crossing the days off, if you want to check."
+  },
+  {
+   "id": "camp.priya.017",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Eggs need about three minutes less than you give them. Just as a data point."
+  },
+  {
+   "id": "camp.priya.018",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "The left arcade machine has a sticky jump button. That might explain the board."
+  },
+  {
+   "id": "camp.priya.019",
+   "cat": "camp",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "dog_near",
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Biscuit's been walking the fence line again. Mostly for dropped crusts, as far as I can tell."
+  },
+  {
+   "id": "camp.tomas.001",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "day>=10"
+   ],
+   "text": "Writing to Ana again. That's a lot of messages waiting for the boat now. She'll get them all at once."
+  },
+  {
+   "id": "camp.tomas.002",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "mode:contract"
+   ],
+   "resp": [
+    "camp.priya.016",
+    "camp.joan.020"
+   ],
+   "text": "Does anyone know exactly when the boat comes? For the messages, I mean."
+  },
+  {
+   "id": "camp.tomas.003",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Biscuit's sitting on my foot. Is that okay? I don't want to move. It feels rude."
+  },
+  {
+   "id": "camp.tomas.004",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "I beat my own high score. Not Joan's. Just mine. That still counts, right?"
+  },
+  {
+   "id": "camp.tomas.005",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Joan's teaching me cards. I've lost every hand, but I'm getting very good at shuffling."
+  },
+  {
+   "id": "camp.tomas.006",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:night",
+    "act:rest"
+   ],
+   "text": "Is it okay if I put the pillow over my head? It's not personal. It's just the snoring."
+  },
+  {
+   "id": "camp.tomas.007",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Sorry, is anyone in the bathroom? I'll wait. Sorry. No rush."
+  },
+  {
+   "id": "camp.tomas.008",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "I made toast for everyone. I burned two. I hid them. Sorry."
+  },
+  {
+   "id": "camp.tomas.009",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Is it dusk already? Okay. Good. I mean, good that we're in."
+  },
+  {
+   "id": "camp.tomas.010",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:camp"
+   ],
+   "text": "My work shirt's on the line. It still smells like the truck. I don't mind, honestly."
+  },
+  {
+   "id": "camp.tomas.011",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "I'll eat them. I like crunchy eggs. Is that okay?"
+  },
+  {
+   "id": "camp.tomas.012",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Can I just watch? I'm not good at it. I'll dry the dishes, though."
+  },
+  {
+   "id": "camp.tomas.013",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp"
+   ],
+   "text": "Evening, boss. I wrote to Ana about you. Good things. Is that okay?"
+  },
+  {
+   "id": "camp.tomas.014",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Okay, I think. I dreamt about the truck. It was a nice dream, actually."
+  },
+  {
+   "id": "camp.tomas.015",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:rest",
+    "phase:day"
+   ],
+   "text": "Ten minutes in the shade. I'm keeping my boots on. If they come off, they're not going back on."
+  },
+  {
+   "id": "camp.tomas.016",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Thank you for dinner. Sorry, I say it every night. It's just always good."
+  },
+  {
+   "id": "camp.tomas.017",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "camp.marta.013",
+    "camp.dale.012",
+    "camp.joan.013"
+   ],
+   "text": "What should I tell Ana about this place? I don't want her to worry."
+  },
+  {
+   "id": "camp.tomas.018",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "phase:night"
+   ],
+   "text": "The bunk creaks every time I turn over. I'm trying not to turn over. It's going badly."
+  },
+  {
+   "id": "camp.tomas.019",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "dog_near",
+    "where:cabin",
+    "phase:night"
+   ],
+   "text": "Biscuit's asleep by the door again. I like it when Biscuit sleeps in here."
+  },
+  {
+   "id": "camp.tomas.020",
+   "cat": "camp",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Okay, but go easy. I still don't understand trumps."
+  },
+  {
+   "id": "camp.joan.001",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:camp",
+    "phase:day",
+    "day>=2"
+   ],
+   "resp": [
+    "camp.priya.013",
+    "camp.dale.016",
+    "camp.tomas.014",
+    "camp.marta.018"
+   ],
+   "text": "Morning, {listener}. How'd you sleep? Honestly, mind, not the polite version."
+  },
+  {
+   "id": "camp.joan.002",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Dinner's up! Stew, bread, and a bit of something green so nobody gets scurvy."
+  },
+  {
+   "id": "camp.joan.003",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "camp.dale.020",
+    "camp.tomas.020"
+   ],
+   "text": "Cards, sunshine? Loser does the dishes, and I never lose."
+  },
+  {
+   "id": "camp.joan.004",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "High-score board's been updated. I'm still on top. Some of you need to practise."
+  },
+  {
+   "id": "camp.joan.005",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk",
+    "day>=2"
+   ],
+   "resp": [
+    "camp.dale.007",
+    "camp.priya.008",
+    "camp.marta.010"
+   ],
+   "text": "Right, who was snoring last night? Own up, or I'm sending Biscuit in to investigate."
+  },
+  {
+   "id": "camp.joan.006",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Biscuit, love, you've had dinner. I watched you have dinner. Twice."
+  },
+  {
+   "id": "camp.joan.007",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Laundry rota's on the fridge. If your name's next to towels, it's your turn, whoever you are."
+  },
+  {
+   "id": "camp.joan.008",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Who used the big pan and put it back wet? I'm not angry. I'm just going to find out."
+  },
+  {
+   "id": "camp.joan.009",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest"
+   ],
+   "text": "Writing my sister a letter she'll get in a month. She'll think I've gone soft. Maybe I have."
+  },
+  {
+   "id": "camp.joan.010",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "It's a living tradition, love. Eat up."
+  },
+  {
+   "id": "camp.joan.011",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Stew, love. It's always stew. You ask every single night."
+  },
+  {
+   "id": "camp.joan.012",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Somebody panic. Last time your eggs bounced."
+  },
+  {
+   "id": "camp.joan.013",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Tell her you've got a whole cabin of aunties and uncles now, sunshine. And one dog."
+  },
+  {
+   "id": "camp.joan.014",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "One hand, she says. Last time it was seven, and you won five of them."
+  },
+  {
+   "id": "camp.joan.015",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Evening, boss-love. There's a plate going spare in the cabin. Don't let Dale see you take it."
+  },
+  {
+   "id": "camp.joan.016",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "act:rest",
+    "where:camp",
+    "phase:day"
+   ],
+   "text": "Tea break, loves. Sit down before you fall down."
+  },
+  {
+   "id": "camp.joan.017",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Bathroom's free. Mind the step, and the spider. The spider's called Gerald. Be nice to Gerald."
+  },
+  {
+   "id": "camp.joan.018",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "Lucky, he says. I've got last night's scores written down, sunshine."
+  },
+  {
+   "id": "camp.joan.019",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk",
+    "act:rest"
+   ],
+   "text": "I ran a bar for twelve years, {listener}. Same as this, really. Too many tired people, not enough chairs, and somebody always wants the last biscuit. The food kind. I don't let them near the dog."
+  },
+  {
+   "id": "camp.joan.020",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "When it comes, love. Keep writing. She'll have a lovely big stack to read."
+  },
+  {
+   "id": "camp.joan.021",
+   "cat": "camp",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Nobody, love, and nobody will while I've got breath in me."
+  },
+  {
+   "id": "camp.any.001",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "phase:dusk"
+   ],
+   "text": "Boots off. Finally."
+  },
+  {
+   "id": "camp.any.002",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:day",
+    "act:rest"
+   ],
+   "text": "Short break. Water and a bit of shade."
+  },
+  {
+   "id": "camp.any.003",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Hello, Biscuit. No, I haven't got anything. Honest."
+  },
+  {
+   "id": "camp.any.004",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:night",
+    "act:rest"
+   ],
+   "text": "Lights out soon. Big day tomorrow."
+  },
+  {
+   "id": "camp.any.005",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Kettle's just boiled if anyone wants one."
+  },
+  {
+   "id": "camp.any.006",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Who's on dishes tonight? Not me. I did them yesterday."
+  },
+  {
+   "id": "camp.any.007",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Smells like dinner. Good."
+  },
+  {
+   "id": "camp.any.008",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "Somebody's socks are drying on the heater again."
+  },
+  {
+   "id": "camp.any.009",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "camp.joan.021"
+   ],
+   "text": "Has anyone beaten the top score on the arcade yet?"
+  },
+  {
+   "id": "camp.any.010",
+   "cat": "camp",
+   "speaker": "trait:sociable",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "text": "Come on, cards. Everyone in. Nobody's tired, they're just pretending."
+  },
+  {
+   "id": "camp.any.011",
+   "cat": "camp",
+   "speaker": "trait:sociable",
+   "to": "self",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Biscuit! Come here, you. Who's fed you today? Everyone? Of course they have."
+  },
+  {
+   "id": "camp.any.012",
+   "cat": "camp",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Can we go inside now? It's getting dark, and dinner's ready anyway."
+  },
+  {
+   "id": "camp.any.013",
+   "cat": "camp",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:dusk",
+    "act:rest"
+   ],
+   "text": "Sharpening tonight so I'm straight out in the morning."
+  },
+  {
+   "id": "camp.any.014",
+   "cat": "camp",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "where:camp"
+   ],
+   "text": "I'll carry the water in. Saves everyone two trips."
+  },
+  {
+   "id": "camp.any.015",
+   "cat": "camp",
+   "speaker": "trait:level_headed",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "phase:night",
+    "act:rest"
+   ],
+   "text": "Long day. Sleep now, think about it tomorrow."
+  },
+  {
+   "id": "camp.any.016",
+   "cat": "camp",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "The cabin clock runs five minutes fast. Someone set it that way on purpose, I reckon."
+  },
+  {
+   "id": "camp.any.017",
+   "cat": "camp",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "where:cabin"
+   ],
+   "text": "That top arcade score? I'd bet someone found a glitch."
+  },
+  {
+   "id": "camp.any.018",
+   "cat": "camp",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Truck's parked nose out for the morning. Easier start."
+  },
+  {
+   "id": "camp.any.019",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "phase:night"
+   ],
+   "text": "Whoever's rustling that crisp packet, please be done with it."
+  },
+  {
+   "id": "camp.any.020",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Evening, boss. Dinner's on in the cabin."
+  },
+  {
+   "id": "camp.any.021",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "weather:rain",
+    "act:rest"
+   ],
+   "text": "Rain on the cabin roof. Not the worst sound to rest to."
+  },
+  {
+   "id": "camp.any.022",
+   "cat": "camp",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "mode:contract"
+   ],
+   "text": "Another letter for the boat pile. It's getting thick."
+  }
+ ]
+}

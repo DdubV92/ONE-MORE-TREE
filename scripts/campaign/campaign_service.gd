@@ -112,6 +112,8 @@ var island_mismatch := false
 
 ## Fresh timed campaign (the rules are fixed: 30 days, 15 + 5 minutes).
 func new_campaign() -> void:
+	if Game.feed:
+		Game.feed.restore({})      # Phase 17: a new contract starts with an unread internet
 	if Game.rest:
 		Game.rest.restore({})      # Phase 16: a new contract starts well rested
 	ruleset = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant)) if World.manifest_variant != "full" else Ruleset.get_def(Ruleset.STANDARD if Game.mode == Game.Mode.CAMPAIGN else Ruleset.LEGACY)
@@ -288,6 +290,10 @@ func sleep() -> Dictionary:
 	var settlement := payroll.settle_day(d)
 	# Phase 16: the night's recovery, once per day (same locked transition).
 	var rest_night: Dictionary = Game.rest.on_sleep(d) if Game.rest else {}
+	# Phase 17: what was left of today's feed publishes now (read tomorrow
+	# as a catch-up digest, never a burst of alerts).
+	if Game.feed:
+		Game.feed.on_day_end(d)
 	if Game.timber:
 		Game.timber.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS)
 	var report := build_report(d, settlement)

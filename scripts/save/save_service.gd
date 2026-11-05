@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 11
+const SCHEMA_VERSION := 12
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -178,6 +178,10 @@ static func capture_state(world: Node) -> Dictionary:
 		# settled night, recent nights). Crew merit/progression lives in the
 		# crew block of the campaign (same atomic snapshot).
 		"phase16": {"rest": Game.rest.capture() if Game.rest else {}},
+		# Phase 17: the feed's publication cursor, published/skipped ids and
+		# times, edits, read/bookmark/position state and hook outcomes. Crew
+		# conversation cooldowns live in the crew block ("talk").
+		"phase17": {"feed": Game.feed.capture() if Game.feed else {}},
 		"time_of_day": env.get("hour") if env else 12.0,
 		# Modified original trees only, keyed by stable ID (state, notch work,
 		# cut side, fall intent, felled guard, trunk pose/velocity).
@@ -365,6 +369,13 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# once, deterministically from each employee id.
 		data["phase16"] = {}
 		data["schema"] = 11
+		v = 11
+	if v == 11:
+		# Phase 16 saves: no feed yet. It starts unread from the beginning
+		# and catches up to the saved day on the first tick (published as a
+		# catch-up digest, not live alerts); no conversation cooldowns.
+		data["phase17"] = {}
+		data["schema"] = 12
 	return data
 
 
@@ -412,6 +423,8 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 	var p8: Dictionary = data.get("phase8", {})
 	if Game.rest:
 		Game.rest.restore((data.get("phase16", {}) as Dictionary).get("rest", {}))
+	if Game.feed:
+		Game.feed.restore((data.get("phase17", {}) as Dictionary).get("feed", {}))
 	var hunt_n: Object = world.get("hunt")
 	if hunt_n and str((p6.get("hunt", {}) as Dictionary).get("mode", "none")) != "none":
 		hunt_n.set("pending_restore", true)

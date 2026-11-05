@@ -1,0 +1,240 @@
+# The fictional internet: editorial bible (Phase 17)
+
+This is what the boss reads on the camper computer (Mail, News, Forums, Archives). It is unvoiced, authored fiction, published on a schedule by the campaign clock.
+
+Everything here is invented:
+- no real people, companies, places, brands or real-world incidents;
+- no real private identities or real tragedies presented as news.
+
+## 1. World
+
+- **The region: the Marrow Sound.** A cold northern coastal archipelago in an unnamed English-speaking country. The local time zone is "Sound Time" (ST), which is also the island's time. The campaign's workday maps to roughly 06:30–21:00 ST; night is after about 21:15 ST.
+- **The island: Kittering Holm** ("the Holm"). It is 6 km long, forested and has no residents. It lies 9 km off Gilliver, and is reached by supply boat.
+- **The owner: Ardent Vale Holdings.** A private, quiet and very rich holding company. It bought the Holm through an intermediary 18 months ago.
+- **The contractor: Grieve Land Services.** A mid-size land-clearing firm that employs the boss and the crew. The contract is to clear every tree in 30 days at $100 a tree, plus $300 a day per worker.
+- **Towns:**
+  - **Port Ammet:** the main mainland town, with the ferry terminal, the council and the regional paper.
+  - **Gilliver:** a small fishing village facing the Holm, with a harbour and a slipway.
+  - **Brackwater:** a village inland, with woods, a reservoir and a power substation.
+  - **Weyhaven:** the region's city, 60 km south: industrial port, tower blocks, Dellow Court.
+  - **Carrow Point:** a headland lighthouse, now automated.
+  - **Tollinby:** a market town inland.
+  - **Lisle:** an island with the ferry route Port Ammet ↔ Lisle ↔ Gilliver.
+- **Elsewhere (for the international Lamp Hours forum).** Each place uses ITS OWN local night, so it is never "night everywhere at once".
+
+  | Place | Offset from ST |
+  |---|---|
+  | Halvard (a big inland city) | +1 |
+  | Coriveth (a southern port) | +3 |
+  | Tamsin Bay (a western coast) | −5 |
+  | Orrin Flats (prairie towns) | −7 |
+  | Kestrel Isles (far east) | +9 |
+  | Vellmark (a northern mining town) | +2 |
+
+## 2. Sites (`site` ids)
+
+**Forums (`kind: forum`):**
+- `soundboard`, **The Sound Board**: the regional community forum. Boards: General, Ferries & Roads, Lost & Found, Local Oddities, Trades & Jobs.
+- `lamphours`, **Lamp Hours**: an international forum for night-shift workers and insomniacs.
+- `lowband`, **LowBand**: a field-recording and audio hobbyist forum.
+- `dellow`, **Dellow Court Residents**: a tenants' message board for a 14-storey Weyhaven tower block.
+- `harbour`, **Gilliver Harbour Chat**: fishing, dock and ferry workers.
+
+**News (`kind: news`):**
+- `courier`: *The Ammet Courier* (the regional paper).
+- `soundfm`: *Sound FM News* (radio web desk, with live update posts).
+- `weypost`: *Weyhaven Evening Post* (the city paper).
+- `tradejournal`: *Timber & Land Trade Journal* (industry).
+
+**Advisories (`kind: advisory`):**
+- `met`: Marrow Sound Met Office (forecasts, warnings).
+- `ferry`: Sound Lines ferry service bulletins.
+- `power`: Sound Power Co-op outage notices.
+- `council`: Ammet District Council notices (planning, roads, water, bins).
+- `coast`: the Coastguard's notices to mariners.
+
+**Archives (`kind: archive`):**
+- `history`: Marrow Sound History Society wiki.
+- `fieldnotes`: the Field Notes archive (transcribed diaries of keepers, naturalists and fishermen).
+- `courierarchive`: *Ammet Courier* back issues (excerpts).
+- `lowbandarchive`: the LowBand recordings catalogue (entries describing old recordings).
+
+**Mail (`kind: mail`, site `mail`):** the boss's inbox. `to` is `boss`. Senders are accounts in `data/feed/accounts.json`.
+
+## 3. The mailbox cast
+
+These are accounts with `kind` "mail" in the roster. The boss is never named: mail says "Hi", "Site lead" or nothing.
+
+- **Ruth Imber** (`ruth_imber`): Grieve operations manager. Logistics, the deadline, checks in, polite pressure.
+- **Grieve Payroll** (`grieve_payroll`): automated, mundane payroll statements.
+- **Sam** (`sam`): the boss's sibling. Family news (their kid's school play, the dog at home, Mum's hip). Worries more as news coverage grows.
+- **Hal Brannock** (`hal_brannock`): an old colleague, now on another contract. Jokes. Later: "Grieve has done jobs like this before. Ask about the Corran job."
+- **Nell Ashdown** (`nell_ashdown`): a *Courier* reporter from day 13. Asks polite questions about the Holm; the boss can't reply (no outgoing mail).
+- **Ana Reyner** (`ana_reyner`): Tomas's sister. Asks the boss to tell Tomas she is fine, and asks whether he is sleeping.
+- **Lyle Insurance** (`lyle_insurance`): policy reminders.
+- **Ammet Council newsletter** (`council_news`): weekly.
+- **Ardent Vale community information** (`ardentvale_pr`): smooth, vague PR.
+- **Camp Supply** (`camp_supply_news`): marketing and newsletters only. Real order notices are generated by the game; never write order confirmations.
+- **Morrow** (`morrow_unknown`, days 22+): a forum user who has guessed who the boss is. Tentative, not threatening.
+
+## 4. Arcs (parallel; most stay unresolved)
+
+**A. The Dellow Court stairwell** (`dellow`, `soundboard`, `lowband`; days 1–30)
+- **Days 1–3:** the stairwell lights go out between floors 6 and 8. Footsteps carry on after the person in front stops.
+- **Days 4–9:** residents compare notes. Someone posts a recording, and the fridge-compressor argument starts: "there isn't a fridge on that floor".
+- **Days 10–15:** the building manager's notices blame the timer relay. A resident counts steps on recordings. Arguments, a moderator lock.
+- **Days 16–22:** a family moves out. An electrician fixes the relay and the lights stay on, but someone still hears the footsteps in daylight.
+- **Days 23–30:** quieter. A few return with partial explanations (a neighbour's treadmill?); others don't. It stays unresolved.
+
+**B. The Gilliver slipway** (`harbour`, `ferry`, `soundfm`, `soundboard`; days 3–30)
+- **Days 3–8:** in fog, a night ferry crew see someone standing at the end of the Gilliver slipway who doesn't answer a hail. Fog delays appear in ferry bulletins (mundane).
+- **Days 9–14:** a second sighting at the Lisle slipway. A harbourmaster's "trespass on slipways" notice. Jokes and teasing.
+- **Days 15–21:** night crossings are reduced "for a crew welfare review". A deckhand quits and posts, then deletes it (edited and removed).
+- **Days 22–30:** crossings resume with extra lighting. Arguments about whether it was ever real. A teenager admits a prank on one night, which explains one sighting but not the others.
+
+**C. Power** (`power`, `harbour`, `soundboard`, `courier`; days 1–30)
+- Routine outages early.
+- **Day 9:** a Brackwater substation fault.
+- **Days 18–26:** rolling night outages, officially from "salt-fog corrosion". Linemen on Harbour Chat say it "isn't corrosion, the breakers are tripping like something's leaning on the line". Restoration notices.
+
+**D. Knocking in Brackwater Woods** (`lowband`, `soundboard`, `lowbandarchive`; days 2–30)
+- **Day 2:** recordist `dunlin_rec` posts night knocks.
+- **Days 3–12:** debate: woodpeckers (but at night?), deer, pipes, kids. A second recordist captures "answering" knocks 300 m away. Timestamp corrections (an edit: "it was 02:40, not 03:40").
+- **Days 13–20:** a group session. Some recordings have nothing; one has a voice-like sound people disagree about.
+- **Day 24:** `dunlin_rec` goes quiet mid-session.
+- **Day 27:** he returns embarrassed: he dropped his phone in the reservoir and stayed with his brother. He refuses to talk about why he left early.
+
+**E. Lamp Hours, around the world** (`lamphours`; days 1–30). Night workers in their own local nights describe small things:
+- an intercom that keeps repeating a name;
+- a van idling for hours;
+- a security monitor showing someone at the edge of the lot who isn't there on foot patrol;
+- dogs refusing a corridor.
+
+Skeptics, explanations and mod actions follow. Over the weeks some people notice "standing at the edge of the light" reports. Others push back hard and are sometimes right. No confirmation.
+
+**F. Kittering Holm and the company** (`courier`, `tradejournal`, `soundboard`, `council`, mail, archives; days 1–30)
+- **Days 1–4:** a council planning notice for "total vegetation clearance, Kittering Holm". A trade-journal piece on Grieve's 30-day contract.
+- **Days 5–10:** rumors (a luxury retreat? a data centre? a private refuge?). An "evacuation site" screenshot: someone added that line to a real planning notice, and it is debunked.
+- **Days 11–17:** Nell Ashdown's *Courier* piece. Ardent Vale PR is vague. A former Grieve worker posts that Grieve "did one like this up north, the Corran job, and nobody talks about it". Old links to a 1950s plan for a lighthouse relay on the Holm.
+- **Days 18–25:** posters wonder about the crew on the Holm, and camp lights are seen from Gilliver at night. Speculation that the owners want "somewhere with nothing around it"; others call it obvious land speculation.
+- **Days 26–30:** a contradictory leak about the owner's other properties. The thread splits. It is unresolved.
+- **Never** confirm the island is a supernatural safe haven, and never explain the Terrors.
+
+**G. History** (archives; unlocked over time):
+- an 1890s timber camp on the Holm, abandoned mid-winter;
+- a keeper's logbook from Carrow Point ("walkers on the shore road at night, did not answer");
+- the "quarantine station" rumor, which was actually a fish-curing station;
+- a 1920s naturalist noting no deer on the Holm;
+- the Gilliver custom of keeping a lamp in a window "so they know the house is awake".
+
+These are ambiguous and partly contradictory.
+
+**H. Weather** (`met`; daily): mundane forecasts.
+- **Days 4–8:** a fog week.
+- **Days 14–16:** a storm.
+- **Days 20–23:** a calm cold spell.
+- **Days 25–27:** rain.
+
+Also tides, small-craft warnings and wind.
+
+**I. Mail** (as §3), across all days. It reflects the campaign state through branches (see §6).
+
+**J. The window thread** (`lamphours`; rare; days 21–24). An ordinary thread ("Anyone else work somewhere they can't see the ground at night?") slowly turns. One reply notices details about a remote job: a camper with a desk by a window, an island, a fire burning low, five bunks. The final reply reads: "If you're reading this on an island with trees outside the window, don't look out."
+- That final unit has `hook: "cl01"`.
+- A fallback unit with `branch: "fallback:cl01"` gives an ordinary continuation ("Sorry, that was a bad joke, I'm on nights and I'm tired") for when the game can't stage it safely.
+- It is mutually exclusive with an ordinary ending through `mx:window:a` / `mx:window:b`. Only branch a reaches the warning.
+
+## 5. Computer-linked patterns (`hook`)
+
+Use a hook only where noted. Phase 17 implements cl01; the others are Phase 19 mappings.
+
+| Hook | Pattern |
+|---|---|
+| `cl01` | The window warning (above) |
+| `cl02` | A post's edited timestamp matches a knock heard outside |
+| `cl03` | A thread describes a sound, and a distant counterpart follows |
+| `cl04` | A commenter stops mid-post ("hang on, the camera's") |
+| `cl05` | Contradicting replies about a figure's height |
+| `cl06` | An ordinary delivery email amid a meaningful local silence |
+| `cl07` | Someone "typing…" for a long time, then nothing |
+| `cl08` | A posted photo that looks like a log yard at night |
+| `cl09` | A live report of lights flickering |
+| `cl10` | A caller who names someone like one of the crew |
+| `cl11` | A reply to an email the boss never sent |
+| `cl12` | A LowBand clip with a hum like a camper fridge |
+
+At least one unit per hook must exist across the corpus. A hook unit must read as an ordinary story by itself.
+
+## 6. Data format
+
+The files are `data/feed/<batch>.json`, each shaped `{"batch": "days01-03", "review": "draft", "units": [UNIT, ...]}`.
+
+### UNIT fields
+
+| Field | Required | Meaning |
+|---|---|---|
+| `id` | yes | Unique and stable: `<k>.<dd>.<slug>.<nn>`. `k` is `ml` (mail), `nw` (news), `fo` (forum), `ad` (advisory) or `ar` (archive); `dd` is the publication day (two digits); `slug` is a short thread/article name; `nn` is 01… in order. |
+| `kind` | yes | `mail`, `news`, `forum`, `advisory` or `archive`. |
+| `site` | yes | A site id from §2 (`mail` for mail). |
+| `thread` | yes | The thread, article or mail-thread id, e.g. `t.dellow-lights`. Units of one article/thread share it. |
+| `title` | for the first unit of a thread/article (and each new mail subject) | The headline or subject. Not counted as content. |
+| `author` | yes | An account id from `data/feed/accounts.json` (forum, mail, archive contributors) or a site id (news/advisory publisher). |
+| `to` | mail only | `boss` (or an account id for quoted correspondence). |
+| `parent` | replies | The id of the unit this replies to. It must be published at or before this unit, in the same thread. |
+| `quote` | no | The id of an earlier unit being quoted (same rules). |
+| `day` | yes | The publication day, 1–35 (31–35 are the survival days, published only during the hunt). |
+| `slot` | yes | `day` (daylight), `dusk` or `night`. |
+| `at` | yes | Seconds into the slot (day 0–899, dusk 0–299, night 0–479), used for ordering within a day. |
+| `occurred` | for incident reports | `{"day": n, "local": "02:40", "tz": "ST"\|"Halvard"\|…}`. When it happened, in local time. This is NOT the publication time. |
+| `region` | no | For example `gilliver`, `weyhaven`, `brackwater`, `halvard`. |
+| `status` | no | `ok` (default), `edited`, `retracted`, `removed` (a moderator removed it; the text is shown only as "[removed by a moderator: reason]", and you still write the original for the edit history), or `locked` (a moderator note that locks a thread). |
+| `edit` | no | `{"after_s": 600, "note": "edited: wrong time", "text": "<the new full text>"}`. The edited version replaces the original after `after_s` seconds. Both versions count as ONE unit. |
+| `branch` | no | Only appears when the condition holds. One of:<br>• `mx:<group>:<a\|b>`: mutually exclusive alternatives; the campaign seed picks one per group. Use them sparingly.<br>• `if:<flag>` / `unless:<flag>`: a flag from the list below.<br>• `fallback:cl01`. |
+| `refs` | no | The ids of earlier units this links to (a link to an article or archive entry). |
+| `hook` | no | `cl01`–`cl12` (§5). |
+| `votes` | forum, optional | An integer, a plausible reaction (not proof). |
+| `text` | yes | The substantive content: ONE email/reply, ONE news paragraph or live update, ONE forum post, ONE advisory or bulletin, or ONE archive entry or section. 15–140 words. |
+
+**Flags:**
+- `wages_owed`: the boss owes wages now;
+- `worker_left`: an employee has left;
+- `dog_rescued`: the dog was lost and found;
+- `truck_owned`;
+- `saw_owned`;
+- `cleared25`, `cleared50`, `cleared75`: share of island trees felled;
+- `late_reader`: the boss read the feed after nightfall on an earlier night;
+- `night_event`: an ordinary night encounter happened last night;
+- `hunt`;
+- `rescue`.
+
+Mail from Ruth and Grieve Payroll that mentions arrears or a departed worker MUST carry the matching `if:` flag. The default text must be true whatever the campaign state is.
+
+### Rules
+
+- **Reply order.** A reply's (`day`, `slot`, `at`) is at or after its parent's. Slot order is day < dusk < night.
+- **Counting.** Titles, usernames and dates don't count, and neither do empty or "+1" posts. Write real content: concrete observations, what someone heard, did, misremembered or couldn't verify.
+- **Tone.**
+  - Avoid capital-letter shouting, "you won't believe", monster-name lists and purple prose.
+  - Most posts are mundane, practical, funny or petty. Not everyone is a paranormal researcher. Skeptics are sometimes right.
+  - Not every missing poster is dead: some come back embarrassed, some amend details, some never return.
+- **Pacing.** News and advisories mostly go in the `day` slot. Key discussion branches develop at `dusk`/`night`. Incidents happen at local night in the poster's own time zone.
+- **No duplicates.** Different punctuation or a changed town name does not make a new unit.
+- **Account voices.** Every account keeps its occupation, voice, region, posting window and prior claims (see accounts.json).
+
+## 7. Batches and quotas
+
+Each contract batch covers 3 days. The minimum per batch:
+
+| Kind | Minimum |
+|---|---:|
+| Forum | 320 |
+| News | 92 |
+| Mail | 60 |
+| Advisory | 40 |
+| Archive | 40 |
+
+Spread these over the 3 days: about 184 a day, never more than 230 published on one day. The survival batch (days 31–35) needs at least forum 120, news 30, mail 30, advisory 20 and archive 30. Survival content shows that the outside world has noticed the company left a crew on the Holm, through garbled reports and the ferry's rescue planning. It never says the ship is guaranteed.
+
+Batches: `days01-03`, `days04-06`, `days07-09`, `days10-12`, `days13-15`, `days16-18`, `days19-21`, `days22-24`, `days25-27`, `days28-30`, `days31-35`.
+
+The validator is `python3 tools/content/validate_feed.py data/feed/<batch>.json`, which must report 0 errors.

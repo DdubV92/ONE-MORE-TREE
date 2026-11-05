@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P17"):
+		_run("phase 17 units", _t_phase17_units)
+		await _run_async("phase 17 world", _t_phase17_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P16"):
 		_run("phase 16 units", _t_phase16_units)
 		await _run_async("phase 16 world", _t_phase16_world)
@@ -138,6 +144,8 @@ func _ready() -> void:
 	await _run_async("phase 15 world: one listener, one sound per contact, debounce, travel delay frozen by pause, loop lifecycle (owner freed/stop), saw loops end on kill, per-source occlusion indoor vs outdoor, door portal, mute keeps world evidence, replay never becomes live evidence", _t_phase15_world)
 	_run("phase 16 units: merit conserved per stage (fell/section/stump/transport/receive <= 1,000 per tree), shared work split, boss bucket, no repeat/circling/shuffle farming, saw = axe merit, levels 1-20 + capped skills, one multiplier order, stable profiles, praise once, rest curves (early/late/repeated/recovery), idempotent sleep, five-cycle hunt rest bounded", _t_phase16_units)
 	await _run_async("phase 16 world: worker/boss felling merit split, read-only review, profile survives save/restore, acceptance remainder once, idle causes, rest debuffs reach the real tool/walk effects and leave the camper safe, schema 11 migration", _t_phase16_world)
+	_run("phase 17 units: crew bank >= 1,200 lines (>= 100 per category, >= 150 per starting worker, responses resolve), feed bank >= 5,500 units within kind minimums, 80+ accounts, publication: early sleep = live reading by day end, reload/refresh never republish or reroll, nightly cap, replies after visible parents, quotes never spoil, cl01 falls back safely", _t_phase17_units)
+	await _run_async("phase 17 world: two workers converse from the bank with turn re-checks, knowledge gates (told vs firsthand), rumor transfer, missing listener / departed / interrupted / chainsaw suppression, boss replies, cooldowns survive save/restore, feed publishes by the real clock and the reader builds", _t_phase17_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -4823,6 +4831,274 @@ func _p16_checks(world: IslandWorld) -> String:
 	if not (st.get("phase16", {}) as Dictionary).has("rest"):
 		return "save lacks phase16.rest"
 	var mig := SaveService.migrate({"schema": 10, "phase8": {}, "phase6": {}, "phase5": {}})
-	if int(mig.get("schema", 0)) != 11 or not mig.has("phase16"):
+	if int(mig.get("schema", 0)) != SaveService.SCHEMA_VERSION or not mig.has("phase16"):
 		return "v10 -> v11 migration missing"
+	return ""
+
+
+
+# ------------------------------------------------------------------ Phase 17
+
+func _t_phase17_units() -> String:
+	var bank := CrewBank.get_bank()
+	if not bank.problems.is_empty():
+		return "crew bank problems: %s" % ", ".join(bank.problems.slice(0, 5))
+	if bank.lines.size() < 1200:
+		return "crew bank has %d lines (< 1,200)" % bank.lines.size()
+	var cats := bank.count_by("cat")
+	for c in ["cutting", "hauling", "tools", "ethic", "weather", "pair", "group", "boss", "camp", "wages", "dusk", "survival"]:
+		if int(cats.get(c, 0)) < 100:
+			return "crew category %s has %d lines (< 100)" % [c, int(cats.get(c, 0))]
+	var spk := bank.count_by("speaker")
+	for e in ["EMP-01", "EMP-02", "EMP-03", "EMP-04", "EMP-05"]:
+		if int(spk.get(e, 0)) < 150:
+			return "%s has %d character lines (< 150)" % [e, int(spk.get(e, 0))]
+	var texts := {}
+	for id in bank.lines:
+		var k := str(bank.lines[id].text).to_lower().strip_edges()
+		if texts.has(k):
+			return "duplicate crew text %s = %s" % [id, texts[k]]
+		texts[k] = id
+	# --- feed bank ---------------------------------------------------------
+	FeedService.load_bank()
+	if not FeedService.bank_problems().is_empty():
+		return "feed bank problems: %s" % ", ".join(FeedService.bank_problems().slice(0, 5))
+	var kinds := {}
+	for u in FeedService._bank_units:
+		kinds[str(u.kind)] = int(kinds.get(str(u.kind), 0)) + 1
+	var mins := {"mail": 600, "news": 900, "forum": 3200, "advisory": 400, "archive": 400}
+	for k in mins:
+		if int(kinds.get(k, 0)) < int(mins[k]):
+			return "feed %s has %d units (< %d)" % [k, int(kinds.get(k, 0)), int(mins[k])]
+	if FeedService.bank_size() < 5500:
+		return "feed has %d units (< 5,500)" % FeedService.bank_size()
+	if FeedService._accounts.size() < 80:
+		return "only %d accounts" % FeedService._accounts.size()
+	# --- publication: early sleep vs live late reading ---------------------
+	var early := FeedService.new()
+	var live := FeedService.new()
+	var reload := FeedService.new()
+	for d in range(1, 31):
+		early.advance_to(float(d) * 10000.0 + 1199.0)
+		early.on_day_end(d)
+		for st in [0.0, 300.0, 600.0, 899.0, 1050.0, 1199.0, 1250.0, 1400.0, 1679.0]:
+			live.advance_to(float(d) * 10000.0 + st)
+			live.advance_to(float(d) * 10000.0 + st)     # refresh: nothing new
+			live.clock += 60.0
+		live.on_day_end(d)
+		if d == 15:
+			reload.restore(JSON.parse_string(JSON.stringify(live.capture())))
+			var again := reload.advance_to(float(d) * 10000.0 + 1679.0)
+			if not again.is_empty():
+				return "a reload republished %d units" % again.size()
+		if d > 15:
+			reload.advance_to(float(d) * 10000.0 + 1199.0)
+			reload.on_day_end(d)
+	if early.pub.size() != live.pub.size():
+		return "early sleep published %d, live reading %d by day 30" % [early.pub.size(), live.pub.size()]
+	for id in early.pub:
+		if not live.pub.has(id):
+			return "%s published early but not live" % id
+	if reload.pub.size() != live.pub.size():
+		return "save/restore changed the publication (%d vs %d)" % [reload.pub.size(), live.pub.size()]
+	for day in live.day_count:
+		if int(live.day_count[day]) > FeedService.NIGHT_CAP:
+			return "day %s published %d (> cap)" % [day, int(live.day_count[day])]
+	for id in live.pub:
+		var u := FeedService.unit(str(id))
+		var par := str(u.get("parent", ""))
+		if par != "" and (not live.pub.has(par) or float(live.pub[par]) > float(live.pub[id])):
+			return "%s published before its parent %s" % [id, par]
+		var q := str(u.get("quote", ""))
+		if q != "" and live.pub.has(id) and not live.pub.has(q):
+			return "%s quotes unpublished %s (spoiler)" % [id, q]
+	if live.pub.size() < 5000:
+		return "only %d units reachable by day 30 on the default path" % live.pub.size()
+	# --- cl01: no desk / not night here, so it must fall back -------------
+	for u in FeedService._bank_units:
+		if str(u.get("hook", "")) == "cl01" and live.pub.has(str(u.id)):
+			return "cl01 published without a valid reservation"
+	early.free()
+	live.free()
+	reload.free()
+	return ""
+
+
+func _t_phase17_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or Game.campaign == null or Game.feed == null) and guard < 900:
+		await get_tree().physics_frame
+		guard += 1
+	for i in 20:
+		await get_tree().physics_frame
+	var err := await _p17_checks(world)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p17_checks(world: IslandWorld) -> String:
+	var crew: CrewService = Game.crew
+	Game.campaign.start_test_route(true, true)
+	var g := 0
+	while crew.workers.size() < 3 and g < 900:
+		await get_tree().physics_frame
+		g += 1
+	if crew.workers.size() < 2:
+		return "no crew"
+	var talk := crew.talk
+	var ws: Array = crew.workers.values()
+	var a: Worker = ws[0]
+	var b: Worker = ws[1]
+	# Knowledge gate: a firsthand-only line is ineligible until they saw something.
+	var fl := {}
+	for id in talk.bank.lines:
+		var ln: Dictionary = talk.bank.lines[id]
+		if "saw:strange" in (ln.get("needs", []) as Array) and talk.speaker_ok(ln, a) and (ln.get("when", []) as Array).is_empty():
+			fl = ln
+			break
+	if not fl.is_empty() and a.mind.firsthand_count() == 0 and talk.eligible(fl, a) != "needs saw:strange":
+		return "a firsthand line was eligible before any evidence (%s)" % talk.eligible(fl, a)
+	# Departed workers can't talk.
+	var st0 := str(b.emp.status)
+	b.emp.status = "departed"
+	var dep_ok := talk._can_talk(b)
+	b.emp.status = st0
+	if dep_ok:
+		return "a departed worker was eligible to talk"
+	# Put two workers side by side, idle, and let a conversation start.
+	var at := World.camp_origin() + Vector3(4, 0, 6)
+	at.y = World.height_at(at.x, at.z)
+	for w in crew.workers.values():
+		(w as Worker).abandon("test")
+		(w as Worker).activity = "idle"
+		(w as Worker).global_position = at + Vector3(randf_range(20, 40), 0, 0)
+	a.global_position = at
+	b.global_position = at + Vector3(1.5, 0, 0)
+	a._decide_cd = 999.0
+	b._decide_cd = 999.0
+	var started := false
+	for k in 60:
+		talk._next_try = 0.0
+		talk._try_start()
+		if not talk.active.is_empty():
+			started = true
+			break
+		talk.cooldown.clear()
+	if not started:
+		return "no conversation started between two idle neighbours (openers %d)" % talk.bank.openers.size()
+	var lines0 := int(talk.stats.lines)
+	for k in 40:
+		talk.clock += 3.0
+		a.global_position = at
+		b.global_position = at + Vector3(1.5, 0, 0)
+		talk._advance()
+		if talk.active.is_empty():
+			break
+	if int(talk.stats.lines) <= lines0:
+		return "the conversation never spoke a line"
+	var h: Dictionary = talk.history[talk.history.size() - 1]
+	if not talk.bank.lines.has(str(h.id)):
+		return "history line not from the bank"
+	# A missing listener: alone, no pair/group conversation can start.
+	b.global_position = at + Vector3(60, 0, 0)
+	talk.active.clear()
+	talk.cooldown.clear()
+	var before := int(talk.stats.conversations)
+	var spread := 0
+	for w in crew.workers.values():
+		if w != a:
+			spread += 1
+			(w as Worker).global_position = at + Vector3(60.0 + 30.0 * spread, 0, 30.0 * spread)
+	for k in 10:
+		talk._try_start()
+	if int(talk.stats.conversations) != before:
+		return "a conversation started with nobody nearby"
+	# Interruption: start, then the listener walks away -> dropped.
+	b.global_position = at + Vector3(1.5, 0, 0)
+	for k in 60:
+		talk.cooldown.clear()
+		talk._try_start()
+		if not talk.active.is_empty():
+			break
+	if not talk.active.is_empty():
+		var dropped := int(talk.stats.dropped)
+		talk._advance()
+		b.global_position = at + Vector3(40, 0, 0)
+		talk.clock += 30.0
+		for k in 30:
+			talk.clock += 2.0
+			talk._advance()
+		if not talk.active.is_empty() or int(talk.stats.dropped) <= dropped and int(talk.stats.lines) == lines0:
+			return "an interrupted conversation carried on"
+	# Rumor transfer: a firsthand witness tells a colleague -> told, not seen.
+	a.mind.perceive({"id": "p17-test-stim", "kind": "test_figure", "modality": "sight", "pos": a.global_position + Vector3(10, 0, 0), "severity": 0.2, "ambiguous": true}, crew.now(), {"confidence": 0.7})
+	if not fl.is_empty() and talk.eligible(fl, a) not in ["", "cooldown", "used once"] and not talk.eligible(fl, a).begins_with("when"):
+		return "firsthand line still ineligible after evidence: %s" % talk.eligible(fl, a)
+	b.global_position = at + Vector3(1.5, 0, 0)
+	var told0 := b.mind.told_count()
+	if not fl.is_empty():
+		talk._speak(str(fl.id), a, [b])
+		if b.mind.told_count() <= told0 or b.mind.firsthand_count() != 0 and b.mind.strongest_memory().get("id", "") == "p17-test-stim":
+			return "rumor transfer wrong (told %d, firsthand %d)" % [b.mind.told_count(), b.mind.firsthand_count()]
+	# Boss replies come from the bank.
+	var rep := talk.boss_reply(a, "greet")
+	if rep == "":
+		return "no authored greeting for %s" % a.emp.name
+	# Cooldowns survive save/restore.
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(talk.capture()))
+	var cd_n := (snap.cooldown as Dictionary).size()
+	talk.restore(snap)
+	if talk.cooldown.size() != cd_n or cd_n == 0:
+		return "conversation cooldowns lost on restore (%d -> %d)" % [cd_n, talk.cooldown.size()]
+	# Feed: the real clock publishes day-1 daytime units; the reader builds.
+	var feed: FeedService = Game.feed
+	var cs: CampaignService = Game.campaign
+	cs.clock.day = 1
+	cs.clock.t = 600.0
+	feed.advance_to(feed.now_key())
+	if feed.pub.is_empty():
+		return "nothing published by day 1, 10 min"
+	for id in feed.pub:
+		if int(FeedService.unit(str(id)).get("day", 99)) > 1:
+			return "a future unit (%s) published early" % id
+	for app in ["Mail", "News", "Forums", "Archives"]:
+		var host := Control.new()
+		add_child(host)
+		FeedReader.build(host, app, null)
+		host.queue_free()
+	var th := feed.threads("Forums", 5)
+	if not th.is_empty():
+		feed.positions["Forums"] = {"view": "thread", "thread": str(th[0].key), "page": 0}
+		var host2 := Control.new()
+		add_child(host2)
+		FeedReader.build(host2, "Forums", null)
+		host2.queue_free()
+		if feed.unread("Forums") >= feed.pub.size():
+			return "opening a thread marked nothing read"
+	# Save/restore of the feed keeps publication + read state exactly.
+	var fs: Dictionary = JSON.parse_string(JSON.stringify(feed.capture()))
+	var npub := feed.pub.size()
+	var nread := feed.read.size()
+	feed.restore(fs)
+	if feed.pub.size() != npub or feed.read.size() != nread:
+		return "feed state changed across save/restore"
+	if not feed.advance_to(feed.now_key()).is_empty():
+		return "a reload republished units"
+	var st := SaveService.capture_state(world)
+	if not (st.get("phase17", {}) as Dictionary).has("feed"):
+		return "save lacks phase17.feed"
 	return ""

@@ -29,6 +29,7 @@ var vegetation: Node
 var cover: CoverService              # Phase 12 (island r2 only)
 var sound: SoundService              # Phase 15 sound-event service
 var rest: RestService                # Phase 16 player restedness
+var feed: FeedService                # Phase 17 fictional internet (camper computer)
 var trees: TreeService
 var timber: TimberService
 var yard: YardService                # Phase 13 logging yard

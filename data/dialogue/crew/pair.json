@@ -1,0 +1,1761 @@
+{
+ "category": "pair",
+ "batch": "pair-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "pair.marta.001",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "phase:day"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "resp": [
+    "pair.dale.001",
+    "pair.dale.002"
+   ],
+   "text": "Your count today, Dale. Out with it. Mine's scratched on the axe handle."
+  },
+  {
+   "id": "pair.dale.001",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.marta.002"
+   ],
+   "text": "Mate, I carry everything you knock down. That's two counts in one. I win on arithmetic."
+  },
+  {
+   "id": "pair.marta.002",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Carrying isn't felling. Wood doesn't cut itself, and it doesn't count itself either."
+  },
+  {
+   "id": "pair.dale.002",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Stopped counting at lunch. Lunch was the high point. Everything since has just been wood."
+  },
+  {
+   "id": "pair.dale.003",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "pair.marta.003"
+   ],
+   "text": "Marta, this one's got a personality. Heavy, stubborn, won't sit right on the shoulder. Reminds me of someone."
+  },
+  {
+   "id": "pair.marta.003",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.dale.004"
+   ],
+   "text": "If it's like me, it'll reach the cradle before you do."
+  },
+  {
+   "id": "pair.dale.004",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Twenty years I've known her, and she still can't take a compliment."
+  },
+  {
+   "id": "pair.marta.004",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "day>=8",
+    "where:camp",
+    "act:rest"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.dale.005",
+    "pair.dale.006"
+   ],
+   "text": "Same bet as last week, Dale? Lowest count sharpens both axes before breakfast."
+  },
+  {
+   "id": "pair.dale.005",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Mate, I've sharpened your axe so often it's practically mine. Fine. Same bet."
+  },
+  {
+   "id": "pair.dale.006",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.marta.005"
+   ],
+   "text": "Only if lunch counts as a work stoppage. I'm not losing to a sandwich again."
+  },
+  {
+   "id": "pair.marta.005",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Lunch is twenty minutes. Yours was forty. I timed it."
+  },
+  {
+   "id": "pair.dale.007",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "day>=20",
+    "where:camp"
+   ],
+   "rep": "once",
+   "resp": [
+    "pair.marta.006"
+   ],
+   "text": "Twenty days, Marta, and you've not once let me win the count. Not once."
+  },
+  {
+   "id": "pair.marta.006",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.dale.008"
+   ],
+   "text": "Twenty days and you've not once asked nicely."
+  },
+  {
+   "id": "pair.dale.008",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Please, Marta. Let me win. There, I asked. Now watch nothing change."
+  },
+  {
+   "id": "pair.marta.007",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "act:walk",
+    "where:forest"
+   ],
+   "resp": [
+    "pair.dale.009"
+   ],
+   "text": "Two more before the light goes, Dale. We've got the time if we don't dawdle."
+  },
+  {
+   "id": "pair.dale.009",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.marta.008"
+   ],
+   "text": "We could. Or we could eat. Only one of those keeps me alive, Marta."
+  },
+  {
+   "id": "pair.marta.008",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Ten minutes. Eat walking. I'm counting."
+  },
+  {
+   "id": "pair.dale.010",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "day>=12",
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.marta.009"
+   ],
+   "text": "Remember the mill job, the summer it never stopped raining? You swore never again. Look at you now."
+  },
+  {
+   "id": "pair.marta.009",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Some of us don't learn, Dale. Some of us just buy better boots. Pass the bread."
+  },
+  {
+   "id": "pair.marta.010",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "resp": [
+    "pair.priya.001"
+   ],
+   "text": "Priya, read this lean for me. Where does it want to go?"
+  },
+  {
+   "id": "pair.priya.001",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.marta.011"
+   ],
+   "text": "Back and a little left, toward the gap. The crown's heavier on the downhill side."
+  },
+  {
+   "id": "pair.marta.011",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Good eye. Thicker hinge on the right, then. Watch it go."
+  },
+  {
+   "id": "pair.priya.002",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:stump"
+   ],
+   "resp": [
+    "pair.marta.012",
+    "pair.marta.013"
+   ],
+   "text": "Marta, how are your stumps so flat? Mine look like a staircase."
+  },
+  {
+   "id": "pair.marta.012",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "You're rushing the back cut. Level first. Speed comes later, on its own."
+  },
+  {
+   "id": "pair.marta.013",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Twenty years of ugly stumps first. Yours are better than mine were at your age."
+  },
+  {
+   "id": "pair.priya.003",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "day>=8",
+    "where:camp",
+    "act:rest"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.marta.014"
+   ],
+   "text": "I wrote down your three rules for a back cut. You broke all three today and it still landed perfectly."
+  },
+  {
+   "id": "pair.marta.014",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.priya.004"
+   ],
+   "text": "Rules are for before you know when to break them. Write that down as well."
+  },
+  {
+   "id": "pair.priya.004",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Already did. I underlined it twice."
+  },
+  {
+   "id": "pair.marta.015",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "day>=18",
+    "where:forest"
+   ],
+   "rep": "once",
+   "resp": [
+    "pair.priya.005"
+   ],
+   "text": "You've been calling the lean before I do lately. When did that start?"
+  },
+  {
+   "id": "pair.priya.005",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.marta.016"
+   ],
+   "text": "About a week ago. I didn't say anything. I wanted to be right a few more times first."
+  },
+  {
+   "id": "pair.marta.016",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "That's the right instinct. Most people brag after the first one."
+  },
+  {
+   "id": "pair.priya.006",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "weather:rain",
+    "act:walk",
+    "where:forest"
+   ],
+   "resp": [
+    "pair.marta.017"
+   ],
+   "text": "The lane past the rocks is shorter, but it drains badly. I'd take the long way while it's raining."
+  },
+  {
+   "id": "pair.marta.017",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.priya.007"
+   ],
+   "text": "Long way costs us minutes on every trip. I'll take wet boots."
+  },
+  {
+   "id": "pair.priya.007",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Then I'll count how many times you slip. Purely for the notebook."
+  },
+  {
+   "id": "pair.tomas.001",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "where:forest"
+   ],
+   "resp": [
+    "pair.marta.018"
+   ],
+   "text": "Marta, sorry, how long until dusk, would you say? Just roughly."
+  },
+  {
+   "id": "pair.marta.018",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.tomas.002"
+   ],
+   "text": "Long enough for three more trunks. Ask me again after the second."
+  },
+  {
+   "id": "pair.tomas.002",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Three. Right. Sorry. I'll stop asking. Probably."
+  },
+  {
+   "id": "pair.marta.019",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "resp": [
+    "pair.tomas.003"
+   ],
+   "text": "Tomas, your notch is fine. Stop checking it. Cut."
+  },
+  {
+   "id": "pair.tomas.003",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.marta.020"
+   ],
+   "text": "It's fine? Okay. Good. Sorry, it's just that you never say fine."
+  },
+  {
+   "id": "pair.marta.020",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "I said it once. Don't make me sorry I did."
+  },
+  {
+   "id": "pair.tomas.004",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:ride"
+   ],
+   "resp": [
+    "pair.marta.021"
+   ],
+   "text": "Hold the grab handle past the bend, Marta. The ruts are deep there. I'll keep it in second."
+  },
+  {
+   "id": "pair.marta.021",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.tomas.005"
+   ],
+   "text": "You drive better than you cut, Tomas. That's a compliment. Take it."
+  },
+  {
+   "id": "pair.tomas.005",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Thank you. Really. I'm going to write that one down for Ana."
+  },
+  {
+   "id": "pair.marta.022",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "day>=12",
+    "where:camp",
+    "phase:dusk"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.tomas.006"
+   ],
+   "text": "You stayed out through the last carry today, Tomas. That was good work."
+  },
+  {
+   "id": "pair.tomas.006",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.marta.023"
+   ],
+   "text": "I was nervous the whole time, honestly. But thank you. Is it okay that I was nervous?"
+  },
+  {
+   "id": "pair.marta.023",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Be as nervous as you like. Just keep showing up like that."
+  },
+  {
+   "id": "pair.marta.024",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "act:walk"
+   ],
+   "resp": [
+    "pair.tomas.007"
+   ],
+   "text": "We're not heading in yet, Tomas. The light's fine. You keep looking at the sky."
+  },
+  {
+   "id": "pair.tomas.007",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Sorry. I know. I'd just rather be early than late. That's all it is."
+  },
+  {
+   "id": "pair.joan.001",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:camp",
+    "act:rest"
+   ],
+   "resp": [
+    "pair.marta.025"
+   ],
+   "text": "Sit down, Marta, love. The trees will still be there in ten minutes. I know, that's the problem."
+  },
+  {
+   "id": "pair.marta.025",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.joan.002"
+   ],
+   "text": "That's exactly the problem. Ten minutes is a whole trunk."
+  },
+  {
+   "id": "pair.joan.002",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "And ten minutes is a cup of tea. Sit. I'll hold your axe hostage if I have to."
+  },
+  {
+   "id": "pair.marta.026",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "phase:day"
+   ],
+   "resp": [
+    "pair.joan.003"
+   ],
+   "text": "Joan, you're chatting to that tree again."
+  },
+  {
+   "id": "pair.joan.003",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Somebody has to, love. You only ever talk to them with a blade."
+  },
+  {
+   "id": "pair.joan.004",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "day>=10",
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.marta.027"
+   ],
+   "text": "I timed you at supper, Marta. You sat still four whole minutes. A personal best."
+  },
+  {
+   "id": "pair.marta.027",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Three and a half. I was counting too."
+  },
+  {
+   "id": "pair.joan.005",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "act:walk"
+   ],
+   "resp": [
+    "pair.marta.028"
+   ],
+   "text": "How did you sleep, Marta? And don't tell me you dreamt about hinge wood."
+  },
+  {
+   "id": "pair.marta.028",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Hinge wood. Clean, even hinge wood. Best night I've had in ages."
+  },
+  {
+   "id": "pair.marta.029",
+   "cat": "pair",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "owed",
+    "where:camp"
+   ],
+   "resp": [
+    "pair.joan.006"
+   ],
+   "text": "Pay's late, Joan. You've gone quiet on me."
+  },
+  {
+   "id": "pair.joan.006",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "owed"
+   ],
+   "text": "When I ran the bar, I counted the till twice before I let myself worry. I'm on my second count."
+  },
+  {
+   "id": "pair.dale.011",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "pair.priya.008"
+   ],
+   "text": "Priya, settle something. Heavy end first or light end first, through a gap like this?"
+  },
+  {
+   "id": "pair.priya.008",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.dale.012"
+   ],
+   "text": "Heavy end leads. Then the light end swings less behind you. You already knew that."
+  },
+  {
+   "id": "pair.dale.012",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "I did. I just like hearing it said like a textbook."
+  },
+  {
+   "id": "pair.priya.009",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "where:camp",
+    "dog_near",
+    "day>=5"
+   ],
+   "resp": [
+    "pair.dale.013"
+   ],
+   "text": "Dale, Biscuit has sat by your boots at every meal this week. I've been keeping a tally."
+  },
+  {
+   "id": "pair.dale.013",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.priya.010"
+   ],
+   "text": "That's not data, mate. That's love. Also, I drop things."
+  },
+  {
+   "id": "pair.priya.010",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Seven dropped crusts at breakfast alone. That is data."
+  },
+  {
+   "id": "pair.dale.014",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "act:rest"
+   ],
+   "resp": [
+    "pair.priya.011"
+   ],
+   "text": "Priya, you're the smartest person on this island. So what's for dinner?"
+  },
+  {
+   "id": "pair.priya.011",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Whatever's on Joan's rota. That isn't intelligence, Dale. It's reading the fridge door."
+  },
+  {
+   "id": "pair.dale.015",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "where:camp"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "pair.priya.012",
+    "pair.priya.013"
+   ],
+   "text": "There's a story going round again. I say it's a deer, or someone's radio. Back me up, Priya."
+  },
+  {
+   "id": "pair.priya.012",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "I can't back you or argue. I wasn't there. Ask whoever was, and ask them which direction."
+  },
+  {
+   "id": "pair.priya.013",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I'd like to, Dale. But I heard something myself once, and I wrote it down, and it wasn't a radio."
+  },
+  {
+   "id": "pair.priya.014",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "day>=15",
+    "where:camp"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "resp": [
+    "pair.dale.016"
+   ],
+   "text": "You carried that big trunk from the rocks without setting it down. I paced it out. It's farther than you think."
+  },
+  {
+   "id": "pair.dale.016",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Don't tell me the number. If you tell me, my back finds out."
+  },
+  {
+   "id": "pair.dale.017",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "resp": [
+    "pair.tomas.008"
+   ],
+   "text": "Tomas, mate, you take the light end. I'll take the end with the opinions."
+  },
+  {
+   "id": "pair.tomas.008",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.dale.018"
+   ],
+   "text": "Sorry, which end has opinions? Both of them feel heavy to me."
+  },
+  {
+   "id": "pair.dale.018",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Mine. Mine always has opinions. Lift on three."
+  },
+  {
+   "id": "pair.tomas.009",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:ride"
+   ],
+   "resp": [
+    "pair.dale.019"
+   ],
+   "text": "Hold on past the bend, Dale. Second gear only through here. Sorry, it's going to bump."
+  },
+  {
+   "id": "pair.dale.019",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.tomas.010"
+   ],
+   "text": "You drive like my nan carried soup, mate. Not a drop spilt."
+  },
+  {
+   "id": "pair.tomas.010",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Is that good? I think that's good. I'm taking it as good."
+  },
+  {
+   "id": "pair.tomas.011",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "phase:dusk",
+    "act:home"
+   ],
+   "resp": [
+    "pair.dale.020"
+   ],
+   "text": "Dale, can I walk in with you? Not for any reason. Just the company."
+  },
+  {
+   "id": "pair.dale.020",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Course, mate. I'll talk, you walk, and we're in before the soup's cold."
+  },
+  {
+   "id": "pair.dale.021",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "act:rest"
+   ],
+   "resp": [
+    "pair.tomas.012"
+   ],
+   "text": "Writing to Ana again? Tell her her brother's the best driver on the island."
+  },
+  {
+   "id": "pair.tomas.012",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.dale.022"
+   ],
+   "text": "I did, yesterday. Sorry. I also told her you eat for three."
+  },
+  {
+   "id": "pair.dale.022",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Accurate reporting. Your sister's going places."
+  },
+  {
+   "id": "pair.tomas.013",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "act:walk",
+    "where:forest"
+   ],
+   "resp": [
+    "pair.dale.023"
+   ],
+   "text": "Dale, do you think we could head in a bit early today? Just a little bit?"
+  },
+  {
+   "id": "pair.dale.023",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Not yet, mate. Plenty of day up there. I'll tell you when, and I won't forget."
+  },
+  {
+   "id": "pair.dale.024",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "day>=20",
+    "where:camp"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.tomas.014"
+   ],
+   "text": "Twenty days in, Tomas, and you still apologise to the trucks."
+  },
+  {
+   "id": "pair.tomas.014",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "They've done a lot for us. Somebody ought to say something."
+  },
+  {
+   "id": "pair.joan.007",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "act:rest"
+   ],
+   "resp": [
+    "pair.dale.025"
+   ],
+   "text": "Dale, love, what was that you cooked last night? Biscuit walked away from it."
+  },
+  {
+   "id": "pair.dale.025",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.joan.008"
+   ],
+   "text": "Biscuit's a critic, not a chef. It was stew. Ambitious stew."
+  },
+  {
+   "id": "pair.joan.008",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "It was brave, sunshine. I'll give it brave."
+  },
+  {
+   "id": "pair.dale.026",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "pair.joan.009",
+    "pair.joan.010"
+   ],
+   "text": "Cards tonight, Joan? I'm due a win. The universe owes me one."
+  },
+  {
+   "id": "pair.joan.009",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "The universe doesn't owe you, love. I do, and I'm not paying up."
+  },
+  {
+   "id": "pair.joan.010",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "day>=10"
+   ],
+   "text": "You've been due every night for a week and a half, sunshine. I keep a ledger."
+  },
+  {
+   "id": "pair.joan.011",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "day>=14",
+    "where:cabin"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.dale.027"
+   ],
+   "text": "The card tally on the wall's looking very one-sided, Dale. I'd call it settled."
+  },
+  {
+   "id": "pair.dale.027",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Nothing's settled while there's a deck in the drawer, Joan."
+  },
+  {
+   "id": "pair.dale.028",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "pair.joan.012"
+   ],
+   "text": "Joan, guess what this log weighs. No, wrong. Heavier than that."
+  },
+  {
+   "id": "pair.joan.012",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.dale.029"
+   ],
+   "text": "I wasn't going to guess, love. I was going to ask what's for lunch."
+  },
+  {
+   "id": "pair.dale.029",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Now you're speaking my language. Cheese, if there's any justice."
+  },
+  {
+   "id": "pair.dale.030",
+   "cat": "pair",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "paid",
+    "where:camp"
+   ],
+   "resp": [
+    "pair.joan.013"
+   ],
+   "text": "Paid! Joan, I'm paid! Snacks are on me tonight, and I mean the good ones."
+  },
+  {
+   "id": "pair.joan.013",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "paid"
+   ],
+   "text": "With what you lose at cards, love, you're really buying them for me."
+  },
+  {
+   "id": "pair.tomas.015",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "weather:wind",
+    "where:forest"
+   ],
+   "resp": [
+    "pair.priya.015"
+   ],
+   "text": "Priya, sorry, that creaking. Is that normal? It sounds close."
+  },
+  {
+   "id": "pair.priya.015",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.tomas.016"
+   ],
+   "text": "Two trunks rubbing, upslope, maybe thirty metres. Listen. It rises with every gust."
+  },
+  {
+   "id": "pair.tomas.016",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Okay. Yes. It does. Thank you. Sorry for jumping."
+  },
+  {
+   "id": "pair.priya.016",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:ride"
+   ],
+   "resp": [
+    "pair.tomas.017"
+   ],
+   "text": "You took the soft patch in first and didn't spin a wheel. How did you know?"
+  },
+  {
+   "id": "pair.tomas.017",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.priya.017"
+   ],
+   "text": "The puddle was flat at the edges, so it's deep mud, not water. Sorry, is that weird to notice?"
+  },
+  {
+   "id": "pair.priya.017",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Not weird. Useful. It's going in the notebook with your name on it."
+  },
+  {
+   "id": "pair.tomas.018",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "weather:dry"
+   ],
+   "resp": [
+    "pair.priya.018"
+   ],
+   "text": "Priya, when does the light usually go, by your notes? Roughly?"
+  },
+  {
+   "id": "pair.priya.018",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Clear sky, so it holds longer than on the cloudy days. I'll tell you the moment it starts to drop."
+  },
+  {
+   "id": "pair.priya.019",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "day>=6"
+   ],
+   "resp": [
+    "pair.tomas.019"
+   ],
+   "text": "Did you finish the letter to Ana? You were on page three last night."
+  },
+  {
+   "id": "pair.tomas.019",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Page five. Sorry, she likes details. I described your notebook. Now she wants one."
+  },
+  {
+   "id": "pair.tomas.020",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "where:camp"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "pair.priya.020",
+    "pair.priya.021"
+   ],
+   "text": "Priya, someone said there was something at the treeline. Do you think it's true? Sorry. I keep thinking about it."
+  },
+  {
+   "id": "pair.priya.020",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "I don't know. I didn't see it. Ask whoever said it where they were standing, and when."
+  },
+  {
+   "id": "pair.priya.021",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I can't tell you what it was. I noticed something once myself and marked the spot. That's all I've got, Tomas."
+  },
+  {
+   "id": "pair.priya.022",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "phase:dusk",
+    "act:home"
+   ],
+   "resp": [
+    "pair.tomas.021"
+   ],
+   "text": "Breathe out, Tomas. Count the fence posts as we pass. It helps."
+  },
+  {
+   "id": "pair.tomas.021",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "One. Two. Okay. It does help a bit. Sorry, I'll count quieter."
+  },
+  {
+   "id": "pair.joan.014",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:camp"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "pair.priya.023"
+   ],
+   "text": "Priya, love, rate this one for me. Someone's got a new story about the woods after dark. Evidence or nonsense?"
+  },
+  {
+   "id": "pair.priya.023",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.joan.015"
+   ],
+   "text": "Unverified. One teller, no time, no direction. I'd want a second witness before I wrote it down."
+  },
+  {
+   "id": "pair.joan.015",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "That's why I love you. You turn nonsense into paperwork."
+  },
+  {
+   "id": "pair.priya.024",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "where:camp",
+    "act:rest"
+   ],
+   "resp": [
+    "pair.joan.016"
+   ],
+   "text": "Joan, you said the stew had six ingredients. I counted four and a mystery."
+  },
+  {
+   "id": "pair.joan.016",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.priya.025"
+   ],
+   "text": "The mystery's love, sunshine. You can't put that in a notebook."
+  },
+  {
+   "id": "pair.priya.025",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "I can. I just wrote 'love, unconfirmed.'"
+  },
+  {
+   "id": "pair.joan.017",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "act:walk"
+   ],
+   "resp": [
+    "pair.priya.026"
+   ],
+   "text": "Did you sleep, Priya? I saw that little torch on over your notebook again."
+  },
+  {
+   "id": "pair.priya.026",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Seven hours. I wrote one line about the wind and went straight back to sleep."
+  },
+  {
+   "id": "pair.priya.027",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "day>=14",
+    "where:cabin"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.joan.018"
+   ],
+   "text": "I checked your arcade claims against the board. You're rounding up by two points, Joan."
+  },
+  {
+   "id": "pair.joan.018",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.priya.028"
+   ],
+   "text": "A bar manager always rounds up, love. It's good for morale."
+  },
+  {
+   "id": "pair.priya.028",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Then I'll round mine up too, and we can both be wrong together."
+  },
+  {
+   "id": "pair.priya.029",
+   "cat": "pair",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:yard"
+   ],
+   "resp": [
+    "pair.joan.019"
+   ],
+   "text": "The fire pile's leaning north. Keep stacking this side and it'll roll."
+  },
+  {
+   "id": "pair.joan.019",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Then we stack the other side and blame the wind. Morale and physics, love."
+  },
+  {
+   "id": "pair.joan.020",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "pair.tomas.022"
+   ],
+   "text": "Tomas, sunshine, you're on my team at the arcade tonight. No, you don't get a vote."
+  },
+  {
+   "id": "pair.tomas.022",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.joan.021"
+   ],
+   "text": "Okay. Sorry, I'm not very good. Is that okay?"
+  },
+  {
+   "id": "pair.joan.021",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "That's why you're on my team, love. I'm good enough for two."
+  },
+  {
+   "id": "pair.tomas.023",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "phase:day",
+    "act:walk"
+   ],
+   "resp": [
+    "pair.joan.022"
+   ],
+   "text": "Joan, did you sleep okay? You always ask me, so I thought I'd ask first."
+  },
+  {
+   "id": "pair.joan.022",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.tomas.024"
+   ],
+   "text": "Like a log, love. Fitting, for the job. And you?"
+  },
+  {
+   "id": "pair.tomas.024",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Mostly. Sorry. Better than the first week, anyway."
+  },
+  {
+   "id": "pair.joan.023",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "phase:dusk",
+    "where:camp"
+   ],
+   "resp": [
+    "pair.tomas.025"
+   ],
+   "text": "Eat something before we go in, Tomas. You've got a face like a wet Tuesday."
+  },
+  {
+   "id": "pair.tomas.025",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Sorry. I just don't like it when the light starts going. I'll eat. I promise."
+  },
+  {
+   "id": "pair.tomas.026",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "day>=10",
+    "where:cabin"
+   ],
+   "rep": "rare",
+   "resp": [
+    "pair.joan.024"
+   ],
+   "text": "Joan, I beat your score on the second machine. Sorry. I didn't mean to."
+  },
+  {
+   "id": "pair.joan.024",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "resp": [
+    "pair.tomas.027"
+   ],
+   "text": "Never apologise for a high score, sunshine. Apologise for that haircut."
+  },
+  {
+   "id": "pair.tomas.027",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "You gave me the haircut."
+  },
+  {
+   "id": "pair.joan.025",
+   "cat": "pair",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:ride"
+   ],
+   "resp": [
+    "pair.tomas.028"
+   ],
+   "text": "Go on, Tomas, tell me about the gears again. I find it soothing."
+  },
+  {
+   "id": "pair.tomas.028",
+   "cat": "pair",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Really? Okay. Third is fine on the flat, but this truck hates second on a hill. You can feel it sulk."
+  },
+  {
+   "id": "pair.any.001",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "resp": [
+    "pair.any.002"
+   ],
+   "text": "Your end's dipping. Lift a bit or we'll both be wearing it."
+  },
+  {
+   "id": "pair.any.002",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "My end's fine. It's your end telling stories."
+  },
+  {
+   "id": "pair.any.003",
+   "cat": "pair",
+   "speaker": "trait:sociable",
+   "to": "pair",
+   "when": [
+    "act:rest"
+   ],
+   "resp": [
+    "pair.any.004"
+   ],
+   "text": "So where are you from, then? Properly, not what's on the company form."
+  },
+  {
+   "id": "pair.any.004",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Small place. You'd drive through and never notice. That's the charm of it."
+  },
+  {
+   "id": "pair.any.005",
+   "cat": "pair",
+   "speaker": "trait:timid",
+   "to": "pair",
+   "when": [
+    "phase:dusk",
+    "act:home"
+   ],
+   "resp": [
+    "pair.any.006"
+   ],
+   "text": "Is it me, or is the light going early tonight?"
+  },
+  {
+   "id": "pair.any.006",
+   "cat": "pair",
+   "speaker": "trait:level_headed",
+   "to": "pair",
+   "reply": true,
+   "text": "Same as yesterday. Keep walking and we'll be in with the others soon enough."
+  },
+  {
+   "id": "pair.any.007",
+   "cat": "pair",
+   "speaker": "trait:stronger",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "pair.any.008"
+   ],
+   "text": "Swap ends? I've got more left in me than this log has."
+  },
+  {
+   "id": "pair.any.008",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Not a chance. I'm not handing you the bragging rights."
+  },
+  {
+   "id": "pair.any.009",
+   "cat": "pair",
+   "speaker": "trait:observant",
+   "to": "pair",
+   "when": [
+    "act:walk",
+    "where:forest"
+   ],
+   "resp": [
+    "pair.any.010"
+   ],
+   "text": "Somebody's left a glove on that stump back there. Not mine."
+  },
+  {
+   "id": "pair.any.010",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Not mine either. Hang it on the fence post. Someone'll claim it."
+  },
+  {
+   "id": "pair.any.011",
+   "cat": "pair",
+   "speaker": "trait:reliable_driver",
+   "to": "pair",
+   "when": [
+    "act:ride"
+   ],
+   "resp": [
+    "pair.any.012"
+   ],
+   "text": "Brace your feet. Ruts ahead. I'll keep her slow."
+  },
+  {
+   "id": "pair.any.012",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Slow is good. Slow is my favourite speed."
+  },
+  {
+   "id": "pair.any.013",
+   "cat": "pair",
+   "speaker": "trait:skeptical",
+   "to": "pair",
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "pair.any.014"
+   ],
+   "text": "Heard the latest story? Third time it's changed. By next week it'll be wearing a hat."
+  },
+  {
+   "id": "pair.any.014",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Stories grow out here. There's not much else to do after dark."
+  },
+  {
+   "id": "pair.any.015",
+   "cat": "pair",
+   "speaker": "trait:hard_working",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "resp": [
+    "pair.any.016"
+   ],
+   "text": "Next one's ready. You notch, I'll clear the brush."
+  },
+  {
+   "id": "pair.any.016",
+   "cat": "pair",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Deal. Shout before it goes."
+  }
+ ]
+}

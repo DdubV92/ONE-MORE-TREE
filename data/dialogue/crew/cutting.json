@@ -1,0 +1,1462 @@
+{
+ "category": "cutting",
+ "batch": "cutting-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "cut.marta.001",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "rep": "often",
+   "text": "Hinge is set. Back cut now. Stay out of the lane."
+  },
+  {
+   "id": "cut.marta.002",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Down. That's the day's count up by one. Next one."
+  },
+  {
+   "id": "cut.marta.003",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Trunk's limbed. You take the top end, I'll section the butt."
+  },
+  {
+   "id": "cut.marta.004",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Clean stump. Flat enough to set a mug on."
+  },
+  {
+   "id": "cut.marta.005",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:axe"
+   ],
+   "text": "Wood doesn't cut itself. Small axe, small bites, same tree on the ground."
+  },
+  {
+   "id": "cut.marta.006",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "resp": [
+    "cut.priya.020"
+   ],
+   "text": "Lane clear behind you? I'm about to drop this one."
+  },
+  {
+   "id": "cut.marta.007",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Felling, boss. Notch is in, hinge is even. She'll go where I put her."
+  },
+  {
+   "id": "cut.marta.008",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Yard's full, chief. I can drop trees all day, but the cradle can't take another log."
+  },
+  {
+   "id": "cut.marta.009",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "weather:rain"
+   ],
+   "text": "Wet bark. Watch your footing on the trunk, it's like soap."
+  },
+  {
+   "id": "cut.marta.010",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "phase:dusk"
+   ],
+   "prio": 4,
+   "text": "Last one before dark. Nobody starts another after this."
+  },
+  {
+   "id": "cut.marta.011",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "cleared>=40"
+   ],
+   "rep": "rare",
+   "text": "Forty percent down, give or take. I've been counting stumps on the walk out."
+  },
+  {
+   "id": "cut.marta.012",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Rotten heart on this stump. Comes apart in handfuls. Easy money."
+  },
+  {
+   "id": "cut.marta.013",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:buck"
+   ],
+   "resp": [
+    "cut.dale.020"
+   ],
+   "text": "Dale, short sections on this one. No showing off with the long ones."
+  },
+  {
+   "id": "cut.marta.014",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:big_axe"
+   ],
+   "text": "Big axe on a trunk this thick. Three swings to the hinge, then I'm counting."
+  },
+  {
+   "id": "cut.marta.015",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Report, boss: I've dropped my share today and the next one's already notched."
+  },
+  {
+   "id": "cut.marta.016",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "weather:wind"
+   ],
+   "text": "Wind's pushing the crown. I'll wait for a lull before the back cut."
+  },
+  {
+   "id": "cut.marta.017",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting on the lane. Someone's bucking right where this one wants to land."
+  },
+  {
+   "id": "cut.marta.018",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Priya's notches are getting cleaner. Don't anyone tell her I said so."
+  },
+  {
+   "id": "cut.marta.019",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Pinched the cut. Wedge it, don't wrestle it."
+  },
+  {
+   "id": "cut.marta.020",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "You've out-talked me. The count says otherwise."
+  },
+  {
+   "id": "cut.marta.021",
+   "cat": "cutting",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Somewhere. Never found it. Next one, Joan."
+  },
+  {
+   "id": "cut.dale.001",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Timber, mate. Always wanted to say that and actually mean it."
+  },
+  {
+   "id": "cut.dale.002",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Cutting this into sandwich lengths. Log lengths. I meant log lengths. I'm hungry."
+  },
+  {
+   "id": "cut.dale.003",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "text": "This one's leaning like it's had a long lunch. Watch the left side, mate."
+  },
+  {
+   "id": "cut.dale.004",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Stump's coming out. Roots down here like a plate of noodles."
+  },
+  {
+   "id": "cut.dale.005",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Bucking, mate. Shorter pieces, so nobody needs me to carry every single one."
+  },
+  {
+   "id": "cut.dale.006",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "resp": [
+    "cut.marta.020"
+   ],
+   "text": "Reckon I've out-chopped you this morning, Marta."
+  },
+  {
+   "id": "cut.dale.007",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:saw"
+   ],
+   "text": "Can't hear myself think over this thing. Probably for the best."
+  },
+  {
+   "id": "cut.dale.008",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "weather:rain"
+   ],
+   "text": "Rain down my collar. Tree doesn't care, so neither do I. Mostly."
+  },
+  {
+   "id": "cut.dale.009",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Track's blocked, mate. Sections all over it between here and the next marked tree."
+  },
+  {
+   "id": "cut.dale.010",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:stump",
+    "dog_near"
+   ],
+   "text": "No, Biscuit, the stump's not a snack. I'll find you something after."
+  },
+  {
+   "id": "cut.dale.011",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:buck",
+    "phase:dusk"
+   ],
+   "text": "Getting dark, mate. Two more cuts and then I'm thinking about dinner."
+  },
+  {
+   "id": "cut.dale.012",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "That's one I've dropped today. Feels like I've earned a second breakfast."
+  },
+  {
+   "id": "cut.dale.013",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Sap's on everything, mate. Gloves, sleeves, eyebrows somehow."
+  },
+  {
+   "id": "cut.dale.014",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Knot in the middle of this trunk like a fist. Going round it."
+  },
+  {
+   "id": "cut.dale.015",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "act:cut"
+   ],
+   "rep": "rare",
+   "text": "Know what this job needs, mate? A sandwich every hundred trees. Just putting it out there."
+  },
+  {
+   "id": "cut.dale.016",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "day>=20"
+   ],
+   "rep": "rare",
+   "text": "Twenty days in and my arms finally stopped complaining. Now it's my back's turn."
+  },
+  {
+   "id": "cut.dale.017",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "cleared>=60"
+   ],
+   "rep": "rare",
+   "text": "More sky than trees now. You can see the water from the cutting line."
+  },
+  {
+   "id": "cut.dale.018",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "weather:wind"
+   ],
+   "resp": [
+    "cut.tomas.021"
+   ],
+   "text": "Stand behind me, mate. Not because it's dangerous. I just block the wind."
+  },
+  {
+   "id": "cut.dale.019",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:stump",
+    "weather:dry"
+   ],
+   "text": "Dry ground today. This stump's letting go easier than yesterday's."
+  },
+  {
+   "id": "cut.dale.020",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Me? Show off? I just like a log with some heft to it."
+  },
+  {
+   "id": "cut.dale.021",
+   "cat": "cutting",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Notch looks good, mate. You don't need me. I just like being asked."
+  },
+  {
+   "id": "cut.priya.001",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Lean is about ten degrees east. Notch goes on that side."
+  },
+  {
+   "id": "cut.priya.002",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 4,
+   "text": "Is that crown hung up on the next tree? Look at the top branches before you go in."
+  },
+  {
+   "id": "cut.priya.003",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Tight rings on this one. Slow growth, very hard wood."
+  },
+  {
+   "id": "cut.priya.004",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Stump is level. I checked it with the axe handle, which counts as a tool."
+  },
+  {
+   "id": "cut.priya.005",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Report, boss: everything I felled today went down in the planned direction. One needed a wedge."
+  },
+  {
+   "id": "cut.priya.006",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Sectioning the trunk, boss. Even lengths, so they stack flat on the decks."
+  },
+  {
+   "id": "cut.priya.007",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "weather:wind"
+   ],
+   "text": "The wind has gone round to the north. Should we check the fall directions again?"
+  },
+  {
+   "id": "cut.priya.008",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Marta's hinge on that last one was two fingers thick, exactly. I'm copying it."
+  },
+  {
+   "id": "cut.priya.009",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:buck"
+   ],
+   "resp": [
+    "cut.tomas.020"
+   ],
+   "text": "This section will roll downhill when it comes free. Could you stand uphill, please?"
+  },
+  {
+   "id": "cut.priya.010",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "weather:rain"
+   ],
+   "text": "Rain makes the bark slick and the cut cleaner. I'll take that trade."
+  },
+  {
+   "id": "cut.priya.011",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Three main roots. The downhill one gets cut last."
+  },
+  {
+   "id": "cut.priya.012",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "I'm waiting, boss. My fall zone overlaps where someone is bucking. Two minutes, perhaps."
+  },
+  {
+   "id": "cut.priya.013",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "cleared>=25"
+   ],
+   "rep": "rare",
+   "text": "A quarter of the island is cleared. The wind reaches the cutting line differently now. Have you felt it?"
+  },
+  {
+   "id": "cut.priya.014",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "rep": "often",
+   "text": "Back cut level with the notch. Hinge holding. Good."
+  },
+  {
+   "id": "cut.priya.015",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Too loud for questions while the saw runs. I'll write them down for later."
+  },
+  {
+   "id": "cut.priya.016",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "phase:dusk"
+   ],
+   "text": "Light's going. I can't judge the lean properly in this. I'd rather stop."
+  },
+  {
+   "id": "cut.priya.017",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "weather:dry"
+   ],
+   "text": "Dry wood splinters at the hinge. Leave it slightly thicker today."
+  },
+  {
+   "id": "cut.priya.018",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "where:forest"
+   ],
+   "rep": "rare",
+   "text": "Something moved in the uphill trees when that one landed. Thirty metres off. Birds, most likely."
+  },
+  {
+   "id": "cut.priya.019",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "act:cut"
+   ],
+   "rep": "rare",
+   "text": "You can read drought years in the rings, boss. This tree lived through three of them."
+  },
+  {
+   "id": "cut.priya.020",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Clear. I checked the lean twice. It wants to go left anyway."
+  },
+  {
+   "id": "cut.priya.021",
+   "cat": "cutting",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Five hours. I counted. The cabin roof drips on the left side."
+  },
+  {
+   "id": "cut.tomas.001",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Okay. Notch, then back cut. Notch, then back cut. Okay."
+  },
+  {
+   "id": "cut.tomas.002",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 4,
+   "text": "Is everyone clear? Sorry, I'm going to drop this now. Is that okay?"
+  },
+  {
+   "id": "cut.tomas.003",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Cut that one a bit crooked. Sorry. It'll still carry."
+  },
+  {
+   "id": "cut.tomas.004",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "phase:dusk"
+   ],
+   "text": "Is it dusk already? How long before we should head in, do you think?"
+  },
+  {
+   "id": "cut.tomas.005",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Felling, boss. Slowly. But it's going the right way, I think."
+  },
+  {
+   "id": "cut.tomas.006",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Stumps are like a stuck gearbox. Find the right angle and they give."
+  },
+  {
+   "id": "cut.tomas.007",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "I dropped one on my own today. Ana's getting a whole paragraph about it."
+  },
+  {
+   "id": "cut.tomas.008",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "resp": [
+    "cut.dale.021"
+   ],
+   "text": "Dale, could you check my notch before I cut? Sorry. Just once more."
+  },
+  {
+   "id": "cut.tomas.009",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "weather:rain"
+   ],
+   "text": "Rain's making the trunk shift. Sorry, I'm wedging it first."
+  },
+  {
+   "id": "cut.tomas.010",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "The way through is blocked with logs, boss. I can't reach the next tree from here. Sorry."
+  },
+  {
+   "id": "cut.tomas.011",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "Can't hear anything over the saw. That's fine. That's completely fine."
+  },
+  {
+   "id": "cut.tomas.012",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "level>=2"
+   ],
+   "rep": "rare",
+   "text": "I think I'm getting faster at this? Is that true, or am I imagining it?"
+  },
+  {
+   "id": "cut.tomas.013",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "weather:wind"
+   ],
+   "text": "Wind keeps moving the top. I'll wait. Waiting is allowed, right?"
+  },
+  {
+   "id": "cut.tomas.014",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "These lengths would fit the truck bed perfectly. Not that I'm thinking about the truck."
+  },
+  {
+   "id": "cut.tomas.015",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Report, boss: one down from me today, no trouble. Sorry it isn't more."
+  },
+  {
+   "id": "cut.tomas.016",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "day>=25"
+   ],
+   "rep": "rare",
+   "text": "Only a few days left on the contract. I've started counting them, like Marta does trees."
+  },
+  {
+   "id": "cut.tomas.017",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "rep": "rare",
+   "text": "Did that stump just creak on its own? It's settling. Stumps settle. Sorry."
+  },
+  {
+   "id": "cut.tomas.018",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "cleared>=50"
+   ],
+   "rep": "rare",
+   "text": "Half the island's cleared. From the truck you can see right across to the far shore now."
+  },
+  {
+   "id": "cut.tomas.019",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "day>=15"
+   ],
+   "text": "Felled that one without asking anyone first. Nobody tell me if it was wrong."
+  },
+  {
+   "id": "cut.tomas.020",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Uphill. Yes. Sorry, I hadn't noticed the slope."
+  },
+  {
+   "id": "cut.tomas.021",
+   "cat": "cutting",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Thanks, Dale. That actually helps. Sorry for using you as a wall."
+  },
+  {
+   "id": "cut.joan.001",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Down she goes. Like last orders on a busy night."
+  },
+  {
+   "id": "cut.joan.002",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Pass me the far end, love. I'll make it into something a person can lift."
+  },
+  {
+   "id": "cut.joan.003",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 4,
+   "text": "Fall line clear, sunshine? I'd hate to flatten anyone before lunch."
+  },
+  {
+   "id": "cut.joan.004",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Cutting, boss-love. Steady, not glamorous. Like most good shifts."
+  },
+  {
+   "id": "cut.joan.005",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "act:cut"
+   ],
+   "rep": "rare",
+   "text": "Company pays by the tree, boss-love. I told the trees. They weren't impressed."
+  },
+  {
+   "id": "cut.joan.006",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "resp": [
+    "cut.marta.021"
+   ],
+   "text": "Marta, you've not stopped since sunrise. Do you have an off switch?"
+  },
+  {
+   "id": "cut.joan.007",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Stubborn stump. Reminds me of a regular I had. Wouldn't leave either."
+  },
+  {
+   "id": "cut.joan.008",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "weather:rain"
+   ],
+   "text": "Wet sections, wet gloves, wet me. Glamorous life, this."
+  },
+  {
+   "id": "cut.joan.009",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "phase:dusk"
+   ],
+   "text": "Light's going, love. Let's tidy this one up and call it a day."
+  },
+  {
+   "id": "cut.joan.010",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "That's me on the board for today. Someone owes me a cup of tea."
+  },
+  {
+   "id": "cut.joan.011",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Yard's chock-a-block, boss-love. We're cutting faster than that fire can eat."
+  },
+  {
+   "id": "cut.joan.012",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Tomas dropped that last one clean as anything. Did you see his face after?"
+  },
+  {
+   "id": "cut.joan.013",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Knotty bit in the middle. I'll cut either side and let it be the fire's problem."
+  },
+  {
+   "id": "cut.joan.014",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "weather:wind"
+   ],
+   "text": "Wind's having opinions about this tree. Let's wait till it's finished talking."
+  },
+  {
+   "id": "cut.joan.015",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "day>=10"
+   ],
+   "rep": "rare",
+   "text": "Ten days in. My hands have finally stopped asking what I've done to them."
+  },
+  {
+   "id": "cut.joan.016",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "phase:day"
+   ],
+   "resp": [
+    "cut.priya.021"
+   ],
+   "text": "How'd you sleep, love? You're cutting like someone who didn't."
+  },
+  {
+   "id": "cut.joan.017",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "cleared>=75"
+   ],
+   "rep": "rare",
+   "text": "Hardly any forest left. I'll miss the shade, if nothing else."
+  },
+  {
+   "id": "cut.joan.018",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Report, boss-love: trees down, sections cut, nobody hurt. Best kind of report there is."
+  },
+  {
+   "id": "cut.joan.019",
+   "cat": "cutting",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:stump",
+    "tool:big_axe"
+   ],
+   "text": "Big axe on a stump. Like buttering toast with a cleaver. Works, though."
+  },
+  {
+   "id": "cut.any.001",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 5,
+   "rep": "often",
+   "text": "Tree coming down! Clear the lane!"
+  },
+  {
+   "id": "cut.any.002",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 4,
+   "rep": "often",
+   "text": "She's going. Everyone stand back."
+  },
+  {
+   "id": "cut.any.003",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:buck"
+   ],
+   "resp": [
+    "cut.any.028"
+   ],
+   "text": "Next trunk's ready to section when you are."
+  },
+  {
+   "id": "cut.any.004",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "rep": "often",
+   "text": "Stump's done. Moving on to the next."
+  },
+  {
+   "id": "cut.any.005",
+   "cat": "cutting",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "act:cut"
+   ],
+   "text": "One more before the break. There's always room for one more."
+  },
+  {
+   "id": "cut.any.006",
+   "cat": "cutting",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "phase:dusk"
+   ],
+   "text": "It's getting late. Can we finish this one and head in?"
+  },
+  {
+   "id": "cut.any.007",
+   "cat": "cutting",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 4,
+   "text": "Dead branch up top. Watch it doesn't drop when the trunk moves."
+  },
+  {
+   "id": "cut.any.008",
+   "cat": "cutting",
+   "speaker": "trait:level_headed",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "text": "No rush. Get the hinge right and the rest follows."
+  },
+  {
+   "id": "cut.any.009",
+   "cat": "cutting",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Leave the long sections whole. I can manage them."
+  },
+  {
+   "id": "cut.any.010",
+   "cat": "cutting",
+   "speaker": "trait:sociable",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Good rhythm today. We should work the same lane more often."
+  },
+  {
+   "id": "cut.any.011",
+   "cat": "cutting",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Not every creak is a warning. Old wood creaks when you cut it."
+  },
+  {
+   "id": "cut.any.012",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:buck",
+    "weather:rain"
+   ],
+   "text": "Bark's slippery. Mind the blade on the wet side."
+  },
+  {
+   "id": "cut.any.013",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "weather:storm"
+   ],
+   "text": "Too gusty to drop anything. I'll section what's already down."
+  },
+  {
+   "id": "cut.any.014",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "Nothing marked near me, boss. Point me at a tree and I'll drop it."
+  },
+  {
+   "id": "cut.any.015",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "Can't cut with bare hands, boss. I need something off the tool rack first."
+  },
+  {
+   "id": "cut.any.016",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Lane's occupied. I'll hold off until they're out of the fall zone."
+  },
+  {
+   "id": "cut.any.017",
+   "cat": "cutting",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Once this lot's sectioned, I'd happily drive it in myself."
+  },
+  {
+   "id": "cut.any.018",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:stump",
+    "weather:rain"
+   ],
+   "text": "Mud all round the stump. Roots are greasy today."
+  },
+  {
+   "id": "cut.any.019",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "cleared>=10"
+   ],
+   "rep": "rare",
+   "text": "The line's moving. You can see daylight through the first stands now."
+  },
+  {
+   "id": "cut.any.020",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "rep": "often",
+   "text": "Short, even lengths. Easier on whoever's carrying."
+  },
+  {
+   "id": "cut.any.021",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "phase:dusk"
+   ],
+   "prio": 4,
+   "text": "Dusk. Finish the cut and leave the rest for morning."
+  },
+  {
+   "id": "cut.any.022",
+   "cat": "cutting",
+   "speaker": "trait:observant",
+   "to": "pair",
+   "when": [
+    "act:stump",
+    "where:forest"
+   ],
+   "rep": "rare",
+   "text": "Fresh scrape marks on that root. Something's been digging here recently."
+  },
+  {
+   "id": "cut.any.023",
+   "cat": "cutting",
+   "speaker": "trait:hard_working",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Felled, sectioned and ready to haul, boss. Point me at the next."
+  },
+  {
+   "id": "cut.any.024",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:saw"
+   ],
+   "text": "Saw's running. If you need me, shout, then shout louder."
+  },
+  {
+   "id": "cut.any.025",
+   "cat": "cutting",
+   "speaker": "trait:timid",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Would you watch the top while I cut? Just in case it twists."
+  },
+  {
+   "id": "cut.any.026",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "day>=20"
+   ],
+   "rep": "rare",
+   "text": "Late in the contract and the trunks don't get any lighter."
+  },
+  {
+   "id": "cut.any.027",
+   "cat": "cutting",
+   "speaker": "trait:level_headed",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "weather:wind"
+   ],
+   "text": "Gust coming through. Pull the saw out, wait, start again."
+  },
+  {
+   "id": "cut.any.028",
+   "cat": "cutting",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Coming. Mark where you want the first cut."
+  }
+ ]
+}

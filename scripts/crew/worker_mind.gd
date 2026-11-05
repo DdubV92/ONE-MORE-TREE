@@ -129,10 +129,23 @@ func hear_boss_report(now: float, corroborated: bool) -> String:
 
 
 ## A coworker told them about something they witnessed.
-func hear_coworker(now: float, mem: Dictionary) -> void:
+func hear_coworker(now: float, mem: Dictionary, teller := "") -> void:
 	belief = clampf(belief + (0.06 if has("skeptical") else 0.1) * float(mem.get("confidence", 0.5)), 0.0, 1.0)
 	fear = clampf(fear + 0.04 * sensitivity(), 0.0, 1.0)
+	# Phase 17: remember the CLAIM (second-hand: source, lower confidence),
+	# once per original event - a told memory is never firsthand evidence.
+	var tid := "told:" + str(mem.get("id", ""))
+	for m in memories:
+		if str(m.id) == tid or str(m.id) == str(mem.get("id", "")):
+			_update_state(now)
+			return
+	_remember({"id": tid, "kind": str(mem.get("kind", "?")), "modality": "told", "pos": mem.get("pos", []), "time": now, "confidence": snappedf(float(mem.get("confidence", 0.5)) * 0.5, 0.01), "significance": 0.02, "firsthand": false, "status": "rumor", "source": teller})
 	_update_state(now)
+
+
+## Phase 17: a second-hand claim this worker was told (no firsthand one).
+func told_count() -> int:
+	return memories.filter(func(m: Dictionary) -> bool: return str(m.get("modality", "")) == "told").size()
 
 
 func _remember(m: Dictionary) -> void:

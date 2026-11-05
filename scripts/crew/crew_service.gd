@@ -56,6 +56,8 @@ var coord: CrewCoordinator
 var merit := MeritLedger.new()
 var progression := CrewProgression.new(merit)
 var _tr_t := 0.0
+## Phase 17: authored crew conversations (one owner per camp).
+var talk: ConversationService
 
 
 func setup(c: CampaignService) -> void:
@@ -69,6 +71,9 @@ func setup(c: CampaignService) -> void:
 	nav.name = "CrewNav"
 	add_child(nav)
 	coord = CrewCoordinator.new(self)
+	talk = ConversationService.new()
+	talk.name = "Conversations"
+	add_child(talk)
 	if trees:
 		trees.tree_warning.connect(coord.on_warning)
 		trees.tree_felled.connect(coord.on_felled)
@@ -78,6 +83,7 @@ func setup(c: CampaignService) -> void:
 	if timber:
 		timber.body_settled_hook = _on_log_settled
 		timber.delivery_accepted.connect(_merit_on_accepted)
+	talk.setup(self)
 	progression.advanced.connect(_on_advanced)
 
 
@@ -571,7 +577,7 @@ func _share_stories() -> void:
 					already = true
 			_shared[key] = true
 			if not already:
-				wb.mind.hear_coworker(t, m)
+				wb.mind.hear_coworker(t, m, wa.id)
 
 
 # ------------------------------------------------------------ job choices
@@ -1485,7 +1491,7 @@ func capture() -> Dictionary:
 	var ms := {}
 	for id in minds:
 		ms[id] = (minds[id] as WorkerMind).capture()
-	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture()}
+	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture()}
 
 
 ## Restores the crew without duplicating anyone: one Worker per active or
@@ -1509,6 +1515,7 @@ func restore(d: Dictionary) -> void:
 	# reliable per-actor attribution, so none is assigned retroactively).
 	merit.restore(d.get("merit", {}))
 	progression.restore(d.get("progression", {}))
+	talk.restore(d.get("talk", {}))
 	stats = (d.get("stats", {}) as Dictionary).duplicate(true)
 	enabled = true
 	var saved: Dictionary = d.get("workers", {})

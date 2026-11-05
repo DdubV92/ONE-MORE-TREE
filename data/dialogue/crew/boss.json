@@ -1,0 +1,2651 @@
+{
+ "category": "boss",
+ "batch": "boss-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "boss.marta.001",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:day"
+   ],
+   "text": "Boss. Morning's half gone already. What do you need?"
+  },
+  {
+   "id": "boss.marta.002",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "trust:high"
+   ],
+   "text": "Chief. Come to watch an expert, or come to hand out orders?"
+  },
+  {
+   "id": "boss.marta.003",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Boss. Make it quick. The light's going and I want everyone in."
+  },
+  {
+   "id": "boss.marta.004",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "day>=20"
+   ],
+   "text": "Twenty-odd days and you still turn up when I'm mid-cut. Go on, then."
+  },
+  {
+   "id": "boss.marta.005",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Felling. Notch is in, back cut next. Stand clear of the lean, boss."
+  },
+  {
+   "id": "boss.marta.006",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Bucking it into carry lengths. Square ends, so the stack sits flat."
+  },
+  {
+   "id": "boss.marta.007",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Taking the stump down flat. Nobody trips on one of my stumps."
+  },
+  {
+   "id": "boss.marta.008",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying. I'd rather be felling, but somebody has to feed the cradle."
+  },
+  {
+   "id": "boss.marta.009",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stacking the decks. Tight rows. A loose stack wastes the fire."
+  },
+  {
+   "id": "boss.marta.010",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:idle"
+   ],
+   "text": "Nothing in my hands, boss, and I don't like it. Give me a lane and I'll fill it."
+  },
+  {
+   "id": "boss.marta.011",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Riding out to the next lane. Saves the legs for the cutting."
+  },
+  {
+   "id": "boss.marta.012",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Yard's full, boss. Cradle's stacked and the decks too. Move logs to the fire or put someone on the yard, or I stop dropping trees."
+  },
+  {
+   "id": "boss.marta.013",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Somebody's working my lane. I don't drop trees on people. Clear it or send me to the next one."
+  },
+  {
+   "id": "boss.marta.014",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "No trunk marked anywhere near me. Point me at a lane and I'm gone."
+  },
+  {
+   "id": "boss.marta.015",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No axe, boss. Can't fell with my bare hands. Get me one off the rack."
+  },
+  {
+   "id": "boss.marta.016",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting on a second pair of hands for this trunk. Send me someone and it moves."
+  },
+  {
+   "id": "boss.marta.017",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "text": "I saw something past the lanes. It wasn't wind and it wasn't a deer. It stopped when I stopped. Everyone in by dusk."
+  },
+  {
+   "id": "boss.marta.018",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "I heard it moving after everything else had gone quiet. That's all. Get the others in. Now, boss."
+  },
+  {
+   "id": "boss.marta.019",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "There's a story going round. I didn't see anything myself. Wind in the tops, most likely."
+  },
+  {
+   "id": "boss.marta.020",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "strange",
+   "text": "Strange? Only the company's idea of a schedule. I haven't seen anything out there."
+  },
+  {
+   "id": "boss.marta.021",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "belief:low"
+   ],
+   "text": "Animals in the brush and wind in the crowns. That's all I've got for you, boss."
+  },
+  {
+   "id": "boss.marta.022",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "text": "I'm owed, boss. I don't work for free. When does it land?"
+  },
+  {
+   "id": "boss.marta.023",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed",
+    "trust:low"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Owed at nightfall and still owed today. That's not a pattern I like, boss. Pay me or tell me straight."
+  },
+  {
+   "id": "boss.marta.024",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "Paid up. Good. Nothing to talk about, then."
+  },
+  {
+   "id": "boss.marta.025",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid",
+    "day>=15"
+   ],
+   "text": "Pay's landed on time every round. I notice that, boss. Keep it that way."
+  },
+  {
+   "id": "boss.marta.026",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "It's the job, boss. But I heard you. Thanks."
+  },
+  {
+   "id": "boss.marta.027",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Don't make a habit of it, chief. I'll go soft."
+  },
+  {
+   "id": "boss.marta.028",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised",
+    "know:felled_today"
+   ],
+   "text": "Clean stumps don't happen by accident. Glad somebody looked."
+  },
+  {
+   "id": "boss.marta.029",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "when": [
+    "trust:high"
+   ],
+   "rep": "rare",
+   "text": "Twenty years on contracts and most bosses never said it once. Thank you. Now let me get on."
+  },
+  {
+   "id": "boss.marta.030",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "chat",
+   "text": "Wood doesn't cut itself, boss. That's the whole philosophy. There isn't a second page."
+  },
+  {
+   "id": "boss.marta.031",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp"
+   ],
+   "text": "I sharpen before supper. Sharp axe, short day. Blunt axe, long night."
+  },
+  {
+   "id": "boss.marta.032",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "day>=10"
+   ],
+   "text": "We're past the slow part. The crew knows its lanes now. Days go quicker from here."
+  },
+  {
+   "id": "boss.marta.033",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "cleared>=50"
+   ],
+   "text": "More stumps than trees now, boss. I've been counting. Don't ask me to stop."
+  },
+  {
+   "id": "boss.marta.034",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Understood, boss. That lane's mine, then. I'll start at the far end."
+  },
+  {
+   "id": "boss.marta.035",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Fine. That lane, then. Give me an hour."
+  },
+  {
+   "id": "boss.marta.036",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Right. I'll do it, and I'll do it clean."
+  },
+  {
+   "id": "boss.marta.037",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "ack",
+   "when": [
+    "trust:low"
+   ],
+   "text": "I'll do it. I don't agree with it, but I'll do it."
+  },
+  {
+   "id": "boss.marta.038",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing"
+   ],
+   "text": "No, boss. Not today. Ask me tomorrow."
+  },
+  {
+   "id": "boss.marta.039",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Light's gone, boss. Nobody cuts now. We go in."
+  },
+  {
+   "id": "boss.marta.040",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "No. Not at this hour. Not after what I saw. Everyone inside, you included."
+  },
+  {
+   "id": "boss.marta.041",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing",
+    "owed"
+   ],
+   "text": "Pay what's owed and I'll pick the axe back up. Until then, no."
+  },
+  {
+   "id": "boss.marta.042",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "prio": 4,
+   "text": "Yard's choking, boss. Somebody on the fire pile or we all stand around."
+  },
+  {
+   "id": "boss.marta.043",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Trunk's down, boss. Ready for carrying as soon as I've bucked it."
+  },
+  {
+   "id": "boss.marta.044",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "tool:none"
+   ],
+   "prio": 4,
+   "text": "I need an axe, boss. My hands are free, and that's the problem."
+  },
+  {
+   "id": "boss.marta.045",
+   "cat": "boss",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Dale's sulking over the count. Leave him be. He'll come round by supper."
+  },
+  {
+   "id": "boss.dale.001",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "greet",
+   "text": "Mate! Boss! Come to help carry, or come to admire the carrying?"
+  },
+  {
+   "id": "boss.dale.002",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:day"
+   ],
+   "text": "Morning, mate. Had breakfast? I've had two. The second one was better."
+  },
+  {
+   "id": "boss.dale.003",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Mate. Don't mind Biscuit. He's just checking your pockets for crusts."
+  },
+  {
+   "id": "boss.dale.004",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Evening, mate. Supper's soon. Say what you need before I smell it."
+  },
+  {
+   "id": "boss.dale.005",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying, mate. This one's got a personality. Mostly the heavy kind."
+  },
+  {
+   "id": "boss.dale.006",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stacking. The fire's a slow eater, so I'm laying it out a tidy buffet."
+  },
+  {
+   "id": "boss.dale.007",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Felling, mate. Not my specialty, but the tree doesn't know that."
+  },
+  {
+   "id": "boss.dale.008",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Cutting it into lengths anyone can carry. I could carry longer. I'm being considerate."
+  },
+  {
+   "id": "boss.dale.009",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Stump work. Low and boring, mate. Marta checks it, so it'll be flat."
+  },
+  {
+   "id": "boss.dale.010",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:idle"
+   ],
+   "text": "Doing nothing, mate, and I'm not proud of it. Point me at a heavy one."
+  },
+  {
+   "id": "boss.dale.011",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Riding along. Someone else drives, I'm in charge of the snacks."
+  },
+  {
+   "id": "boss.dale.012",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Cradle's full, mate. I've a log on my shoulder and nowhere to put it. Get some moved to the fire, or put me on the yard."
+  },
+  {
+   "id": "boss.dale.013",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Path's blocked, mate. Someone's in the way, and I'm not swinging a trunk through them. Send me round another way?"
+  },
+  {
+   "id": "boss.dale.014",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "Nothing to lift, mate. Feels wrong. Find me something heavy and I'm happy."
+  },
+  {
+   "id": "boss.dale.015",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No axe on me, mate. I'm strong, but I'm not that strong. One off the rack would sort it."
+  },
+  {
+   "id": "boss.dale.016",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting on a partner for this big one. Even I won't lift it alone. Send someone over and it's moving."
+  },
+  {
+   "id": "boss.dale.017",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "text": "I'll be honest, mate. I saw something I can't explain, and I tried. It wasn't a deer. It moved wrong. I've not slept right since."
+  },
+  {
+   "id": "boss.dale.018",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I heard it with my own ears, mate. Close, then nothing at all. And I'm the one who always says it's the fridge."
+  },
+  {
+   "id": "boss.dale.019",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "There's a story going round. Sounds like a deer to me, or somebody's radio. People get jumpy out here."
+  },
+  {
+   "id": "boss.dale.020",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "strange",
+   "text": "Strange? Joan's stew last Thursday. That's the only mystery I've got for you, mate."
+  },
+  {
+   "id": "boss.dale.021",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "belief:low"
+   ],
+   "text": "Nothing strange, mate. Foxes, wind, and Biscuit having dreams."
+  },
+  {
+   "id": "boss.dale.022",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "text": "Mate, I'm owed. And a hungry Dale is a slow Dale. When's it coming?"
+  },
+  {
+   "id": "boss.dale.023",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Still owed, mate. I've started rationing the good snacks. Even Biscuit's noticed."
+  },
+  {
+   "id": "boss.dale.024",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "Paid! Mate, you beauty. Best news since breakfast."
+  },
+  {
+   "id": "boss.dale.025",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "All square, mate. Nothing owed. I'm a happy man with a full locker."
+  },
+  {
+   "id": "boss.dale.026",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Aw, mate. You'll make me go red. Thanks."
+  },
+  {
+   "id": "boss.dale.027",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thanks, boss. Tell Marta. Tell her loudly, so she can hear it over the axe."
+  },
+  {
+   "id": "boss.dale.028",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "That's nice, mate. I take thanks or biscuits. Thanks will do today."
+  },
+  {
+   "id": "boss.dale.029",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised",
+    "know:team_carry"
+   ],
+   "text": "Wasn't just me, mate. Two of us on that carry. But I'll take it."
+  },
+  {
+   "id": "boss.dale.030",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "text": "Know what I miss? Proper chips. Thick ones, with salt and vinegar."
+  },
+  {
+   "id": "boss.dale.031",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "day>=7"
+   ],
+   "text": "Joan's ahead at cards. I'm letting her. That's my story, mate, and I'm sticking to it."
+  },
+  {
+   "id": "boss.dale.032",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Biscuit's my best mate on this island. Don't tell Tomas. He'd be gutted."
+  },
+  {
+   "id": "boss.dale.033",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "text": "Used to haul crates on the docks. Logs are friendlier, mate. No corners."
+  },
+  {
+   "id": "boss.dale.034",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Right you are, mate. On it."
+  },
+  {
+   "id": "boss.dale.035",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Lift it, carry it, drop it. Leave it with me."
+  },
+  {
+   "id": "boss.dale.036",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "ack",
+   "when": [
+    "phase:day"
+   ],
+   "text": "Sure thing, mate. And after that, lunch?"
+  },
+  {
+   "id": "boss.dale.037",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "ack",
+   "when": [
+    "trust:high"
+   ],
+   "text": "For you, mate? Anything. Within lifting distance."
+  },
+  {
+   "id": "boss.dale.038",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing"
+   ],
+   "text": "Not today, mate. Sorry. I'm just not up to it."
+  },
+  {
+   "id": "boss.dale.039",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "No, mate. It's getting dark. I'm going in, and you should too."
+  },
+  {
+   "id": "boss.dale.040",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Not out there, mate. Not now. I know what I heard, even if I can't say what it was."
+  },
+  {
+   "id": "boss.dale.041",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing",
+    "owed"
+   ],
+   "text": "Pay first, mate. I like you, but I can't eat liking."
+  },
+  {
+   "id": "boss.dale.042",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "prio": 4,
+   "text": "Mate, the yard's stacked solid. Can't put another log down. Send someone to feed the fire."
+  },
+  {
+   "id": "boss.dale.043",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Dropped another load at the cradle, mate. The yard's eating well today."
+  },
+  {
+   "id": "boss.dale.044",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "Did a two-man carry on a monster today, mate. My back would like it on the record."
+  },
+  {
+   "id": "boss.dale.045",
+   "cat": "boss",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Marta's ahead of me on the count and she's being smug about it. I thought you should know. As a witness."
+  },
+  {
+   "id": "boss.priya.001",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "greet",
+   "text": "Hello, boss. Is it something specific? I'm halfway through a note."
+  },
+  {
+   "id": "boss.priya.002",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:day",
+    "weather:wind"
+   ],
+   "text": "Morning, boss. Mind the wind today. It's shifting, so the fall lines will too."
+  },
+  {
+   "id": "boss.priya.003",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Boss. We're losing light under the canopy. What do you need?"
+  },
+  {
+   "id": "boss.priya.004",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:day"
+   ],
+   "text": "Good timing, boss. I was going to ask you about the next lane."
+  },
+  {
+   "id": "boss.priya.005",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Felling. The lean's slight, back and to the left. I've cut the notch to match it."
+  },
+  {
+   "id": "boss.priya.006",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Bucking. I'm cutting between the knots so the lengths stack evenly."
+  },
+  {
+   "id": "boss.priya.007",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Taking down the stump. Marta's standard is flat enough to set a cup on."
+  },
+  {
+   "id": "boss.priya.008",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying to the cradle. I'm watching the footing. The bark's slick where the sap's run."
+  },
+  {
+   "id": "boss.priya.009",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stacking. Heavy lengths on the bottom tier, so the deck doesn't shift."
+  },
+  {
+   "id": "boss.priya.010",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:idle"
+   ],
+   "text": "Nothing assigned right now, boss. Is there a lane you'd like me in?"
+  },
+  {
+   "id": "boss.priya.011",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Riding to the next site. I'm watching the treeline as we go. Old habit from surveying."
+  },
+  {
+   "id": "boss.priya.012",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "The cradle and decks are full, boss. The fire's burning slower than we deliver. Someone on the yard, or logs moved to the fire, would clear it."
+  },
+  {
+   "id": "boss.priya.013",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "My route's blocked. Someone's working in the lane I need. Could you point me at the next one over?"
+  },
+  {
+   "id": "boss.priya.014",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "There's no marked tree within reach of me. If you mark the next one, I'll start straight away."
+  },
+  {
+   "id": "boss.priya.015",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "I don't have an axe, boss. The rack's the place to check. I can't do anything useful until I've got one."
+  },
+  {
+   "id": "boss.priya.016",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "I'm waiting for a carry partner. This trunk is too long for one person. Could you send someone?"
+  },
+  {
+   "id": "boss.priya.017",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "text": "I heard something to one side of me, maybe forty metres off, keeping pace. It stopped when I stopped. It wasn't wind."
+  },
+  {
+   "id": "boss.priya.018",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I saw movement between the trunks. Upright, not an animal's gait, and no sound on the brush. I wrote down the time."
+  },
+  {
+   "id": "boss.priya.019",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Someone told me a story about it. I haven't seen anything myself, so I can't confirm or deny it."
+  },
+  {
+   "id": "boss.priya.020",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "strange",
+   "text": "Nothing I'd put in the notebook as strange. If that changes, you'll hear it from me first."
+  },
+  {
+   "id": "boss.priya.021",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "belief:high"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "I keep hearing the same claim from different people. That doesn't make it true. It does make me pay attention."
+  },
+  {
+   "id": "boss.priya.022",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "text": "I'm owed wages, boss. Do you know the date it will be paid?"
+  },
+  {
+   "id": "boss.priya.023",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I was owed at nightfall as well. I'd like a date I can write down, please."
+  },
+  {
+   "id": "boss.priya.024",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "All paid, boss. Three hundred a day, and it matches my notebook."
+  },
+  {
+   "id": "boss.priya.025",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "Nothing owed. Thank you for keeping it regular. It's one less thing to track."
+  },
+  {
+   "id": "boss.priya.026",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thank you. That's useful to know. I wasn't sure anyone had noticed."
+  },
+  {
+   "id": "boss.priya.027",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "That's kind, boss. The leans were easy to read, honestly."
+  },
+  {
+   "id": "boss.priya.028",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thanks, boss. A good part of it is Marta's teaching."
+  },
+  {
+   "id": "boss.priya.029",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised",
+    "know:levelup"
+   ],
+   "text": "Thank you. I've been working on my back cuts. It's good to know it shows."
+  },
+  {
+   "id": "boss.priya.030",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "weather:rain"
+   ],
+   "text": "You can tell the wind direction by which side of the bark is wettest. Useful on a day like this."
+  },
+  {
+   "id": "boss.priya.031",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "text": "I keep a list of every bird I've heard on the island. It's short. Shorter than I'd expect."
+  },
+  {
+   "id": "boss.priya.032",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "text": "I left surveying because I wanted to touch the trees, not just measure them. Now I do both."
+  },
+  {
+   "id": "boss.priya.033",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "dog_near"
+   ],
+   "text": "Biscuit's put on weight since we arrived. I have a theory, boss, and its name is Dale."
+  },
+  {
+   "id": "boss.priya.034",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Understood, boss. Heading there now."
+  },
+  {
+   "id": "boss.priya.035",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Right. I'll check the lean first, then start."
+  },
+  {
+   "id": "boss.priya.036",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Okay. Which side do you want them to fall? I'll make it happen."
+  },
+  {
+   "id": "boss.priya.037",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Yes, boss. I'll report back when it's done."
+  },
+  {
+   "id": "boss.priya.038",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing"
+   ],
+   "text": "Not right now, boss. I need some time. I'll tell you when I'm ready."
+  },
+  {
+   "id": "boss.priya.039",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "There isn't enough light to fell safely, boss. I'm heading in."
+  },
+  {
+   "id": "boss.priya.040",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "No. I know what I perceived out there at this hour. I'm not going back out until morning."
+  },
+  {
+   "id": "boss.priya.041",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing",
+    "trust:low"
+   ],
+   "text": "I'd rather not, boss. I don't think the plan's been thought through, and I'd like to see that it has."
+  },
+  {
+   "id": "boss.priya.042",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "prio": 4,
+   "text": "Boss, the yard's full. Two people stacking would clear it faster than waiting on the fire."
+  },
+  {
+   "id": "boss.priya.043",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "The trunk I felled is down clean, boss. It's ready to be bucked and carried."
+  },
+  {
+   "id": "boss.priya.044",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "weather:wind",
+    "where:forest"
+   ],
+   "prio": 4,
+   "text": "Wind's picking up, boss. I'd hold off on the tall ones near the lanes until it settles."
+  },
+  {
+   "id": "boss.priya.045",
+   "cat": "boss",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "tool:none"
+   ],
+   "prio": 4,
+   "text": "I need an axe from the rack before I can start, boss. Any size will do."
+  },
+  {
+   "id": "boss.tomas.001",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "greet",
+   "text": "Hi, boss. Sorry. Did you need me?"
+  },
+  {
+   "id": "boss.tomas.002",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:day",
+    "weather:dry"
+   ],
+   "text": "Morning, boss. The track's dried out a bit, if you need the truck."
+  },
+  {
+   "id": "boss.tomas.003",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Boss. Hi. Sorry, is it nearly time to go in?"
+  },
+  {
+   "id": "boss.tomas.004",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "trust:high"
+   ],
+   "text": "Hi, boss. It's good to see you. Is everything okay?"
+  },
+  {
+   "id": "boss.tomas.005",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Driving, boss. Third on the flat, second on the hill. She likes that."
+  },
+  {
+   "id": "boss.tomas.006",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying this to the cradle. Sorry, I'm slower than Dale."
+  },
+  {
+   "id": "boss.tomas.007",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Felling. The notch is in. I checked it twice. Sorry, three times."
+  },
+  {
+   "id": "boss.tomas.008",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Cutting it into lengths. Is that okay? I think the lengths are right."
+  },
+  {
+   "id": "boss.tomas.009",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Taking down the stump. I'm trying to get it flat like Marta's."
+  },
+  {
+   "id": "boss.tomas.010",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stacking the decks. It's nice work, boss. Close to camp."
+  },
+  {
+   "id": "boss.tomas.011",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:idle"
+   ],
+   "text": "Sorry, boss, nothing at the moment. I could drive something somewhere, if that helps."
+  },
+  {
+   "id": "boss.tomas.012",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Sorry, boss, the yard's full. There's nowhere to drop this. If someone fed the fire, or you put me on stacking, it'd clear."
+  },
+  {
+   "id": "boss.tomas.013",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "The way's blocked, boss. Someone's in it. Sorry, could you point me round another way?"
+  },
+  {
+   "id": "boss.tomas.014",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "I don't have anything to do, boss. Sorry. Is there a tree you'd like me on?"
+  },
+  {
+   "id": "boss.tomas.015",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "I haven't got an axe. Sorry. Could I take one off the rack, or could you get me one?"
+  },
+  {
+   "id": "boss.tomas.016",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "I'm waiting for someone to take the other end. It's a two-person one. Sorry. Could you send somebody?"
+  },
+  {
+   "id": "boss.tomas.017",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "text": "I saw something, boss. At the edge of the trees. It was standing still, and then it wasn't there. Sorry. I keep seeing it when I close my eyes."
+  },
+  {
+   "id": "boss.tomas.018",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I heard something right behind me. When I turned round, there was nothing. I'm sorry. I didn't stop running till the fence."
+  },
+  {
+   "id": "boss.tomas.019",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Someone said they saw something out there. I didn't see it. I don't know if it's true. Do you?"
+  },
+  {
+   "id": "boss.tomas.020",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "strange",
+   "text": "No, boss. Nothing. Sorry. Should I have?"
+  },
+  {
+   "id": "boss.tomas.021",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mood:uneasy"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "People keep saying things about the treeline. I haven't seen anything. But I've sort of stopped looking."
+  },
+  {
+   "id": "boss.tomas.022",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "text": "Sorry to ask, boss, but I'm owed. Is it coming soon? It's okay if not. Well, it isn't, really."
+  },
+  {
+   "id": "boss.tomas.023",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'm still owed, boss. I promised Ana some of it for her course. Sorry."
+  },
+  {
+   "id": "boss.tomas.024",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "I'm paid up, boss. Thank you. Really."
+  },
+  {
+   "id": "boss.tomas.025",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "All paid. I've put half aside for Ana already. Is that silly?"
+  },
+  {
+   "id": "boss.tomas.026",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Really? Thank you, boss. That's, wow. Thanks."
+  },
+  {
+   "id": "boss.tomas.027",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thank you! I'm putting that in my letter to Ana. She won't believe it."
+  },
+  {
+   "id": "boss.tomas.028",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Oh. Thank you. Sorry, I'm not used to that. Thank you."
+  },
+  {
+   "id": "boss.tomas.029",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "when": [
+    "act:ride"
+   ],
+   "text": "Thanks, boss. The truck did most of it. But thank you."
+  },
+  {
+   "id": "boss.tomas.030",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "text": "I've got a whole stack of letters for Ana now. They're mostly about trucks. Sorry, Ana."
+  },
+  {
+   "id": "boss.tomas.031",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "text": "I used to drive deliveries. Mud's harder than traffic. Quieter, though."
+  },
+  {
+   "id": "boss.tomas.032",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "phase:day"
+   ],
+   "text": "What time is dusk tonight, roughly? Sorry. I just like to know."
+  },
+  {
+   "id": "boss.tomas.033",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "day>=10"
+   ],
+   "text": "I'm getting used to it here. Mostly. The mornings are nice, when the mist sits on the water."
+  },
+  {
+   "id": "boss.tomas.034",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Okay, boss. Yes. I'll do it."
+  },
+  {
+   "id": "boss.tomas.035",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Right away. Sorry. I mean, yes. On it."
+  },
+  {
+   "id": "boss.tomas.036",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "ack",
+   "text": "I can do that. I'll take the truck, if that's okay."
+  },
+  {
+   "id": "boss.tomas.037",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "ack",
+   "when": [
+    "phase:day"
+   ],
+   "text": "Okay. Is that close to camp? Sorry. Yes. I'll go."
+  },
+  {
+   "id": "boss.tomas.038",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Sorry, boss. It's getting dark. Can I head in? Please?"
+  },
+  {
+   "id": "boss.tomas.039",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing"
+   ],
+   "text": "I can't, boss. I'm sorry. I just can't right now."
+  },
+  {
+   "id": "boss.tomas.040",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Not out there. Not after dark. Not after what I saw. Sorry, boss. I really can't."
+  },
+  {
+   "id": "boss.tomas.041",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing",
+    "trust:low"
+   ],
+   "text": "I'm sorry. I don't think it's a good idea, and I don't think you'd go out there either."
+  },
+  {
+   "id": "boss.tomas.042",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "prio": 4,
+   "text": "Boss, sorry, the yard's full. Should I start feeding the fire?"
+  },
+  {
+   "id": "boss.tomas.043",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "I took a load to the cradle, boss. The truck's free, if anyone needs it."
+  },
+  {
+   "id": "boss.tomas.044",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "phase:dusk"
+   ],
+   "prio": 4,
+   "text": "Boss, it's dusk. Sorry. I thought you'd want to know. I'm heading in."
+  },
+  {
+   "id": "boss.tomas.045",
+   "cat": "boss",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "tool:none"
+   ],
+   "prio": 4,
+   "text": "Sorry, boss, I need an axe. Is there one I can have?"
+  },
+  {
+   "id": "boss.joan.001",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "greet",
+   "text": "Boss-love! How did you sleep? Honestly, now."
+  },
+  {
+   "id": "boss.joan.002",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Evening, boss-love. Supper's on in a bit, and you're eating with us."
+  },
+  {
+   "id": "boss.joan.003",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "boss_tired"
+   ],
+   "text": "Boss-love, you look like a wrung-out tea towel. Sit down for a minute."
+  },
+  {
+   "id": "boss.joan.004",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "greet",
+   "when": [
+    "weather:rain"
+   ],
+   "text": "Morning, boss-love. Lovely weather for ducks and loggers."
+  },
+  {
+   "id": "boss.joan.005",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Felling, boss-love. I have a word with each one first. Makes it less rude."
+  },
+  {
+   "id": "boss.joan.006",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:buck"
+   ],
+   "text": "Cutting it into lengths. Like slicing a loaf, only the loaf fights back."
+  },
+  {
+   "id": "boss.joan.007",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Stump work. Marta inspects them like a health inspector, so it's getting done right."
+  },
+  {
+   "id": "boss.joan.008",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying, love. If I drop it, it's the log's fault."
+  },
+  {
+   "id": "boss.joan.009",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stacking and minding the fire. Same as running a bar. Keep it moving, keep it warm."
+  },
+  {
+   "id": "boss.joan.010",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:idle"
+   ],
+   "text": "Nothing on, boss-love. I could be peeling potatoes. Or felling. Your call."
+  },
+  {
+   "id": "boss.joan.011",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Riding in luxury, love. Feet up, bumps included, no tips expected."
+  },
+  {
+   "id": "boss.joan.012",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "The yard's full, boss-love. Not a gap anywhere. Shift some to the fire pile or put someone on stacking and we're back in business."
+  },
+  {
+   "id": "boss.joan.013",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Can't get through, love. Somebody's in my lane. Send me another way and I'll go."
+  },
+  {
+   "id": "boss.joan.014",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "I've nothing to do, boss-love, and idle hands make gossip. Point me somewhere."
+  },
+  {
+   "id": "boss.joan.015",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No axe, love. I'm not felling with a wooden spoon. One off the rack, please."
+  },
+  {
+   "id": "boss.joan.016",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "I'm waiting for a partner on this carry. Send someone with a good back and a better sense of humour."
+  },
+  {
+   "id": "boss.joan.017",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "text": "I wasn't going to say. I saw something by the trees, boss-love. It was watching. And I don't believe in anything, so that's what's bothering me."
+  },
+  {
+   "id": "boss.joan.018",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I heard it myself, love. Something moving outside while we were all indoors. I counted heads. We were all indoors."
+  },
+  {
+   "id": "boss.joan.019",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Someone's been telling tales. I didn't see a thing, and I'd take it with a good pinch of salt."
+  },
+  {
+   "id": "boss.joan.020",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "strange",
+   "text": "Strange? Someone's been reading forums, boss-love. I've seen nothing."
+  },
+  {
+   "id": "boss.joan.021",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "belief:low"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "I've heard the story. I ran a bar for twenty years, love. Every story grows a foot after the second pint."
+  },
+  {
+   "id": "boss.joan.022",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "text": "We're owed, boss-love. I'll not make a fuss. I'm just a bit worried, is all."
+  },
+  {
+   "id": "boss.joan.023",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Still owed. I've gone quiet about it, love, and you know that isn't like me."
+  },
+  {
+   "id": "boss.joan.024",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "Paid, boss-love. Lovely. That's morale sorted for a night."
+  },
+  {
+   "id": "boss.joan.025",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "All square. I can stop adding up my savings in my head now."
+  },
+  {
+   "id": "boss.joan.026",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Oh, give over, boss-love. Thank you, though."
+  },
+  {
+   "id": "boss.joan.027",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "That's nice to hear, love. I'll tell the others you've got manners."
+  },
+  {
+   "id": "boss.joan.028",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thank you, sunshine. There'll be a little extra in your bowl at supper."
+  },
+  {
+   "id": "boss.joan.029",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thanks, boss-love. Mind you say it to Marta too. She thinks nobody notices."
+  },
+  {
+   "id": "boss.joan.030",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "text": "Did I ever tell you about the night the cellar flooded? Three barrels floating and a man in a bow tie."
+  },
+  {
+   "id": "boss.joan.031",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "day>=3"
+   ],
+   "text": "How's everyone sleeping, boss-love? Tomas talks in his. Dale snores in his. I keep notes."
+  },
+  {
+   "id": "boss.joan.032",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "text": "The company once sent a memo about morale. I used it to light the stove."
+  },
+  {
+   "id": "boss.joan.033",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:cabin",
+    "day>=7"
+   ],
+   "text": "There's a new name at the top of the arcade board. I'll give you a clue, love. It isn't Dale."
+  },
+  {
+   "id": "boss.joan.034",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Right you are, boss-love. Off I go."
+  },
+  {
+   "id": "boss.joan.035",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "ack",
+   "text": "I'll do it, love. I'll complain the whole time, but I'll do it."
+  },
+  {
+   "id": "boss.joan.036",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "ack",
+   "when": [
+    "phase:day"
+   ],
+   "text": "Fine by me. Just don't make me miss supper."
+  },
+  {
+   "id": "boss.joan.037",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "ack",
+   "text": "On it, sunshine. Back before the kettle boils."
+  },
+  {
+   "id": "boss.joan.038",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing"
+   ],
+   "text": "Not today, boss-love. Ask me nicely tomorrow."
+  },
+  {
+   "id": "boss.joan.039",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "It's dusk, love. Nobody's going out. Everyone in, you included."
+  },
+  {
+   "id": "boss.joan.040",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "No. I hardly ever say no to you, boss-love. I'm saying it now."
+  },
+  {
+   "id": "boss.joan.041",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mood:refusing",
+    "owed"
+   ],
+   "text": "Pay the crew and we'll talk, boss-love. Until then I'm on strike. Very politely."
+  },
+  {
+   "id": "boss.joan.042",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Boss-love, somebody's pride's a bit dented over the count today. Have a kind word ready."
+  },
+  {
+   "id": "boss.joan.043",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "prio": 4,
+   "text": "Yard's chock-full, love. Can I have someone on the fire pile?"
+  },
+  {
+   "id": "boss.joan.044",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:frustrated"
+   ],
+   "text": "I've spent half the day waiting on the yard, boss-love. Not complaining. All right, complaining a bit."
+  },
+  {
+   "id": "boss.joan.045",
+   "cat": "boss",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "text": "Supper's ready, boss-love. Come and eat before Dale finds it."
+  },
+  {
+   "id": "boss.any.001",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "greet",
+   "text": "Boss. What can I do for you?"
+  },
+  {
+   "id": "boss.any.002",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:walk"
+   ],
+   "text": "Heading to the next lane, boss. Nothing in my hands yet."
+  },
+  {
+   "id": "boss.any.003",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:home"
+   ],
+   "text": "Heading in, boss. The light's going."
+  },
+  {
+   "id": "boss.any.004",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Yard's full, boss. Nowhere to drop logs until someone feeds the fire."
+  },
+  {
+   "id": "boss.any.005",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No axe on me, boss. I need one from the rack."
+  },
+  {
+   "id": "boss.any.006",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "strange",
+   "text": "Haven't seen anything strange myself, boss."
+  },
+  {
+   "id": "boss.any.007",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "owed"
+   ],
+   "text": "I'm owed, boss. When will it be paid?"
+  },
+  {
+   "id": "boss.any.008",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "paid"
+   ],
+   "text": "All paid, boss. No complaints from me."
+  },
+  {
+   "id": "boss.any.009",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thanks, boss. Appreciated."
+  },
+  {
+   "id": "boss.any.010",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Got it, boss."
+  },
+  {
+   "id": "boss.any.011",
+   "cat": "boss",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Not at dusk, boss. I'm heading in."
+  },
+  {
+   "id": "boss.any.012",
+   "cat": "boss",
+   "speaker": "trait:timid",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Can it wait till morning? It's getting dark under the trees."
+  },
+  {
+   "id": "boss.any.013",
+   "cat": "boss",
+   "speaker": "trait:reliable_driver",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Driving. The ruts are deep here, so I'm taking it slow."
+  },
+  {
+   "id": "boss.any.014",
+   "cat": "boss",
+   "speaker": "trait:stronger",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying the heavy end. Somebody has to."
+  },
+  {
+   "id": "boss.any.015",
+   "cat": "boss",
+   "speaker": "trait:sociable",
+   "to": "boss",
+   "ask": "chat",
+   "text": "Crew's in decent spirits, boss. Mostly. Supper helps."
+  },
+  {
+   "id": "boss.any.016",
+   "cat": "boss",
+   "speaker": "trait:skeptical",
+   "to": "boss",
+   "ask": "strange",
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "I've heard the stories, boss. Haven't seen a thing myself. People get bored out here."
+  },
+  {
+   "id": "boss.any.017",
+   "cat": "boss",
+   "speaker": "trait:hard_working",
+   "to": "boss",
+   "ask": "ack",
+   "text": "Good. I was getting restless."
+  },
+  {
+   "id": "boss.any.018",
+   "cat": "boss",
+   "speaker": "trait:observant",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Boss, the one I dropped is lying clean across the lane. Ready for bucking."
+  }
+ ]
+}

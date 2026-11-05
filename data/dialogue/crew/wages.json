@@ -1,0 +1,1810 @@
+{
+ "category": "wages",
+ "batch": "wages-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "wage.marta.001",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:cut"
+   ],
+   "text": "Three hundred a day. That's three trees to the company. I'll have mine down before the coffee's cold."
+  },
+  {
+   "id": "wage.marta.002",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:rest",
+    "where:cabin"
+   ],
+   "text": "Twenty years and I still write every payday in the back of my diary. You count what you're owed, or nobody does.",
+   "rep": "rare"
+  },
+  {
+   "id": "wage.marta.003",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:rest"
+   ],
+   "text": "This lot's going on a new roof. The old one leaks right over the stove, and I'm done cooking around a bucket."
+  },
+  {
+   "id": "wage.marta.004",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "Company pays by the tree, we get paid by the day. Somebody did that sum very carefully, and it wasn't us."
+  },
+  {
+   "id": "wage.marta.005",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "We're square, boss. I noticed. Late is late, but square is square, and I'll take square."
+  },
+  {
+   "id": "wage.marta.006",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:cut"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Back pay's landed. Right. Let's earn the next lot before anyone forgets how."
+  },
+  {
+   "id": "wage.marta.007",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:cut"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Cutting on credit today. The hinge wood doesn't care. I do."
+  },
+  {
+   "id": "wage.marta.008",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 4,
+   "text": "Straight answer, boss. I'm owed, and I've been owed since nightfall. When does it land?"
+  },
+  {
+   "id": "wage.marta.009",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 5,
+   "rep": "rare",
+   "text": "Fair warning, boss. If I'm still owed tomorrow night, I'm packing for the boat. Nothing personal. My rent isn't personal either."
+  },
+  {
+   "id": "wage.marta.010",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:walk"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Every tree I drop today, I'm adding up what it's worth and what I've seen of it. Second column's empty."
+  },
+  {
+   "id": "wage.marta.011",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "resp": [
+    "wage.dale.009",
+    "wage.joan.007"
+   ],
+   "text": "{listener}, have you been paid since nightfall? No? Then it isn't just me."
+  },
+  {
+   "id": "wage.marta.012",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "crew<=3",
+    "act:cut"
+   ],
+   "text": "This few hands won't clear the island by day thirty. Not unless the trees start felling themselves."
+  },
+  {
+   "id": "wage.marta.013",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "crew<=3"
+   ],
+   "text": "Fewer of us means a smaller wage bill, boss, I know. It also means fewer stumps. Don't save the money and lose the contract."
+  },
+  {
+   "id": "wage.marta.014",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "act:cut"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Empty lane next to mine now. I'll work it as well. I'm only counting it, not complaining about it."
+  },
+  {
+   "id": "wage.marta.015",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "resp": [
+    "wage.priya.016"
+   ],
+   "text": "We're a pair of hands short, {listener}. Pick up the slack where you can and don't make a speech about it."
+  },
+  {
+   "id": "wage.marta.016",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid",
+    "trust:high"
+   ],
+   "text": "Pay's fine, chief. On time, every bit of it. Keep it that way and I'll keep the stumps clean."
+  },
+  {
+   "id": "wage.marta.017",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "phase:dusk"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'll sleep on it once. If it's still not there by morning, I stop sleeping on it."
+  },
+  {
+   "id": "wage.marta.018",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:idle"
+   ],
+   "text": "Mainland money vanishes because there's everything to spend it on. Island money piles up because there's nothing. Enjoy it while it lasts."
+  },
+  {
+   "id": "wage.marta.019",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed",
+    "trust:low"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I've been stiffed by contractors before, boss. I know how it starts. It starts exactly like this."
+  },
+  {
+   "id": "wage.marta.020",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed",
+    "trust:high"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I know you're good for it, boss. I'd still rather have it in my hand than in your word."
+  },
+  {
+   "id": "wage.marta.021",
+   "cat": "wages",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "text": "Cook what you like. I'm eating whatever's fastest and getting back to the next one."
+  },
+  {
+   "id": "wage.dale.001",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:carry"
+   ],
+   "text": "Paid, mate. Means nothing out here, does it? Still feels like a steak dinner."
+  },
+  {
+   "id": "wage.dale.002",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:rest",
+    "where:cabin"
+   ],
+   "text": "First thing off the boat, a proper fry-up. Second thing, another fry-up. After that I'll start thinking about savings, mate. Probably."
+  },
+  {
+   "id": "wage.dale.003",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:idle"
+   ],
+   "text": "Most of mine goes to my mum. She keeps it in a biscuit tin. Doesn't trust banks. Can't say I blame her."
+  },
+  {
+   "id": "wage.dale.004",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "dog_near"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 2,
+   "text": "There it is, back pay! Biscuit, we're rich. Well, I'm rich. You get the crusts, same as always."
+  },
+  {
+   "id": "wage.dale.005",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "Company gets a hundred a tree, mate. Every log on my shoulder was part of somebody's hundred. Just thinking out loud. Slowly."
+  },
+  {
+   "id": "wage.dale.006",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:carry"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Heavy log, light pocket. That's the wrong way round, that is."
+  },
+  {
+   "id": "wage.dale.007",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 4,
+   "text": "I'm not one to fuss, mate, but I'm owed. I've been planning meals around money I haven't got."
+  },
+  {
+   "id": "wage.dale.008",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 5,
+   "rep": "rare",
+   "text": "I like you, mate, I do. But one more night unpaid and I'm on that boat. I'll even carry my own bag down."
+  },
+  {
+   "id": "wage.dale.009",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Not a cent, mate. Checked twice. Checked a third time out of pure hope."
+  },
+  {
+   "id": "wage.dale.010",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:idle"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Owed wages and an empty stomach. Funny how they make the same noise."
+  },
+  {
+   "id": "wage.dale.011",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid",
+    "trust:high"
+   ],
+   "text": "All square, mate. Never shorted me once. That keeps a man lifting."
+  },
+  {
+   "id": "wage.dale.012",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "crew<=3",
+    "act:carry"
+   ],
+   "text": "Not many of us on the haul now. Every log feels like it's missing a mate on the other end."
+  },
+  {
+   "id": "wage.dale.013",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "act:carry"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Carrying for two since that last one left, mate. Back's fine. Heart's a bit sore, if I'm honest."
+  },
+  {
+   "id": "wage.dale.014",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "where:cabin"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "rep": "rare",
+   "text": "Still made up the empty bunk this morning. Habit. Nobody's coming back to it."
+  },
+  {
+   "id": "wage.dale.015",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:rest"
+   ],
+   "text": "Funny thing, getting paid. You stop worrying about money and start missing home instead. Not sure that's an improvement, mate."
+  },
+  {
+   "id": "wage.dale.016",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "dog_near"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Sorry, Biscuit. Smaller crusts until the boss pays up. We're in it together, you and me."
+  },
+  {
+   "id": "wage.dale.017",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "Thirty days at three hundred. Nine thousand, if I don't get daft with it. I'm going to get a little bit daft with it."
+  },
+  {
+   "id": "wage.dale.018",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed",
+    "trust:low"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Mate, I've carried everything you asked me to. You can carry this one. Pay me what I'm owed."
+  },
+  {
+   "id": "wage.dale.019",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Cheers for squaring up, mate. Knew you would. Mostly knew. Knew enough."
+  },
+  {
+   "id": "wage.dale.020",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "paid",
+    "where:camp",
+    "phase:day"
+   ],
+   "resp": [
+    "wage.joan.012",
+    "wage.tomas.020",
+    "wage.marta.021"
+   ],
+   "rep": "rare",
+   "text": "Paid again, everyone! Tonight I'm cooking to celebrate. Somebody warn the kitchen."
+  },
+  {
+   "id": "wage.dale.021",
+   "cat": "wages",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Like a log, mate. A paid log. Best kind there is."
+  },
+  {
+   "id": "wage.priya.001",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:idle"
+   ],
+   "text": "Paid in full. Written down. I like a page where the columns agree."
+  },
+  {
+   "id": "wage.priya.002",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:rest"
+   ],
+   "text": "Mine is going toward finishing the survey course. Two modules left. It's odd to pay for forestry by removing a forest."
+  },
+  {
+   "id": "wage.priya.003",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "text": "I worked it out, boss. Each of us costs three trees a day before you see any profit. I find that clarifying, honestly."
+  },
+  {
+   "id": "wage.priya.004",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 4,
+   "text": "My notebook says I've been owed since the last nightfall settlement. Does yours agree, boss?"
+  },
+  {
+   "id": "wage.priya.005",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 5,
+   "rep": "rare",
+   "text": "To be precise, boss: the grace is one day. If the arrears aren't cleared by tomorrow night, I'll be on the boat. I would rather not be."
+  },
+  {
+   "id": "wage.priya.006",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:cut"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Owed. Noted. Same pace regardless. Slowing down doesn't help anyone get paid."
+  },
+  {
+   "id": "wage.priya.007",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "resp": [
+    "wage.tomas.013",
+    "wage.joan.020"
+   ],
+   "text": "{listener}, has anyone actually been paid since nightfall? Or have we only been told we will be?"
+  },
+  {
+   "id": "wage.priya.008",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "The arrears are cleared. Thank you, boss. I can stop checking the notebook every hour."
+  },
+  {
+   "id": "wage.priya.009",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "crew<=3"
+   ],
+   "text": "With this few of us, boss, the wage bill falls but so does the daily count. I'm not sure the count still reaches day thirty. Have you checked?"
+  },
+  {
+   "id": "wage.priya.010",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "act:walk"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Since the departure, there's more ground than we can cover before dusk. I've redrawn the lanes in the notebook."
+  },
+  {
+   "id": "wage.priya.011",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "act:cut"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "I took over the empty lane next to mine, {listener}. It's thicker than it looked from the yard."
+  },
+  {
+   "id": "wage.priya.012",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:rest"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I keep redoing the sum in my head. It comes out the same every time. That's the problem."
+  },
+  {
+   "id": "wage.priya.013",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Is the company late paying you, boss, or is this a cash-flow choice? Either answer is fine. Not knowing isn't."
+  },
+  {
+   "id": "wage.priya.014",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed",
+    "trust:low"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Next time, boss, I'd like it in writing. Not because I think you'd lie. Because I've learned to ask."
+  },
+  {
+   "id": "wage.priya.015",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "where:cabin"
+   ],
+   "rep": "rare",
+   "text": "After settlement the cabin goes quiet. Everyone off in a corner, doing sums."
+  },
+  {
+   "id": "wage.priya.016",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Already on it. I've split the empty lane between us by tree count, not by area. It's fairer that way."
+  },
+  {
+   "id": "wage.priya.017",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Same here. Owed since nightfall. I wrote down the time, in case it matters later."
+  },
+  {
+   "id": "wage.priya.018",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "where:camp",
+    "phase:day"
+   ],
+   "rep": "rare",
+   "text": "Paid every night like clockwork. I didn't expect a logging camp to be the most punctual employer I've had."
+  },
+  {
+   "id": "wage.priya.019",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed",
+    "day>=25"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "This close to the end of the contract, boss, arrears make everyone nervous. Me included, a little."
+  },
+  {
+   "id": "wage.priya.020",
+   "cat": "wages",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid",
+    "trust:high"
+   ],
+   "text": "Nothing owed, boss. Thank you for keeping it tidy. It makes the rest easier to think about."
+  },
+  {
+   "id": "wage.tomas.001",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "Paid! Sorry. I've just never been paid this regularly before. Is it okay to be excited about that?"
+  },
+  {
+   "id": "wage.tomas.002",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:rest"
+   ],
+   "text": "Ana wants a car. I'm helping with the deposit. I've already written to tell her, but she can't read it until the boat."
+  },
+  {
+   "id": "wage.tomas.003",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:ride"
+   ],
+   "text": "Saving for my own truck. Nothing fancy. Manual box, good tyres, a seat that doesn't squeak like this one."
+  },
+  {
+   "id": "wage.tomas.004",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 4,
+   "text": "Sorry, boss, I don't want to be rude. I think I'm owed? Since last night? Is that right?"
+  },
+  {
+   "id": "wage.tomas.005",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 5,
+   "rep": "rare",
+   "text": "I'm really sorry, boss. If it's still unpaid tomorrow night, I have to take the boat home. Ana's counting on that money."
+  },
+  {
+   "id": "wage.tomas.006",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:ride"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Owed wages and a full tank. Well. One of those is fine."
+  },
+  {
+   "id": "wage.tomas.007",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:rest",
+    "where:cabin"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I told Ana in my letter that the money's all fine. I'll fix that page tomorrow. Maybe."
+  },
+  {
+   "id": "wage.tomas.008",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Oh, it came through! Thank you, boss. And sorry I asked about it twice."
+  },
+  {
+   "id": "wage.tomas.009",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "crew<=3",
+    "act:ride"
+   ],
+   "text": "There's so few of us now. I keep waiting at the truck for people who aren't coming."
+  },
+  {
+   "id": "wage.tomas.010",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "act:ride"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "I'm doing the extra runs since someone left. I don't mind. I like driving. The cab's just quiet without them."
+  },
+  {
+   "id": "wage.tomas.011",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "act:walk"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "resp": [
+    "wage.joan.021"
+   ],
+   "text": "Do you think they got home all right? The one who left? Sorry, {listener}. I keep wondering."
+  },
+  {
+   "id": "wage.tomas.012",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:idle"
+   ],
+   "text": "My last job paid by the parcel, and the van broke down twice a week. A day rate feels like a holiday, honestly."
+  },
+  {
+   "id": "wage.tomas.013",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Not me either. I thought I'd done something wrong. Sorry, I'm glad it isn't just me. That came out badly."
+  },
+  {
+   "id": "wage.tomas.014",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:ride"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Caught up at last. Same road, same mud, and somehow it's a nicer drive."
+  },
+  {
+   "id": "wage.tomas.015",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed",
+    "trust:high"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I know you'll sort it, boss. I just get nervous about money. Sorry. It's not you."
+  },
+  {
+   "id": "wage.tomas.016",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "Rent, Ana's car, Mum's dentist. I list it all in my head and then it's all spent. In my head, anyway."
+  },
+  {
+   "id": "wage.tomas.017",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:carry"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'm trying not to count the days I'm owed. I keep counting them anyway."
+  },
+  {
+   "id": "wage.tomas.018",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "text": "All paid up, boss. Thank you. Really. I checked, sorry, but it's all there."
+  },
+  {
+   "id": "wage.tomas.019",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "crew<=3"
+   ],
+   "text": "Boss, with so few of us, I'm hauling more than I'm driving now. I don't mind. I just thought you should know."
+  },
+  {
+   "id": "wage.tomas.020",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "text": "I can help! I can make toast. Sorry, toast is the whole list."
+  },
+  {
+   "id": "wage.tomas.021",
+   "cat": "wages",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Better, thanks. For once I didn't wake up doing sums. Is that silly?"
+  },
+  {
+   "id": "wage.joan.001",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "paid",
+    "phase:dusk"
+   ],
+   "rep": "rare",
+   "text": "Wages are in, loves. Cards tonight. Stakes are real money and my mood, so play carefully."
+  },
+  {
+   "id": "wage.joan.002",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:rest"
+   ],
+   "text": "Mine's going toward a little place by the water, sunshine. Six tables. No loggers. Well. Maybe one or two loggers."
+  },
+  {
+   "id": "wage.joan.003",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "Did you know the company pays the boss by the tree, and we're paid by the day? Someone upstairs is very pleased with themselves, love."
+  },
+  {
+   "id": "wage.joan.004",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:cut"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Not much to say today. Owing makes me quiet. You'd think it'd be the other way round."
+  },
+  {
+   "id": "wage.joan.005",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 4,
+   "text": "I won't make a fuss, boss-love. I'll just say I'm owed, and I'd like it sorted."
+  },
+  {
+   "id": "wage.joan.006",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 5,
+   "rep": "rare",
+   "text": "Boss-love, I'll be honest because I like you. If it's still owing tomorrow night, I'm on the boat. I'd hate it. I'd still do it."
+  },
+  {
+   "id": "wage.joan.007",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Not a penny, love. I've stopped asking around. It only makes the room go quiet."
+  },
+  {
+   "id": "wage.joan.008",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Back pay's in. Thank you, boss-love. Now I can stop pretending I wasn't worried."
+  },
+  {
+   "id": "wage.joan.009",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "crew<=3",
+    "where:cabin"
+   ],
+   "text": "Too few of us at the table now. I keep cooking for the old number and wrapping up the rest."
+  },
+  {
+   "id": "wage.joan.010",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "where:cabin"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "rep": "rare",
+   "text": "Set a place for someone who's gone again. Silly of me. I'll stop. I won't, but I'll say I will."
+  },
+  {
+   "id": "wage.joan.011",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "We cover their share and we don't moan about it, sunshine. That's how a crew holds together."
+  },
+  {
+   "id": "wage.joan.012",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "text": "If you're cooking, I'm hiding the good pan. Payday or no payday, love."
+  },
+  {
+   "id": "wage.joan.013",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:idle"
+   ],
+   "text": "Money's fine this week. Money's always fine this week. It's next week I lie awake over."
+  },
+  {
+   "id": "wage.joan.014",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed",
+    "trust:low"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I ran a bar for twenty years, boss. I know what a tab looks like when it isn't getting paid."
+  },
+  {
+   "id": "wage.joan.015",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid",
+    "trust:high"
+   ],
+   "text": "Square and on time, boss-love. You'd be amazed how rare that is in this trade."
+  },
+  {
+   "id": "wage.joan.016",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "phase:day",
+    "where:camp"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "resp": [
+    "wage.tomas.021",
+    "wage.dale.021"
+   ],
+   "text": "How'd you sleep, {listener}? Better than on the owing nights, I'd bet."
+  },
+  {
+   "id": "wage.joan.017",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "owed",
+    "where:cabin"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'm saying very little at dinner tonight, loves. Don't take it personally. Take it up with the boss."
+  },
+  {
+   "id": "wage.joan.018",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "crew<=3"
+   ],
+   "text": "There aren't enough of us, boss. I don't need to tell you. I'm telling you because nobody else will."
+  },
+  {
+   "id": "wage.joan.019",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "If the company paid half as fast as it asks for things, love, I'd have retired years ago."
+  },
+  {
+   "id": "wage.joan.020",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Told, love. Only told."
+  },
+  {
+   "id": "wage.joan.021",
+   "cat": "wages",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "I'd like to think so, sunshine. Boats are boring and safe. That's what they're for."
+  },
+  {
+   "id": "wage.any.001",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:walk"
+   ],
+   "text": "Pay came through clean. One less thing to think about out here."
+  },
+  {
+   "id": "wage.any.002",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:cut"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Owed since nightfall. Keep swinging, keep counting."
+  },
+  {
+   "id": "wage.any.003",
+   "cat": "wages",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:cut"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'll work while I'm owed. Not forever. Today, though."
+  },
+  {
+   "id": "wage.any.004",
+   "cat": "wages",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:carry"
+   ],
+   "text": "Paid in full and still lifting the big ones. Good week."
+  },
+  {
+   "id": "wage.any.005",
+   "cat": "wages",
+   "speaker": "trait:timid",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Sorry, I hate to ask. Are the wages coming soon?"
+  },
+  {
+   "id": "wage.any.006",
+   "cat": "wages",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:walk"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'll believe in back pay when it's in my hand and not a minute before."
+  },
+  {
+   "id": "wage.any.007",
+   "cat": "wages",
+   "speaker": "trait:sociable",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "paid",
+    "phase:dusk"
+   ],
+   "rep": "rare",
+   "text": "Wages are in, so dinner's a proper sit-down. No excuses, no eating standing up."
+  },
+  {
+   "id": "wage.any.008",
+   "cat": "wages",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "where:camp"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Nobody's laughed at breakfast since the wages went late. Small thing. Still noticed it."
+  },
+  {
+   "id": "wage.any.009",
+   "cat": "wages",
+   "speaker": "trait:level_headed",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'm owed, boss. I'm not panicking about it. I would like a date, though."
+  },
+  {
+   "id": "wage.any.010",
+   "cat": "wages",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:ride"
+   ],
+   "text": "Paid and fuelled. The truck runs on diesel. I run on payday."
+  },
+  {
+   "id": "wage.any.011",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "owed"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "prio": 5,
+   "rep": "rare",
+   "text": "I'm telling you straight, boss. Another day unpaid and I'm leaving on the next boat."
+  },
+  {
+   "id": "wage.any.012",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "crew<=3",
+    "where:cabin"
+   ],
+   "text": "Not many names left on the payroll. Every empty bunk is louder for it."
+  },
+  {
+   "id": "wage.any.013",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "where:camp"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Their gloves are still on the rack. Somebody should use them. Feels odd to be the one."
+  },
+  {
+   "id": "wage.any.014",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Caught up at last. Thanks for sorting it, boss."
+  },
+  {
+   "id": "wage.any.015",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "wages",
+   "when": [
+    "mode:contract",
+    "paid"
+   ],
+   "text": "Nothing owed, boss. We're good."
+  },
+  {
+   "id": "wage.any.016",
+   "cat": "wages",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:cut"
+   ],
+   "text": "Paid on time means I work on time. That's a fair trade."
+  },
+  {
+   "id": "wage.any.017",
+   "cat": "wages",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "act:walk"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Someone left. Now I keep wondering if I ought to."
+  },
+  {
+   "id": "wage.any.018",
+   "cat": "wages",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "act:idle"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Paid today. Ask me tomorrow whether it's turned into a habit."
+  },
+  {
+   "id": "wage.any.019",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "owed",
+    "day>=28"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "resp": [
+    "wage.priya.017"
+   ],
+   "text": "Owed, this close to the end? That'll make for a tense boat ride, whichever way it goes."
+  },
+  {
+   "id": "wage.any.020",
+   "cat": "wages",
+   "speaker": "trait:sociable",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "where:cabin"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "Even cards are quiet tonight. Nobody bets when they're owed."
+  },
+  {
+   "id": "wage.any.021",
+   "cat": "wages",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "owed",
+    "act:carry"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "I'll carry anything you like. I won't carry a debt for long."
+  },
+  {
+   "id": "wage.any.022",
+   "cat": "wages",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "paid",
+    "weather:rain"
+   ],
+   "text": "Rain on payday doesn't count. Rain on payday is just weather."
+  },
+  {
+   "id": "wage.any.023",
+   "cat": "wages",
+   "speaker": "trait:observant",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "paid",
+    "where:cabin"
+   ],
+   "needs": [
+    "know:owed_wages"
+   ],
+   "text": "People are sleeping in later since the back pay came through. Have you noticed that, {listener}?"
+  }
+ ]
+}

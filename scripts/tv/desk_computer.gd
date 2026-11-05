@@ -14,10 +14,11 @@ extends Node
 ##              the truck order (real VehicleService).
 ##   Gear     - Phase 14: your kit breakdown, camp storage, issuing gear to
 ##              the crew (the same screen as the tool rack).
-##   Mail     - Phase 14: supplier notices generated from the real order
-##              records only (company/personal mail arrives in Phase 17).
-##   News, Forums, Recordings - labelled "later update" placeholders
-##              (Phases 17/19); they never show fake content.
+##   Mail     - Phase 17: the boss's inbox from the authored bank, plus the
+##              live supplier order status from the real order records.
+##   News, Forums, Archives - Phase 17: the fictional internet published by
+##              the campaign clock (FeedService / FeedReader).
+##   Recordings - a labelled Phase 19 placeholder (never fake content).
 ## A small quad inset keeps the cameras at the edge of attention in other
 ## apps (same four-feed budget: it is the same composite texture).
 ## Live: time keeps running while you use it; the real pause menu pauses.
@@ -25,10 +26,8 @@ extends Node
 signal app_changed(app: String)
 
 const SIZE := Vector2i(1024, 576)
-const APPS := ["Cameras", "Supplier", "Gear", "Mail", "News", "Forums", "Recordings"]
+const APPS := ["Cameras", "Supplier", "Gear", "Mail", "News", "Forums", "Archives", "Recordings"]
 const LATER := {
-	"News": "Regional news arrives in a later update (Phase 17).",
-	"Forums": "The community forums arrive in a later update (Phase 17).",
 	"Recordings": "The camera recording archive arrives in a later update (Phase 19). Nothing is being recorded yet.",
 }
 
@@ -187,8 +186,11 @@ func open_app(a: String) -> void:
 	match a:
 		"Cameras":
 			_build_cameras()
-		"Supplier", "Gear", "Mail":
+		"Supplier", "Gear":
 			_build_shop()
+		"Mail", "News", "Forums", "Archives":
+			# Phase 17: the authored, clock-published internet.
+			FeedReader.build(_content, a, self)
 		_:
 			var l := UITheme.label(str(LATER.get(a, "")), 18)
 			l.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -351,8 +353,10 @@ func sit(on: bool) -> void:
 	seated = on
 	glancing = false
 	_update_overlay()
-	if on and app in ["Supplier", "Gear", "Mail"]:
+	if on and app in ["Supplier", "Gear"]:
 		_refresh_shop()
+	elif on and app in ["Mail", "News", "Forums", "Archives"]:
+		open_app(app)
 
 
 func set_glance(g: bool) -> void:
@@ -379,6 +383,9 @@ func set_power(on: bool) -> void:
 	_update_overlay()
 
 
+var _unread_t := 0.0
+
+
 func _process(_delta: float) -> void:
 	if monitor == null:
 		return
@@ -387,6 +394,14 @@ func _process(_delta: float) -> void:
 	var cs: CampaignService = Game.campaign
 	if _clock and cs and cs.active:
 		_clock.text = "Day %d · %s" % [cs.clock.day, ["daylight", "dusk", "night"][cs.clock.phase()]]
+	# Phase 17: unread counts on the reading apps (cheap, twice a second).
+	_unread_t -= _delta
+	if _unread_t <= 0.0 and Game.feed:
+		_unread_t = 0.5
+		for a2 in ["Mail", "News", "Forums", "Archives"]:
+			if _buttons.has(a2):
+				var n: int = Game.feed.unread(a2)
+				(_buttons[a2] as Button).text = a2 + (" (%d)" % n if n > 0 else "")
 	var wall: CameraWall = Game.tv
 	if _status and app == "Cameras" and wall:
 		_status.text = ("Focus: %s %s · LIVE · right-click or Wall (4) to go back" % [wall.cam_id(wall.focus_index), wall.cam_name(wall.focus_index)]) if wall.mode == "focus" else "Wall: four live cameras, one swaps every %s · click a feed to focus it%s" % ["(frozen)" if wall.interval <= 0.0 else "%d s" % int(wall.interval), " · mics muted" if wall.mic_muted else ""]

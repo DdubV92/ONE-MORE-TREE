@@ -1,0 +1,1316 @@
+{
+ "category": "weather",
+ "batch": "weather-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "wx.marta.001",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:fell"
+   ],
+   "text": "Rain on the bark. Grip's worse, hinge is the same. Mind your feet."
+  },
+  {
+   "id": "wx.marta.002",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "weather:wind",
+    "act:fell"
+   ],
+   "text": "Wind's pushing the tops. Wait for the lull, then cut."
+  },
+  {
+   "id": "wx.marta.003",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "weather:storm",
+    "where:forest"
+   ],
+   "text": "Storm's up. Nobody fells in this. I'm not arguing about it."
+  },
+  {
+   "id": "wx.marta.004",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "weather:dry",
+    "phase:day"
+   ],
+   "text": "Dry ground and no rain coming. Days like this, you count high."
+  },
+  {
+   "id": "wx.marta.005",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "cleared>=25"
+   ],
+   "rep": "once",
+   "text": "Past a quarter of the island now. I've been counting. It's going."
+  },
+  {
+   "id": "wx.marta.006",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "cleared>=50"
+   ],
+   "rep": "once",
+   "text": "Half the island's down. Halfway's where crews get sloppy. Not us."
+  },
+  {
+   "id": "wx.marta.007",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "cleared>=75"
+   ],
+   "rep": "once",
+   "text": "Three quarters done. The last of it's always on the worst ground. Remember that."
+  },
+  {
+   "id": "wx.marta.008",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "where:forest"
+   ],
+   "text": "Stumps out to the next rise now. Every one of mine you could set a cup on."
+  },
+  {
+   "id": "wx.marta.009",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "where:forest"
+   ],
+   "text": "On a slope the tree wants downhill. Let it, or plan for a fight."
+  },
+  {
+   "id": "wx.marta.010",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Mud's taking boots. Short steps. Nobody runs with a log in this."
+  },
+  {
+   "id": "wx.marta.011",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "where:forest"
+   ],
+   "text": "Undergrowth's thick here. Clear yourself a way out before you cut. Always an escape route."
+  },
+  {
+   "id": "wx.marta.012",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "phase:dusk",
+    "where:forest"
+   ],
+   "text": "Light's going. Last one, then in. Everyone."
+  },
+  {
+   "id": "wx.marta.013",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "weather:rain",
+    "where:forest"
+   ],
+   "resp": [
+    "wx.dale.015",
+    "wx.tomas.015",
+    "wx.joan.019"
+   ],
+   "text": "Rain's set in. Bark's slick, but the work isn't going anywhere."
+  },
+  {
+   "id": "wx.marta.014",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Then we change the order and take the ones leaning with it. Good eye."
+  },
+  {
+   "id": "wx.marta.015",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "cleared>=50",
+    "where:forest"
+   ],
+   "text": "You can see water from here now. Couldn't when we started."
+  },
+  {
+   "id": "wx.marta.016",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Lovely. Now look at all the stumps in front of it. Also lovely."
+  },
+  {
+   "id": "wx.marta.017",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "where:forest",
+    "phase:day"
+   ],
+   "text": "Birds have moved off this end. Too much noise. They'll find somewhere quieter."
+  },
+  {
+   "id": "wx.marta.018",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "weather:wind"
+   ],
+   "text": "Wind's up, boss. I'm picking trees that lean with it. The rest can wait."
+  },
+  {
+   "id": "wx.marta.019",
+   "cat": "weather",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "cleared>=90"
+   ],
+   "rep": "once",
+   "text": "Nine in ten down. Near enough I could count what's left from the yard."
+  },
+  {
+   "id": "wx.dale.001",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:carry"
+   ],
+   "text": "Wet log. Twice the weight, half the grip, and it's still got an attitude."
+  },
+  {
+   "id": "wx.dale.002",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "weather:wind"
+   ],
+   "text": "Wind's trying to take my hat. It can have it if it carries a log as well."
+  },
+  {
+   "id": "wx.dale.003",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "weather:dry",
+    "act:carry"
+   ],
+   "text": "Dry day. Logs are lighter. Well, they're not, but they feel it."
+  },
+  {
+   "id": "wx.dale.004",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "weather:storm",
+    "where:cabin"
+   ],
+   "text": "Listen to that on the roof. Proper weather for a second breakfast."
+  },
+  {
+   "id": "wx.dale.005",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:walk"
+   ],
+   "text": "Mud's got my boot. Hang on. Right. Me and the boot are reunited."
+  },
+  {
+   "id": "wx.dale.006",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "where:forest"
+   ],
+   "text": "Downhill with a log is easy. Uphill with a log is a personality test."
+  },
+  {
+   "id": "wx.dale.007",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "where:shore",
+    "weather:rain"
+   ],
+   "text": "River's running fast after all this. Wouldn't fancy a swim. Biscuit would, mind."
+  },
+  {
+   "id": "wx.dale.008",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:forest"
+   ],
+   "text": "Brambles had my sleeve. They can keep it. I've got another shirt at camp, I think."
+  },
+  {
+   "id": "wx.dale.009",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "cleared>=10"
+   ],
+   "rep": "once",
+   "text": "Fair few gaps out there already. Island's starting to look like it had a haircut."
+  },
+  {
+   "id": "wx.dale.010",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "cleared>=50",
+    "where:camp"
+   ],
+   "rep": "once",
+   "text": "Half the trees gone, mates. Half! Somebody should make a cake."
+  },
+  {
+   "id": "wx.dale.011",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "cleared>=50",
+    "where:forest"
+   ],
+   "resp": [
+    "wx.priya.017",
+    "wx.joan.012",
+    "wx.tomas.016"
+   ],
+   "text": "You can see the sea from here now. Makes the walk back feel shorter, somehow."
+  },
+  {
+   "id": "wx.dale.012",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "cleared>=25"
+   ],
+   "text": "Stumps everywhere. It's like a very slow game of hopscotch with a log on."
+  },
+  {
+   "id": "wx.dale.013",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:home",
+    "phase:dusk"
+   ],
+   "text": "Getting dark, mate. Dinner's waiting, and so's the dog."
+  },
+  {
+   "id": "wx.dale.014",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "cleared>=50",
+    "where:forest"
+   ],
+   "text": "Birds cleared off this side ages ago. Can't blame them. It's all chainsaws and me singing."
+  },
+  {
+   "id": "wx.dale.015",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Neither am I, not until I've had a cup of tea."
+  },
+  {
+   "id": "wx.dale.016",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Push you? Mate, I'll carry the truck if it comes to it."
+  },
+  {
+   "id": "wx.dale.017",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Sounds like rain coming to me. And rain sounds like soup weather."
+  },
+  {
+   "id": "wx.dale.018",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "weather:rain"
+   ],
+   "text": "Wet one, mate. Good day for being a duck. Or a cook."
+  },
+  {
+   "id": "wx.dale.019",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "weather:dry",
+    "where:shore"
+   ],
+   "text": "Sun on the water. If it weren't for the logs, I'd call this a holiday."
+  },
+  {
+   "id": "wx.dale.020",
+   "cat": "weather",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Your knee said that yesterday, mate. Your knee's a pessimist."
+  },
+  {
+   "id": "wx.priya.001",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "weather:wind",
+    "act:fell"
+   ],
+   "text": "Wind's gusting in the crowns. I'll time the back cut for the gaps between."
+  },
+  {
+   "id": "wx.priya.002",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "weather:wind",
+    "where:forest"
+   ],
+   "resp": [
+    "wx.marta.014",
+    "wx.dale.017"
+   ],
+   "text": "The wind's backed round since earlier. The tops are leaning the other way now."
+  },
+  {
+   "id": "wx.priya.003",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "where:forest"
+   ],
+   "text": "Rain's soaking the leaf litter. Any slope round here will be slick within the hour."
+  },
+  {
+   "id": "wx.priya.004",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "weather:storm"
+   ],
+   "text": "Storm's building, boss. The gusts are moving whole crowns. I wouldn't fell in it."
+  },
+  {
+   "id": "wx.priya.005",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "weather:dry",
+    "act:cut"
+   ],
+   "text": "Dry bark today. Cleaner cuts, less sap. You can hear the difference in the blade."
+  },
+  {
+   "id": "wx.priya.006",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "where:forest"
+   ],
+   "text": "If it's leaning downhill, fell it with the lean, not against it. The slope always wins."
+  },
+  {
+   "id": "wx.priya.007",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:forest"
+   ],
+   "text": "Ground's softer under the ferns. There's water close to the surface somewhere here."
+  },
+  {
+   "id": "wx.priya.008",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:shore",
+    "weather:rain",
+    "cleared>=25"
+   ],
+   "text": "The river's running brown. That's runoff from the bare slopes. Less root to hold the soil."
+  },
+  {
+   "id": "wx.priya.009",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "where:forest"
+   ],
+   "text": "The undergrowth's taller where the canopy opened. Light gets in, and everything grows."
+  },
+  {
+   "id": "wx.priya.010",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "cleared>=10"
+   ],
+   "rep": "once",
+   "text": "We're past a tenth. I've been shading in the cleared blocks on my map."
+  },
+  {
+   "id": "wx.priya.011",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "where:forest"
+   ],
+   "rep": "once",
+   "text": "Over a quarter cleared. The wind moves differently over open ground. You can feel it at the edges."
+  },
+  {
+   "id": "wx.priya.012",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "cleared>=75"
+   ],
+   "rep": "once",
+   "text": "Three quarters cleared. Much of what's left is on awkward ground. We took the easy ones first, naturally."
+  },
+  {
+   "id": "wx.priya.013",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "phase:dusk",
+    "where:forest"
+   ],
+   "text": "Light's going flat. It's harder to judge a lean like this. I'd stop after this one."
+  },
+  {
+   "id": "wx.priya.014",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "phase:day"
+   ],
+   "text": "Fewer birds on this side. I've watched them going over to the stands we haven't reached."
+  },
+  {
+   "id": "wx.priya.015",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "cleared>=50",
+    "weather:dry"
+   ],
+   "text": "The older stumps are already greying in the sun. It happens faster than people think."
+  },
+  {
+   "id": "wx.priya.016",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "cleared>=50"
+   ],
+   "text": "You can see the sea from much more of the island now, boss. It makes finding your way easier."
+  },
+  {
+   "id": "wx.priya.017",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "It's not shorter. It just feels that way when you can see where you're going."
+  },
+  {
+   "id": "wx.priya.018",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Your knee was wrong twice last week. I wrote it down."
+  },
+  {
+   "id": "wx.priya.019",
+   "cat": "weather",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Keep to the high side of the ruts. It's firmer where the roots are."
+  },
+  {
+   "id": "wx.tomas.001",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:ride"
+   ],
+   "text": "Rain's on. Second gear, no sudden steering. The truck's happiest slow in this."
+  },
+  {
+   "id": "wx.tomas.002",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "weather:rain"
+   ],
+   "resp": [
+    "wx.dale.016",
+    "wx.priya.019",
+    "wx.joan.018"
+   ],
+   "text": "The lane's going to be all ruts after this rain. I might need a push later. Sorry in advance."
+  },
+  {
+   "id": "wx.tomas.003",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "weather:storm",
+    "where:forest"
+   ],
+   "text": "Is it okay if we head in? The storm's getting louder. Sorry. I just think we should."
+  },
+  {
+   "id": "wx.tomas.004",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "weather:wind",
+    "act:walk"
+   ],
+   "text": "The trees are really moving. Is that normal? Sorry. It's probably normal."
+  },
+  {
+   "id": "wx.tomas.005",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "weather:dry",
+    "act:ride"
+   ],
+   "text": "Dry lane today. The truck almost feels like it's on a real road."
+  },
+  {
+   "id": "wx.tomas.006",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:ride"
+   ],
+   "text": "Mud's deep at the low bits. I'll take it wide and keep the wheels turning."
+  },
+  {
+   "id": "wx.tomas.007",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Low gear on the downhill. Nobody touch anything. Please."
+  },
+  {
+   "id": "wx.tomas.008",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "phase:dusk",
+    "where:forest"
+   ],
+   "text": "Is it dusk? It looks like dusk. Sorry, I just like to know."
+  },
+  {
+   "id": "wx.tomas.009",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "act:ride"
+   ],
+   "rep": "once",
+   "text": "The route's easier with fewer trees about. I can see round the corners now."
+  },
+  {
+   "id": "wx.tomas.010",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "cleared>=50"
+   ],
+   "rep": "once",
+   "text": "Half the island! I'm telling Ana. She'll ask what it looks like. Mostly stumps, I'll say."
+  },
+  {
+   "id": "wx.tomas.011",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "cleared>=50",
+    "where:forest",
+    "mode:contract"
+   ],
+   "text": "You can see the water the boat will come in on. Well, the water. No boat yet."
+  },
+  {
+   "id": "wx.tomas.012",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "day>=8"
+   ],
+   "text": "There were loads of birds in these trees when we got here. They've moved. Because of us, I think. The saws are loud."
+  },
+  {
+   "id": "wx.tomas.013",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:forest"
+   ],
+   "text": "Something grabbed my whole arm. Oh. Brambles. Sorry. It's just brambles."
+  },
+  {
+   "id": "wx.tomas.014",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:ride",
+    "cleared>=25"
+   ],
+   "text": "Steering round stumps now. It's like a cone course. I used to be good at those."
+  },
+  {
+   "id": "wx.tomas.015",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "The truck lane's going to be soup. Is it okay if I take it slow today?"
+  },
+  {
+   "id": "wx.tomas.016",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Can you see the dock from here? Sorry. I just like knowing where it is."
+  },
+  {
+   "id": "wx.tomas.017",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:home",
+    "phase:dusk"
+   ],
+   "text": "Cabin roof's just there. Nearly in. Is everyone behind me?"
+  },
+  {
+   "id": "wx.tomas.018",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "weather:rain"
+   ],
+   "text": "The rain's good for one thing, boss. The truck gets washed for free."
+  },
+  {
+   "id": "wx.tomas.019",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:shore",
+    "weather:rain"
+   ],
+   "text": "The river's louder than it was. Is that rain from further up? Priya would know."
+  },
+  {
+   "id": "wx.tomas.020",
+   "cat": "weather",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "It is nice. It makes the boat feel closer. Is that silly?"
+  },
+  {
+   "id": "wx.joan.001",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "where:camp"
+   ],
+   "text": "Rain again. There'll be wet socks on every chair in the cabin tonight. I can feel it coming."
+  },
+  {
+   "id": "wx.joan.002",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "day>=10",
+    "weather:dry"
+   ],
+   "resp": [
+    "wx.priya.018",
+    "wx.dale.020"
+   ],
+   "text": "My knee says rain tomorrow. My knee has never once been wrong."
+  },
+  {
+   "id": "wx.joan.003",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "weather:wind",
+    "where:forest"
+   ],
+   "text": "Wind's got opinions today. Hold on to your helmet, sunshine."
+  },
+  {
+   "id": "wx.joan.004",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "weather:storm",
+    "where:cabin"
+   ],
+   "text": "Storm out there. Kettle in here. I know which one I'm picking."
+  },
+  {
+   "id": "wx.joan.005",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "weather:dry",
+    "phase:day"
+   ],
+   "text": "Lovely day for it. If this were a bar terrace, I'd be selling cider by the jug."
+  },
+  {
+   "id": "wx.joan.006",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:walk"
+   ],
+   "text": "Mud to the ankle. These boots will be the ruin of the cabin floor."
+  },
+  {
+   "id": "wx.joan.007",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "where:forest"
+   ],
+   "text": "Who put a hill here? Somebody write to the company."
+  },
+  {
+   "id": "wx.joan.008",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "cleared>=10"
+   ],
+   "rep": "once",
+   "text": "We've made a dent. Not a big one, but there's sky where there wasn't."
+  },
+  {
+   "id": "wx.joan.009",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "cleared>=50",
+    "phase:dusk"
+   ],
+   "rep": "once",
+   "text": "Half of it's gone, loves. Half! That's worth a proper pudding tonight."
+  },
+  {
+   "id": "wx.joan.010",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "cleared>=90"
+   ],
+   "rep": "once",
+   "text": "Nearly bare out there now. I'll almost miss the shade. Almost."
+  },
+  {
+   "id": "wx.joan.011",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "cleared>=50",
+    "where:forest",
+    "day>=10"
+   ],
+   "resp": [
+    "wx.marta.016",
+    "wx.tomas.020"
+   ],
+   "text": "Look at that, the sea. Isn't that lovely, after weeks of nothing but trunks?"
+  },
+  {
+   "id": "wx.joan.012",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Sea view and a log on your shoulder. People pay good money for half of that."
+  },
+  {
+   "id": "wx.joan.013",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "cleared>=50",
+    "phase:day"
+   ],
+   "text": "I miss the dawn birds. They've gone off to the far trees. Now I wake up to the kettle."
+  },
+  {
+   "id": "wx.joan.014",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Light's going, sunshine. Let's be in before it goes altogether."
+  },
+  {
+   "id": "wx.joan.015",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "cleared>=25"
+   ],
+   "text": "All these stumps. Somebody should've planted chairs in them."
+  },
+  {
+   "id": "wx.joan.016",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:forest"
+   ],
+   "text": "Ferns up to my waist in here. If I go missing, follow the complaining."
+  },
+  {
+   "id": "wx.joan.017",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "weather:dry"
+   ],
+   "text": "Sun's out, boss-love. Everybody's happier. You could ask for anything today."
+  },
+  {
+   "id": "wx.joan.018",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "We'll all push, sunshine. Dale will push and tell us about it for a week."
+  },
+  {
+   "id": "wx.joan.019",
+   "cat": "weather",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Rain's good for one thing. Nobody argues about taking the long lunch."
+  },
+  {
+   "id": "wx.any.001",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:fell"
+   ],
+   "text": "Wet bark. Slow and steady on this one."
+  },
+  {
+   "id": "wx.any.002",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "weather:wind",
+    "act:fell"
+   ],
+   "text": "Gusts in the tops. Waiting for a lull."
+  },
+  {
+   "id": "wx.any.003",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "weather:storm",
+    "where:forest"
+   ],
+   "text": "Storm's too strong to fell in. Holding off."
+  },
+  {
+   "id": "wx.any.004",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "weather:dry",
+    "phase:day"
+   ],
+   "text": "Dry and bright. Good working weather."
+  },
+  {
+   "id": "wx.any.005",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:carry"
+   ],
+   "text": "Mud's sucking at my boots. Careful steps."
+  },
+  {
+   "id": "wx.any.006",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "where:forest"
+   ],
+   "text": "More sky than canopy out here now."
+  },
+  {
+   "id": "wx.any.007",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "cleared>=75"
+   ],
+   "rep": "once",
+   "text": "Not much forest left to clear. The island looks bigger without it."
+  },
+  {
+   "id": "wx.any.008",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "phase:dusk",
+    "where:forest"
+   ],
+   "text": "Sun's low. Time to wrap up."
+  },
+  {
+   "id": "wx.any.009",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:forest"
+   ],
+   "text": "Roots everywhere under this growth. Watch your ankles."
+  },
+  {
+   "id": "wx.any.010",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "cleared>=50",
+    "where:camp",
+    "phase:dusk"
+   ],
+   "rep": "once",
+   "text": "Halfway cleared, everyone. The second half's never quicker, but at least we know the ground now."
+  },
+  {
+   "id": "wx.any.011",
+   "cat": "weather",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "weather:wind",
+    "act:fell"
+   ],
+   "text": "Wind's shifted a few degrees. Checking the lean again before I commit."
+  },
+  {
+   "id": "wx.any.012",
+   "cat": "weather",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "cleared>=25",
+    "weather:dry"
+   ],
+   "text": "Ground's drying faster where the canopy's gone. You can see the line between the two."
+  },
+  {
+   "id": "wx.any.013",
+   "cat": "weather",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "phase:dusk",
+    "where:forest"
+   ],
+   "text": "Getting dark. Can we start heading back? Just to be early."
+  },
+  {
+   "id": "wx.any.014",
+   "cat": "weather",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "weather:storm"
+   ],
+   "text": "I don't like how loud the storm gets in the trees. Can we go in?"
+  },
+  {
+   "id": "wx.any.015",
+   "cat": "weather",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "act:ride",
+    "weather:rain"
+   ],
+   "text": "Low gear, steady throttle. The route holds if you don't rush it."
+  },
+  {
+   "id": "wx.any.016",
+   "cat": "weather",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "act:ride",
+    "cleared>=50"
+   ],
+   "text": "Route's opened right up. Hardly a blind corner left."
+  },
+  {
+   "id": "wx.any.017",
+   "cat": "weather",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Wet log, heavy log. I'll take it."
+  },
+  {
+   "id": "wx.any.018",
+   "cat": "weather",
+   "speaker": "trait:level_headed",
+   "to": "self",
+   "when": [
+    "weather:storm"
+   ],
+   "text": "It's only weather. We wait it out, then we go again."
+  },
+  {
+   "id": "wx.any.019",
+   "cat": "weather",
+   "speaker": "trait:sociable",
+   "to": "pair",
+   "when": [
+    "weather:rain",
+    "where:camp"
+   ],
+   "text": "Rain's settled in, {listener}. Good excuse for a long chat under the eaves."
+  },
+  {
+   "id": "wx.any.020",
+   "cat": "weather",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "weather:rain",
+    "act:cut"
+   ],
+   "text": "Bit of rain never ruined a good day. Keep going."
+  },
+  {
+   "id": "wx.any.021",
+   "cat": "weather",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "weather:wind",
+    "where:forest"
+   ],
+   "text": "Wind always sounds worse in a forest than it is. Old trees creak."
+  },
+  {
+   "id": "wx.any.022",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "weather:storm",
+    "act:idle"
+   ],
+   "text": "Storm's up, boss. I've stopped felling till it passes."
+  },
+  {
+   "id": "wx.any.023",
+   "cat": "weather",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:shore",
+    "weather:dry"
+   ],
+   "text": "Calm water today. You can see a long way out."
+  }
+ ]
+}

@@ -142,6 +142,36 @@ func peak_available() -> bool:
 	return night_active_t - last_peak_t >= refr
 
 
+## Phase 17: computer-linked opportunities. Reading can make a pattern
+## eligible; execution belongs to the Phase 19 catalog (recorded here so
+## the source relationship stays traceable). Never fires anything itself.
+var computer_hints: Array = []
+
+
+func computer_hint(pattern: String, unit_id: String) -> void:
+	computer_hints.append({"pattern": pattern, "unit": unit_id, "night_t": snappedf(night_active_t, 0.1)})
+	if computer_hints.size() > 60:
+		computer_hints.pop_front()
+
+
+## Phase 17 cl01: stage an ORDINARY window encounter (camper context, an
+## event that needs the window, low intensity) through the normal
+## placement/reservation path. Returns true only if it really started; the
+## feed then commits the warning post, otherwise its fallback.
+func stage_window_encounter(_res: Dictionary) -> bool:
+	var p := Game.player as Node3D
+	if p == null or active != null or not enabled:
+		return false
+	var cands: Array = []
+	for ev in events_by_ctx.get("camper", []):
+		if "window" in (ev.get("needs", []) as Array) and int(ev.get("intensity", 3)) <= 2 and bool(ev.get("visual", false)) and _needs_ok(ev):
+			cands.append(ev)
+	if cands.is_empty():
+		return false
+	var ev: Dictionary = cands[_rng.randi() % cands.size()]
+	return _start(ev, "camper", p, false) != ""
+
+
 ## One opportunity: choose and start an encounter, or deliberately nothing.
 func offer(force_id := "") -> String:
 	var p := Game.player as Node3D

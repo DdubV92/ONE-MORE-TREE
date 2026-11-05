@@ -67,6 +67,11 @@ func _ready() -> void:
 	rs.name = "Rest"
 	add_child(rs)
 	Game.rest = rs
+	# Phase 17: the fictional internet, published by the campaign clock.
+	var fd := FeedService.new()
+	fd.name = "Feed"
+	add_child(fd)
+	Game.feed = fd
 	environment = _timed("environment", func() -> Node: var e := EnvironmentController.new(); e.name = "Environment"; add_child(e); e.build(); return e)
 	Game.environment = environment
 	weather = WeatherService.new()

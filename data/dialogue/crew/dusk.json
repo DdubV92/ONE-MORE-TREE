@@ -1,0 +1,1694 @@
+{
+ "category": "dusk",
+ "batch": "dusk-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "dusk.marta.001",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Tools on the rack, then inside. That's the order. Every evening, same order."
+  },
+  {
+   "id": "dusk.marta.002",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "where:camp"
+   ],
+   "prio": 4,
+   "text": "Sound off as you come through the entrance. I'm counting, and I want the number to match the morning."
+  },
+  {
+   "id": "dusk.marta.003",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Good count today. Not good enough to stay out for. Nothing is."
+  },
+  {
+   "id": "dusk.marta.004",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "prio": 4,
+   "text": "I'm not discussing it. Everyone inside by dusk. That's all I'm saying, and I'm only saying it once."
+  },
+  {
+   "id": "dusk.marta.005",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Past the far deck, last night. Something upright, still as a post. There's no post there. I checked this morning."
+  },
+  {
+   "id": "dusk.marta.006",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "belief:low"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Wind in the tops, {listener}. That's what it always is. Somebody tells a story and the wind grows a face."
+  },
+  {
+   "id": "dusk.marta.007",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "mood:uneasy"
+   ],
+   "text": "Don't like this light. Every trunk at the tree line looks like it's leaning toward us."
+  },
+  {
+   "id": "dusk.marta.008",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "prio": 5,
+   "text": "Boss. I'm calling everyone in early tonight. You can dock me for it. I'm doing it anyway."
+  },
+  {
+   "id": "dusk.marta.009",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:contract",
+    "mood:refusing"
+   ],
+   "text": "No, boss. Not after dusk. I'll cut double tomorrow, but I'm not walking back out there now."
+  },
+  {
+   "id": "dusk.marta.010",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "resp": [
+    "dusk.tomas.009"
+   ],
+   "text": "{listener}, stop staring at the trees and walk. Staring never got anyone home faster."
+  },
+  {
+   "id": "dusk.marta.011",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "where:camp"
+   ],
+   "text": "Fence is up and the lamps are lit. That's what we've got. Stay in the light and get to bed."
+  },
+  {
+   "id": "dusk.marta.012",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "text": "Three knocks on the back wall, last night, evenly spaced. I didn't open it. I won't. Neither will any of you."
+  },
+  {
+   "id": "dusk.marta.013",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "dog_near"
+   ],
+   "text": "Biscuit. Inside. Now. Good dog."
+  },
+  {
+   "id": "dusk.marta.014",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "The dog wouldn't come off the porch last night, {listener}. Wouldn't look at the trees, either. Make of that what you like."
+  },
+  {
+   "id": "dusk.marta.015",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "mood:uneasy"
+   ],
+   "text": "I'll sharpen everything on the rack tonight. Keeps the hands busy."
+  },
+  {
+   "id": "dusk.marta.016",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "belief:low"
+   ],
+   "text": "Somebody heard a noise in a forest. That's not news. That's a forest."
+  },
+  {
+   "id": "dusk.marta.017",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "weather:wind"
+   ],
+   "text": "Wind's got the tops going. That's the noise. That's all that noise is."
+  },
+  {
+   "id": "dusk.marta.018",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Twenty years, {listener}, and I've never once regretted being indoors before dark."
+  },
+  {
+   "id": "dusk.marta.019",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I saw what I saw, boss. I'm not adding anything to it. Everyone in by dusk and you'll hear no more from me."
+  },
+  {
+   "id": "dusk.marta.020",
+   "cat": "dusk",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract",
+    "belief:low"
+   ],
+   "text": "Strange? I've heard stories, boss. I've cut in worse places than this and come home every time."
+  },
+  {
+   "id": "dusk.dale.001",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Dusk, mate. Kettle, cards, and whatever's in the pot. In that order."
+  },
+  {
+   "id": "dusk.dale.002",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "belief:low"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "dusk.priya.021",
+    "dusk.joan.020"
+   ],
+   "text": "Someone heard a voice in the trees, did they? Somebody's radio, mate. Sound carries over water something wicked."
+  },
+  {
+   "id": "dusk.dale.003",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin",
+    "belief:low"
+   ],
+   "text": "Every cabin knocks at night, mate. Pipes cooling, boards shrinking. Ours just has more opinions than most."
+  },
+  {
+   "id": "dusk.dale.004",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I'm not explaining this one, mate. I've tried. I keep coming up short, and I don't like it."
+  },
+  {
+   "id": "dusk.dale.005",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Light past the fence last night, mate. Low down, like a torch held at the knee. Nobody had a torch out. I asked everyone."
+  },
+  {
+   "id": "dusk.dale.006",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "dog_near"
+   ],
+   "text": "Come on, Biscuit. Supper's inside. Supper's always inside. That's the whole trick to dusk."
+  },
+  {
+   "id": "dusk.dale.007",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Biscuit growled at the tree line last night. That dog doesn't growl at anything, mate. Not even me eating his share."
+  },
+  {
+   "id": "dusk.dale.008",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Big logs today. Bigger dinner tonight. That's the arithmetic I understand."
+  },
+  {
+   "id": "dusk.dale.009",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "mood:uneasy"
+   ],
+   "text": "I'll walk in the middle tonight, mate, if it's all the same to you. Just for the view."
+  },
+  {
+   "id": "dusk.dale.010",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "where:camp"
+   ],
+   "text": "Everyone in? I'll count again. Not because I'm worried. Because I'm thorough, that's all."
+  },
+  {
+   "id": "dusk.dale.011",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "mood:calm"
+   ],
+   "resp": [
+    "dusk.tomas.011"
+   ],
+   "text": "Stick by me, {listener}. Anything comes out of those trees, it'll want the big fella first. Plenty of me to go round."
+  },
+  {
+   "id": "dusk.dale.012",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract",
+    "belief:low"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "I've heard a story, mate. Stories are free. I'll believe it when it nicks my sandwich."
+  },
+  {
+   "id": "dusk.dale.013",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:contract",
+    "mood:refusing"
+   ],
+   "text": "Not tonight, mate. Sorry. Ask me in the morning and I'll carry anything you point at."
+  },
+  {
+   "id": "dusk.dale.014",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "text": "Just give me a minute. I'm fine. Big lads are allowed a minute."
+  },
+  {
+   "id": "dusk.dale.015",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Branch went right behind me on the walk in last night. Heavy snap, like something stood on it. Turned round, mate. Just the road."
+  },
+  {
+   "id": "dusk.dale.016",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "weather:rain",
+    "belief:low"
+   ],
+   "text": "Everything sounds like footsteps in the rain. That's just rain. That's what rain does."
+  },
+  {
+   "id": "dusk.dale.017",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "text": "Someone called my name from the trees, mate. Sounded like my mum. My mum's on the mainland. I didn't answer it."
+  },
+  {
+   "id": "dusk.dale.018",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "text": "Door shut, lights off, and nobody goes out for a midnight snack. That includes me. Especially me."
+  },
+  {
+   "id": "dusk.dale.019",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "belief:low"
+   ],
+   "text": "I worked docks at three in the morning, mate. Everything sounds like a person if you want it to."
+  },
+  {
+   "id": "dusk.dale.020",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I'm not one for stories, mate, you know that. I saw something. I'd rather not say what till I've thought it through."
+  },
+  {
+   "id": "dusk.dale.021",
+   "cat": "dusk",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "Course you can, mate. All the way to the door. You can even carry the conversation."
+  },
+  {
+   "id": "dusk.priya.001",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "weather:wind"
+   ],
+   "text": "Wind's backed round to the west, {listener}. It'll be cold by full dark. Worth getting the stove going early."
+  },
+  {
+   "id": "dusk.priya.002",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "About forty metres past the fence, north-east. A shape at roughly head height, for three or four seconds. Not a deer. Deer don't stand that still."
+  },
+  {
+   "id": "dusk.priya.003",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I've written down what I heard: two knocks on the north wall, then one nearer the door. I don't know what made them."
+  },
+  {
+   "id": "dusk.priya.004",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "I've been told about it, boss. I haven't seen anything myself. I'd rather not guess."
+  },
+  {
+   "id": "dusk.priya.005",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "belief:low"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "dusk.joan.021"
+   ],
+   "text": "Who told you, {listener}? I'd like to know how many people it passed through before it got to us."
+  },
+  {
+   "id": "dusk.priya.006",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "I count heads at the camp entrance every evening. It isn't fear. It's a habit I'd like us all to keep."
+  },
+  {
+   "id": "dusk.priya.007",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "resp": [
+    "dusk.tomas.010"
+   ],
+   "text": "Most sounds after dusk are trees cooling and the fire settling, {listener}. Most. If I hear one that isn't, I'll tell you."
+  },
+  {
+   "id": "dusk.priya.008",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "dog_near"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Last night Biscuit's ears went flat toward the tree line and stayed that way for about a minute. I noted the time."
+  },
+  {
+   "id": "dusk.priya.009",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "where:camp"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "prio": 4,
+   "text": "One fence panel was bowed inward this morning, boss. Not cut. Pushed from outside, at about chest height. I can't say by what."
+  },
+  {
+   "id": "dusk.priya.010",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "There was a light on the road after dusk. Steady, so not a fire. And it didn't bob the way it would if someone carried it."
+  },
+  {
+   "id": "dusk.priya.011",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "mood:uneasy"
+   ],
+   "text": "I'd like to be inside before the light goes. Nothing specific. I just can't see well enough to say what anything is."
+  },
+  {
+   "id": "dusk.priya.012",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Give me a moment, {listener}. I'll be clear-headed shortly. I want to write it down before I start remembering it wrong."
+  },
+  {
+   "id": "dusk.priya.013",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:contract",
+    "mood:refusing"
+   ],
+   "text": "I'm declining, boss. Visibility is too poor past dusk, and I don't trust what I'd be looking at."
+  },
+  {
+   "id": "dusk.priya.014",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract"
+   ],
+   "text": "Was it seen, heard, or told? Those are three very different things, and only one of them goes in my notebook."
+  },
+  {
+   "id": "dusk.priya.015",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Heading in, boss. Whatever's still out in the forest can wait until there's light to see it by."
+  },
+  {
+   "id": "dusk.priya.016",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Near the tree line I heard something like a name. I couldn't tell whose. Honestly, I couldn't tell if it was a voice."
+  },
+  {
+   "id": "dusk.priya.017",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "belief:low"
+   ],
+   "text": "Forests are noisy at dusk, {listener}. Mostly birds settling and bark contracting. I've catalogued quite a few."
+  },
+  {
+   "id": "dusk.priya.018",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "text": "If you hear something tonight, note the time and the direction. Don't go and look. Looking is how people end up outside."
+  },
+  {
+   "id": "dusk.priya.019",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "weather:storm"
+   ],
+   "text": "Storms make everything sound closer than it is. Remember that tonight, before anyone decides what they heard."
+  },
+  {
+   "id": "dusk.priya.020",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "belief:high"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I've stopped saying it was nothing. I don't know what it was. That isn't the same as nothing."
+  },
+  {
+   "id": "dusk.priya.021",
+   "cat": "dusk",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "Possibly. Though the only radio I know of on this island is the one in the utility room. I'm only noting it."
+  },
+  {
+   "id": "dusk.tomas.001",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Inside, inside, inside. Sorry. I talk when I walk fast."
+  },
+  {
+   "id": "dusk.tomas.002",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "phase:day",
+    "mood:uneasy"
+   ],
+   "text": "Sorry, boss, how long until dusk? I'd like to have the truck parked and be inside before it."
+  },
+  {
+   "id": "dusk.tomas.003",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:ride"
+   ],
+   "text": "Headlights on, windows up. I know the windows don't do anything. They help me."
+  },
+  {
+   "id": "dusk.tomas.004",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Someone was standing by the decks when I parked last night. I said hello. Sorry, I always say hello. Nobody answered. Then nobody was there."
+  },
+  {
+   "id": "dusk.tomas.005",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Something tapped on the window by my bunk last night. I didn't open the curtain. That was right, wasn't it? Please say that was right."
+  },
+  {
+   "id": "dusk.tomas.006",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "belief:high"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Someone said there's a light on the road at night. I don't want to see it, {listener}. I really don't want to see it."
+  },
+  {
+   "id": "dusk.tomas.007",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "text": "Sorry. Sorry. I'm okay. I just need to be inside now."
+  },
+  {
+   "id": "dusk.tomas.008",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:contract",
+    "mood:refusing"
+   ],
+   "text": "I'm sorry, boss. I can't. Not now, not out there. Please don't ask me again tonight."
+  },
+  {
+   "id": "dusk.tomas.009",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "Sorry. Walking. I'm walking."
+  },
+  {
+   "id": "dusk.tomas.010",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "Okay. Okay. Mostly is good. I'll take mostly."
+  },
+  {
+   "id": "dusk.tomas.011",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "That's... thank you? I think that's a nice thing to say. Sorry, I'm still deciding."
+  },
+  {
+   "id": "dusk.tomas.012",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "dog_near"
+   ],
+   "text": "Come on, buddy. Stay with me, Biscuit. You make me braver than I actually am."
+  },
+  {
+   "id": "dusk.tomas.013",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Biscuit barked at the fence last night and wouldn't stop. Then he stopped all at once, mid-bark. That was worse, somehow."
+  },
+  {
+   "id": "dusk.tomas.014",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "where:camp"
+   ],
+   "text": "Is everyone here? Sorry, I just need to count. One more time. Okay. Okay, good."
+  },
+  {
+   "id": "dusk.tomas.015",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin",
+    "act:rest"
+   ],
+   "text": "Writing to Ana tonight. I'll tell her about the trucks. Not about the dark."
+  },
+  {
+   "id": "dusk.tomas.016",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Boss, sorry, is it true? About the noises? Someone told me, and now I can't stop listening for them."
+  },
+  {
+   "id": "dusk.tomas.017",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Someone said my name from past the fence. Quietly. Like they didn't want anyone else to hear it."
+  },
+  {
+   "id": "dusk.tomas.018",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "mood:uneasy"
+   ],
+   "text": "The tree line gets further away every day, because we keep cutting it back. It still feels closer every evening."
+  },
+  {
+   "id": "dusk.tomas.019",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "mood:uneasy"
+   ],
+   "resp": [
+    "dusk.dale.021"
+   ],
+   "text": "Can I walk in with you, {listener}? Sorry. Just as far as the fence."
+  },
+  {
+   "id": "dusk.tomas.020",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "prio": 5,
+   "text": "Boss, sorry, I have to tell you. I saw something by the road. I don't know what. I'm not driving that way at dusk again."
+  },
+  {
+   "id": "dusk.tomas.021",
+   "cat": "dusk",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "Can we talk about trucks? Sorry. Gearboxes are very calming."
+  },
+  {
+   "id": "dusk.joan.001",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Right, loves, in we go. Kettle's mine, the cards are somebody else's problem."
+  },
+  {
+   "id": "dusk.joan.002",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "belief:low"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Someone's been reading forums, sunshine. There's nothing out there but trees and a lot of imagination."
+  },
+  {
+   "id": "dusk.joan.003",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "dusk.priya.014",
+    "dusk.marta.016"
+   ],
+   "text": "I'm only passing it on, love. Someone says there was knocking after dark. I don't believe it. I'm passing it on anyway."
+  },
+  {
+   "id": "dusk.joan.004",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "I'll tell you it's nothing, love, and I'll mean it. I just won't promise. I don't promise about things I can't see."
+  },
+  {
+   "id": "dusk.joan.005",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "text": "Who's sleeping light tonight? Hands up. Right. Same as me, then."
+  },
+  {
+   "id": "dusk.joan.006",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I didn't believe a word of it, boss-love. Then I saw it myself. Now I'm the one people look at, and I don't like it."
+  },
+  {
+   "id": "dusk.joan.007",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Someone was at the fence last night, love. Just standing, arms at its sides. I thought it was one of us. We were all inside."
+  },
+  {
+   "id": "dusk.joan.008",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home",
+    "where:camp"
+   ],
+   "text": "Count off, loves. Nobody eats till I've got every one of you."
+  },
+  {
+   "id": "dusk.joan.009",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "resp": [
+    "dusk.tomas.021"
+   ],
+   "text": "Come here, sunshine, walk with me. We'll talk about anything you like except the trees."
+  },
+  {
+   "id": "dusk.joan.010",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "mood:uneasy"
+   ],
+   "text": "I'm not scared. I'm just walking a bit faster. There's a difference. A small one."
+  },
+  {
+   "id": "dusk.joan.011",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "dog_near"
+   ],
+   "text": "In you go, Biscuit. You first, then the rest of us. Seniority."
+  },
+  {
+   "id": "dusk.joan.012",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:contract",
+    "mood:refusing"
+   ],
+   "text": "No, boss-love. Not this time. I'll do anything you like at sunrise. Not now."
+  },
+  {
+   "id": "dusk.joan.013",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "text": "I'll sit here a bit. Don't fuss, love. Just sit with me."
+  },
+  {
+   "id": "dusk.joan.014",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract",
+    "belief:low"
+   ],
+   "text": "Strange? Boss-love, I ran a bar. I've seen strange. This is a dark island with tall trees."
+  },
+  {
+   "id": "dusk.joan.015",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Someone was on the porch last night, love. Slow steps, three of them, then nothing. I counted the bunks after. Everyone was in them."
+  },
+  {
+   "id": "dusk.joan.016",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "belief:low"
+   ],
+   "text": "A regular at my bar swore there was a woman in the cellar every closing time. It was the mop. Stories grow in the dark, love."
+  },
+  {
+   "id": "dusk.joan.017",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "text": "Door's locked, lamps are on outside, and that's all any of us can do. Sleep, loves. I'll be up a while."
+  },
+  {
+   "id": "dusk.joan.018",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "belief:high"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "dusk.dale.019"
+   ],
+   "text": "I don't want to believe it, love. But I heard it from someone who doesn't tell stories, and that's the trouble."
+  },
+  {
+   "id": "dusk.joan.019",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "mood:calm"
+   ],
+   "text": "How are you holding up, {listener}? Honestly, now. I'm not asking to be polite."
+  },
+  {
+   "id": "dusk.joan.020",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract",
+    "belief:low"
+   ],
+   "text": "Or somebody's tummy, sunshine. I've heard yours after dinner. Could frighten a forest."
+  },
+  {
+   "id": "dusk.joan.021",
+   "cat": "dusk",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:contract"
+   ],
+   "text": "Second-hand, love. Third, maybe. That's exactly my point. I don't believe a word of it."
+  },
+  {
+   "id": "dusk.any.001",
+   "cat": "dusk",
+   "speaker": "trait:timid",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:contract",
+    "phase:day",
+    "act:walk",
+    "mood:uneasy"
+   ],
+   "text": "Is it nearly dusk? I'd like to start heading back, if that's all right."
+  },
+  {
+   "id": "dusk.any.002",
+   "cat": "dusk",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "First one in. I don't care who laughs."
+  },
+  {
+   "id": "dusk.any.003",
+   "cat": "dusk",
+   "speaker": "trait:skeptical",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "belief:low"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "A rumour's just a story with somebody nervous doing the publicity."
+  },
+  {
+   "id": "dusk.any.004",
+   "cat": "dusk",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin",
+    "belief:low"
+   ],
+   "text": "Every knock has a cause. Usually a loose board and a cold night."
+  },
+  {
+   "id": "dusk.any.005",
+   "cat": "dusk",
+   "speaker": "trait:observant",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "There was a fresh broken branch by the camp entrance this morning. High up. Whatever did it had weight and reach."
+  },
+  {
+   "id": "dusk.any.006",
+   "cat": "dusk",
+   "speaker": "trait:level_headed",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "where:camp"
+   ],
+   "text": "Stay in the light, keep the door shut, sleep. That's the part we control."
+  },
+  {
+   "id": "dusk.any.007",
+   "cat": "dusk",
+   "speaker": "trait:sociable",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Who's walking with me? Nobody walks in alone tonight."
+  },
+  {
+   "id": "dusk.any.008",
+   "cat": "dusk",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk"
+   ],
+   "text": "One more cut and... no. Dusk is dusk. Tools down."
+  },
+  {
+   "id": "dusk.any.009",
+   "cat": "dusk",
+   "speaker": "trait:stronger",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "I'll take the back of the line. Somebody big should be at the back."
+  },
+  {
+   "id": "dusk.any.010",
+   "cat": "dusk",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:ride"
+   ],
+   "text": "Last run. Lights on, straight to camp, no detours."
+  },
+  {
+   "id": "dusk.any.011",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "act:home"
+   ],
+   "text": "Light's going. Tools away and get inside."
+  },
+  {
+   "id": "dusk.any.012",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "mood:uneasy",
+    "where:camp"
+   ],
+   "text": "Let's not hang about near the fence, {listener}."
+  },
+  {
+   "id": "dusk.any.013",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "mood:shaken"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I don't want to talk about it. I want to get inside."
+  },
+  {
+   "id": "dusk.any.014",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:contract",
+    "mood:refusing"
+   ],
+   "text": "I'm not going back out tonight, boss. I'm sorry. Ask me again at first light."
+  },
+  {
+   "id": "dusk.any.015",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I saw something past the fence. I can't tell you what it was. I'm sure it was there."
+  },
+  {
+   "id": "dusk.any.016",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Only stories, boss. Nothing I've seen with my own eyes."
+  },
+  {
+   "id": "dusk.any.017",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "dog_near"
+   ],
+   "text": "Stick close, dog. We're both going in."
+  },
+  {
+   "id": "dusk.any.018",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:night",
+    "where:cabin"
+   ],
+   "text": "Somebody check the door's latched. Then check it once more."
+  },
+  {
+   "id": "dusk.any.019",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "weather:wind"
+   ],
+   "text": "Wind's making every branch sound like a footstep."
+  },
+  {
+   "id": "dusk.any.020",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "mode:contract",
+    "phase:dusk",
+    "where:camp"
+   ],
+   "text": "Everybody here? Say your name if you're in."
+  },
+  {
+   "id": "dusk.any.021",
+   "cat": "dusk",
+   "speaker": "trait:observant",
+   "to": "boss",
+   "ask": "strange",
+   "when": [
+    "mode:contract"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "It came from the north side, low down, twice. That's all I can honestly tell you, boss."
+  },
+  {
+   "id": "dusk.any.022",
+   "cat": "dusk",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "mode:contract",
+    "mood:uneasy"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I don't believe in any of it. I'd still rather not walk past that spot again."
+  },
+  {
+   "id": "dusk.any.023",
+   "cat": "dusk",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "mode:contract",
+    "belief:high"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "text": "Enough people have said it now, {listener}. I can't keep waving it off."
+  }
+ ]
+}

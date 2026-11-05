@@ -57,6 +57,7 @@ var values := {
 	"highlight": 1.0,               # interaction target highlight strength 0..1
 	"hints": true,                  # tutorial / contextual hints
 	"rest_reminders": true,         # Phase 16: gentle bedtime reminders (cooldown; never forced)
+	"subtitle_time": 1.0,           # Phase 17: speech subtitle duration multiplier (0.6..2.0)
 	"binds": {},                    # remapped actions (Keys.capture())
 	# Phase 11 art treatment (characters only; world rendering unchanged)
 	"character_style": "clean",     # clean / pixel
@@ -212,6 +213,7 @@ func sanitize() -> void:
 	values.horror_intensity = clampf(float(values.horror_intensity), 0.4, 1.0)
 	values.ui_scale = clampf(float(values.ui_scale), 0.85, 1.6)
 	values.highlight = clampf(float(values.highlight), 0.0, 1.0)
+	values.subtitle_time = clampf(float(values.get("subtitle_time", 1.0)), 0.6, 2.0)
 	if not values.character_style in ["clean", "pixel"]:
 		values.character_style = "clean"
 	values.character_style_strength = clampf(float(values.character_style_strength), 0.0, 1.0)

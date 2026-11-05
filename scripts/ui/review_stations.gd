@@ -86,6 +86,12 @@ const STATIONS16 := [
 	["5 Rest: early night", "p16_rest_early"], ["6 Rest: very late night", "p16_rest_late"],
 	["7 Rest: exhausted day", "p16_rest_low"], ["8 Hunt rest (how it works)", "p16_hunt_rest"],
 ]
+const STATIONS17 := [
+	["1 Start a crew conversation", "p17_talk"], ["2 Conversation inspector", "p17_inspect"],
+	["3 Feed: publish next day", "p17_next_day"], ["4 Feed counts & digest", "p17_counts"],
+	["5 Window-warning check", "p17_window"], ["6 How to read the feed", "p17_howto"],
+]
+static var _feed_day := 0
 static var _clear_i := 0
 static var _density_i := 0
 static var _overlay12: CoverOverlay
@@ -346,6 +352,57 @@ static func go(hud: Node, which: String) -> String:
 			if Game.campaign_ui:
 				Game.campaign_ui.toggle_journal(0)
 			return "Journal -> Crew: level, merit to the next level, each skill's real effect, today's time split with causes, and 'Thank them' buttons for specific work."
+		"p17_talk", "p17_inspect":
+			var cs17: CampaignService = Game.campaign
+			if Game.crew == null or Game.crew.workers.size() < 2:
+				cs17.start_test_route(true, true)
+				return "Crew starting (they arrive on the boat). Pick this stop again in a moment."
+			var ws17: Array = Game.crew.workers.values()
+			ws17.sort_custom(func(a: Worker, b: Worker) -> bool: return a.global_position.distance_to(p.global_position) < b.global_position.distance_to(p.global_position))
+			if which == "p17_inspect":
+				return Game.crew.talk.explain(ws17[0])
+			var a17: Worker = ws17[0]
+			var b17: Worker = ws17[1]
+			var fwd := -p.global_basis.z
+			fwd.y = 0.0
+			var spot := p.global_position + fwd.normalized() * 4.0
+			spot.y = World.height_at(spot.x, spot.z)
+			for wk in [a17, b17]:
+				(wk as Worker).abandon("review")
+				(wk as Worker).activity = "idle"
+				(wk as Worker)._decide_cd = 25.0
+			a17.global_position = spot
+			b17.global_position = spot + Vector3(1.4, 0, 0)
+			var talk17: ConversationService = Game.crew.talk
+			for k in 40:
+				talk17._try_start()
+				if not talk17.active.is_empty():
+					break
+				talk17.cooldown.erase("g:%s,%s" % [a17.id, b17.id])
+			if talk17.active.is_empty():
+				return "No line fits these two right now (try another time of day, place or job)."
+			var first: String = str((talk17.active.queue as Array)[0][0])
+			return "%s and %s start talking (line %s). Subtitles appear as they speak; walk away and it drops." % [a17.emp.name, b17.emp.name, first]
+		"p17_next_day":
+			var fd: FeedService = Game.feed
+			if fd == null:
+				return ""
+			_feed_day = clampi(_feed_day + 1, 1, 35)
+			var got := fd.advance_to(float(_feed_day) * 10000.0 + 1679.0)
+			return "Preview: the feed is published through the end of day %d (%d new units; %d published in all). Sit at the camper computer to read." % [_feed_day, got.size(), fd.pub.size()]
+		"p17_counts":
+			var fc: FeedService = Game.feed
+			FeedService.load_bank()
+			var kinds := {}
+			for u in FeedService._bank_units:
+				kinds[str(u.kind)] = int(kinds.get(str(u.kind), 0)) + 1
+			var bank17 := CrewBank.get_bank()
+			return "Crew bank: %d lines (%s).\nFeed bank: %d units %s, %d accounts. Published now: %d (skipped by branch/flag: %d).\nMail: %s\nForums: %s" % [bank17.lines.size(), str(bank17.count_by("cat")), FeedService.bank_size(), str(kinds), FeedService._accounts.size(), fc.pub.size(), fc.skipped.size(), fc.digest("Mail"), fc.digest("Forums")]
+		"p17_window":
+			var r17 := Game.feed.window_reservation() if Game.feed else {}
+			return "Window-warning reservation right now: %s. (It needs: you reading at the desk, not glancing out, contract night, open curtains, a valid staging spot, nobody outside who would plainly see it, and the director free; otherwise the thread ends ordinarily.)" % ("OK" if bool(r17.get("ok", false)) else "refused - " + str(r17.get("reason", "")))
+		"p17_howto":
+			return "Sit at the camper desk: Mail, News, Forums and Archives are on the bar. New posts arrive with the clock (daytime news, evening and night discussion); anything you miss is waiting the next morning with a short 'since you last looked' digest. Bookmark threads; your place is remembered. Reading is live time - the night keeps going."
 		"p16_numbers":
 			var lv := PackedStringArray()
 			for l in [2, 3, 5, 8, 10, 12, 15, 20]:

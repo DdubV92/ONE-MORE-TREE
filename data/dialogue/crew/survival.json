@@ -1,0 +1,1497 @@
+{
+ "category": "survival",
+ "batch": "survival-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "surv.marta.001",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day<=31"
+   ],
+   "rep": "once",
+   "text": "Company's gone. No boat, no hires, no word. Right. Then we count what we've got."
+  },
+  {
+   "id": "surv.marta.002",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Breathe through your nose. Slowly."
+  },
+  {
+   "id": "surv.marta.003",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Count to a hundred. Then count again."
+  },
+  {
+   "id": "surv.marta.004",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt"
+   ],
+   "prio": 4,
+   "text": "Here's the plan, boss. Nobody alone, nobody on the road, nobody out after dusk. That's the whole plan, and it's enough."
+  },
+  {
+   "id": "surv.marta.005",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "where:cabin"
+   ],
+   "text": "Two meals a day till the ship. I've counted the tins. It works if nobody gets clever with the cupboard."
+  },
+  {
+   "id": "surv.marta.006",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "Half of you sleep, half of you watch. I'm first watch. Don't argue. I wasn't going to sleep anyway."
+  },
+  {
+   "id": "surv.marta.007",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "I'll grieve on the boat. Till then, we keep moving."
+  },
+  {
+   "id": "surv.marta.008",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Whoever walked off is still somewhere on this island, {listener}. I hope they found a hole and stayed in it."
+  },
+  {
+   "id": "surv.marta.009",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day<=31",
+    "phase:day"
+   ],
+   "text": "Five days. I've done five-day jobs in worse weather. Not with this. Still. Five days."
+  },
+  {
+   "id": "surv.marta.010",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:day"
+   ],
+   "text": "The dog's in the alcove under the dock. Leave him there, {listener}. He's better off out of sight than following us about."
+  },
+  {
+   "id": "surv.marta.011",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day>=33",
+    "day<=33"
+   ],
+   "text": "Day thirty-three. Three more dawns. I'm counting them like trees. One at a time, clean."
+  },
+  {
+   "id": "surv.marta.012",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:rescue",
+    "where:shore"
+   ],
+   "prio": 4,
+   "text": "Walk, don't run. Running is how people end up in the water off the gangway."
+  },
+  {
+   "id": "surv.marta.013",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:rescue"
+   ],
+   "text": "Counting heads at the dock. I'm not leaving without a number I can live with."
+  },
+  {
+   "id": "surv.marta.014",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt",
+    "day<=32"
+   ],
+   "text": "They knew the deadline, boss. They knew what they were leaving us with. Don't you dare apologise on their behalf."
+  },
+  {
+   "id": "surv.marta.015",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "mood:shaken"
+   ],
+   "text": "Hands are steady. Hands are steady. Fine. Next thing."
+  },
+  {
+   "id": "surv.marta.016",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:hunt",
+    "mood:refusing"
+   ],
+   "text": "Not out there, boss. Not while it's walking the road. Give me any job you like inside the fence."
+  },
+  {
+   "id": "surv.marta.017",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "day>=35"
+   ],
+   "prio": 4,
+   "text": "Last day. Nobody gets brave today. Brave can wait till we're on the boat."
+  },
+  {
+   "id": "surv.marta.018",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "day<=31"
+   ],
+   "resp": [
+    "surv.dale.018",
+    "surv.joan.019",
+    "surv.tomas.020"
+   ],
+   "rep": "once",
+   "text": "Right. Nobody panics, everybody listens. Five days, and a ship at the end of them. We work the problem like a job."
+  },
+  {
+   "id": "surv.marta.019",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Wait. Not yet. Wait."
+  },
+  {
+   "id": "surv.marta.020",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:rescue"
+   ],
+   "text": "We made it to the boat, boss. Most days I didn't think we would. Now get on it."
+  },
+  {
+   "id": "surv.marta.021",
+   "cat": "survival",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Angry's fine. Angry keeps you awake. Just don't let it make you loud."
+  },
+  {
+   "id": "surv.dale.001",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "day<=31"
+   ],
+   "rep": "once",
+   "text": "They've just gone, mate? No boat at all? I thought that was a story the old hands told to scare new lads."
+  },
+  {
+   "id": "surv.dale.002",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Can't fit. Never mind. I'm fitting."
+  },
+  {
+   "id": "surv.dale.003",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Quiet, mate. Big breath. Hold it."
+  },
+  {
+   "id": "surv.dale.004",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "where:cabin"
+   ],
+   "text": "Half a tin each, mate. I did the sums. Hardest sums I've done in my life, and I've done a lot of sums about food."
+  },
+  {
+   "id": "surv.dale.005",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:day"
+   ],
+   "text": "Left Biscuit a whole sausage in the dock alcove. Don't tell anyone. Don't tell me, either, or I'll want it back."
+  },
+  {
+   "id": "surv.dale.006",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "I'll take the late watch. Can't sleep hungry anyway, and we're all a bit hungry."
+  },
+  {
+   "id": "surv.dale.007",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "I keep saving them a seat, mate. Stop me if I do it again."
+  },
+  {
+   "id": "surv.dale.008",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Wherever they wandered off to, I hope it's quiet there, and I hope they're still in it."
+  },
+  {
+   "id": "surv.dale.009",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day>=32"
+   ],
+   "text": "Big lad's still standing. Bit wobbly. Still standing."
+  },
+  {
+   "id": "surv.dale.010",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "mood:uneasy"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I explained everything away for a month, mate. Deer, fridge, radio. I can't explain this one. So I've stopped trying."
+  },
+  {
+   "id": "surv.dale.011",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "day<=32"
+   ],
+   "text": "They took the boat and left us the island. Generous of them. Very generous."
+  },
+  {
+   "id": "surv.dale.012",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "day>=34",
+    "day<=34"
+   ],
+   "text": "Two more dawns, mate. Then a fry-up. I'm going to think about that fry-up the whole way."
+  },
+  {
+   "id": "surv.dale.013",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:rescue",
+    "where:shore"
+   ],
+   "text": "Ten years on docks and I've never been this glad to see a boat tie up."
+  },
+  {
+   "id": "surv.dale.014",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "mode:rescue"
+   ],
+   "text": "There she is. Biscuit first, then me, then anyone who wants my seat can fight me for it."
+  },
+  {
+   "id": "surv.dale.015",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "If anyone gets hurt, mate, I'll carry them. That's my plan. That's the whole of my plan."
+  },
+  {
+   "id": "surv.dale.016",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Not now, stomach. Please. Not now."
+  },
+  {
+   "id": "surv.dale.017",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:hunt",
+    "mood:refusing"
+   ],
+   "text": "Sorry, mate. I'm not stepping off this porch today. I'll do anything that doesn't need me to."
+  },
+  {
+   "id": "surv.dale.018",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Like a job. All right. I can do a job. Point me at the heavy bit."
+  },
+  {
+   "id": "surv.dale.019",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "It's not the dark, mate. It's when the dark goes quiet all at once. That's when I know."
+  },
+  {
+   "id": "surv.dale.020",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "mode:rescue"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "We should all have been on this, mate. We aren't. I'll say it the once, and then I'll sit down."
+  },
+  {
+   "id": "surv.dale.021",
+   "cat": "survival",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Slept? Mate, I lay very still with my eyes shut. That's the most I can claim."
+  },
+  {
+   "id": "surv.priya.001",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "day<=31"
+   ],
+   "rep": "once",
+   "resp": [
+    "surv.marta.021"
+   ],
+   "text": "No boat today and nothing on the radio from them. The company isn't late, {listener}. It's gone. I'd like to be angry about it later."
+  },
+  {
+   "id": "surv.priya.002",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt"
+   ],
+   "prio": 4,
+   "text": "The beacon was acknowledged on the utility radio, boss. Dawn on day thirty-six. Everything we do now is about getting there."
+  },
+  {
+   "id": "surv.priya.003",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Stay still. Sound carries further than you think."
+  },
+  {
+   "id": "surv.priya.004",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Slow breaths. Count them. Four in, four out."
+  },
+  {
+   "id": "surv.priya.005",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "It stops when it listens, {listener}. I've seen it do that twice now. So when it stops, we stop."
+  },
+  {
+   "id": "surv.priya.006",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "where:cabin"
+   ],
+   "text": "I've listed what food we have. It lasts to day thirty-six if we're disciplined. It doesn't last much past it."
+  },
+  {
+   "id": "surv.priya.007",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "Two-hour watches. I've written the order on the wall, so nobody has to remember anything at three in the morning."
+  },
+  {
+   "id": "surv.priya.008",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "Their name is in the notebook. I'll read it out on the ship. Not before."
+  },
+  {
+   "id": "surv.priya.009",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Whoever quit is still on the island, boss. No boat took them. If you see them, they'll need somewhere to hide."
+  },
+  {
+   "id": "surv.priya.010",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day>=32",
+    "day<=32"
+   ],
+   "text": "Day thirty-two. Four dawns to go. One crossed off."
+  },
+  {
+   "id": "surv.priya.011",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "The alcove's raised, roofed and out of sight, with water and a bed. He's better placed than any of us, honestly."
+  },
+  {
+   "id": "surv.priya.012",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "day>=33"
+   ],
+   "text": "We're doing well, considering, {listener}. That isn't comfort. It's a measurement. I'll take either."
+  },
+  {
+   "id": "surv.priya.013",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "mode:rescue",
+    "where:shore"
+   ],
+   "prio": 4,
+   "text": "Boarding's at the dock end and the window is short. Walk straight. Don't stop for anything you can replace."
+  },
+  {
+   "id": "surv.priya.014",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "mode:rescue"
+   ],
+   "text": "I'll finish the notebook on the crossing. Some pages I'm leaving blank on purpose."
+  },
+  {
+   "id": "surv.priya.015",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Don't look out. Looking makes noise."
+  },
+  {
+   "id": "surv.priya.016",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:night",
+    "mood:uneasy"
+   ],
+   "text": "It's quieter tonight than last night, {listener}. I genuinely don't know whether that's good."
+  },
+  {
+   "id": "surv.priya.017",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:hunt",
+    "mood:refusing"
+   ],
+   "text": "No, boss. The road is exactly where it's been walking. I'll do anything that doesn't involve the road."
+  },
+  {
+   "id": "surv.priya.018",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "day<=32"
+   ],
+   "text": "Three rules. Nobody alone. Nobody in the open after dusk. If you have to hide, pick somewhere you can get out of."
+  },
+  {
+   "id": "surv.priya.019",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Three hours, broken into pieces. Better than yesterday, by my count."
+  },
+  {
+   "id": "surv.priya.020",
+   "cat": "survival",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:rescue"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "I've the names of everyone who isn't boarding, boss. Someone should be able to say them properly, later."
+  },
+  {
+   "id": "surv.tomas.001",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "day<=31"
+   ],
+   "rep": "once",
+   "text": "They're not coming? Sorry, I mean, they're really not coming? Not even the boat?"
+  },
+  {
+   "id": "surv.tomas.002",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Sorry. Sorry. I'm quiet. I'm being quiet."
+  },
+  {
+   "id": "surv.tomas.003",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Please go away. Please, please go away."
+  },
+  {
+   "id": "surv.tomas.004",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "I wrote Ana a letter I hope she never has to read. Sorry. That's grim. I needed it written down."
+  },
+  {
+   "id": "surv.tomas.005",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "The truck still starts first time, boss. Engines are loud, though. Maybe only if we really have to. Is that useful?"
+  },
+  {
+   "id": "surv.tomas.006",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "I'll take a watch. I'm not sleeping anyway. Sorry, I mean I'm happy to."
+  },
+  {
+   "id": "surv.tomas.007",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt",
+    "day>=35"
+   ],
+   "text": "The ship's tomorrow, boss? At dawn? Sorry. I just need to hear someone else say it."
+  },
+  {
+   "id": "surv.tomas.008",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:day"
+   ],
+   "resp": [
+    "surv.priya.011"
+   ],
+   "text": "Is Biscuit all right in the alcove, {listener}? Sorry. I keep thinking about him down there by himself."
+  },
+  {
+   "id": "surv.tomas.009",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "I keep expecting to see them at the truck. Then I remember."
+  },
+  {
+   "id": "surv.tomas.010",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "Do you think they're hiding somewhere, {listener}? The one who quit? I hope they found somewhere good."
+  },
+  {
+   "id": "surv.tomas.011",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "mood:shaken"
+   ],
+   "text": "I'm okay. I'm okay. I just need one minute where nothing moves."
+  },
+  {
+   "id": "surv.tomas.012",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "day>=33"
+   ],
+   "text": "I'm still here. Scared every second, but still here. That counts, doesn't it?"
+  },
+  {
+   "id": "surv.tomas.013",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:rescue"
+   ],
+   "rep": "once",
+   "text": "It's real. It's actually there. Sorry, I'm crying. Ana gets the other letter after all. The good one."
+  },
+  {
+   "id": "surv.tomas.014",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "mode:rescue",
+    "where:shore"
+   ],
+   "text": "Should I go first? Sorry. No, you go. I'll go. Somebody go!"
+  },
+  {
+   "id": "surv.tomas.015",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I saw it cross the road. Just the once. Sorry, I don't want to say any more than that."
+  },
+  {
+   "id": "surv.tomas.016",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:hunt",
+    "mood:refusing"
+   ],
+   "text": "I can't, boss. I'm so sorry. Please don't make me go out there."
+  },
+  {
+   "id": "surv.tomas.017",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "where:cabin"
+   ],
+   "text": "I can eat less. I'm smaller than everyone. Sorry, that's just maths."
+  },
+  {
+   "id": "surv.tomas.018",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day<=32"
+   ],
+   "text": "I did every run they asked for. Every single one. They didn't even send a message."
+  },
+  {
+   "id": "surv.tomas.019",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Is it gone? Don't answer. Sorry."
+  },
+  {
+   "id": "surv.tomas.020",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Okay. Okay. Tell me what to do and I'll do it. Just, please, not alone."
+  },
+  {
+   "id": "surv.tomas.021",
+   "cat": "survival",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Not really. Sorry. I kept listening to the roof."
+  },
+  {
+   "id": "surv.joan.001",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "day<=31"
+   ],
+   "rep": "once",
+   "text": "Well, loves. That's the company. I always said they'd run up the tab and walk out the back door."
+  },
+  {
+   "id": "surv.joan.002",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Shh, sunshine. I've got you."
+  },
+  {
+   "id": "surv.joan.003",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Quiet as a cellar. Quiet as a cellar."
+  },
+  {
+   "id": "surv.joan.004",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "where:cabin"
+   ],
+   "text": "I can make three tins feed four if nobody's fussy. And nobody's allowed to be fussy, loves."
+  },
+  {
+   "id": "surv.joan.005",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "Sleep, love. I'll sit up. I'm too old to sleep through this anyway."
+  },
+  {
+   "id": "surv.joan.006",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:day",
+    "day>=32"
+   ],
+   "resp": [
+    "surv.dale.021",
+    "surv.tomas.021",
+    "surv.priya.019"
+   ],
+   "text": "How did you sleep, {listener}? Don't lie to me. Nobody did."
+  },
+  {
+   "id": "surv.joan.007",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "We'll raise a glass for them on the boat, loves. Just the one. Then we get on."
+  },
+  {
+   "id": "surv.joan.008",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "I hope the one who walked out is tucked up somewhere, love. I'd forgive them a lot for being alive."
+  },
+  {
+   "id": "surv.joan.009",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "day>=33"
+   ],
+   "text": "Still here, loves. Count yourselves. Still here."
+  },
+  {
+   "id": "surv.joan.010",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:day"
+   ],
+   "text": "Biscuit's under the dock with his water bowl and his own little roof. Spoiled rotten, that dog. Good."
+  },
+  {
+   "id": "surv.joan.011",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt",
+    "day<=32"
+   ],
+   "text": "Don't you blame yourself, boss-love. Blame the people who had the boat."
+  },
+  {
+   "id": "surv.joan.012",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I used to say it was all forums and ghost stories, love. I've stopped saying that."
+  },
+  {
+   "id": "surv.joan.013",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "day>=34",
+    "day<=34"
+   ],
+   "text": "Two more nights, loves. I've lived through worse weeks behind a bar. Not many, mind."
+  },
+  {
+   "id": "surv.joan.014",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:rescue",
+    "where:shore"
+   ],
+   "text": "Up you go, sunshine. Don't look back at the trees. Look at the boat."
+  },
+  {
+   "id": "surv.joan.015",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:rescue"
+   ],
+   "text": "Thank you for getting us this far, boss-love. Now get on that ship before I carry you on."
+  },
+  {
+   "id": "surv.joan.016",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:hunt",
+    "mood:refusing"
+   ],
+   "text": "Not out there, boss-love. Ask me to cook, ask me to keep watch. Not that."
+  },
+  {
+   "id": "surv.joan.017",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "mood:shaken"
+   ],
+   "text": "Give me a second, love. I'm listening, not talking. Just for a second."
+  },
+  {
+   "id": "surv.joan.018",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "where:cabin",
+    "day<=32"
+   ],
+   "text": "House rules, loves: nobody goes alone, nobody goes far, and everybody eats something."
+  },
+  {
+   "id": "surv.joan.019",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "And I'll handle the kitchen, so at least the food won't kill anyone."
+  },
+  {
+   "id": "surv.joan.020",
+   "cat": "survival",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "mode:rescue"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "Leave a space at the rail for them, love. Just stand next to it. That's enough."
+  },
+  {
+   "id": "surv.any.001",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Don't move. Not yet."
+  },
+  {
+   "id": "surv.any.002",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Stay down. Keep breathing."
+  },
+  {
+   "id": "surv.any.003",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Not a sound now."
+  },
+  {
+   "id": "surv.any.004",
+   "cat": "survival",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Please don't find us. Please."
+  },
+  {
+   "id": "surv.any.005",
+   "cat": "survival",
+   "speaker": "trait:level_headed",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "act:hide"
+   ],
+   "text": "Wait. Let it move on first."
+  },
+  {
+   "id": "surv.any.006",
+   "cat": "survival",
+   "speaker": "trait:stronger",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "where:camp"
+   ],
+   "text": "I'll take the heavy end of everything. You keep your eyes on the tree line."
+  },
+  {
+   "id": "surv.any.007",
+   "cat": "survival",
+   "speaker": "trait:observant",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "It went quiet near the decks just before. Quiet is when I start worrying."
+  },
+  {
+   "id": "surv.any.008",
+   "cat": "survival",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "I used to have a word for all this. Nonsense. I've lost the word."
+  },
+  {
+   "id": "surv.any.009",
+   "cat": "survival",
+   "speaker": "trait:sociable",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "Talk to me. Quietly. Just so I know you're still there."
+  },
+  {
+   "id": "surv.any.010",
+   "cat": "survival",
+   "speaker": "trait:reliable_driver",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Truck's fuelled and the keys are in my pocket, boss. Last resort only."
+  },
+  {
+   "id": "surv.any.011",
+   "cat": "survival",
+   "speaker": "trait:hard_working",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt"
+   ],
+   "text": "Give me something to do, boss. Anything. Idle hands shake."
+  },
+  {
+   "id": "surv.any.012",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day<=31"
+   ],
+   "text": "The company left right on schedule. Shame it was only their schedule."
+  },
+  {
+   "id": "surv.any.013",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:rescue",
+    "where:shore"
+   ],
+   "text": "Is that the ship? That's the ship."
+  },
+  {
+   "id": "surv.any.014",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "mode:rescue",
+    "where:shore"
+   ],
+   "text": "One at a time on the gangway. Hold the rail."
+  },
+  {
+   "id": "surv.any.015",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "I won't say their name yet. On the boat."
+  },
+  {
+   "id": "surv.any.016",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "mode:hunt"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "text": "One of us walked off before all this. I hope they're hiding well."
+  },
+  {
+   "id": "surv.any.017",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "crew<=3"
+   ],
+   "text": "There's so few of us now. Stay where I can see you."
+  },
+  {
+   "id": "surv.any.018",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "mode:hunt",
+    "phase:night"
+   ],
+   "text": "Your watch. Wake me if anything changes. Anything at all."
+  },
+  {
+   "id": "surv.any.019",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:rescue"
+   ],
+   "needs": [
+    "know:dead"
+   ],
+   "text": "Not everyone's getting on. I know. Keep walking anyway."
+  },
+  {
+   "id": "surv.any.020",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:rescue",
+    "dog_near"
+   ],
+   "text": "Go on, Biscuit. Up you go. We're right behind you."
+  },
+  {
+   "id": "surv.any.021",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "refuse",
+   "when": [
+    "mode:hunt",
+    "mood:refusing"
+   ],
+   "text": "I'm not leaving cover, boss. Not for anything."
+  },
+  {
+   "id": "surv.any.022",
+   "cat": "survival",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "mode:hunt",
+    "day>=35",
+    "phase:night"
+   ],
+   "text": "Last night of it. Hold on till the light."
+  },
+  {
+   "id": "surv.any.023",
+   "cat": "survival",
+   "speaker": "trait:timid",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "mode:hunt",
+    "mood:uneasy"
+   ],
+   "text": "Can we stay inside today? Please? Whatever's been walking the road, I don't want to meet it."
+  },
+  {
+   "id": "surv.any.024",
+   "cat": "survival",
+   "speaker": "trait:level_headed",
+   "to": "group",
+   "when": [
+    "mode:hunt",
+    "where:cabin"
+   ],
+   "text": "Eat, rest, keep the door shut. Boring keeps us alive."
+  }
+ ]
+}

@@ -1,0 +1,1366 @@
+{
+ "category": "ethic",
+ "batch": "ethic-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "eth.marta.001",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Just doing the job, boss. Though I'll take it. Wood doesn't cut itself, but it's nice when someone notices."
+  },
+  {
+   "id": "eth.marta.002",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "thanks",
+   "when": [
+    "trust:high"
+   ],
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Appreciated, chief. Don't make a habit of it or I'll start expecting it."
+  },
+  {
+   "id": "eth.marta.003",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "needs": [
+    "know:levelup"
+   ],
+   "rep": "rare",
+   "text": "New level. Twenty years in and they still find things to grade me on. Fine. I'll take it."
+  },
+  {
+   "id": "eth.marta.004",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "resp": [
+    "eth.tomas.012",
+    "eth.dale.016",
+    "eth.joan.016",
+    "eth.priya.013"
+   ],
+   "text": "Somebody's been cutting to the marks all day without one wonky stump. I noticed. That's all."
+  },
+  {
+   "id": "eth.marta.005",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Cradle's the bottleneck. I can fell faster than that fire can eat."
+  },
+  {
+   "id": "eth.marta.006",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting on a second pair of hands. Minutes add up. So does my temper."
+  },
+  {
+   "id": "eth.marta.007",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Notch came out shallow. My mistake. Recutting it before anyone sees."
+  },
+  {
+   "id": "eth.marta.008",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Pinched the bar. Should've wedged first. Twenty years and I still need telling."
+  },
+  {
+   "id": "eth.marta.009",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Trees are coming down clean today, boss. Faster still if the yard keeps up."
+  },
+  {
+   "id": "eth.marta.010",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:idle",
+    "phase:day"
+   ],
+   "text": "Five minutes. Water, sharpen, then the next one."
+  },
+  {
+   "id": "eth.marta.011",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Nobody's slacking. The route's blocked. Say it how it is."
+  },
+  {
+   "id": "eth.marta.012",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "know:frustrated"
+   ],
+   "text": "Lost too much of today waiting on the yard. Tomorrow I count the minutes, and the boss gets the number."
+  },
+  {
+   "id": "eth.marta.013",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Yard's full, boss. Cradle's stacked and the fire's slow. The cutting isn't the problem."
+  },
+  {
+   "id": "eth.marta.014",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "Rack's empty, boss. Give me a tool and I'll give you a tree."
+  },
+  {
+   "id": "eth.marta.015",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "needs": [
+    "know:felled_today"
+   ],
+   "resp": [
+    "eth.dale.010"
+   ],
+   "text": "More than you, Dale, and every stump flat enough to set a cup on."
+  },
+  {
+   "id": "eth.marta.016",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "I stop when the day stops. That's the deal I made with the day."
+  },
+  {
+   "id": "eth.marta.017",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "It counts. You fix it anyway, and you remember it next time."
+  },
+  {
+   "id": "eth.marta.018",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "You did fine. Better than fine. Stop asking, you'll wear it out."
+  },
+  {
+   "id": "eth.marta.019",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Give it to whoever kept the yard moving. That's the real work today."
+  },
+  {
+   "id": "eth.marta.020",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:stump"
+   ],
+   "text": "Flush stump. Nobody'll ever look at it twice, and that's how you know it's right."
+  },
+  {
+   "id": "eth.marta.021",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "resp": [
+    "eth.tomas.019",
+    "eth.priya.020"
+   ],
+   "text": "Sit down while you can, {listener}. When that yard clears, it'll all come at once."
+  },
+  {
+   "id": "eth.marta.022",
+   "cat": "ethic",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "That's practice. Took me years to get them like that. Whoever it is, they're quicker than I was."
+  },
+  {
+   "id": "eth.dale.001",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Cheers, mate. I'll take the thanks, but I'd take a second helping of dinner more."
+  },
+  {
+   "id": "eth.dale.002",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised",
+    "know:delivered_today"
+   ],
+   "text": "Ah, it was nothing, mate. Well. It was a very heavy nothing."
+  },
+  {
+   "id": "eth.dale.003",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "needs": [
+    "know:levelup"
+   ],
+   "rep": "rare",
+   "text": "Levelled up. Reckon that's worth an extra biscuit at tea. The food kind, not the dog."
+  },
+  {
+   "id": "eth.dale.004",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "text": "Every log I've hauled lately has been cut to a sensible length. Somebody out there knows what they're doing."
+  },
+  {
+   "id": "eth.dale.005",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Dropped that one short. My fault, mate. Picking it back up before anyone writes it down."
+  },
+  {
+   "id": "eth.dale.006",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Second go. Me and this log have had words, and we've made up."
+  },
+  {
+   "id": "eth.dale.007",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Can't set it down anywhere. Cradle's stuffed. Not my fault, not the log's fault. The fire's just slow."
+  },
+  {
+   "id": "eth.dale.008",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting on someone for the other end. This one's too long even for me, and I hate saying that."
+  },
+  {
+   "id": "eth.dale.009",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "phase:dusk"
+   ],
+   "resp": [
+    "eth.marta.015",
+    "eth.priya.019"
+   ],
+   "text": "Go on then, how many have you dropped today? Honest numbers."
+  },
+  {
+   "id": "eth.dale.010",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Ah, but did you carry them? Didn't think so."
+  },
+  {
+   "id": "eth.dale.011",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:idle",
+    "phase:day"
+   ],
+   "text": "Two minutes, mate. My back's filed a complaint and I'm reading it through."
+  },
+  {
+   "id": "eth.dale.012",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Delivered a good few, mate. Lost count after the one with the personality."
+  },
+  {
+   "id": "eth.dale.013",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Nobody said lazy, mate. Though I did think it about myself for a second there."
+  },
+  {
+   "id": "eth.dale.014",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "know:frustrated"
+   ],
+   "text": "Spent half the day holding logs nobody could take. Tomorrow I'm holding a sandwich instead."
+  },
+  {
+   "id": "eth.dale.015",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No axe on the rack, mate. Can't fell a tree with a stern look. I've tried."
+  },
+  {
+   "id": "eth.dale.016",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Wasn't me. I don't cut to marks, I cut to lunch."
+  },
+  {
+   "id": "eth.dale.017",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "Nothing marked for me. I'll stand here looking strong until somebody needs strong."
+  },
+  {
+   "id": "eth.dale.018",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Mate, you did better than okay. Nobody had to shout at you once."
+  },
+  {
+   "id": "eth.dale.019",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Me. Heaviest logs and the biggest appetite. Both should count."
+  },
+  {
+   "id": "eth.dale.020",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "Good carry earlier. Two people, one log, nobody swore. That's teamwork, that is."
+  },
+  {
+   "id": "eth.dale.021",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Tripped on a root and saved it with my knee. Log's fine. Knee's thinking about it."
+  },
+  {
+   "id": "eth.dale.022",
+   "cat": "ethic",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "I stop for every meal and most snacks, so I reckon I'm doing fine."
+  },
+  {
+   "id": "eth.priya.001",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thank you, boss. I'll write that down. Mostly so I can find it on a bad day."
+  },
+  {
+   "id": "eth.priya.002",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised",
+    "know:felled_today"
+   ],
+   "text": "That's kind. For the record, I checked the hinge on my last one twice. It held exactly where I wanted."
+  },
+  {
+   "id": "eth.priya.003",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "needs": [
+    "know:levelup"
+   ],
+   "rep": "rare",
+   "text": "New level. I'll put the date in the notebook. Small things add up if you write them down."
+  },
+  {
+   "id": "eth.priya.004",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "where:forest"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "resp": [
+    "eth.marta.022",
+    "eth.joan.020"
+   ],
+   "text": "Have you seen the stumps along the last lane? Someone's getting them nearly flush now."
+  },
+  {
+   "id": "eth.priya.005",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Face cut's a few degrees off. Easy to fix. Recutting it before the back cut."
+  },
+  {
+   "id": "eth.priya.006",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Bar's pinched. I misread the compression on top. Wedge in, then try again."
+  },
+  {
+   "id": "eth.priya.007",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "The cradle's full and the decks are high, boss. More felling right now just moves the queue into the forest."
+  },
+  {
+   "id": "eth.priya.008",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Route's blocked. That's the delay, and I'm writing it down so nobody blames the wrong thing."
+  },
+  {
+   "id": "eth.priya.009",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting on a second carrier. That's a staffing gap, not a work-rate problem."
+  },
+  {
+   "id": "eth.priya.010",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Agreed. Nobody's slow. The path is the hold-up, and you can see it from here."
+  },
+  {
+   "id": "eth.priya.011",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:idle",
+    "phase:day"
+   ],
+   "text": "Five-minute break. Water first. My handwriting gets worse when I'm thirsty."
+  },
+  {
+   "id": "eth.priya.012",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Mine came down clean today, boss. No hang-ups, and the lane behind me is clear for hauling."
+  },
+  {
+   "id": "eth.priya.013",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Was it the stumps by the lane? I've been trying to copy yours."
+  },
+  {
+   "id": "eth.priya.014",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "resp": [
+    "eth.joan.014",
+    "eth.marta.017"
+   ],
+   "text": "Question. Does it count as a mistake if you fix it before anyone sees?"
+  },
+  {
+   "id": "eth.priya.015",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "know:frustrated"
+   ],
+   "text": "A lot of waiting today, most of it at the yard. That's a pattern, not bad luck. I'll mention it."
+  },
+  {
+   "id": "eth.priya.016",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "No task for me. I'll check the marks on the next row while I wait. Something useful."
+  },
+  {
+   "id": "eth.priya.017",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "Nothing on the rack that suits this trunk. I'd rather wait than fell with the wrong tool."
+  },
+  {
+   "id": "eth.priya.018",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "needs": [
+    "know:levelup"
+   ],
+   "text": "I reached a new level, boss. I suspect the notebook deserves partial credit."
+  },
+  {
+   "id": "eth.priya.019",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "I keep a tally, but I'm not telling you. You'd turn it into a contest."
+  },
+  {
+   "id": "eth.priya.020",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "It'll clear in a rush, yes. The fire is eating, just slowly."
+  },
+  {
+   "id": "eth.priya.021",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "Honestly? Whoever had the fewest hang-ups. I could check, if anyone wants numbers."
+  },
+  {
+   "id": "eth.priya.022",
+   "cat": "ethic",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Every ninety minutes, exactly. It's in the notebook."
+  },
+  {
+   "id": "eth.tomas.001",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Really? Thank you, boss. Sorry, I just didn't think anyone had noticed."
+  },
+  {
+   "id": "eth.tomas.002",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "That means a lot, boss. Is it okay if I tell my sister? I'll write it down for when the boat comes."
+  },
+  {
+   "id": "eth.tomas.003",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "needs": [
+    "know:levelup"
+   ],
+   "rep": "rare",
+   "text": "New level! Sorry. It's the first certificate kind of thing I've had since my driving test."
+  },
+  {
+   "id": "eth.tomas.004",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "text": "Somebody just took a huge log on their own and didn't even slow down. I'd need four goes and an apology."
+  },
+  {
+   "id": "eth.tomas.005",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Sorry, sorry. Dropped it short. I've got it. Nobody needs to come over."
+  },
+  {
+   "id": "eth.tomas.006",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Okay. Got it on the deck this time. Is that okay where it is?"
+  },
+  {
+   "id": "eth.tomas.007",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "The way's blocked. I'm not hiding, honestly. I just can't get past."
+  },
+  {
+   "id": "eth.tomas.008",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Sorry, boss, the yard's full. There's nowhere to put anything. Is it okay to wait?"
+  },
+  {
+   "id": "eth.tomas.009",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting for someone to take the other end. I could try alone. I won't. Marta said not to."
+  },
+  {
+   "id": "eth.tomas.010",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:idle",
+    "phase:day"
+   ],
+   "text": "Is it okay if I sit for a minute? Just one. My arms are doing a thing."
+  },
+  {
+   "id": "eth.tomas.011",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "I don't have anything right now, boss. Sorry. Point me anywhere. I can drive, too."
+  },
+  {
+   "id": "eth.tomas.012",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Was that me? Sorry. Please say it was me."
+  },
+  {
+   "id": "eth.tomas.013",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:home",
+    "phase:dusk"
+   ],
+   "needs": [
+    "know:frustrated"
+   ],
+   "text": "So much waiting today. At least we're heading in now. That part I don't mind."
+  },
+  {
+   "id": "eth.tomas.014",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Saw's stuck. Sorry. Getting the wedge. I know, I know. Wedge first."
+  },
+  {
+   "id": "eth.tomas.015",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No axe left on the rack. I checked twice. Is it bad that I'm a little relieved?"
+  },
+  {
+   "id": "eth.tomas.016",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Haven't stalled once today. Not once. Ana won't care, but I'm telling her anyway."
+  },
+  {
+   "id": "eth.tomas.017",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "phase:dusk"
+   ],
+   "resp": [
+    "eth.joan.015",
+    "eth.marta.018",
+    "eth.dale.018"
+   ],
+   "text": "Did I do okay today? You can tell me if I didn't."
+  },
+  {
+   "id": "eth.tomas.018",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "needs": [
+    "know:levelup"
+   ],
+   "text": "Boss, I went up a level. Is that okay? I mean, obviously it's okay. Sorry. I'm just pleased."
+  },
+  {
+   "id": "eth.tomas.019",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Okay. Good. I was worried it looked like we were just standing about."
+  },
+  {
+   "id": "eth.tomas.020",
+   "cat": "ethic",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Not me. I'd only blush and drop my fork. Give it to someone braver."
+  },
+  {
+   "id": "eth.joan.001",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Oh, boss-love, you'll make me blush. Bring that energy to dinner, it's stew."
+  },
+  {
+   "id": "eth.joan.002",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thank you, boss-love. Tell the others as well, would you? Marta won't admit she likes it, but she does."
+  },
+  {
+   "id": "eth.joan.003",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "needs": [
+    "know:levelup"
+   ],
+   "rep": "rare",
+   "text": "Levelled up, apparently. At my age. I'll have the lot of them calling me ma'am."
+  },
+  {
+   "id": "eth.joan.004",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "text": "Somebody's been working like a clock all afternoon. I'll be saying so at dinner whether they like it or not."
+  },
+  {
+   "id": "eth.joan.005",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "resp": [
+    "eth.marta.016",
+    "eth.dale.022",
+    "eth.priya.022"
+   ],
+   "text": "Do you ever actually stop, {listener}, or does somebody wind you up each morning?"
+  },
+  {
+   "id": "eth.joan.006",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Cradle's full, sunshine. That's the fire being slow, not anyone being idle."
+  },
+  {
+   "id": "eth.joan.007",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "blocker:blocked"
+   ],
+   "resp": [
+    "eth.priya.010",
+    "eth.dale.013"
+   ],
+   "text": "Before anyone says lazy, the route's blocked. I've been watching it for a good while."
+  },
+  {
+   "id": "eth.joan.008",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:idle",
+    "where:camp",
+    "phase:day"
+   ],
+   "text": "Kettle break. Five minutes. Doctor's orders, and I'm the doctor."
+  },
+  {
+   "id": "eth.joan.009",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Well, that notch is a crime. We'll call it a practice one and do it properly."
+  },
+  {
+   "id": "eth.joan.010",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Second try's the real one. First try was for the audience."
+  },
+  {
+   "id": "eth.joan.011",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "I'm waiting on a carry partner, boss-love. Can't haul a trunk on good intentions."
+  },
+  {
+   "id": "eth.joan.012",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "phase:dusk"
+   ],
+   "needs": [
+    "know:frustrated"
+   ],
+   "text": "Long day of standing about. Not our fault, mind. That yard needs a second fire or a miracle."
+  },
+  {
+   "id": "eth.joan.013",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No saw on the rack, boss-love. I'll put the kettle on while somebody finds one."
+  },
+  {
+   "id": "eth.joan.014",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Love, that's called management."
+  },
+  {
+   "id": "eth.joan.015",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "You did grand, sunshine. Better than grand. Now go and eat something."
+  },
+  {
+   "id": "eth.joan.016",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Say it to their face at dinner, love. It's worth twice as much there."
+  },
+  {
+   "id": "eth.joan.017",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "Nothing to do. Dangerous words in a camp with a cook in it."
+  },
+  {
+   "id": "eth.joan.018",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "phase:dusk"
+   ],
+   "resp": [
+    "eth.dale.019",
+    "eth.priya.021",
+    "eth.marta.019",
+    "eth.tomas.020"
+   ],
+   "text": "Right, who's had the best day? I'm handing out an imaginary medal at dinner."
+  },
+  {
+   "id": "eth.joan.019",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:buck"
+   ],
+   "text": "My mum used to say a job half done is a meal half cooked. Terrible cook, my mum. Not wrong, though."
+  },
+  {
+   "id": "eth.joan.020",
+   "cat": "ethic",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "You and your stumps, love. Next you'll be reading them like tea leaves."
+  },
+  {
+   "id": "eth.any.001",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised"
+   ],
+   "text": "Thanks, boss. Good to know someone's keeping count."
+  },
+  {
+   "id": "eth.any.002",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "needs": [
+    "know:levelup"
+   ],
+   "rep": "rare",
+   "text": "Moved up a level. Feels earned, for once."
+  },
+  {
+   "id": "eth.any.003",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Nowhere to set this down. Yard's full up."
+  },
+  {
+   "id": "eth.any.004",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Path's blocked ahead. Going round or waiting, one or the other."
+  },
+  {
+   "id": "eth.any.005",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "This one needs two. Waiting for a spare pair of hands."
+  },
+  {
+   "id": "eth.any.006",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "Nothing left on the rack I can use. Somebody bring one back."
+  },
+  {
+   "id": "eth.any.007",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "No marked trees near me. Waiting on direction."
+  },
+  {
+   "id": "eth.any.008",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Bad grip, short drop. Lifting it again."
+  },
+  {
+   "id": "eth.any.009",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "ack",
+   "text": "On it, boss. Next one's mine."
+  },
+  {
+   "id": "eth.any.010",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "phase:dusk",
+    "where:camp"
+   ],
+   "text": "Good day, all. Same again tomorrow, and maybe the yard can keep up for once."
+  },
+  {
+   "id": "eth.any.011",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:idle",
+    "blocker:yard_full"
+   ],
+   "text": "I'm only stood here because the yard's full, boss. Clear it and I'm straight back."
+  },
+  {
+   "id": "eth.any.012",
+   "cat": "ethic",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "act:idle",
+    "phase:day"
+   ],
+   "text": "Short break, then straight back out. No sense wasting the light."
+  },
+  {
+   "id": "eth.any.013",
+   "cat": "ethic",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "phase:day"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Good pace today. Couple more before dusk if the yard keeps up."
+  },
+  {
+   "id": "eth.any.014",
+   "cat": "ethic",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Give me the heavy end. That's what I'm here for."
+  },
+  {
+   "id": "eth.any.015",
+   "cat": "ethic",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "act:idle"
+   ],
+   "text": "Is it okay that I stopped? I'll go again in a second, I promise."
+  },
+  {
+   "id": "eth.any.016",
+   "cat": "ethic",
+   "speaker": "trait:level_headed",
+   "to": "self",
+   "when": [
+    "act:fell"
+   ],
+   "text": "Mistakes happen. Clean it up and keep going. No point stewing on it."
+  },
+  {
+   "id": "eth.any.017",
+   "cat": "ethic",
+   "speaker": "trait:sociable",
+   "to": "group",
+   "when": [
+    "phase:dusk"
+   ],
+   "text": "Good work today, everyone. Somebody should say it out loud, so I will."
+  },
+  {
+   "id": "eth.any.018",
+   "cat": "ethic",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Anyone who calls this lazy can come and look at the full cradle first."
+  },
+  {
+   "id": "eth.any.019",
+   "cat": "ethic",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "The cradle hasn't changed in a while. Same logs, same places. That's our hold-up."
+  },
+  {
+   "id": "eth.any.020",
+   "cat": "ethic",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Smooth run, no stalls, nothing bounced off the back. That's my bit done properly."
+  },
+  {
+   "id": "eth.any.021",
+   "cat": "ethic",
+   "speaker": "trait:observant",
+   "to": "self",
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "text": "Someone's notches have tidied up lately. You can see it in the stumps."
+  },
+  {
+   "id": "eth.any.022",
+   "cat": "ethic",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Saw's pinched. Wedge it, ease it out, start again."
+  },
+  {
+   "id": "eth.any.023",
+   "cat": "ethic",
+   "speaker": "trait:level_headed",
+   "to": "boss",
+   "ask": "thanks",
+   "needs": [
+    "know:praised",
+    "know:frustrated"
+   ],
+   "text": "Thanks, boss. It helps to hear it on a day with this much waiting in it."
+  }
+ ]
+}

@@ -1,0 +1,1448 @@
+{
+ "category": "tools",
+ "batch": "tools-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "tool.marta.001",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "text": "Edge is going dull. Ten more swings, then I sharpen."
+  },
+  {
+   "id": "tool.marta.002",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:big_axe"
+   ],
+   "text": "Large axe. Half the swings of the small one. Worth every gram of it."
+  },
+  {
+   "id": "tool.marta.003",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "Running the saw, boss. Don't bother talking to me till it's off."
+  },
+  {
+   "id": "tool.marta.004",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:fell",
+    "tool:saw"
+   ],
+   "text": "Hand signals while the saw's going. Thumb up means I'm done."
+  },
+  {
+   "id": "tool.marta.005",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "act:idle"
+   ],
+   "text": "File, two strokes per tooth. Same count every time."
+  },
+  {
+   "id": "tool.marta.006",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "Rack's empty, chief. Order another axe on the camper computer, or I'm cutting with my teeth."
+  },
+  {
+   "id": "tool.marta.007",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "resp": [
+    "tool.priya.020"
+   ],
+   "text": "Priya, your edge is rolled. Look, there, along the bevel."
+  },
+  {
+   "id": "tool.marta.008",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:axe",
+    "weather:rain"
+   ],
+   "text": "Wet handle. Choke up and keep your grip dry."
+  },
+  {
+   "id": "tool.marta.009",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "day>=4"
+   ],
+   "rep": "rare",
+   "text": "Decent gloves. Blisters stopped on day three. I'm grateful, and I don't say that often."
+  },
+  {
+   "id": "tool.marta.010",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "tool:big_axe"
+   ],
+   "needs": [
+    "know:felled_today"
+   ],
+   "text": "Report, boss: the big axe is near doubling my count. Best money the company's spent out here."
+  },
+  {
+   "id": "tool.marta.011",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Tomas's swing is tighter than last week. Less wasted wood in his chips."
+  },
+  {
+   "id": "tool.marta.012",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Chain's stretched. Tension it now or throw it later."
+  },
+  {
+   "id": "tool.marta.013",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp"
+   ],
+   "rep": "rare",
+   "text": "Best tool on this island, boss? A sharp edge and somebody who keeps it that way."
+  },
+  {
+   "id": "tool.marta.014",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "level>=3"
+   ],
+   "rep": "rare",
+   "text": "Twenty years in and still getting faster. Don't tell the young ones."
+  },
+  {
+   "id": "tool.marta.015",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 4,
+   "text": "Helmet on, {listener}. Branches don't give warnings."
+  },
+  {
+   "id": "tool.marta.016",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "weather:rain"
+   ],
+   "text": "Saw doesn't mind the rain. I do."
+  },
+  {
+   "id": "tool.marta.017",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "weather:rain",
+    "where:forest"
+   ],
+   "text": "Good boots. Wet slope and not one slip. Money well spent."
+  },
+  {
+   "id": "tool.marta.018",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "text": "Small axe today, boss. Slower, but it never runs out of fuel."
+  },
+  {
+   "id": "tool.marta.019",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "phase:dusk"
+   ],
+   "text": "Wiping the blade before we go in. Rust works overtime."
+  },
+  {
+   "id": "tool.marta.020",
+   "cat": "tools",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "Choke off once it coughs. Pull hard, not long. There you go."
+  },
+  {
+   "id": "tool.dale.001",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:big_axe"
+   ],
+   "text": "Big axe, big man. Nature's way, mate."
+  },
+  {
+   "id": "tool.dale.002",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "resp": [
+    "tool.joan.020"
+   ],
+   "text": "This little axe is like eating soup with a teaspoon, mate."
+  },
+  {
+   "id": "tool.dale.003",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Saw's going. Can't hear a word anyone says. Bliss."
+  },
+  {
+   "id": "tool.dale.004",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "Saw's doing the hard bit, mate. I'm just the bloke holding the pointy end away from me."
+  },
+  {
+   "id": "tool.dale.005",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No axe on the rack, mate. I'll carry, but I can't cut with my sunny smile."
+  },
+  {
+   "id": "tool.dale.006",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "New gloves, mate. My hands haven't been this pampered since, well, never."
+  },
+  {
+   "id": "tool.dale.007",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "tool:big_axe"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Marta's got that big axe sharp enough to slice bread. I'd know, I've thought about it."
+  },
+  {
+   "id": "tool.dale.008",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "text": "Handle's worn smooth where my hand goes. We're getting to know each other."
+  },
+  {
+   "id": "tool.dale.009",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:camp"
+   ],
+   "text": "Parcel locker's got something in it, mate. Hope it's biscuits. The human kind."
+  },
+  {
+   "id": "tool.dale.010",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp"
+   ],
+   "rep": "rare",
+   "text": "Can the camper computer order a pie, mate? Asking for a friend. The friend is me."
+  },
+  {
+   "id": "tool.dale.011",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Helmet's a bit snug. My head's bigger than the company planned for."
+  },
+  {
+   "id": "tool.dale.012",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "weather:rain"
+   ],
+   "text": "Chainsaw in the rain. Loud, wet, and smells like a fuel can's packed lunch."
+  },
+  {
+   "id": "tool.dale.013",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:stump",
+    "tool:big_axe"
+   ],
+   "text": "Big axe through a root. Like cutting a crusty loaf, that."
+  },
+  {
+   "id": "tool.dale.014",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "level>=2"
+   ],
+   "rep": "rare",
+   "text": "Swear I'm getting better at this, mate. Two swings fewer a tree, near enough."
+  },
+  {
+   "id": "tool.dale.015",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Boots are earning their keep today, mate. Mud to the ankles and my socks still dry."
+  },
+  {
+   "id": "tool.dale.016",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "dog_near"
+   ],
+   "prio": 4,
+   "text": "Biscuit, back off from the saw. You're not a log, even if you're shaped like one."
+  },
+  {
+   "id": "tool.dale.017",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "text": "Swap you axes, mate? Yours looks lighter. Mine looks like a responsibility."
+  },
+  {
+   "id": "tool.dale.018",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "where:camp"
+   ],
+   "text": "Tool rack's sorted, mate. Hung everything back up. Biscuit helped by sitting on the gloves."
+  },
+  {
+   "id": "tool.dale.019",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "tool:none"
+   ],
+   "text": "No tool today. Just these arms. They'll do."
+  },
+  {
+   "id": "tool.dale.020",
+   "cat": "tools",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "Ears? I thought the ringing was just me being happy."
+  },
+  {
+   "id": "tool.priya.001",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:big_axe"
+   ],
+   "text": "The large axe takes about forty percent fewer swings than the small one. I've been counting."
+  },
+  {
+   "id": "tool.priya.002",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "Too loud to hear anything. I watch the chips instead. They tell you plenty."
+  },
+  {
+   "id": "tool.priya.003",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "tool:saw"
+   ],
+   "text": "Report, boss: the saw chain will need replacing soon. The cuts are drifting to the left."
+  },
+  {
+   "id": "tool.priya.004",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "where:forest"
+   ],
+   "prio": 4,
+   "text": "Helmets on, please. There's a hung branch two trees over."
+  },
+  {
+   "id": "tool.priya.005",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp"
+   ],
+   "rep": "rare",
+   "text": "Do the parts and the food come from the same supplier, boss? The parcel labels match."
+  },
+  {
+   "id": "tool.priya.006",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:axe",
+    "level>=2"
+   ],
+   "rep": "rare",
+   "text": "My strikes are landing closer together. Less chopping, more cutting."
+  },
+  {
+   "id": "tool.priya.007",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "Kickback comes off the top of the bar tip. Keep it away from knots."
+  },
+  {
+   "id": "tool.priya.008",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "There's no tool for me on the rack, boss. Could we order one on the camper computer?"
+  },
+  {
+   "id": "tool.priya.009",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "act:idle"
+   ],
+   "text": "Oiled the axe heads. Two had rust at the eye, where the rain gets in."
+  },
+  {
+   "id": "tool.priya.010",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Your strokes are much more even now. Did Marta show you that?"
+  },
+  {
+   "id": "tool.priya.011",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "weather:rain"
+   ],
+   "text": "Wet gloves lose grip at the end of the swing. A second pair would be worth it."
+  },
+  {
+   "id": "tool.priya.012",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "where:forest"
+   ],
+   "text": "These boots have a deeper tread than the old ones. Fewer slips on the slope."
+  },
+  {
+   "id": "tool.priya.013",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "tool:big_axe",
+    "phase:dusk"
+   ],
+   "text": "The large axe tires the shoulders by dusk. My accuracy drops after about six hours."
+  },
+  {
+   "id": "tool.priya.014",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "tool:saw"
+   ],
+   "resp": [
+    "tool.dale.020"
+   ],
+   "text": "Dale, the saw is louder than standing next to a running truck. Are your ears covered?"
+  },
+  {
+   "id": "tool.priya.015",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "weather:dry"
+   ],
+   "text": "Dry wood makes finer sawdust. The air filter will need cleaning tonight."
+  },
+  {
+   "id": "tool.priya.016",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "Sawing, boss. Faster than the axe, but I can't hear anyone, so I keep looking up."
+  },
+  {
+   "id": "tool.priya.017",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:camp"
+   ],
+   "text": "The parcel locker light is on. Something's arrived from the supplier."
+  },
+  {
+   "id": "tool.priya.018",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:axe"
+   ],
+   "text": "Small axe. More swings, but I can place every one exactly."
+  },
+  {
+   "id": "tool.priya.019",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "level>=3"
+   ],
+   "rep": "rare",
+   "text": "My felling times are down by a third since the first week. I keep a record."
+  },
+  {
+   "id": "tool.priya.020",
+   "cat": "tools",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Oh. You're right. I'll hone it at lunch, if you'll show me the angle."
+  },
+  {
+   "id": "tool.tomas.001",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "The saw's so loud. I'll just nod at everyone."
+  },
+  {
+   "id": "tool.tomas.002",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "tool:saw"
+   ],
+   "resp": [
+    "tool.marta.020"
+   ],
+   "text": "Marta, could you show me how to start the saw? Sorry. It keeps flooding."
+  },
+  {
+   "id": "tool.tomas.003",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:big_axe"
+   ],
+   "text": "The big axe is heavy. But it feels a bit like driving a truck instead of a van."
+  },
+  {
+   "id": "tool.tomas.004",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "text": "Small axe, boss. It's fine. It's actually fine. I'm used to it."
+  },
+  {
+   "id": "tool.tomas.005",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "Sorry, boss, there's nothing on the rack for me. Is that okay? I can carry instead."
+  },
+  {
+   "id": "tool.tomas.006",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Helmet on. Ana made me promise. I promised."
+  },
+  {
+   "id": "tool.tomas.007",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:camp"
+   ],
+   "text": "Something in the parcel locker. I hope it's mine. Nothing's ever mine, actually. Never mind."
+  },
+  {
+   "id": "tool.tomas.008",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:buck",
+    "level>=2"
+   ],
+   "rep": "rare",
+   "text": "I can split a section in four swings now. It used to be seven."
+  },
+  {
+   "id": "tool.tomas.009",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "These boots grip like good tyres. I could go anywhere in these."
+  },
+  {
+   "id": "tool.tomas.010",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "The truck is my favourite tool. Is a truck a tool? I'm saying it's a tool."
+  },
+  {
+   "id": "tool.tomas.011",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "tool:axe"
+   ],
+   "needs": [
+    "know:levelup"
+   ],
+   "text": "Report, boss: I think I've improved with the axe. Fewer swings per section. Sorry, is that a report?"
+  },
+  {
+   "id": "tool.tomas.012",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "phase:dusk"
+   ],
+   "text": "Turning the saw off now. I want to hear what's around us before dark."
+  },
+  {
+   "id": "tool.tomas.013",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Are your gloves stiff too? Mine are crunchy from all the sap."
+  },
+  {
+   "id": "tool.tomas.014",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "tool:axe",
+    "weather:rain"
+   ],
+   "text": "Wet handle. Sorry, axe. I'll hold you properly."
+  },
+  {
+   "id": "tool.tomas.015",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "act:idle"
+   ],
+   "text": "I put all the tools back on the rack. Sorted by size. Is that okay?"
+  },
+  {
+   "id": "tool.tomas.016",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp"
+   ],
+   "rep": "rare",
+   "text": "Does the camper computer list trucks, boss? Just looking. Not asking. Mostly not asking."
+  },
+  {
+   "id": "tool.tomas.017",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:buck",
+    "tool:big_axe"
+   ],
+   "text": "Big axe on a section, and it just goes. That's nice."
+  },
+  {
+   "id": "tool.tomas.018",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "weather:wind"
+   ],
+   "text": "Saw off for a second. Sorry. Just checking the top isn't swaying."
+  },
+  {
+   "id": "tool.tomas.019",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "tool:axe",
+    "day>=20"
+   ],
+   "rep": "rare",
+   "text": "Twenty days with this small axe. I've given it a name. Don't tell Dale."
+  },
+  {
+   "id": "tool.tomas.020",
+   "cat": "tools",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Oh. Oh no. Sorry. That explains a lot, actually."
+  },
+  {
+   "id": "tool.joan.001",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "text": "Small axe, small grievances. Gets there in the end."
+  },
+  {
+   "id": "tool.joan.002",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "Chainsaw's like a packed bar on a Friday. Can't hear a word, so smile and nod."
+  },
+  {
+   "id": "tool.joan.003",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "where:camp"
+   ],
+   "rep": "rare",
+   "text": "Ordered anything nice on the camper computer, boss-love? Cushions? A kettle that whistles?"
+  },
+  {
+   "id": "tool.joan.004",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut",
+    "tool:big_axe"
+   ],
+   "text": "Big axe today, boss-love. I feel like the lumberjack off a shortbread tin."
+  },
+  {
+   "id": "tool.joan.005",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "Nothing on the rack, boss-love. I can tend the fire, but I can't fell a tree with a ladle."
+  },
+  {
+   "id": "tool.joan.006",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Helmet's not optional, sunshine. I've seen what a falling branch does to a hairdo."
+  },
+  {
+   "id": "tool.joan.007",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "resp": [
+    "tool.tomas.020"
+   ],
+   "text": "Tomas, love, your gloves are on the wrong hands. Thumbs go on the inside."
+  },
+  {
+   "id": "tool.joan.008",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:walk",
+    "where:camp"
+   ],
+   "text": "Parcel locker's blinking. Either it's our gear, or the company's sent another form."
+  },
+  {
+   "id": "tool.joan.009",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "weather:rain"
+   ],
+   "text": "Wet gloves. Like doing the washing up in mittens."
+  },
+  {
+   "id": "tool.joan.010",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:cut"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Priya's chopping like she was born to it now. Remember her first day? Bless her."
+  },
+  {
+   "id": "tool.joan.011",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "tool:big_axe"
+   ],
+   "text": "This big axe is heavier than a full keg. Twice as useful, too."
+  },
+  {
+   "id": "tool.joan.012",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Good boots, these. Twenty years behind a bar, and my feet never had it so good."
+  },
+  {
+   "id": "tool.joan.013",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:buck",
+    "tool:saw"
+   ],
+   "text": "I'll signal when I'm done, love. Two waves means stop sawing, not hello."
+  },
+  {
+   "id": "tool.joan.014",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "level>=2"
+   ],
+   "rep": "rare",
+   "text": "Getting quicker with this axe. Who knew I had hidden talents? Besides cocktails."
+  },
+  {
+   "id": "tool.joan.015",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "where:camp"
+   ],
+   "text": "Report, boss-love: tools are sharp, the rack's tidy, and Dale hasn't lost a glove all week."
+  },
+  {
+   "id": "tool.joan.016",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "weather:dry"
+   ],
+   "text": "Dust everywhere off this saw. My hair's going to smell of sawdust for a week."
+  },
+  {
+   "id": "tool.joan.017",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "where:camp"
+   ],
+   "rep": "rare",
+   "text": "Heard the supplier charges the company double for helmets. Can't say I mind."
+  },
+  {
+   "id": "tool.joan.018",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "phase:dusk",
+    "where:camp"
+   ],
+   "text": "Axes on the rack before dark, love. A tidy rack's a happy camp."
+  },
+  {
+   "id": "tool.joan.019",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "day>=15"
+   ],
+   "rep": "rare",
+   "text": "Fifteen days in and I can start the saw on the first pull. Mostly."
+  },
+  {
+   "id": "tool.joan.020",
+   "cat": "tools",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "You'd manage, love. I've seen what you do with a teaspoon and a jar of jam."
+  },
+  {
+   "id": "tool.any.001",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "prio": 4,
+   "rep": "often",
+   "text": "Starting the saw! Step back."
+  },
+  {
+   "id": "tool.any.002",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "rep": "often",
+   "text": "Too loud to talk. Wave if you need me."
+  },
+  {
+   "id": "tool.any.003",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:fell",
+    "tool:big_axe"
+   ],
+   "rep": "often",
+   "text": "Big axe makes short work of it."
+  },
+  {
+   "id": "tool.any.004",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:axe"
+   ],
+   "rep": "often",
+   "text": "Small axe. Patience, and a lot more swings."
+  },
+  {
+   "id": "tool.any.005",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "No tool left on the rack. Someone needs to order more."
+  },
+  {
+   "id": "tool.any.006",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "where:camp",
+    "phase:day"
+   ],
+   "text": "Sharpening while there's light. A dull axe is a dangerous axe."
+  },
+  {
+   "id": "tool.any.007",
+   "cat": "tools",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "tool:big_axe"
+   ],
+   "text": "Give me the heaviest axe there is. I'll keep it swinging all day."
+  },
+  {
+   "id": "tool.any.008",
+   "cat": "tools",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "tool:axe"
+   ],
+   "text": "Quick hone and back to it. Sharp edges, quicker trees."
+  },
+  {
+   "id": "tool.any.009",
+   "cat": "tools",
+   "speaker": "trait:observant",
+   "to": "pair",
+   "when": [
+    "tool:saw"
+   ],
+   "text": "That chain's throwing dust, not chips. It needs sharpening."
+  },
+  {
+   "id": "tool.any.010",
+   "cat": "tools",
+   "speaker": "trait:level_headed",
+   "to": "pair",
+   "when": [
+    "tool:saw"
+   ],
+   "text": "Let the saw do the work. Don't lean on it."
+  },
+  {
+   "id": "tool.any.011",
+   "cat": "tools",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "tool:saw"
+   ],
+   "text": "The saw makes me jump every time it starts. Sorry."
+  },
+  {
+   "id": "tool.any.012",
+   "cat": "tools",
+   "speaker": "trait:sociable",
+   "to": "pair",
+   "when": [
+    "where:camp"
+   ],
+   "resp": [
+    "tool.any.028"
+   ],
+   "text": "Swap stories while we hone the axes? Makes the time go quicker."
+  },
+  {
+   "id": "tool.any.013",
+   "cat": "tools",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "tool:saw"
+   ],
+   "text": "Can't hear a thing over this, so there's no point worrying about noises."
+  },
+  {
+   "id": "tool.any.014",
+   "cat": "tools",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Tools strapped down in the truck bed. Nothing rattling loose."
+  },
+  {
+   "id": "tool.any.015",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:fell"
+   ],
+   "prio": 4,
+   "text": "Helmet on before you go under that crown."
+  },
+  {
+   "id": "tool.any.016",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Good tread on these boots. The mud's not winning today."
+  },
+  {
+   "id": "tool.any.017",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut"
+   ],
+   "text": "Sap's glued my gloves stiff. Still better than bare hands."
+  },
+  {
+   "id": "tool.any.018",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:missing_tool"
+   ],
+   "text": "I need a tool, boss. The camper computer can order one from the supplier."
+  },
+  {
+   "id": "tool.any.019",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "level>=2"
+   ],
+   "rep": "rare",
+   "text": "Getting the hang of this. Fewer swings than last week."
+  },
+  {
+   "id": "tool.any.020",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:walk",
+    "where:camp"
+   ],
+   "text": "Parcel locker's full. New gear from the supplier, I hope."
+  },
+  {
+   "id": "tool.any.021",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "weather:rain"
+   ],
+   "text": "Wet chain flinging bark everywhere. Keep your visor down."
+  },
+  {
+   "id": "tool.any.022",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "tool:saw",
+    "phase:dusk"
+   ],
+   "prio": 4,
+   "text": "Killing the saw. Dusk is coming and I want my ears back."
+  },
+  {
+   "id": "tool.any.023",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "tool:big_axe",
+    "day>=10"
+   ],
+   "rep": "rare",
+   "text": "Ten days with the big axe. I'd never go back to the small one."
+  },
+  {
+   "id": "tool.any.024",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "tool:axe",
+    "weather:dry"
+   ],
+   "text": "Dry wood bites clean. The edge is holding up today."
+  },
+  {
+   "id": "tool.any.025",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:cut",
+    "tool:saw"
+   ],
+   "text": "On the saw, boss. Can't hear you, but I can see you're there."
+  },
+  {
+   "id": "tool.any.026",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:cut",
+    "weather:wind"
+   ],
+   "text": "Wind's dropping twigs on my helmet. Glad I'm wearing it."
+  },
+  {
+   "id": "tool.any.027",
+   "cat": "tools",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "where:camp"
+   ],
+   "text": "One axe on the rack has a cracked handle. I'm setting it aside."
+  },
+  {
+   "id": "tool.any.028",
+   "cat": "tools",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Go on, then. You start, I'll keep the angle."
+  }
+ ]
+}

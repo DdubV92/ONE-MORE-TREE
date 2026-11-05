@@ -1,0 +1,1468 @@
+{
+ "category": "hauling",
+ "batch": "hauling-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "haul.marta.001",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Log on the shoulder. Twelve more and this lane's clear."
+  },
+  {
+   "id": "haul.marta.002",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "rep": "often",
+   "text": "Cradle's emptied. Decks are filling nicely. Keep them coming."
+  },
+  {
+   "id": "haul.marta.003",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "That team carry earlier was the cleanest one yet. Same again."
+  },
+  {
+   "id": "haul.marta.004",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Cradle's full and the decks are stacked to the top, boss. The fire's the bottleneck, not the crew."
+  },
+  {
+   "id": "haul.marta.005",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Hauling, boss. Route's clear, logs are moving. That's all I ask of a day."
+  },
+  {
+   "id": "haul.marta.006",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stack them butt to butt. Tidy deck, quick fire."
+  },
+  {
+   "id": "haul.marta.007",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "haul.dale.020"
+   ],
+   "text": "Dale, you've got the heavy end. Don't make that face."
+  },
+  {
+   "id": "haul.marta.008",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Mud on the haul road. Short steps, people."
+  },
+  {
+   "id": "haul.marta.009",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "phase:dusk"
+   ],
+   "prio": 4,
+   "text": "Last load's in. Fire's banked. Everyone inside before dark."
+  },
+  {
+   "id": "haul.marta.010",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Report, boss: I've been delivering all day. Lost count past twenty, which annoys me more than the walking."
+  },
+  {
+   "id": "haul.marta.011",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Route's blocked by a fallen crown. Clear it, or we all walk the long way round."
+  },
+  {
+   "id": "haul.marta.012",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Swap shoulders at the stump. You'll thank me tomorrow."
+  },
+  {
+   "id": "haul.marta.013",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Fire pile's hungry. Feed it the dry ones first."
+  },
+  {
+   "id": "haul.marta.014",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:frustrated"
+   ],
+   "rep": "rare",
+   "text": "Lost half the morning waiting on that yard. Making it up now."
+  },
+  {
+   "id": "haul.marta.015",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "cleared>=50"
+   ],
+   "rep": "rare",
+   "text": "Half the island's gone, and the walk to the yard gets longer every day."
+  },
+  {
+   "id": "haul.marta.016",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "weather:wind"
+   ],
+   "text": "Wind's on the fire. Keep the decks clear of the sparks."
+  },
+  {
+   "id": "haul.marta.017",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Tomas is hauling faster than last week. Someone tell him before he apologises for it."
+  },
+  {
+   "id": "haul.marta.018",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "day>=20"
+   ],
+   "rep": "rare",
+   "text": "Day twenty-something. I could walk this haul road with my eyes shut."
+  },
+  {
+   "id": "haul.marta.019",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "act:yard"
+   ],
+   "rep": "rare",
+   "text": "Fire burns slow, boss. Like a budget. You can't rush either one."
+  },
+  {
+   "id": "haul.marta.020",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Handcart's free. Load it to the rail, no higher, and push."
+  },
+  {
+   "id": "haul.marta.021",
+   "cat": "hauling",
+   "speaker": "EMP-01",
+   "to": "pair",
+   "reply": true,
+   "text": "No. I'll count them myself and tell you which number is higher."
+  },
+  {
+   "id": "haul.dale.001",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "This one's got a personality. Mostly heavy."
+  },
+  {
+   "id": "haul.dale.002",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "I'll take the heavy one, mate. I always take the heavy one. Somebody write that down."
+  },
+  {
+   "id": "haul.dale.003",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "Good team carry earlier, mate. We should charge extra for synchronised walking."
+  },
+  {
+   "id": "haul.dale.004",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "dog_near"
+   ],
+   "text": "Biscuit, you're walking right where my feet go. Crust for you if you shift."
+  },
+  {
+   "id": "haul.dale.005",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying, mate. Big ones to the cradle. The little ones I leave for the others."
+  },
+  {
+   "id": "haul.dale.006",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Cradle's full, mate. I'm stood here holding a log like a very boring statue."
+  },
+  {
+   "id": "haul.dale.007",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Neat deck, this. Layered up like a proper club sandwich."
+  },
+  {
+   "id": "haul.dale.008",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Wet log, mate. Slippery as a fish and twice as rude."
+  },
+  {
+   "id": "haul.dale.009",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Fire's got a good bed of coals going. Could cook a sausage on that."
+  },
+  {
+   "id": "haul.dale.010",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "haul.marta.021"
+   ],
+   "text": "Marta, how many have you carried? Go on. Then ask me how many I've carried."
+  },
+  {
+   "id": "haul.dale.011",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "phase:dusk"
+   ],
+   "text": "Last log of the day. Then dinner. Then a second, smaller dinner."
+  },
+  {
+   "id": "haul.dale.012",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "haul.tomas.020"
+   ],
+   "text": "Tomas, mate, lift with your legs, yeah? Your back's not a forklift."
+  },
+  {
+   "id": "haul.dale.013",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Lost count of what I've delivered today. Big number. Very impressive. Trust me."
+  },
+  {
+   "id": "haul.dale.014",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "act:carry"
+   ],
+   "rep": "rare",
+   "text": "Company gets a hundred a tree, mate. I'd settle for a hot pie per trunk."
+  },
+  {
+   "id": "haul.dale.015",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "weather:rain"
+   ],
+   "text": "Fire's spitting at the rain. Can't say I blame it."
+  },
+  {
+   "id": "haul.dale.016",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Route's clogged with sections, mate. Can't get round without climbing over."
+  },
+  {
+   "id": "haul.dale.017",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "day>=10"
+   ],
+   "rep": "rare",
+   "text": "Ten days of hauling. My shoulders have got their own postcode now."
+  },
+  {
+   "id": "haul.dale.018",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "cleared>=30"
+   ],
+   "rep": "rare",
+   "text": "Longer walk to the yard every day. Should've built the thing on wheels."
+  },
+  {
+   "id": "haul.dale.019",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Hand me the next one, mate. This deck's nearly as tall as me."
+  },
+  {
+   "id": "haul.dale.020",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "This is my thinking face, Marta. I'm thinking about lunch."
+  },
+  {
+   "id": "haul.dale.021",
+   "cat": "hauling",
+   "speaker": "EMP-02",
+   "to": "pair",
+   "reply": true,
+   "text": "It landed exactly where I wanted, Joan. Eventually."
+  },
+  {
+   "id": "haul.priya.001",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Shorter path through the stumps on the left. Eleven paces saved."
+  },
+  {
+   "id": "haul.priya.002",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Deck three is two logs from full. The fire pile can take four."
+  },
+  {
+   "id": "haul.priya.003",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:yard"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Report, boss: I've delivered steadily today. The fire is burning slower than we're stacking."
+  },
+  {
+   "id": "haul.priya.004",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "The cradle is full, boss, and the decks too. Until the fire catches up, carrying more just moves the queue."
+  },
+  {
+   "id": "haul.priya.005",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "We matched step on that team carry. Did you notice? It's much easier in rhythm."
+  },
+  {
+   "id": "haul.priya.006",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Wet logs weigh more. Not much, but you feel it by the tenth."
+  },
+  {
+   "id": "haul.priya.007",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:yard"
+   ],
+   "resp": [
+    "haul.joan.020"
+   ],
+   "text": "This log's still green. Should it go on the fire now, or season on the deck?"
+  },
+  {
+   "id": "haul.priya.008",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "weather:wind"
+   ],
+   "text": "The wind's carrying sparks east. Nothing downwind but stumps and bare ground."
+  },
+  {
+   "id": "haul.priya.009",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stacking the decks, boss. Largest at the bottom, so nothing rolls."
+  },
+  {
+   "id": "haul.priya.010",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "where:forest"
+   ],
+   "text": "Fresh tracks across the haul road. Small, four toes, claws showing. A fox, I think."
+  },
+  {
+   "id": "haul.priya.011",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "There's a crown lying across the route by the big stump. Is anyone assigned to clear it?"
+  },
+  {
+   "id": "haul.priya.012",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "rep": "rare",
+   "text": "The fire pile settles about a hand's width every hour. I measured it yesterday."
+  },
+  {
+   "id": "haul.priya.013",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "phase:dusk"
+   ],
+   "text": "The sun's on the ridge. About twenty minutes of usable light. Shall we make this the last?"
+  },
+  {
+   "id": "haul.priya.014",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Dale carried two of the long ones in the time I carried one. Noted."
+  },
+  {
+   "id": "haul.priya.015",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "phase:day"
+   ],
+   "text": "Cradle's clear. I'll move the top of the deck to the fire so there's room."
+  },
+  {
+   "id": "haul.priya.016",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "cleared>=60"
+   ],
+   "rep": "rare",
+   "text": "With this much cleared, we could take a straighter line to the yard. Should we ask the boss?"
+  },
+  {
+   "id": "haul.priya.017",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "act:carry"
+   ],
+   "rep": "rare",
+   "text": "Have you noticed the logs from the north slope are heavier, boss? Denser wood, I think."
+  },
+  {
+   "id": "haul.priya.018",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "rep": "rare",
+   "text": "Something called out in the trees when the fire cracked. Southwest, far off. A bird, I'd guess."
+  },
+  {
+   "id": "haul.priya.019",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Second log today that's rolled off the cradle's edge. The left side sits lower."
+  },
+  {
+   "id": "haul.priya.020",
+   "cat": "hauling",
+   "speaker": "EMP-03",
+   "to": "pair",
+   "reply": true,
+   "text": "Just you. And me. Our muscles are tired. The logs weigh what they weighed this morning."
+  },
+  {
+   "id": "haul.tomas.001",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "I've got it. I think I've got it. Yes. Got it."
+  },
+  {
+   "id": "haul.tomas.002",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Second gear on the hill, first in the mud. The truck likes it that way."
+  },
+  {
+   "id": "haul.tomas.003",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Carrying, boss. It's like deliveries, except nobody signs for anything."
+  },
+  {
+   "id": "haul.tomas.004",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "Our team carry earlier went well, didn't it? I didn't drop my end once."
+  },
+  {
+   "id": "haul.tomas.005",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "The haul road's turning to mud. Sorry if I slow down a bit."
+  },
+  {
+   "id": "haul.tomas.006",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Sorry, boss, the route's blocked. There's a pile of sections right across the track."
+  },
+  {
+   "id": "haul.tomas.007",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "phase:dusk"
+   ],
+   "resp": [
+    "haul.joan.021"
+   ],
+   "text": "It's getting dark. Is it okay if this is my last carry?"
+  },
+  {
+   "id": "haul.tomas.008",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Stacked it straight. I think. Is that straight? It's straight."
+  },
+  {
+   "id": "haul.tomas.009",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "If they let me load the truck bed properly, this would be three trips, not thirty."
+  },
+  {
+   "id": "haul.tomas.010",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "I've delivered a few today. That number's going in Ana's letter."
+  },
+  {
+   "id": "haul.tomas.011",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Sorry, is this deck the one for the fire, or the one for later?"
+  },
+  {
+   "id": "haul.tomas.012",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:yard"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Report, boss: steady deliveries from me today. Nothing dropped. The cradle's taking them fine."
+  },
+  {
+   "id": "haul.tomas.013",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "where:forest",
+    "phase:dusk"
+   ],
+   "text": "Quick steps now. Not running. Just quick."
+  },
+  {
+   "id": "haul.tomas.014",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "haul.priya.020"
+   ],
+   "text": "Do the logs get heavier at the end of the day, or is that just me?"
+  },
+  {
+   "id": "haul.tomas.015",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "weather:wind"
+   ],
+   "text": "The fire's leaning in the wind. I'll stack from the other side."
+  },
+  {
+   "id": "haul.tomas.016",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "level>=2"
+   ],
+   "rep": "rare",
+   "text": "I can carry the medium ones without stopping now. That's new. Is that normal?"
+  },
+  {
+   "id": "haul.tomas.017",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "The cradle's full. I'll hold on to this one. Sorry, I'll just stand here."
+  },
+  {
+   "id": "haul.tomas.018",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:ride",
+    "day>=10"
+   ],
+   "rep": "rare",
+   "text": "Ten days and the truck still starts first try. Good truck."
+  },
+  {
+   "id": "haul.tomas.019",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "where:forest"
+   ],
+   "rep": "rare",
+   "text": "Was that a branch snapping behind us? Sorry. Probably a pile settling."
+  },
+  {
+   "id": "haul.tomas.020",
+   "cat": "hauling",
+   "speaker": "EMP-04",
+   "to": "pair",
+   "reply": true,
+   "text": "Legs. Right. Sorry. I knew that, I just forgot it halfway."
+  },
+  {
+   "id": "haul.joan.001",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Fire's going lovely. Could roast a chicken in there, if anyone had a chicken."
+  },
+  {
+   "id": "haul.joan.002",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Mind your end, love. I'm not carrying you and the log."
+  },
+  {
+   "id": "haul.joan.003",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "work",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Tending the fire, boss-love. Slow burn. Like a good stew."
+  },
+  {
+   "id": "haul.joan.004",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Yard's stuffed, boss-love. Fire's eating as fast as it can, and you can't hurry a fire."
+  },
+  {
+   "id": "haul.joan.005",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "That team carry earlier, love. We walked in step like a pair of old dancers."
+  },
+  {
+   "id": "haul.joan.006",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:rain"
+   ],
+   "text": "Rain on the logs, rain on me. Somebody owes me a dry jumper."
+  },
+  {
+   "id": "haul.joan.007",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:yard"
+   ],
+   "resp": [
+    "haul.dale.021"
+   ],
+   "text": "Dale, love, toss another one that hard and the whole deck goes over."
+  },
+  {
+   "id": "haul.joan.008",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "phase:dusk"
+   ],
+   "text": "Banking the fire for the night. Let it sulk till morning."
+  },
+  {
+   "id": "haul.joan.009",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "chat",
+   "when": [
+    "act:carry"
+   ],
+   "rep": "rare",
+   "text": "I bet the company wants a photo of every deck, boss-love. They're that sort."
+  },
+  {
+   "id": "haul.joan.010",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "phase:day"
+   ],
+   "text": "How'd you sleep, sunshine? You're carrying like you had a nap on the way."
+  },
+  {
+   "id": "haul.joan.011",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Big ones to the bottom, love. It's a log deck, not a house of cards."
+  },
+  {
+   "id": "haul.joan.012",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:yard"
+   ],
+   "needs": [
+    "know:colleague_progress"
+   ],
+   "rep": "rare",
+   "text": "Did you see Priya stack that deck? Straight as a ruler. Showing off, that is."
+  },
+  {
+   "id": "haul.joan.013",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Back and forth, back and forth. Used to do this with crates of bottles."
+  },
+  {
+   "id": "haul.joan.014",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "boss",
+   "ask": "report",
+   "when": [
+    "act:yard"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "Report, boss-love: I've had logs on the cradle all day, the fire's fed, and nobody's crying."
+  },
+  {
+   "id": "haul.joan.015",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Route's jammed with sections, love. Like a cellar on delivery day."
+  },
+  {
+   "id": "haul.joan.016",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "weather:wind"
+   ],
+   "text": "Wind's throwing smoke straight at me. Of course it is."
+  },
+  {
+   "id": "haul.joan.017",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "when": [
+    "act:carry",
+    "dog_near"
+   ],
+   "text": "Biscuit's following that log like it owes him money. Dale's been feeding him again."
+  },
+  {
+   "id": "haul.joan.018",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "cleared>=50"
+   ],
+   "rep": "rare",
+   "text": "That fire's been going since day one. Half the island's been through it now."
+  },
+  {
+   "id": "haul.joan.019",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "day>=25"
+   ],
+   "rep": "rare",
+   "text": "Nearly the end of the contract and I've still got a barmaid's arms. Strong ones, mind."
+  },
+  {
+   "id": "haul.joan.020",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "If it's on the fire, love, it's not cluttering my deck. In it goes."
+  },
+  {
+   "id": "haul.joan.021",
+   "cat": "hauling",
+   "speaker": "EMP-05",
+   "to": "pair",
+   "reply": true,
+   "text": "Course it is, sunshine. Drop it on the deck and walk in with me."
+  },
+  {
+   "id": "haul.any.001",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "prio": 4,
+   "rep": "often",
+   "text": "Coming through with a log! Mind your heads."
+  },
+  {
+   "id": "haul.any.002",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "rep": "often",
+   "text": "Log's on the cradle. Next."
+  },
+  {
+   "id": "haul.any.003",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "resp": [
+    "haul.any.028"
+   ],
+   "text": "Grab the other end? This one's a two-person job."
+  },
+  {
+   "id": "haul.any.004",
+   "cat": "hauling",
+   "speaker": "trait:stronger",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Heavy one. Don't worry, I've got it."
+  },
+  {
+   "id": "haul.any.005",
+   "cat": "hauling",
+   "speaker": "trait:stronger",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Put another on top. I can take two of these."
+  },
+  {
+   "id": "haul.any.006",
+   "cat": "hauling",
+   "speaker": "trait:timid",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "phase:dusk"
+   ],
+   "text": "Last carry, and then inside. Please."
+  },
+  {
+   "id": "haul.any.007",
+   "cat": "hauling",
+   "speaker": "trait:hard_working",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Straight back for the next one. No point walking empty."
+  },
+  {
+   "id": "haul.any.008",
+   "cat": "hauling",
+   "speaker": "trait:observant",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "prio": 4,
+   "text": "Deck on the left is leaning. Restack it before it slides."
+  },
+  {
+   "id": "haul.any.009",
+   "cat": "hauling",
+   "speaker": "trait:sociable",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Walk back with me? The haul feels shorter with someone to talk to."
+  },
+  {
+   "id": "haul.any.010",
+   "cat": "hauling",
+   "speaker": "trait:level_headed",
+   "to": "pair",
+   "when": [
+    "blocker:yard_full"
+   ],
+   "text": "Yard's full. No point stewing. Let's tidy the decks while the fire catches up."
+  },
+  {
+   "id": "haul.any.011",
+   "cat": "hauling",
+   "speaker": "trait:skeptical",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Fire crackles. That's all that noise is."
+  },
+  {
+   "id": "haul.any.012",
+   "cat": "hauling",
+   "speaker": "trait:reliable_driver",
+   "to": "self",
+   "when": [
+    "act:ride"
+   ],
+   "text": "Truck's handling well on the haul road. The ruts are drying out."
+  },
+  {
+   "id": "haul.any.013",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:waiting"
+   ],
+   "text": "Waiting on the cradle, boss. Someone's unloading ahead of me."
+  },
+  {
+   "id": "haul.any.014",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:no_task"
+   ],
+   "text": "Nothing to carry near me, boss. Is there a pile somewhere else?"
+  },
+  {
+   "id": "haul.any.015",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:storm"
+   ],
+   "prio": 4,
+   "text": "Storm's picking up. Get this one in and we'll see."
+  },
+  {
+   "id": "haul.any.016",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "weather:rain"
+   ],
+   "text": "Fire's struggling in the rain. Take the dry logs from the middle of the deck."
+  },
+  {
+   "id": "haul.any.017",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:carry"
+   ],
+   "prio": 4,
+   "text": "Watch the stump on your right. Ankle height, nasty."
+  },
+  {
+   "id": "haul.any.018",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "needs": [
+    "know:team_carry"
+   ],
+   "text": "Two-person carries are slow, but nobody's back gives out."
+  },
+  {
+   "id": "haul.any.019",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:yard",
+    "where:camp"
+   ],
+   "text": "Fire pile's burned down a bit. Room for a few more."
+  },
+  {
+   "id": "haul.any.020",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "pair",
+   "when": [
+    "act:yard",
+    "phase:dusk"
+   ],
+   "prio": 4,
+   "text": "Leave the rest on the deck. It'll keep till morning."
+  },
+  {
+   "id": "haul.any.021",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "day>=15"
+   ],
+   "rep": "rare",
+   "text": "Same route, same log size, same sore shoulder."
+  },
+  {
+   "id": "haul.any.022",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "cleared>=80"
+   ],
+   "rep": "rare",
+   "text": "Hardly anything left to haul from out here. Odd to see it so bare."
+  },
+  {
+   "id": "haul.any.023",
+   "cat": "hauling",
+   "speaker": "trait:timid",
+   "to": "boss",
+   "ask": "blocker",
+   "when": [
+    "blocker:blocked"
+   ],
+   "text": "Sorry, boss. Something's lying across the route and I can't get past with this."
+  },
+  {
+   "id": "haul.any.024",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:yard"
+   ],
+   "needs": [
+    "know:delivered_today"
+   ],
+   "text": "That's my deliveries done for now. Fire's got plenty."
+  },
+  {
+   "id": "haul.any.025",
+   "cat": "hauling",
+   "speaker": "trait:hard_working",
+   "to": "pair",
+   "when": [
+    "act:yard"
+   ],
+   "text": "Cradle's clear. Let's get another load in before the fire catches up."
+  },
+  {
+   "id": "haul.any.026",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry",
+    "weather:dry"
+   ],
+   "text": "Dry day. Bark's light and the road's firm. Good hauling."
+  },
+  {
+   "id": "haul.any.027",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "self",
+   "when": [
+    "act:carry"
+   ],
+   "text": "Load the handcart and push. Beats carrying them one at a time."
+  },
+  {
+   "id": "haul.any.028",
+   "cat": "hauling",
+   "speaker": "any",
+   "to": "pair",
+   "reply": true,
+   "text": "Got it. Lift on three."
+  }
+ ]
+}

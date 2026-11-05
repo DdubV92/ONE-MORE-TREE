@@ -22,6 +22,7 @@ func _ready() -> void:
 	_slider(v, "Text and UI size", "ui_scale", 0.85, 1.6, 0.05)
 	_toggle(v, "Captions for important sounds", "captions")
 	_toggle(v, "Subtitles for crew speech", "subtitles")
+	_slider(v, "Crew subtitle duration", "subtitle_time", 0.6, 2.0, 0.1)
 	_toggle(v, "Tutorial and contextual hints", "hints")
 	_slider(v, "Interaction highlight strength", "highlight", 0.0, 1.0, 0.05)
 	_section(v, "Controls")

@@ -1,0 +1,1436 @@
+{
+ "category": "group",
+ "batch": "group-1",
+ "review": "sampled: validated (0 errors, 0 near-duplicates) + editorial sample read",
+ "lines": [
+  {
+   "id": "grp.joan.001",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "phase:day"
+   ],
+   "resp": [
+    "grp.dale.001",
+    "grp.marta.001",
+    "grp.tomas.001"
+   ],
+   "text": "Right, everyone. Porridge or eggs, and how did we all sleep? Hands up for both questions."
+  },
+  {
+   "id": "grp.dale.001",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.priya.001"
+   ],
+   "text": "Both, Joan. Eggs and porridge, and I slept like a man who'd earned it."
+  },
+  {
+   "id": "grp.priya.001",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.dale.002"
+   ],
+   "text": "You snored from about two until four, Dale. I know because I was awake for most of it."
+  },
+  {
+   "id": "grp.dale.002",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Then you got a free concert, mate. Most people pay for that."
+  },
+  {
+   "id": "grp.marta.001",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Porridge. Quick. The first trunk's waiting and it won't fell itself."
+  },
+  {
+   "id": "grp.tomas.001",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Eggs, please, if that's okay. I slept, mostly. Sorry, the wind kept me up a bit."
+  },
+  {
+   "id": "grp.dale.003",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "act:idle",
+    "where:forest",
+    "phase:day"
+   ],
+   "resp": [
+    "grp.joan.002",
+    "grp.marta.002"
+   ],
+   "text": "Lunch report, everyone. Two sandwiches, an apple, and a biscuit Biscuit doesn't know about."
+  },
+  {
+   "id": "grp.joan.002",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.tomas.002"
+   ],
+   "text": "That dog knows, love. That dog always knows. He can smell a crust through a tin."
+  },
+  {
+   "id": "grp.tomas.002",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Sorry, should I hide mine too? I don't want to be the one he follows home."
+  },
+  {
+   "id": "grp.marta.002",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.priya.002"
+   ],
+   "text": "Eat faster, all of you. Twelve minutes and we're back on the lane."
+  },
+  {
+   "id": "grp.priya.002",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.marta.003"
+   ],
+   "text": "The break's twenty minutes on the sheet, Marta. I checked. We've got eight more."
+  },
+  {
+   "id": "grp.marta.003",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Eight. Fine. I'll spend them sharpening."
+  },
+  {
+   "id": "grp.joan.003",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "phase:dusk",
+    "act:rest"
+   ],
+   "resp": [
+    "grp.dale.004",
+    "grp.priya.003"
+   ],
+   "text": "Quiz night, my loves. First question: how many trees did this crew fell today? Marta, you're not allowed to answer."
+  },
+  {
+   "id": "grp.dale.004",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.marta.004"
+   ],
+   "text": "Loads, Joan. A great big load of them. Do I get a point?"
+  },
+  {
+   "id": "grp.marta.004",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "He doesn't. And I know the real number, so you'd better have it right, Joan."
+  },
+  {
+   "id": "grp.priya.003",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.joan.004"
+   ],
+   "text": "I'd have to check the yard tally, so I'll pass. I don't guess on quiz nights."
+  },
+  {
+   "id": "grp.joan.004",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "That's why nobody lets you play, love. Fine. Next question. Who left the kettle empty?"
+  },
+  {
+   "id": "grp.marta.005",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "where:camp",
+    "phase:dusk",
+    "act:yard"
+   ],
+   "resp": [
+    "grp.dale.005",
+    "grp.priya.004",
+    "grp.tomas.003"
+   ],
+   "text": "Decks are filling and the fire's slow. We stack tight tonight or we lose half a morning tomorrow."
+  },
+  {
+   "id": "grp.dale.005",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Tight's my middle name, mate. Well, it's Albert. But tight's close."
+  },
+  {
+   "id": "grp.priya.004",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.marta.006"
+   ],
+   "text": "If the short lengths go on the top deck, the long ones fit underneath. I measured both."
+  },
+  {
+   "id": "grp.marta.006",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Do it Priya's way. She's right, and I want us all in before dark."
+  },
+  {
+   "id": "grp.tomas.003",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.joan.005"
+   ],
+   "text": "Can we be quick? Sorry. It's just that the light's going."
+  },
+  {
+   "id": "grp.joan.005",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "We're quick, love. Ten more minutes and I'll walk you in myself."
+  },
+  {
+   "id": "grp.dale.006",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "paid",
+    "where:camp",
+    "phase:dusk"
+   ],
+   "resp": [
+    "grp.joan.006",
+    "grp.marta.007",
+    "grp.tomas.004"
+   ],
+   "text": "Paid, paid, paid! Everyone hear that? That's the sound of a man who can afford snacks."
+  },
+  {
+   "id": "grp.joan.006",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "paid"
+   ],
+   "text": "We heard, sunshine. Half the island heard. Biscuit's already waiting by the locker."
+  },
+  {
+   "id": "grp.marta.007",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "paid"
+   ],
+   "text": "Good. That one's earned. Tomorrow we start earning the next."
+  },
+  {
+   "id": "grp.tomas.004",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "paid"
+   ],
+   "resp": [
+    "grp.dale.007"
+   ],
+   "text": "I'm putting mine aside for Ana's course. Sorry, that's boring. But I'm really happy."
+  },
+  {
+   "id": "grp.dale.007",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "That's not boring, mate. That's the best use of money on this whole island."
+  },
+  {
+   "id": "grp.priya.005",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "weather:rain",
+    "phase:day",
+    "where:camp"
+   ],
+   "resp": [
+    "grp.marta.008",
+    "grp.dale.008",
+    "grp.joan.007"
+   ],
+   "text": "Rain's coming from the west, steady, not gusting. The low lanes will be soft by midday."
+  },
+  {
+   "id": "grp.marta.008",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.tomas.005"
+   ],
+   "text": "Then we cut high this morning and come down once it drains."
+  },
+  {
+   "id": "grp.tomas.005",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "I'll keep the truck on the ridge track, then. The low one turns to soup in this."
+  },
+  {
+   "id": "grp.dale.008",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Soft lanes, wet bark, slippery logs. Lovely. I'll be carrying them like bars of soap."
+  },
+  {
+   "id": "grp.joan.007",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "Everyone take dry socks off the rack before you go. I'm not nursing anyone's feet tonight."
+  },
+  {
+   "id": "grp.marta.009",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "where:camp",
+    "phase:day",
+    "act:idle"
+   ],
+   "resp": [
+    "grp.dale.009",
+    "grp.priya.006",
+    "grp.joan.008"
+   ],
+   "text": "Ground rules, for anyone new or anyone who's forgotten. One feller per lane. Shout before it goes. The cradle isn't a bench."
+  },
+  {
+   "id": "grp.dale.009",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.joan.009"
+   ],
+   "text": "And the food in the blue tin is mine. That's a rule too, mate. Unofficially."
+  },
+  {
+   "id": "grp.joan.009",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "It isn't, love. The blue tin's for everyone. I'm the cook, so I make the rules about tins."
+  },
+  {
+   "id": "grp.priya.006",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "And check the lean before you notch, not after. That's the one people learn the hard way."
+  },
+  {
+   "id": "grp.joan.008",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "And supper's at dusk, everyone helps clear up, and nobody touches my arcade score."
+  },
+  {
+   "id": "grp.tomas.006",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "act:rest"
+   ],
+   "rep": "rare",
+   "resp": [
+    "grp.dale.010",
+    "grp.marta.010"
+   ],
+   "text": "Does anyone remember my first day? I racked my axe upside down. Sorry. I still think about it."
+  },
+  {
+   "id": "grp.dale.010",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Mate, my first day I put my boots on the wrong feet. Walked half a mile like that. We all start somewhere."
+  },
+  {
+   "id": "grp.marta.010",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.joan.010"
+   ],
+   "text": "You racked it upside down once and never again. That's all anyone needs from a new hand."
+  },
+  {
+   "id": "grp.joan.010",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "Hear that, sunshine? That's practically a medal from Marta."
+  },
+  {
+   "id": "grp.joan.011",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "mode:contract"
+   ],
+   "needs": [
+    "know:departed"
+   ],
+   "rep": "rare",
+   "resp": [
+    "grp.dale.011",
+    "grp.marta.011",
+    "grp.tomas.007"
+   ],
+   "text": "That empty bunk's bothering me, and I don't bother easy. Whoever the company sends next, I hope they play cards."
+  },
+  {
+   "id": "grp.dale.011",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "As long as they don't cook. One bad cook per crew, and that job's taken."
+  },
+  {
+   "id": "grp.marta.011",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "I hope they can fell. We're a pair of hands short, and the count shows it."
+  },
+  {
+   "id": "grp.tomas.007",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.priya.007"
+   ],
+   "text": "I keep expecting them to walk back in. Sorry. I know they won't."
+  },
+  {
+   "id": "grp.priya.007",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "People leave contracts early all the time, Tomas. They had their reasons. It doesn't have to mean anything more."
+  },
+  {
+   "id": "grp.priya.008",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "cleared>=50",
+    "where:forest",
+    "phase:day"
+   ],
+   "rep": "rare",
+   "resp": [
+    "grp.marta.012",
+    "grp.dale.012",
+    "grp.joan.012"
+   ],
+   "text": "You can see the shore from the middle ridge now. When we landed it was solid canopy."
+  },
+  {
+   "id": "grp.marta.012",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "More than half gone. The second half always feels slower. It isn't. Keep going."
+  },
+  {
+   "id": "grp.dale.012",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Less shade for lunch, mates. Nobody ever thinks about the lunch shade."
+  },
+  {
+   "id": "grp.joan.012",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.tomas.008"
+   ],
+   "text": "Odd, isn't it. Like a pub after closing. Too much room, and all the chairs up on the tables."
+  },
+  {
+   "id": "grp.tomas.008",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "I don't love how far you can see now. Or how far anything could see us. Sorry. Ignore me."
+  },
+  {
+   "id": "grp.dale.013",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "cleared>=80",
+    "where:forest"
+   ],
+   "rep": "once",
+   "resp": [
+    "grp.marta.013",
+    "grp.priya.009"
+   ],
+   "text": "Look at that. Stumps all the way down to the dock. We did that, mates. Mostly me."
+  },
+  {
+   "id": "grp.marta.013",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Mostly the axes. Then me. Then you, Dale, hauling it all off. Fair's fair."
+  },
+  {
+   "id": "grp.priya.009",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "I'd want the numbers before I crowned anyone. But the stumps do look good from up here."
+  },
+  {
+   "id": "grp.marta.014",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "where:camp",
+    "phase:day"
+   ],
+   "resp": [
+    "grp.priya.010",
+    "grp.dale.014",
+    "grp.joan.013"
+   ],
+   "text": "Everyone to the north lanes today. Fell the lot, haul it tomorrow. Faster that way."
+  },
+  {
+   "id": "grp.priya.010",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.marta.015"
+   ],
+   "text": "If we fell everything first, the yard sits empty today and overflows tomorrow. I'd split the crew."
+  },
+  {
+   "id": "grp.marta.015",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Split it, then. Two fell, the rest haul. But I'm on the axe."
+  },
+  {
+   "id": "grp.dale.014",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.marta.016"
+   ],
+   "text": "Mate, if you fell it all today, I'm carrying it all tomorrow. My back would like a vote."
+  },
+  {
+   "id": "grp.marta.016",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Your back's had a vote every day this month, Dale. It always votes for lunch."
+  },
+  {
+   "id": "grp.joan.013",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.marta.017"
+   ],
+   "text": "Why not ask the boss, love? That's what they're paid for. Allegedly."
+  },
+  {
+   "id": "grp.marta.017",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "The boss has enough on. We sort our own lanes. Always have."
+  },
+  {
+   "id": "grp.tomas.009",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "where:cabin"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "grp.joan.014",
+    "grp.dale.015",
+    "grp.priya.011"
+   ],
+   "text": "Somebody told me there was something by the dock. Has anyone else heard that? Sorry. I just want to know."
+  },
+  {
+   "id": "grp.joan.014",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.tomas.010"
+   ],
+   "text": "Somebody's been reading forums, love. Who told you? I'll have a quiet word."
+  },
+  {
+   "id": "grp.tomas.010",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "I don't want to get anyone in trouble. Sorry. Forget it. It was probably nothing."
+  },
+  {
+   "id": "grp.dale.015",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "belief:low"
+   ],
+   "text": "By the dock? That's water slapping the pilings, mate. Sounds like footsteps at night. Every dock does it."
+  },
+  {
+   "id": "grp.priya.011",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "Who said it, and when? If they can give me a time and where they stood, I'll write it down. If not, it's a story."
+  },
+  {
+   "id": "grp.dale.016",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "grp.marta.018",
+    "grp.marta.019",
+    "grp.priya.012",
+    "grp.tomas.011"
+   ],
+   "text": "Here's a good one. Apparently someone saw a light in the trees past the burn pit. A light. In the trees. Fireflies, mates."
+  },
+  {
+   "id": "grp.marta.018",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Sun off the water, or a lantern someone forgot. Don't start the night on a story."
+  },
+  {
+   "id": "grp.marta.019",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "needs": [
+    "saw:strange"
+   ],
+   "text": "Don't laugh at that one, Dale. Just get inside before the light goes."
+  },
+  {
+   "id": "grp.priya.012",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "Did they say what colour, and how high? Fireflies don't hold still at head height."
+  },
+  {
+   "id": "grp.tomas.011",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.joan.015"
+   ],
+   "text": "Can we not, Dale? Please. Not right before dark."
+  },
+  {
+   "id": "grp.joan.015",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "Leave it, sunshine. Tomas is right. If there's telling to do, it waits for daylight."
+  },
+  {
+   "id": "grp.joan.016",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "where:camp",
+    "phase:day"
+   ],
+   "needs": [
+    "heard:strange"
+   ],
+   "resp": [
+    "grp.priya.013",
+    "grp.dale.017",
+    "grp.any.010"
+   ],
+   "text": "I'll say it so nobody whispers it. I've been told someone heard a voice in the trees. I'm not saying I believe it."
+  },
+  {
+   "id": "grp.priya.013",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.joan.017"
+   ],
+   "text": "Told by whom? A rumour passed through two people loses the useful parts first."
+  },
+  {
+   "id": "grp.joan.017",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "That's my point exactly, love. By the time it reached me it had grown a beard."
+  },
+  {
+   "id": "grp.dale.017",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "belief:low"
+   ],
+   "text": "A voice? Somebody's radio carrying over the water. Or Tomas talking in his sleep again."
+  },
+  {
+   "id": "grp.dale.018",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "act:rest"
+   ],
+   "resp": [
+    "grp.joan.018",
+    "grp.priya.014",
+    "grp.tomas.012"
+   ],
+   "text": "Right, cards. Joan and me against Priya and Tomas. Winners do the dishes. No, losers. Losers do the dishes."
+  },
+  {
+   "id": "grp.joan.018",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "Losers do the dishes, love, and you've had your hands in that sink most nights this month."
+  },
+  {
+   "id": "grp.priya.014",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "I'll play, but I'm keeping track of which cards are gone. That isn't cheating. It's attention."
+  },
+  {
+   "id": "grp.tomas.012",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.priya.015"
+   ],
+   "text": "Okay, but I'm bad at this. Sorry in advance, Priya."
+  },
+  {
+   "id": "grp.priya.015",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "You're not bad, Tomas. You fold too early. Hold on one round longer."
+  },
+  {
+   "id": "grp.joan.019",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "day>=7"
+   ],
+   "rep": "rare",
+   "resp": [
+    "grp.dale.019",
+    "grp.tomas.013",
+    "grp.marta.020"
+   ],
+   "text": "New name at the top of the arcade board, my loves. Want to guess whose it is?"
+  },
+  {
+   "id": "grp.dale.019",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "If it's not mine, the machine's broken. I'll have a look at it after supper."
+  },
+  {
+   "id": "grp.tomas.013",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.joan.020"
+   ],
+   "text": "Sorry. It's mine. I couldn't sleep. Is that okay?"
+  },
+  {
+   "id": "grp.joan.020",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "Okay? Sunshine, it's the best news all week. I'm going to frame it."
+  },
+  {
+   "id": "grp.marta.020",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Whoever it is had energy left over after the day's cut. I'll find them more work."
+  },
+  {
+   "id": "grp.priya.016",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "dog_near",
+    "where:camp"
+   ],
+   "resp": [
+    "grp.dale.020",
+    "grp.joan.021",
+    "grp.marta.021"
+   ],
+   "text": "Biscuit's carrying a glove. I think it's yours, Dale. There's jam on the thumb."
+  },
+  {
+   "id": "grp.dale.020",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "That's not jam, that's strategy, mate. He'll trade it back for a crust."
+  },
+  {
+   "id": "grp.joan.021",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "That dog eats better than half this crew. Mostly off Dale's plate."
+  },
+  {
+   "id": "grp.marta.021",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Get it off him before it's chewed. Gloves aren't free. Neither's jam."
+  },
+  {
+   "id": "grp.marta.022",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "act:walk",
+    "where:forest",
+    "phase:day"
+   ],
+   "resp": [
+    "grp.dale.021",
+    "grp.priya.017",
+    "grp.tomas.014"
+   ],
+   "text": "Count starts now. I want twenty trunks at the cradle by dusk, and I want the stumps clean."
+  },
+  {
+   "id": "grp.dale.021",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Twenty trunks. That's twenty times I carry your ambition, Marta."
+  },
+  {
+   "id": "grp.priya.017",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "Twenty is doable if the yard keeps up. That's the part that usually gives first."
+  },
+  {
+   "id": "grp.tomas.014",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "I can run the truck between the lanes and the yard, if that helps. I'm faster in it than on foot."
+  },
+  {
+   "id": "grp.marta.023",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "owed",
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "grp.joan.022",
+    "grp.dale.022",
+    "grp.priya.018"
+   ],
+   "text": "Company's late with the pay. I'm telling the boss so tomorrow. Plainly."
+  },
+  {
+   "id": "grp.joan.022",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "owed"
+   ],
+   "text": "Go on, love. I'll not say much myself. I'm busy adding up what I've got put by."
+  },
+  {
+   "id": "grp.dale.022",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "owed"
+   ],
+   "text": "I've got a stomach to feed, mate. The company can't pay a stomach in promises."
+  },
+  {
+   "id": "grp.priya.018",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "when": [
+    "owed"
+   ],
+   "text": "Take dates with you. When we were last paid, how many days are owed. The boss will take numbers better than temper."
+  },
+  {
+   "id": "grp.joan.023",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "when": [
+    "weather:storm",
+    "where:cabin"
+   ],
+   "resp": [
+    "grp.dale.023",
+    "grp.tomas.015",
+    "grp.priya.019"
+   ],
+   "text": "Nobody's going out in that. Kettle's on. Who wants to hear about the night the bar cellar flooded?"
+  },
+  {
+   "id": "grp.dale.023",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Me. Every time. Do the bit with the barrel and the man in the bow tie."
+  },
+  {
+   "id": "grp.tomas.015",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Me too, please. Talking helps with the noise of the wind."
+  },
+  {
+   "id": "grp.priya.019",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "The gusts are coming every forty seconds or so. I checked the window frames. They're holding."
+  },
+  {
+   "id": "grp.tomas.016",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "act:ride"
+   ],
+   "resp": [
+    "grp.dale.024",
+    "grp.joan.024",
+    "grp.marta.024"
+   ],
+   "text": "Everyone hold on. The mud's deep past the second bend. I'll take it in first, nice and slow."
+  },
+  {
+   "id": "grp.dale.024",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Captain Tomas, mates. Best seat on the island, and the snacks ride free."
+  },
+  {
+   "id": "grp.joan.024",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.tomas.017"
+   ],
+   "text": "Look at him, all confident behind the wheel. Where's this lad at dusk?"
+  },
+  {
+   "id": "grp.tomas.017",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Still here. The truck just makes sense to me. Dusk doesn't."
+  },
+  {
+   "id": "grp.marta.024",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Slow's fine. Stuck isn't. You know the difference better than I do."
+  },
+  {
+   "id": "grp.tomas.018",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "when": [
+    "phase:dusk",
+    "act:home"
+   ],
+   "resp": [
+    "grp.marta.025",
+    "grp.joan.025",
+    "grp.priya.020"
+   ],
+   "text": "Is everyone here? Sorry. I just like counting us before we go in."
+  },
+  {
+   "id": "grp.marta.025",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "I count every evening too. Keep walking. I'll do it again at the gate."
+  },
+  {
+   "id": "grp.joan.025",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "Count us twice if it helps, sunshine. I'll count you."
+  },
+  {
+   "id": "grp.priya.020",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "I counted at the last fence post. Everyone who left the lanes with us is walking with us."
+  },
+  {
+   "id": "grp.priya.021",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "when": [
+    "act:walk",
+    "where:forest",
+    "weather:wind"
+   ],
+   "resp": [
+    "grp.marta.026",
+    "grp.tomas.019",
+    "grp.dale.025"
+   ],
+   "text": "Wind's swung round to the north since lunch. The leans we marked this morning won't all hold."
+  },
+  {
+   "id": "grp.marta.026",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "reply": true,
+   "text": "Then we re-mark them. Ten minutes now saves a trunk across the lane later."
+  },
+  {
+   "id": "grp.tomas.019",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Should I move the truck back from the edge? Sorry. I'd rather not have a tree on it."
+  },
+  {
+   "id": "grp.dale.025",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "text": "Wind's on my side, then. Every tree that falls toward the track is a shorter carry."
+  },
+  {
+   "id": "grp.marta.027",
+   "cat": "group",
+   "speaker": "EMP-01",
+   "to": "group",
+   "when": [
+    "where:camp",
+    "phase:dusk"
+   ],
+   "needs": [
+    "saw:strange"
+   ],
+   "rep": "rare",
+   "resp": [
+    "grp.joan.026",
+    "grp.priya.022",
+    "grp.dale.026"
+   ],
+   "text": "Everyone in by dusk from now on. No stragglers, no last trunk. I'm not discussing why."
+  },
+  {
+   "id": "grp.joan.026",
+   "cat": "group",
+   "speaker": "EMP-05",
+   "to": "group",
+   "reply": true,
+   "text": "If Marta's saying it, I'm listening. I don't need the why, love."
+  },
+  {
+   "id": "grp.priya.022",
+   "cat": "group",
+   "speaker": "EMP-03",
+   "to": "group",
+   "reply": true,
+   "text": "Agreed. And we walk in pairs. If you'd tell me what you saw later, Marta, I'd write it down."
+  },
+  {
+   "id": "grp.dale.026",
+   "cat": "group",
+   "speaker": "EMP-02",
+   "to": "group",
+   "reply": true,
+   "resp": [
+    "grp.tomas.020"
+   ],
+   "text": "Marta's never once called a day early. Not in all the years I've known her. Fine. In by dusk."
+  },
+  {
+   "id": "grp.tomas.020",
+   "cat": "group",
+   "speaker": "EMP-04",
+   "to": "group",
+   "reply": true,
+   "text": "Thank you. Sorry. I'm just glad someone else said it first."
+  },
+  {
+   "id": "grp.any.001",
+   "cat": "group",
+   "speaker": "any",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "act:rest",
+    "weather:rain"
+   ],
+   "resp": [
+    "grp.any.002",
+    "grp.any.003"
+   ],
+   "text": "Anyone else's boots still wet from yesterday? Mine squelch when I think about them."
+  },
+  {
+   "id": "grp.any.002",
+   "cat": "group",
+   "speaker": "any",
+   "to": "group",
+   "reply": true,
+   "text": "Stuff them with newspaper. Oh, wait. No newspaper. Stuff them with somebody's spare socks."
+  },
+  {
+   "id": "grp.any.003",
+   "cat": "group",
+   "speaker": "trait:sociable",
+   "to": "group",
+   "reply": true,
+   "text": "Line them up by the stove, all of them. We'll make a little boot parade."
+  },
+  {
+   "id": "grp.any.004",
+   "cat": "group",
+   "speaker": "trait:observant",
+   "to": "group",
+   "when": [
+    "act:yard"
+   ],
+   "resp": [
+    "grp.any.005",
+    "grp.any.006"
+   ],
+   "text": "The fire pile's burning faster on the windward side. We should feed the other end."
+  },
+  {
+   "id": "grp.any.005",
+   "cat": "group",
+   "speaker": "any",
+   "to": "group",
+   "reply": true,
+   "text": "I'll take the other end. Somebody pass me the short lengths."
+  },
+  {
+   "id": "grp.any.006",
+   "cat": "group",
+   "speaker": "trait:hard_working",
+   "to": "group",
+   "reply": true,
+   "text": "Feed both ends and it'll burn twice as fast. The cradle needs the room."
+  },
+  {
+   "id": "grp.any.007",
+   "cat": "group",
+   "speaker": "trait:timid",
+   "to": "group",
+   "when": [
+    "phase:dusk",
+    "where:forest"
+   ],
+   "resp": [
+    "grp.any.008",
+    "grp.any.009"
+   ],
+   "text": "Are we nearly done? It's getting dim under the trees."
+  },
+  {
+   "id": "grp.any.008",
+   "cat": "group",
+   "speaker": "trait:level_headed",
+   "to": "group",
+   "reply": true,
+   "text": "Last carry. Then we walk in together, at a sensible pace."
+  },
+  {
+   "id": "grp.any.009",
+   "cat": "group",
+   "speaker": "trait:hard_working",
+   "to": "group",
+   "reply": true,
+   "text": "One more trunk would finish the lane. But I'll leave it for the morning."
+  },
+  {
+   "id": "grp.any.010",
+   "cat": "group",
+   "speaker": "trait:skeptical",
+   "to": "group",
+   "reply": true,
+   "text": "A voice nobody can name, heard by somebody nobody can name. That's not news, that's weather."
+  },
+  {
+   "id": "grp.any.011",
+   "cat": "group",
+   "speaker": "trait:sociable",
+   "to": "group",
+   "when": [
+    "where:cabin",
+    "phase:dusk"
+   ],
+   "resp": [
+    "grp.any.012",
+    "grp.any.013"
+   ],
+   "text": "Who's got a story? Not a scary one. A daft one."
+  },
+  {
+   "id": "grp.any.012",
+   "cat": "group",
+   "speaker": "any",
+   "to": "group",
+   "reply": true,
+   "text": "I once lost a whole truck in a car park. Found it three hours later. Wrong car park."
+  },
+  {
+   "id": "grp.any.013",
+   "cat": "group",
+   "speaker": "trait:reliable_driver",
+   "to": "group",
+   "reply": true,
+   "text": "Daft story: a goat once refused to get off a delivery ramp. I waited it out. Took an hour."
+  }
+ ]
+}
