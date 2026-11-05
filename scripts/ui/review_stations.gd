@@ -96,11 +96,57 @@ const STATIONS18 := [
 	["4 Tomas", "p18_EMP-04"], ["5 Joan", "p18_EMP-05"], ["6 Two-person exchange", "p18_exchange"],
 	["7 Distance ladder", "p18_distance"], ["8 Five-voice lineup", "p18_lineup"], ["9 Voice coverage", "p18_counts"],
 ]
+const STATIONS19 := [
+	["1 Survey ship (beach)", "p19_ship"], ["2 Slow pass (yard)", "p19_yard"], ["3 Helicopter launch", "p19_launch"],
+	["4 Helicopter over camp", "p19_heli"], ["5 Offshore coverage", "p19_counts"], ["6 Thicket hide (try it)", "p19_thicket"],
+	["7 Field shed", "p19_shed"], ["8 Dock gear chest", "p19_chest"], ["9 Cover audit", "p19_audit"],
+	["10 Midday gathering", "p19_break"], ["11 Roles & transport", "p19_roles"],
+]
 static var _feed_day := 0
 static var _clear_i := 0
 static var _density_i := 0
 static var _overlay12: CoverOverlay
 static var _light_i := 0
+
+
+static func _p19_offshore(w: IslandWorld, p: Player, which: String) -> String:
+	var off: OffshoreSurvey = Game.offshore
+	if off == null:
+		return ""
+	off.stop_preview()
+	off.preview_visit(3)
+	off.visit.state = "lap"
+	off.visit.seg_t = 0.0
+	match which:
+		"p19_ship", "p19_yard":
+			off.visit.theta = off.theta0
+			off.visit.lap = 0.0
+		"p19_launch":
+			off.visit.theta = off.theta_camp
+			off.visit.lap = absf(off.theta_camp - off.theta0)
+			off.visit.visible_s = 999.0
+		"p19_heli":
+			off.visit.theta = off.theta_camp + off.dir * 0.3
+			off.visit.lap = absf(off.theta_camp - off.theta0) + 0.3
+			off.visit.launched = true
+			off._place_ship()
+			off.heli.wps = off.leg_points("camp")
+			off.heli.wp_i = 1
+			off.heli.set_state("fly")
+			off.heli.rotor = 1.0
+			off.heli.global_position = World.camp_origin() + Vector3(260, 70, 300)
+	off._place_ship()
+	var sp := off.ship_position()
+	var stand: Vector3 = Game.crew.dock_shore if which != "p19_yard" and Game.crew else CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 6))
+	if which == "p19_heli":
+		stand = CampLayout.world(Vector3(0, 0, 4))
+		p.teleport(stand + Vector3(0, 1.65, 0), World.camp_origin() + Vector3(120, 60, 160))
+	else:
+		p.teleport(stand + Vector3(0, 1.65, 0), sp + Vector3(0, 10, 0))
+	return {"p19_ship": "The survey vessel on the camp-facing arc (about %d m out). It slows to half speed past camp, makes one full lap of the island and leaves. No markings; no contact; nothing to do." % int(stand.distance_to(sp)),
+		"p19_yard": "The same silhouette from the yard at eye height (existing fog and weather).",
+		"p19_launch": "The helicopter spools up and lifts off the moving stern pad, then surveys camp and the island.",
+		"p19_heli": "The camp pass: rotor heard first, then seen over the yard. Workers who see it call it out (look gesture; subtitles carry a direction)."}[which]
 
 
 static func go(hud: Node, which: String) -> String:
@@ -357,6 +403,64 @@ static func go(hud: Node, which: String) -> String:
 			if Game.campaign_ui:
 				Game.campaign_ui.toggle_journal(0)
 			return "Journal -> Crew: level, merit to the next level, each skill's real effect, today's time split with causes, and 'Thank them' buttons for specific work."
+		"p19_ship", "p19_yard", "p19_launch", "p19_heli":
+			return _p19_offshore(w, p, which)
+		"p19_counts":
+			var off: OffshoreSurvey = Game.offshore
+			var bank := CrewBank.get_bank()
+			var n := 0
+			var maps := 0
+			var rec := 0
+			for id in bank.lines:
+				if str(bank.lines[id].get("cat", "")) != "offshore":
+					continue
+				n += 1
+				for prof in ["marta", "dale", "priya", "tomas", "joan", "crew_m", "crew_f"]:
+					if not VoiceBank.info(prof, id).is_empty():
+						maps += 1
+						if VoiceBank.has(prof, id):
+							rec += 1
+			var rc := off.route_clearance() if off else {}
+			return "Offshore survey: %d authored crew lines (6 x 20), %d eligible line/voice mappings, %d recordings available (subtitles cover any gap). Lap %.0f s on a %.0f m circle (min depth %.1f m, dock routes clear: %s). Visits every %d days from day %d; none after the contract." % [n, maps, rec, off.lap_seconds() if off else 0.0, off.R if off else 0.0, float(rc.get("min_depth", 0.0)), str(rc.get("routes_ok", false)), int(off.sc("interval_days", 3)) if off else 3, int(off.sc("first_day", 3)) if off else 3]
+		"p19_thicket", "p19_shed", "p19_chest":
+			var sc: SurvivalCover = Game.survival_cover
+			if sc == null or not sc.built:
+				return "Survival cover exists on island r2 only."
+			Game.hunt.hunt_preview = true
+			var kind: String = {"p19_thicket": "thicket", "p19_shed": "shed", "p19_chest": "dock_store"}[which]
+			for h in sc.hides:
+				if h.kind == kind:
+					var stand: Vector3 = h.get_meta("door_out", h.exits[0] if not h.exits.is_empty() else h.approach)
+					p.teleport(stand + Vector3(0, 1.65, 0), h.global_position + Vector3(0, 0.6, 0))
+					return {"thicket": "A dense persistent thicket: crouch inside (interact). The brush hides you from farther than 4 m if you were not seen going in; up close, or seen entering, it does not. %d ways out." % h.exits.size(),
+						"shed": "A field work shed: hide behind the bench. The door creaks (a real sound); the back hatch is a second way out.",
+						"dock_store": "The dock gear chest: lie inside. The lid knocks when you climb in. Biscuit is never a target."}[kind]
+			return "None of that kind on this island."
+		"p19_audit":
+			var sc2: SurvivalCover = Game.survival_cover
+			if sc2 == null:
+				return "Survival cover exists on island r2 only."
+			var au := sc2.audit()
+			var lines := PackedStringArray()
+			for k in au.regions:
+				var r: Dictionary = au.regions[k]
+				lines.append("%s: nearest hide median %d m (90%% within %d m); hide within 30 m at %d%% of points; 2+ within 150 m at %d%%" % [k, int(r.median_m), int(r.p90_m), int(float(r.hide_within_30m) * 100), int(float(r.two_or_more_within_150m) * 100)])
+			return "Hides: %d (%s; largest kind %d%%).\n%s\n%s" % [int(au.hides), str(au.kinds), int(float(au.largest_kind_share) * 100), "\n".join(lines.slice(0, 8)), au.cleared_land]
+		"p19_break", "p19_roles":
+			var cs19: CampaignService = Game.campaign
+			if Game.crew == null or Game.crew.workers.size() < 2:
+				cs19.start_test_route(true, true)
+				return "Crew starting (they arrive on the boat). Pick this stop again in a moment."
+			var rt: CampRoutine = Game.crew.routine
+			rt.plan_day(cs19.clock.day)
+			if which == "p19_roles":
+				var rl := PackedStringArray()
+				for eid in rt.roles:
+					rl.append("%s: %s" % [str(Game.crew.emp(eid).get("name", eid)).split(" ")[0], rt.roles[eid]])
+				return "Today's roles (from kit, traits and the backlog; your job assignments win): %s.\nTransport: %s (%s)." % [", ".join(rl), str(rt.plan.get("mode", "")), str(rt.plan.get("why", ""))]
+			w.teleport_to("camp")
+			rt.start_break(cs19.clock.day)
+			return "Midday gathering: workers near camp walk to the fire seats and talk; far crews break where they are; someone calls Biscuit over. Break time counts as a break, not idleness."
 		"p18_counts":
 			return "Voice bank: %d clips for %d authored lines (all required line/profile mappings). Generated offline with eSpeak NG (original synthetic voices; no recorded or cloned person). Runtime loads clips on demand; missing clips fall back to subtitles. The internet stays text only." % [VoiceBank.count(), CrewBank.get_bank().lines.size()]
 		"p18_EMP-01", "p18_EMP-02", "p18_EMP-03", "p18_EMP-04", "p18_EMP-05", "p18_exchange", "p18_distance", "p18_lineup":

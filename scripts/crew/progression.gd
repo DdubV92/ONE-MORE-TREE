@@ -33,8 +33,8 @@ const HANDLE_PER_LEVEL := 0.03
 const DRIVE_PER_LEVEL := 0.015
 const TEAM_PER_LEVEL := 0.04
 const MAX_SKILL := 1.35
-const CATEGORIES := ["useful", "travel", "waiting", "blocked", "no_task", "missing_tool", "yard_full", "fear", "dusk", "pause"]
-const CATEGORY_WORDS := {"useful": "useful work", "travel": "walking & handling", "waiting": "waiting on others", "blocked": "blocked route", "no_task": "no work available", "missing_tool": "missing a tool", "yard_full": "yard full", "fear": "refusing risky work", "dusk": "heading home", "pause": "short breaks"}
+const CATEGORIES := ["useful", "travel", "waiting", "blocked", "no_task", "missing_tool", "yard_full", "fear", "dusk", "pause", "break"]
+const CATEGORY_WORDS := {"useful": "useful work", "travel": "walking & handling", "waiting": "waiting on others", "blocked": "blocked route", "no_task": "no work available", "missing_tool": "missing a tool", "yard_full": "yard full", "fear": "refusing risky work", "dusk": "heading home", "pause": "short breaks", "break": "midday break (Phase 19)"}
 const CONTEXT_CAP := 200
 const PRAISE_TRUST := 0.03
 

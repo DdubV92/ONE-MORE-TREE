@@ -160,6 +160,8 @@ func _ready() -> void:
 	await _run_async("phase 17 world: two workers converse from the bank with turn re-checks, knowledge gates (told vs firsthand), rumor transfer, missing listener / departed / interrupted / chainsaw suppression, boss replies, cooldowns survive save/restore, feed publishes by the real clock and the reader builds", _t_phase17_world)
 	_run("phase 18 units: every required line/profile mapping has an imported clip (character lines -> own profile, shared lines -> each selectable profile), sampled clips decode at their manifest length, deliveries valid, replacement voices persistent, internet unvoiced", _t_phase18_units)
 	await _run_async("phase 18 world: a voiced turn plays from the speaker's head with synced caption and mouth motion, interruption stops audio + mouth, missing clip keeps text, boss reply voiced, no doubled playback", _t_phase18_world)
+	_run("phase 19 units: 120 offshore lines with stable ids, triggers, knowledge, cooldowns; visit schedule every 3 days from day 3", _t_phase19_units)
+	await _run_async("phase 19 world: survival cover (thickets, sheds, chest, clearance, region audit, seen/unseen entries, escapes, dog, hunt timing); offshore lap, 2:1 speed, visibility, helicopter launch/clearance/recovery/rotor, save/load, repeat visit, witnesses, fall-warning precedence, Day 36 independence; camp routine and schema 13", _t_phase19_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -5634,6 +5636,16 @@ func _p19_more(off: OffshoreSurvey, cap: Dictionary) -> String:
 	if not ok36:
 		return "rescue ship not independent (survey visit running during the rescue)"
 	p19_report["survey_ships_during_rescue"] = surveys
+	var re := await _p19_routine()
+	if re != "":
+		return re
+	# --- save format: schema 13 carries phase19; a v12 save migrates.
+	var mig := SaveService.migrate({"schema": 12, "phase17": {}})
+	if int(mig.get("schema", 0)) != SaveService.SCHEMA_VERSION or not mig.has("phase19"):
+		return "v12 -> v13 migration missing phase19"
+	var st := SaveService.capture_state(get_tree().root.find_children("*", "IslandWorld", true, false)[0])
+	if not st.has("phase19") or not (st.phase19 as Dictionary).has("offshore") or not (st.phase19 as Dictionary).has("routine"):
+		return "phase19 block not saved"
 	# --- coverage
 	var have := 0
 	var maps := 0
@@ -5787,4 +5799,82 @@ func _p19_cover() -> String:
 	hunt.foreman = null
 	hunt.hunt_preview = false
 	await get_tree().physics_frame
+	return ""
+
+
+func _p19_routine() -> String:
+	var crew: CrewService = Game.crew
+	var r: CampRoutine = crew.routine
+	if r == null:
+		return "no routine"
+	var ws: Array = crew.workers.values()
+	for w in ws:
+		(w as Worker).emp["job"] = "automatic"
+	var day := Game.campaign.clock.day
+	r.plan_day(day)
+	var roles1 := r.roles.duplicate()
+	r.plan_day(day)
+	if r.roles != roles1 or roles1.size() != ws.size():
+		return "day roles not deterministic / not assigned: %s" % str(roles1)
+	var near_focus := World.camp_origin() + Vector3(0, 0, -40)
+	var far_focus := World.camp_origin() + Vector3(250, 0, -300)
+	var p_near := r.transport_plan(near_focus)
+	var p_far := r.transport_plan(far_focus)
+	var rep := {"roles": roles1, "plan_near": p_near, "plan_far": p_far}
+	p19_report["routine"] = rep
+	if str(p_near.mode) != "carry" or str(p_far.mode) == "carry" and Game.cart != null:
+		return "transport plan ignores distance: %s / %s" % [str(p_near), str(p_far)]
+	# Midday gathering: three near camp walk in and sit; one far away
+	# takes the break in place.
+	var camp := World.camp_origin()
+	for i in ws.size():
+		var w: Worker = ws[i]
+		w.activity = "idle"
+		w.path.clear()
+		_p19_place(w, camp + Vector3(-6 + i * 3, 0, -14) if i < 3 else Vector3(300, 0, -330))
+	if Game.dog:
+		Game.dog.global_position = r._seat_point(0) + Vector3(1.2, 0, 1.2)
+	var pets0: int = Game.dog.pets if Game.dog else 0
+	r.start_break(day)
+	var att: Array = r.brk.attendees
+	var fld: Array = r.brk.field
+	var g := 0
+	var d0 := {}
+	for e in att:
+		var sp: Array = r.brk.seats[e]
+		d0[e] = snappedf((crew.workers[e] as Worker).global_position.distance_to(Vector3(sp[0], sp[1], sp[2])), 0.1)
+	while g < 3000:
+		await get_tree().physics_frame
+		r._settle_attendees()
+		g += 1
+		if att.all(func(e: String) -> bool: return (crew.workers[e] as Worker).activity == "break_sit") and str(r.brk.petted) != "":
+			break
+	var d1 := {}
+	for e in att:
+		var sp2: Array = r.brk.seats[e]
+		var wk2: Worker = crew.workers[e]
+		d1[e] = [snappedf(wk2.global_position.distance_to(Vector3(sp2[0], sp2[1], sp2[2])), 0.1), wk2.activity, wk2.path.size(), wk2._after_move]
+	rep["walk"] = {"start_dist": d0, "end": d1}
+	var seated := att.filter(func(e: String) -> bool: return (crew.workers[e] as Worker).activity == "break_sit")
+	var w0: Worker = crew.workers[att[0]] if not att.is_empty() else ws[0]
+	rep["break"] = {"attendees": att, "field": fld, "seated": seated, "frames": g, "petted_by": r.brk.petted, "shared": r.brk.shared,
+		"time_category": crew.time_category(w0), "act_rest": crew.talk.holds("act:rest", w0), "dog_pets": (Game.dog.pets if Game.dog else 0) - pets0}
+	if att.size() < 3 or fld.size() < 1:
+		return "gathering split wrong: %s" % str(rep["break"])
+	if seated.size() < 2:
+		return "workers did not reach the gathering: %s" % str(rep["break"])
+	if crew.time_category(w0) != "break":
+		return "break time not counted as a break"
+	if not crew.talk.holds("act:rest", w0):
+		return "gathering does not open rest conversation"
+	if Game.dog and str(r.brk.petted) == "":
+		return "nobody petted the dog at the gathering"
+	var cap := r.capture()
+	r.end_break()
+	if (crew.workers[att[0]] as Worker).activity != "idle":
+		return "break did not end"
+	var r2 := CampRoutine.new(crew)
+	r2.restore(JSON.parse_string(JSON.stringify(cap)))
+	if r2.roles != r.roles or str(r2.brk.state) != "done":
+		return "routine save/restore wrong"
 	return ""

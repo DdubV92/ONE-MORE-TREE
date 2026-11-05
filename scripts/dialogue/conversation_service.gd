@@ -172,7 +172,7 @@ func _acts(w: Worker) -> Array:
 			return ["act:carry"] if w.is_carrying() else ["act:walk"]
 		"follow":
 			return ["act:walk"]
-		"sleep", "sit":
+		"sleep", "sit", "break_sit":
 			return ["act:rest"]
 		"aboard", "seated":
 			return ["act:ride"]

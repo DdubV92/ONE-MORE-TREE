@@ -109,3 +109,36 @@ The files are `data/dialogue/crew/<category>.json` (UTF-8 JSON), and each one ha
 - **Repetition.** No near-duplicates. A shared line is authored once, as `speaker: any` or `trait:`.
 - **Exchanges.** Pair and group exchanges need real response content and distinct perspectives.
 - **Content limits.** No real people, real companies or real-world tragedies. No profanity stronger than "hell"/"damn". No slurs.
+
+## Phase 19: the `offshore` category (`sea.` ids)
+
+`data/dialogue/crew/offshore.json` holds the 120 authored offshore-survey lines (the addendum's texts verbatim), generated from the table in `tools/content/offshore_lines.py`. Ids keep the authored number: `sea.<who>.<nnn>` (`nnn` = 001–120).
+
+Extra fields on these rows:
+
+| Field | Meaning |
+|---|---|
+| `n` | The authored line number (1–120). |
+| `trigger` | The beat that may speak it: `sight`, `slow`, `rotor`, `heli`, `deck`, `depart`, `repeat` (immediate callouts) or `later` (ordinary conversation after a visit). |
+| `knowledge` | Reported class: `firsthand_sight`, `hearing`, `visual_detail`, `secondhand`, `two_passes`. |
+| `directs` | `true` if the line points the player's attention (preferred while the player has not seen it). |
+
+`when` and `needs` may use the `sea:` predicates. The runtime implements them in `OffshoreSurvey.holds()` / `knows()`; the validator reads that list from the code, so an unimplemented predicate is an error.
+
+- **Live situation (`when`)**:
+  - Ship: `sea:ship_seen`, `sea:ship_unseen`, `sea:opening_soon`, `sea:slow`, `sea:speeding`, `sea:lap_late`, `sea:departing`, `sea:broadside`, `sea:near_view`, `sea:edge`, `sea:toward_sun`, `sea:hazy`, `sea:engine_heard`, `sea:deck_seen`, `sea:ship_lost_point`.
+  - Rotor: `sea:rotor`, `sea:heli_unseen_heard`, `sea:rotor_rising`, `sea:rotor_long`, `sea:rotor_lost`, `sea:rotor_close`, `sea:from_water`.
+  - Aircraft: `sea:heli_seen`, `sea:heli_behind_ridge`, `sea:over_camp`, `sea:over_water`, `sea:over_ridge`, `sea:over_cleared`, `sea:overhead`, `sea:heli_close`, `sea:heli_far`, `sea:banking`, `sea:turned`, `sea:sweep`, `sea:inland_next`, `sea:inbound`, `sea:near_dock`, `sea:seaward`, `sea:landing`, `sea:heli_airborne`, `sea:heli_lost_seaward`.
+  - Speaker's surroundings: `sea:saw_running`, `sea:engine_noise`, `sea:truck_near`, `sea:away_from_pit`, `sea:among_trees`.
+  - Campaign: `sea:yesterday_quiet`, `sea:player_missed`, `sea:after`, `sea:today`.
+- **Knowledge (`needs`)**:
+  - Firsthand sight: `sea:saw_ship_now`, `sea:saw_ship_long`, `sea:saw_ship_early`, `sea:saw_slow`, `sea:saw_slowdown`, `sea:saw_fast_then_slow`, `sea:saw_heli`, `sea:no_heli_seen`, `sea:saw_launch`, `sea:saw_land`, `sea:saw_recover`, `sea:saw_heli_camp`, `sea:both_sides`.
+  - Hearing: `sea:heard_rotor`, `sea:heard_only`, `sea:heard_twice`, `sea:knows_recover`.
+  - Earlier visits (two valid passes): `sea:two_passes`, `sea:prev_slow`, `sea:prev_ship_only`, `sea:prev_heli`, `sea:prev_deck`.
+  - Secondhand: `sea:told`, `sea:called`, `sea:missed`, `sea:missed_saw`, `sea:wake_only`, `sea:knows_any`, `sea:knows_heli`, `sea:knows_ship`, `sea:knows_exit`.
+
+**Knowledge rules.**
+- A firsthand sighting needs line of sight from the worker's eyes to the hull or aircraft, through terrain, structures and standing trees, within the fog range.
+- Rotor knowledge needs hearing only. A running chainsaw within 15 m masks it.
+- Being told is secondhand and never becomes a sighting.
+- Two-pass comparisons need firsthand sightings on two different visits.

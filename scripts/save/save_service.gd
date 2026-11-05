@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 12
+const SCHEMA_VERSION := 13
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -182,6 +182,12 @@ static func capture_state(world: Node) -> Dictionary:
 		# times, edits, read/bookmark/position state and hook outcomes. Crew
 		# conversation cooldowns live in the crew block ("talk").
 		"phase17": {"feed": Game.feed.capture() if Game.feed else {}},
+		# Phase 19: offshore survey visits (persistent visit ids, the visit in
+		# progress with its exact route/aircraft state, registered beats and
+		# spoken lines, each worker's firsthand/heard/told knowledge) and the
+		# crew's day routine (roles, transport plan, midday break).
+		"phase19": {"offshore": Game.offshore.capture() if Game.offshore else {},
+			"routine": Game.crew.routine.capture() if Game.crew and Game.crew.routine else {}},
 		"time_of_day": env.get("hour") if env else 12.0,
 		# Modified original trees only, keyed by stable ID (state, notch work,
 		# cut side, fall intent, felled guard, trunk pose/velocity).
@@ -376,6 +382,12 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# catch-up digest, not live alerts); no conversation cooldowns.
 		data["phase17"] = {}
 		data["schema"] = 12
+		v = 12
+	if v == 12:
+		# Phase 18 saves: no offshore visits recorded yet (the next due
+		# visit day simply happens), no routine yet (planned next morning).
+		data["phase19"] = {}
+		data["schema"] = 13
 	return data
 
 
@@ -425,6 +437,11 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 		Game.rest.restore((data.get("phase16", {}) as Dictionary).get("rest", {}))
 	if Game.feed:
 		Game.feed.restore((data.get("phase17", {}) as Dictionary).get("feed", {}))
+	var p19: Dictionary = data.get("phase19", {})
+	if Game.offshore:
+		Game.offshore.restore(p19.get("offshore", {}))
+	if Game.crew and Game.crew.routine:
+		Game.crew.routine.restore(p19.get("routine", {}))
 	var hunt_n: Object = world.get("hunt")
 	if hunt_n and str((p6.get("hunt", {}) as Dictionary).get("mode", "none")) != "none":
 		hunt_n.set("pending_restore", true)

@@ -271,6 +271,7 @@ func activity_words() -> String:
 		"follow": return "following you"
 		"home": return "heading home"
 		"sit": return "resting"
+		"break_sit": return "on the midday break"
 		"sleep": return "asleep"
 		"depart": return "leaving on the next boat"
 		"arrive": return "arriving"
@@ -539,7 +540,7 @@ func _physics_process(delta: float) -> void:
 			_do_follow(delta)
 		"team_follow":
 			_do_team_follow(delta)
-		"sleep", "sit", "departed", "aboard", "seated", "hidden", "dead", "board":
+		"sleep", "sit", "departed", "aboard", "seated", "hidden", "dead", "board", "break_sit":
 			pass
 		"hide_enter":
 			_enter_hide()

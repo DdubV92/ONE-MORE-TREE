@@ -1,10 +1,29 @@
-# ONE MORE TREE LATEST BUILD PHASE 18
+# ONE MORE TREE LATEST BUILD PHASE 19
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 18 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 19 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. If SmartScreen warns, choose More info, then Run anyway.
 
-## New in Phase 18 (headphones recommended)
+## New in Phase 19
+
+- **A crew day has a shape.**
+  - Each worker gets a role for the day (felling, sawing, hauling, the yard), chosen from their tools, traits and what is waiting. Jobs you assign still win.
+  - A transport plan: carry, handcart or truck runs, depending on how far out the work is.
+  - **A midday break:** everyone near camp sits at the fire and talks, about each other's actual work. Somebody calls Biscuit over.
+- **Hiding during the five nights is fairer and harder.**
+  - Dense thickets you can crouch into, two field sheds out in the far logging areas (with a back hatch), and a gear chest at the dock.
+  - Nothing is a safe zone. If the Foreman sees you go in, it knows where to look; up close, brush won't hide you.
+  - When you leave a hide, you take the way out away from it.
+- **Something offshore.**
+  - Every third day a large ship comes out of the haze, slows as it passes camp, makes one full lap of the island and leaves.
+  - Its helicopter takes off from the stern, sweeps the island and passes over camp, then lands back on the moving ship.
+  - The crew notice it in their own ways, based only on what each of them actually saw or heard.
+  - There is nothing to do about it.
+- **Review:** Preview → Tab → "Phase 19 …" (the ship, the helicopter, each new hide, the cover audit, the gathering, roles).
+
+**Honest limits:** checked headless only. Not seen on a real GPU, and the new ship and rotor sounds have not been heard.
+
+## Phase 18 (previous build) (headphones recommended)
 
 - **The crew speaks.**
   - Every crew line is voiced: five distinct voices for Marta, Dale, Priya, Tomas and Joan, plus two for anyone you hire later.

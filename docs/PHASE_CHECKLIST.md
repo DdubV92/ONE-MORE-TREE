@@ -2,6 +2,26 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 19: Camp routines, fair survival cover, and the offshore survey
+
+Full detail: [PHASE19_NOTES.md](PHASE19_NOTES.md). Lines: [editorial/CREW_SCHEMA.md](editorial/CREW_SCHEMA.md) (offshore category).
+
+| Item | Status | Notes |
+|---|---|---|
+| Daily roles from kit, traits and backlog; transport plan; midday gathering with the dog; colleague awareness | ✅ | Tested in a live world; player job assignments win |
+| Hides: 36 thickets, 2 far field sheds (door and back hatch), dock gear chest; plus 60 rock hides and the building hides | ✅ | 110 hides; largest kind 34% |
+| Occupant-pose clearance (no clipping into trunks, rocks or walls) | ✅ | 0 failures |
+| Region audit: no hide within 30 m at most points; 2+ hides within 150 m everywhere | ✅ | 19–43% / 100% by region |
+| Evidence-based hides: unseen entry holds, near reveal at 3 m, seen entry becomes evidence, no position leak | ✅ | Fix: an entry is judged seen before the hider counts as hidden |
+| Real alternate escapes (exit away from the hunter); dog never a target; five-day hunt unchanged; objective text | ✅ | Tested |
+| Offshore visits every 3 days from day 3 (data); persistent visit ids; reload never restarts or replays | ✅ | Save/load mid-flight tested |
+| Exact 360° lap on a fixed circle (0.0 m deviation); 2:1 open-water to camp-arc speed; arrival and departure legs | ✅ | Logged samples |
+| Visible from yard, camp approach, beach gate, shoreline, dock | ✅ | Eye-height line-of-sight checks |
+| Helicopter: deck launch, seeded survey, clearance ≥ 33 m, banking ≤ 28°, positional rotor, recovery on the moving pad | ✅ | Landing error 0.0 m |
+| 120 authored lines with triggers, knowledge, cooldowns; firsthand, hearing-only, secondhand and two-pass rules; beat callouts | ✅ | 488/488 voice mappings recorded |
+| Fall warning takes precedence; Day 36 rescue independent | ✅ | Tested |
+| Seen on a real GPU or heard on real audio | ⛔ | Headless only |
+
 ## Phase 18: The crew speaks
 
 Full detail: [PHASE18_NOTES.md](PHASE18_NOTES.md). Cast: [editorial/VOICE_CAST.md](editorial/VOICE_CAST.md).

@@ -58,6 +58,7 @@ var progression := CrewProgression.new(merit)
 var _tr_t := 0.0
 ## Phase 17: authored crew conversations (one owner per camp).
 var talk: ConversationService
+var routine: CampRoutine     # Phase 19: day roles, transport plan, midday gathering
 
 
 func setup(c: CampaignService) -> void:
@@ -84,6 +85,7 @@ func setup(c: CampaignService) -> void:
 		timber.body_settled_hook = _on_log_settled
 		timber.delivery_accepted.connect(_merit_on_accepted)
 	talk.setup(self)
+	routine = CampRoutine.new(self)
 	progression.advanced.connect(_on_advanced)
 
 
@@ -522,6 +524,8 @@ func _physics_process(delta: float) -> void:
 	merit.day = c.day
 	_sample_transport(delta)
 	_tick_time_ledger(delta)
+	if routine:
+		routine.tick()
 
 
 var _last_fear_state := {}
@@ -680,6 +684,9 @@ func _auto(w: Worker) -> void:
 	# at a full cradle).
 	var yard_full := Game.yard != null and Game.yard.cradle_free() == 0 and Game.yard.deck_free_estimate() < 10
 	if yard_full and try_yard(w):
+		return
+	# Phase 19: today's role decides what to try first.
+	if routine and routine.try_role_first(w):
 		return
 	# Stage division: the saw is wasted carrying logs, so saw holders cut
 	# while axe hands haul first when anything is waiting.
@@ -1318,6 +1325,8 @@ func _on_night(_d: int) -> void:
 
 
 func _on_morning(_d: int) -> void:
+	if routine:
+		routine.plan_day(campaign.clock.day)
 	for w in workers.values():
 		var wk := w as Worker
 		if wk.activity in ["sleep", "sit"]:
@@ -1666,6 +1675,8 @@ func _tick_time_ledger(delta: float) -> void:
 
 
 func time_category(w: Worker) -> String:
+	if routine and (w.activity == "break_sit" or (w.activity == "move" and w._after_move == "break_sit")):
+		return "break"
 	if w.talking_until > now():
 		return "waiting"
 	match w.activity:
