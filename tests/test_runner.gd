@@ -140,13 +140,25 @@ func _ready() -> void:
 
 
 func _run(name: String, f: Callable) -> void:
-	var err: String = f.call()
-	_report(name, err)
+	var r: Variant = f.call()
+	# A script error aborts the test function and yields null: that is a
+	# failure, never a silent pass.
+	_report(name, "aborted by a script error (see log)" if r == null else str(r))
 
 
 func _run_async(name: String, f: Callable) -> void:
-	var err: String = await f.call()
-	_report(name, err)
+	var r: Variant = await f.call()
+	_report(name, "aborted by a script error (see log)" if r == null else str(r))
+	await get_tree().process_frame
+	var left := 0
+	for c in get_children():
+		if c is IslandWorld and not c.is_queued_for_deletion():
+			left += 1
+	if left > 0:
+		print("WORLD LEAK after '%s': %d world(s) still alive" % [name.substr(0, 40), left])
+		for c in get_children():
+			if c is IslandWorld:
+				print("  LEAKED ", c.name, " id=", c.get_instance_id(), " player=", (c as IslandWorld).build_player, " ui=", (c as IslandWorld).build_ui, " kids=", c.get_child_count(), " first=", c.get_children().slice(0, 6).map(func(x): return str(x.name)))
 
 
 func _report(name: String, err: String) -> void:

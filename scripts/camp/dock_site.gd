@@ -119,7 +119,7 @@ func _detail_dock(crew: CrewService) -> void:
 	li.omni_range = 7.0
 	li.light_energy = 0.7
 	li.light_color = Color(1.0, 0.82, 0.58)
-	li.add_to_group("camp_lamps")
+	li.add_to_group("dock_lamps")    # not a CampLamp: never in camp_lamps (safety/levels)
 	d.add_child(li)
 	# Sign at the shore end.
 	var sp := Vector3(x - 1.6, World.height_at(x - 1.6, shore.z - 0.8), shore.z - 0.8)

@@ -237,7 +237,16 @@ There is also an **active voices** list (dev): event, distance, bus/tier, level 
 
 - **Thunder and other environment sounds were emitted as AI evidence** by the first SoundService build. Caught by the Phase 8 test; Ambience events no longer emit by default.
 - **The crew's door auto-close could shut a door the player had opened.** A worker passing through earlier left a stale record, so the door closed again as soon as the player stepped away. The crew now only closes doors it opened that are still open, and never a door the player opened by hand. Found by reading the door code while chasing a test failure.
-- **Test harness: a world left behind by an earlier test overlapped the camp.** Its closed door sat on every acoustic ray, so the open-door check failed only in the full suite. The Phase 15 world test now starts from a single world. Which earlier test leaks it is not identified (pre-existing).
+- **Test harness (pre-existing since Phase 5): the "camp built" test had been silently aborting halfway.**
+  - **Cause:** the dock's plain light was in the `camp_lamps` group, and setting `working` on it raised a script error. An aborted test returned nothing, which the runner counted as a pass.
+  - **What was skipped:** the lamp-safety and camper-doorway checks never ran.
+  - **What leaked:** the test's world never closed and stayed alive for the rest of the suite. Its closed camper door blocked the Phase 15 door check, and its weather pushes made a Phase 8 check flaky on CI.
+  - **Fixes:**
+    - the dock light now has its own `dock_lamps` group (safety never counted it: SafetyService only accepts real CampLamps);
+    - the runner now reports an aborted test as a failure;
+    - the skipped checks run and pass;
+    - no world leaks between tests.
+- **Rain layers churned audio players** on every weather change (each stop left a fading player). They now idle silently and are released after 4 s of continuous silence, which keeps the node count bounded (Phase 8 presentation test). The roof-material check also ran per frame instead of 4× per second; it is now time-based.
 - **Hinge crack snap arrived about 0.8 s after the break**, and the **tailgate sounded like a wooden log.** Both models were rebuilt.
 
 ## Known limits (honest)

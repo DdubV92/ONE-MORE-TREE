@@ -249,7 +249,7 @@ func _process(delta: float) -> void:
 		wetness = maxf(wetness - delta / WET_DRY, 0.0)
 	_update_lightning(delta)
 	_update_shelter(delta)
-	_update_audio()
+	_update_audio(delta)
 	_push_t -= delta
 	if _push_t <= 0.0 or flash > 0.001:
 		_push_t = 0.2
@@ -357,7 +357,7 @@ var _roof_kind := ""
 var _roof_t := 0.0
 
 
-func _update_audio() -> void:
+func _update_audio(delta: float) -> void:
 	if SoundService.instance() == null:
 		return
 	var r := rain
@@ -370,13 +370,13 @@ func _update_audio() -> void:
 	_rain_pts[0].global_position = lp + right * 7.0 + Vector3(0, 2.5, 0)
 	_rain_pts[1].global_position = lp - right * 7.0 + Vector3(0, 2.5, 0)
 	var heavy := clampf((r - 0.45) / 0.4, 0.0, 1.0)
-	_rain_layer("light_l", "weather.rain.light", _rain_pts[0], r * (1.0 - heavy * 0.6), -2.0)
-	_rain_layer("light_r", "weather.rain.light", _rain_pts[1], r * (1.0 - heavy * 0.6), -2.0)
-	_rain_layer("heavy", "weather.rain.heavy", _rain_pts[0], r * heavy, 0.0)
+	_rain_layer("light_l", "weather.rain.light", _rain_pts[0], r * (1.0 - heavy * 0.6), -2.0, delta)
+	_rain_layer("light_r", "weather.rain.light", _rain_pts[1], r * (1.0 - heavy * 0.6), -2.0, delta)
+	_rain_layer("heavy", "weather.rain.heavy", _rain_pts[0], r * heavy, 0.0, delta)
 	# The roof right above you, by what it is made of (rechecked 4x/s).
-	_roof_t -= 0.25
+	_roof_t -= delta
 	if _roof_t <= 0.0:
-		_roof_t = 1.0
+		_roof_t = 0.25
 		_roof_kind = ""
 		var space := get_viewport().world_3d.direct_space_state if get_viewport() else null
 		if space:
@@ -388,17 +388,30 @@ func _update_audio() -> void:
 				_roof_kind = "metal" if m == "metal" else ("canvas" if m == "fabric" else "wood")
 				_rain_pts[2].global_position = hit.position
 	for k in ["metal", "wood", "canvas"]:
-		_rain_layer("roof_" + k, "weather.rain." + k, _rain_pts[2], r if _roof_kind == k else 0.0, -2.0)
-	_rain_layer("drips", "weather.rain.drips", _rain_pts[2], r * (0.6 if _roof_kind != "" else 0.0), 0.0)
+		_rain_layer("roof_" + k, "weather.rain." + k, _rain_pts[2], r if _roof_kind == k else 0.0, -2.0, delta)
+	_rain_layer("drips", "weather.rain.drips", _rain_pts[2], r * (0.6 if _roof_kind != "" else 0.0), 0.0, delta)
 
 
-func _rain_layer(key: String, event: String, at: Node3D, lin: float, top_db: float) -> void:
+## A rain layer keeps its loop while weather flickers: silent layers idle at
+## -80 dB and are released only after RAIN_RELEASE s of continuous silence,
+## so rapid weather changes never churn players (bounded nodes).
+const RAIN_RELEASE := 4.0
+var _rain_quiet := {}
+
+
+func _rain_layer(key: String, event: String, at: Node3D, lin: float, top_db: float, delta: float) -> void:
 	var h := int(_rain_h.get(key, 0))
 	if lin < 0.01:
 		if h != 0:
-			SoundService.loop_stop(h, 0.6)
-			_rain_h.erase(key)
+			_rain_quiet[key] = float(_rain_quiet.get(key, 0.0)) + delta
+			if float(_rain_quiet[key]) >= RAIN_RELEASE or not SoundService.is_playing(h):
+				SoundService.loop_stop(h, 0.3)
+				_rain_h.erase(key)
+				_rain_quiet.erase(key)
+			else:
+				SoundService.loop_set(h, -80.0)
 		return
+	_rain_quiet.erase(key)
 	if h == 0 or not SoundService.is_playing(h):
 		h = SoundService.loop(event, at, {"gain": -40.0})
 		_rain_h[key] = h
