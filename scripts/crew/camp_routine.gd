@@ -22,7 +22,7 @@ extends RefCounted
 ##           did today (merit ledger) - a real colleague_progress context
 ##           with exactly those knowers.
 
-const BREAK_T0 := 430.0       # daylight seconds (midday)
+const BREAK_T0 := WorkdayClock.DAYLIGHT_SECONDS * 0.48   # midday (576 s of 1,200)
 const BREAK_LEN := 55.0       # seconds once started (walking in is part of it)
 const GATHER_R := 170.0       # within this of camp: walk in for the break
 const SEATS := [-0.6, 1.0, 2.2, 3.6]   # fire seat angles (CampLayout.BURN_PIT_POS, r 3.6)

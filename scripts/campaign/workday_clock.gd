@@ -5,8 +5,10 @@ extends Node
 ## HUD countdown, warnings, scheduled hooks, wage-shift boundaries and the
 ## contract deadline. Nothing else keeps its own campaign timer.
 ##
-##   0 ........ 900 ........ 1200 -> night (bounded; t stays at 1200)
-##   daylight     dusk          night: only sleep starts the next day
+##   0 ........ 1200 ........ 1500 -> night (bounded; t stays at 1500)
+##   daylight      dusk          night: only sleep starts the next day
+## (Phase 22, owner request: daylight 15 -> 20 minutes; dusk stays 5. Saves
+## from before keep night as night: CampaignService.restore.)
 ##
 ## Advances in _physics_process (fixed step) so it is frame-rate independent;
 ## pausing the tree stops it (and burning, and everything else). Night
@@ -14,13 +16,15 @@ extends Node
 
 enum Phase { DAYLIGHT, DUSK, NIGHT }
 
-const DAYLIGHT_SECONDS := 900.0
+const DAYLIGHT_SECONDS := 1200.0
 const DUSK_SECONDS := 300.0
-const NIGHT_AT := 1200.0
+const NIGHT_AT := 1500.0
+## The pre-Phase-22 nightfall (saves without "len" were made on that day).
+const LEGACY_NIGHT_AT := 1200.0
 const CONTRACT_DAYS := 30
 ## Warnings: main return warning at dusk start, a reminder half-way through
 ## dusk, a final warning one minute before night.
-const WARNINGS := [[900.0, "dusk"], [1050.0, "dusk_reminder"], [1140.0, "dusk_final"]]
+const WARNINGS := [[DAYLIGHT_SECONDS, "dusk"], [DAYLIGHT_SECONDS + DUSK_SECONDS * 0.5, "dusk_reminder"], [NIGHT_AT - 60.0, "dusk_final"]]
 ## Lighting hour keyframes for the workday (lighting presets blend by hour).
 const HOUR_DAY_START := 6.6
 const HOUR_DUSK_START := 18.1
@@ -30,7 +34,7 @@ signal phase_changed(phase: int)
 signal warning(kind: String, seconds_to_night: float)
 signal night_started(day: int)
 signal day_started(day: int)
-signal deadline_reached()          # end of day 30's dusk (t = 1200)
+signal deadline_reached()          # end of day 30's dusk (t = NIGHT_AT)
 signal scheduled(tag: String)
 
 var day := 1
@@ -142,7 +146,16 @@ func start_next_day() -> void:
 
 
 func capture() -> Dictionary:
-	return {"day": day, "t": t, "night_exposure": night_exposure, "running": running, "deadline_enabled": deadline_enabled, "fired": _fired.keys(), "deadline_fired": _deadline_fired}
+	return {"day": day, "t": t, "len": NIGHT_AT, "night_exposure": night_exposure, "running": running, "deadline_enabled": deadline_enabled, "fired": _fired.keys(), "deadline_fired": _deadline_fired}
+
+
+## Phase 22: a clock saved on the shorter day (no "len") that was at night
+## stays night; earlier times keep their seconds (more daylight left).
+static func migrate_saved(d: Dictionary) -> Dictionary:
+	var cl := d.duplicate()
+	if not cl.has("len") and float(cl.get("t", 0.0)) >= LEGACY_NIGHT_AT - 0.01:
+		cl["t"] = NIGHT_AT
+	return cl
 
 
 func restore(d: Dictionary) -> void:

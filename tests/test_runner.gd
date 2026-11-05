@@ -1086,9 +1086,14 @@ func _t_clock() -> String:
 	var warns := []
 	c.phase_changed.connect(func(p: int) -> void: phases.append(p))
 	c.warning.connect(func(k: String, _l: float) -> void: warns.append(k))
-	if WorkdayClock.phase_at(899.9) != WorkdayClock.Phase.DAYLIGHT or WorkdayClock.phase_at(900.0) != WorkdayClock.Phase.DUSK:
+	if WorkdayClock.DAYLIGHT_SECONDS != 1200.0 or WorkdayClock.NIGHT_AT != 1500.0:
+		return "workday is not 20 + 5 minutes"
+	# Saves from the shorter day: night stays night, daytime keeps its seconds.
+	if float(WorkdayClock.migrate_saved({"t": 1200.0}).t) != WorkdayClock.NIGHT_AT or float(WorkdayClock.migrate_saved({"t": 800.0}).t) != 800.0 or float(WorkdayClock.migrate_saved({"t": 1300.0, "len": 1500.0}).t) != 1300.0:
+		return "old-save clock migration wrong"
+	if WorkdayClock.phase_at(1199.9) != WorkdayClock.Phase.DAYLIGHT or WorkdayClock.phase_at(1200.0) != WorkdayClock.Phase.DUSK:
 		return "daylight/dusk boundary wrong"
-	if WorkdayClock.phase_at(1199.9) != WorkdayClock.Phase.DUSK or WorkdayClock.phase_at(1200.0) != WorkdayClock.Phase.NIGHT:
+	if WorkdayClock.phase_at(1499.9) != WorkdayClock.Phase.DUSK or WorkdayClock.phase_at(1500.0) != WorkdayClock.Phase.NIGHT:
 		return "dusk/night boundary wrong"
 	# Frame-rate independence: same boundaries with very different steps.
 	for step in [1.0 / 23.0, 1.0 / 60.0, 1.0 / 144.0, 7.3]:
@@ -1096,7 +1101,7 @@ func _t_clock() -> String:
 		phases.clear()
 		warns.clear()
 		var guard := 0
-		while c.t < 1300.0 and guard < 200000 and c.phase() != WorkdayClock.Phase.NIGHT:
+		while c.t < WorkdayClock.NIGHT_AT + 100.0 and guard < 400000 and c.phase() != WorkdayClock.Phase.NIGHT:
 			c.advance(step)
 			guard += 1
 		if phases != [WorkdayClock.Phase.DUSK, WorkdayClock.Phase.NIGHT]:
@@ -1112,11 +1117,11 @@ func _t_clock() -> String:
 	# Deadline: exactly once, only at the end of day 30's dusk.
 	var dl := [0]
 	c.deadline_reached.connect(func() -> void: dl[0] += 1)
-	c.restore({"day": 29, "t": 1100.0})
+	c.restore({"day": 29, "t": WorkdayClock.NIGHT_AT - 100.0})
 	c.advance(500.0)
 	if dl[0] != 0:
 		return "deadline fired on day 29"
-	c.restore({"day": 30, "t": 1199.9})
+	c.restore({"day": 30, "t": WorkdayClock.NIGHT_AT - 0.1})
 	c.advance(0.05)
 	if dl[0] != 0:
 		return "deadline fired early"
@@ -1124,7 +1129,7 @@ func _t_clock() -> String:
 	c.advance(50.0)
 	if dl[0] != 1:
 		return "deadline fired %d times" % dl[0]
-	c.restore({"day": 30, "t": 1199.0, "deadline_enabled": false})
+	c.restore({"day": 30, "t": WorkdayClock.NIGHT_AT - 1.0, "deadline_enabled": false})
 	c.advance(10.0)
 	if dl[0] != 1:
 		return "legacy run hit the deadline"
@@ -1332,7 +1337,7 @@ func _t_campaign_world() -> String:
 	if err == "" and world.trees.state_of(id) != TreeService.State.DISPOSED:
 		err = "stump not removed"
 	# Save/load round trip (in memory) keeps money, clock and ownership.
-	cs.clock.restore({"day": 30, "t": 1199.99, "running": true})
+	cs.clock.restore({"day": 30, "t": WorkdayClock.NIGHT_AT - 0.01, "running": true})
 	var snap: Dictionary = JSON.parse_string(JSON.stringify(SaveService.capture_state(world)))
 	if err == "" and int(snap.economy.wallet.cash) != cs.wallet.cash:
 		err = "save missed the wallet"
@@ -1387,7 +1392,7 @@ func _t_sleep_report() -> String:
 	var cs: CampaignService = world.campaign
 	cs.start_test_route(true, false)
 	cs.wallet.grant(10000, "test", "T", "extra")
-	cs.clock.restore({"day": 4, "t": 1000.0, "running": true})
+	cs.clock.restore({"day": 4, "t": WorkdayClock.DAYLIGHT_SECONDS + 100.0, "running": true})
 	cs._begin_day_stats()
 	var cash0 := cs.wallet.cash
 	if bool(cs.can_sleep().ok) == false:
@@ -1409,7 +1414,7 @@ func _t_sleep_report() -> String:
 	if err == "" and (cs.reports.size() != 1 or cs.payroll.settle_day(4).repeat != true):
 		err = "settlement repeated"
 	# Day 30: sleeping routes to the outcome instead of a day 31.
-	cs.clock.restore({"day": 30, "t": 1000.0, "running": true})
+	cs.clock.restore({"day": 30, "t": WorkdayClock.DAYLIGHT_SECONDS + 100.0, "running": true})
 	var fin := cs.sleep()
 	await get_tree().process_frame
 	if err == "" and (not bool(fin.get("terminal", false)) or cs.clock.day != 30 or not cs.contract.is_closed()):
@@ -2472,7 +2477,7 @@ func _t_phase8_presentation() -> String:
 		if err == "" and (absf(float(a.rain) - float(b.rain)) > 1e-6 or str(a.name) != str(b.name)):
 			err = "weather not deterministic on day %d" % day
 		var any_rain := false
-		for tt in range(0, 1200, 60):
+		for tt in range(0, int(WorkdayClock.NIGHT_AT), 60):
 			if float(w.sample(day, float(tt)).rain) > 0.3:
 				any_rain = true
 		if any_rain:
@@ -2485,7 +2490,7 @@ func _t_phase8_presentation() -> String:
 	# Continuity: no instant jumps between neighbouring seconds.
 	for day in [4, 9, 17]:
 		var prev := w.sample(day, 0.0)
-		for tt in range(1, 1200, 1):
+		for tt in range(1, int(WorkdayClock.NIGHT_AT), 1):
 			var cur := w.sample(day, float(tt))
 			if err == "" and absf(float(cur.cloud) - float(prev.cloud)) > 0.05:
 				err = "weather jumps on day %d at %d s" % [day, tt]
@@ -2496,7 +2501,7 @@ func _t_phase8_presentation() -> String:
 	var target_day := -1
 	var target_t := 0.0
 	for day in range(2, 30):
-		for tt in range(60, 1140, 30):
+		for tt in range(60, int(WorkdayClock.NIGHT_AT) - 60, 30):
 			if target_day < 0 and float(w.sample(day, float(tt)).rain) > 0.3:
 				target_day = day
 				target_t = float(tt)
@@ -4668,10 +4673,10 @@ func _t_phase16_units() -> String:
 func _p16_rest_units() -> String:
 	var r := RestService.new()
 	# A normal workday, early sleep: fully restored.
-	r.step(1200.0, false, 0.5)
+	r.step(WorkdayClock.NIGHT_AT, false, 0.5)
 	var bed := r.rest
 	if bed < 55.0 or bed > 72.0:
-		return "a normal 20-minute workday cost %.1f rest (want ~30-40)" % (100.0 - bed)
+		return "a normal 25-minute workday cost %.1f rest (want ~30-40)" % (100.0 - bed)
 	var f := r.forecast()
 	r.on_sleep(1)
 	if not _close(r.rest, 100.0, 0.01) or not _close(float(f.morning), 100.0, 0.01):
@@ -4679,7 +4684,7 @@ func _p16_rest_units() -> String:
 	if not r.on_sleep(1).is_empty() or not _close(r.rest, 100.0):
 		return "a second sleep for the same night applied again"
 	# Very late (8+ min after nightfall): quality floor, capped morning.
-	r.step(1200.0, false, 0.5)
+	r.step(WorkdayClock.NIGHT_AT, false, 0.5)
 	r.step(9.0 * 60.0, true, 0.0)
 	var q := RestService.quality(r.late_s / 60.0)
 	var late := r.on_sleep(2)
@@ -4687,14 +4692,14 @@ func _p16_rest_units() -> String:
 		return "very late night: Q %.2f morning %.1f" % [q, float(late.morning)]
 	# Repeated late nights compound, then early nights recover in <= 2.
 	var low := r.rest
-	r.step(1200.0, false, 0.5)
+	r.step(WorkdayClock.NIGHT_AT, false, 0.5)
 	r.step(9.0 * 60.0, true, 0.0)
 	r.on_sleep(3)
 	if r.rest > low:
 		return "a second late night did not compound (%.1f -> %.1f)" % [low, r.rest]
 	var nights := 0
 	while r.rest < 99.0 and nights < 4:
-		r.step(1200.0, false, 0.5)
+		r.step(WorkdayClock.NIGHT_AT, false, 0.5)
 		r.on_sleep(4 + nights)
 		nights += 1
 	if nights > 2 or r.rest < 99.0:
@@ -4713,7 +4718,7 @@ func _p16_rest_units() -> String:
 		return "well rested still penalised"
 	# Interruption hook: bounded, applied once with the night.
 	var ri := RestService.new()
-	ri.step(1200.0, false, 0.5)
+	ri.step(WorkdayClock.NIGHT_AT, false, 0.5)
 	ri.interrupt(1, 40.0)
 	ri.interrupt(1, 40.0)
 	var ni := ri.on_sleep(1)
@@ -6033,7 +6038,7 @@ func _p20_checks(world: IslandWorld) -> String:
 	cs.clock.t = 100.0
 	nr.on_morning()
 	var marks_morning := get_tree().get_nodes_in_group("night_marks").size()
-	cs.clock.t = 500.0
+	cs.clock.t = NightRecorder.MARK_UNTIL_T + 50.0     # past midday
 	nr.refresh_marks()
 	await get_tree().process_frame
 	var marks_noon := get_tree().get_nodes_in_group("night_marks").filter(func(n: Node) -> bool: return not n.is_queued_for_deletion()).size()

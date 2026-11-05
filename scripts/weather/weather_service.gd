@@ -128,8 +128,12 @@ func plan_for_day(day: int) -> Dictionary:
 			chosen = k
 			break
 	var segs: Array = []
+	# Plans are authored on the 20-minute contract day; Phase 22 days are
+	# 25 minutes, so contract days stretch them (afternoon stays afternoon).
+	# Hunt days run on hunt time and keep the authored times.
+	var sc := WorkdayClock.NIGHT_AT / WorkdayClock.LEGACY_NIGHT_AT if day <= WorkdayClock.CONTRACT_DAYS else 1.0
 	for seg in PLANS[chosen].s:
-		var at: float = float(seg[0])
+		var at: float = float(seg[0]) * sc
 		if at > 0.0:
 			at = maxf(at + r.randf_range(-60.0, 60.0), 30.0)
 		segs.append([at, str(seg[1])])

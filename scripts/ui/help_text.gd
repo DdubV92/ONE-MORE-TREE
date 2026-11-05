@@ -37,7 +37,7 @@ static func contract() -> String:
 
 static func night() -> String:
 	return "\n".join([
-		"Each workday is 15 minutes of daylight and 5 minutes of dusk. Dusk is your return warning: you get messages at the start of dusk, halfway, and one minute before night.",
+		"Each workday is 20 minutes of daylight and 5 minutes of dusk. Dusk is your return warning: you get messages at the start of dusk, halfway, and one minute before night.",
 		"Your crew and the dog head for shelter at dusk. Workers who think you are ignoring the time may leave in a truck without you.",
 		"At night during the contract, the camper is always safe, even with the door open. An occupied cabin is safe, and so are the pools of the working camp lamps. Moonlight, a flashlight or a screen's glow are NOT protection.",
 		"Staying awake makes the night more uneasy. Being outside a safe place at night can end the attempt (you can reload the morning checkpoint).",

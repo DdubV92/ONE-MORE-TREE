@@ -117,7 +117,7 @@ func setup() -> void:
 ## Phase 12: set when a loaded save names a different frozen island.
 var island_mismatch := false
 
-## Fresh timed campaign (the rules are fixed: 30 days, 15 + 5 minutes).
+## Fresh timed campaign (30 days of 20 + 5 minutes; Phase 22 added 5 min).
 func new_campaign() -> void:
 	if Game.feed:
 		Game.feed.restore({})      # Phase 17: a new contract starts with an unread internet
@@ -526,7 +526,11 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 		active = false
 		rules_choice_needed.emit()
 		return true
-	clock.restore(campaign.get("clock", {}))
+	# Phase 22: a save from the shorter (15-minute daylight) day that was made
+	# at night stays night; it would otherwise wake up in the new, longer
+	# dusk. Earlier times keep their second count (a daytime save simply has
+	# more daylight left).
+	clock.restore(WorkdayClock.migrate_saved(campaign.get("clock", {})))
 	clock.running = not contract.is_closed()
 	clock.deadline_enabled = not legacy
 	day_stats = (campaign.get("day_stats", {}) as Dictionary).duplicate()

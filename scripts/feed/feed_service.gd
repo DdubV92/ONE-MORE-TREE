@@ -113,7 +113,7 @@ func _ready() -> void:
 # ----------------------------------------------------------- the clock
 
 ## Where the campaign is now, as (day, seconds into the publishing day).
-## Contract nights are bounded at t = 1200, so night progress is the
+## Contract nights are bounded at nightfall, so night progress is the
 ## boss's awake time at night (WorkdayClock.night_exposure).
 func now_key() -> float:
 	var cs: CampaignService = Game.campaign
@@ -123,7 +123,12 @@ func now_key() -> float:
 	if cs == null:
 		return 0.0
 	var c := cs.clock
-	var s := c.t
+	# The publishing day keeps its authored shape (daylight 0-900, dusk
+	# 900-1200, night 1200+); the workday maps onto it proportionally
+	# (Phase 22: 20 minutes of daylight). Hunt days use hunt time above.
+	var s := c.t * 900.0 / WorkdayClock.DAYLIGHT_SECONDS
+	if c.t >= WorkdayClock.DAYLIGHT_SECONDS:
+		s = 900.0 + (c.t - WorkdayClock.DAYLIGHT_SECONDS) * 300.0 / WorkdayClock.DUSK_SECONDS
 	if c.phase() == WorkdayClock.Phase.NIGHT:
 		s = 1200.0 + minf(c.night_exposure, 479.0)
 	return float(c.day) * 10000.0 + s

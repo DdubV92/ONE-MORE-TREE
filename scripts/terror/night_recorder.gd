@@ -24,7 +24,7 @@ extends Node
 const DATA := "res://data/terror/recordings.json"
 const KEEP := 12             # retained clips (capacity policy)
 const P_NIGHT := 0.35        # chance a night produces an incident
-const MARK_UNTIL_T := 450.0  # cosmetic marks are gone by midday
+const MARK_UNTIL_T := WorkdayClock.DAYLIGHT_SECONDS * 0.5  # cosmetic marks are gone by midday
 
 var scenarios: Array = []
 var by_id := {}

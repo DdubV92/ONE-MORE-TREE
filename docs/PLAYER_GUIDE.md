@@ -15,13 +15,13 @@ A short guide in the top-right walks you through real work: walk, read the contr
 
 - $100 per original tree, paid in shares as each log is accepted at the camp yard (the receiving cradle by the fire, or a log deck outside the north-east fence). If there's no room, the delivery is refused and not paid until there is. Felling alone pays nothing.
 - The fire burns only what's on its loading pile. Carry paid logs from the cradle or decks to the fire, or put a worker on **Yard** duty. The handcart by the fire moves 4 logs at once, and logs too heavy to lift can be dragged.
-- Each active employee costs $300 a day, settled when you sleep. Unpaid wages stay owed from their day; one more unpaid workday and that worker leaves. Paying part doesn't reset that.
-- Example: two workers cost $600 a day. Five whole trees delivered that day earns $500, so you are $100 short on wages. A worker pays for themselves only by delivering more than three trees' worth of logs a day.
+- Each worker has their own daily rate, at least $100, set in the Payroll app on the camper computer, plus any bonuses; it is settled when you sleep. Pay below what a worker feels is fair makes them unhappy, and they may quit (always with at least one day's "on the verge" warning). Unpaid wages stay owed from their day; one more unpaid workday and that worker leaves. Paying part doesn't reset that.
+- Example: two workers on $100 cost $200 a day. Two whole trees delivered that day earn that back ($100 a tree).
 - Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate. Hard-working: ×1.25. Stronger: carries more by hand. Timid: frightens sooner and heads home earlier.
 
 ## Nights (during the contract)
 
-- Dusk lasts five minutes. Warnings come at its start, halfway and one minute before night.
+- A workday is 20 minutes of daylight and 5 minutes of dusk. Warnings come at the start of dusk, halfway and one minute before night.
 - **Safe at night:** the camper (always, even with the door open), an occupied cabin, and the pools of the working camp lamps. Moonlight, flashlights and screens don't count.
 - Night only ends when you sleep. Waiting doesn't bring morning. Staying out at night can end the attempt; you can reload that morning's checkpoint.
 

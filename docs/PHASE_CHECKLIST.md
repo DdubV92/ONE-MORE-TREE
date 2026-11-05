@@ -2,6 +2,18 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 22: Longer workdays (owner request)
+
+The contract stays at 30 days; each workday gains 5 real minutes of daylight (20 + 5 minutes of dusk = 25 minutes). The owner plans to extend the contract to 100 days with more content, and to shorten the hunt to 3 days, later.
+
+| Item | Status | Notes |
+|---|---|---|
+| Daylight 900 → 1,200 s; dusk 300 s; night at 1,500 s; warnings at dusk start, halfway, one minute before night | ✅ | `WorkdayClock` constants; everything else reads them |
+| Things timed within the day follow: midday break, "marks gone by midday", weather plans (stretched ×1.25 on contract days), internet publishing (mapped proportionally), lighting, supplier hours, survey ship window | ✅ | Hunt days keep their own 15-minute daylight |
+| A full day tires you as before (per-minute drain × 20/25); hunt drain unchanged | ✅ | |
+| Older saves: a save made at night stays night; daytime saves keep their seconds (more daylight left) | ✅ | `WorkdayClock.migrate_saved`, tested |
+| Contract feasibility (B1) | ❌ | About +33% crew work per day; still far from 10,000 trees |
+
 ## Phase 21: Payroll, pay mood and quitting (owner request)
 
 Notes: [PHASE21_NOTES.md](PHASE21_NOTES.md).

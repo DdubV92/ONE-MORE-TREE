@@ -5,10 +5,11 @@ extends Node
 ##
 ## Awake drain (simulation time; a true pause stops it, live computer/TV
 ## viewing does not):
-##   workday (daylight + dusk): DAY_BASE 1.5/min + up to EFFORT 0.6/min
-##     while exerting (chopping, carrying, sprinting) -> a normal 20-minute
-##     workday costs ~30-40;
-##   ordinary night (after workday second 1,200; the night clock is
+##   workday (daylight + dusk): DAY_BASE 1.2/min + up to EFFORT 0.48/min
+##     while exerting (chopping, carrying, sprinting) -> a normal 25-minute
+##     workday costs ~30-40 (Phase 22 scaled the per-minute drain by 20/25
+##     when the day grew, so a full day tires you exactly as before);
+##   ordinary night (after nightfall, workday second 1,500; the night clock is
 ##     bounded but awake time keeps counting): NIGHT 5/min instead.
 ## Sleep (the bed, once per day, settled in the same locked transition as
 ## wages): Q = max(0.25, 1 - 0.75 x late_minutes / 8)
@@ -25,8 +26,11 @@ extends Node
 ## no immunity, nothing skipped).
 
 const VERSION := 1
-const DAY_BASE := 1.5
-const EFFORT := 0.6
+const DAY_BASE := 1.2
+const EFFORT := 0.48
+## Hunt days kept their 15-minute daylight, so they keep the original rates.
+const HUNT_DAY_BASE := 1.5
+const HUNT_EFFORT := 0.6
 const NIGHT := 5.0
 const LATE_FULL_MIN := 8.0
 const Q_FLOOR := 0.25
@@ -163,7 +167,9 @@ func step(dt: float, night: bool, effort01: float, hunting := false, hunt_restin
 			late_s += dt
 		rest -= NIGHT * dt / 60.0
 	else:
-		rest -= (DAY_BASE + EFFORT * clampf(effort01, 0.0, 1.0)) * dt / 60.0
+		var base := HUNT_DAY_BASE if hunting else DAY_BASE
+		var eff := HUNT_EFFORT if hunting else EFFORT
+		rest -= (base + eff * clampf(effort01, 0.0, 1.0)) * dt / 60.0
 	rest = clampf(rest, 0.0, 100.0)
 	_after_change()
 

@@ -1,10 +1,17 @@
-# ONE MORE TREE LATEST BUILD PHASE 21 (payroll and pay mood)
+# ONE MORE TREE LATEST BUILD PHASE 22 (longer workdays)
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 21 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 22 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
 
-## New in Phase 21 (your payroll request)
+## New in Phase 22
+
+- **Longer workdays:** 20 minutes of daylight (was 15) plus 5 minutes of dusk. The contract is still 30 days.
+- Everything timed within the day moves with it: the midday break, the weather (afternoon showers stay in the afternoon), the internet's posting times, the supplier's hours and the lighting.
+- A full day doesn't tire you more than before. The hunt nights are unchanged.
+- Older saves: a save made at night stays night; a daytime save simply has more daylight left.
+
+## Phase 21 (previous build): your payroll request
 
 - **Cheaper, negotiated wages.** Each worker has their own daily rate, from a **$100 minimum** (was a flat $300). New campaigns start everyone at $100; older saves keep $300 so nobody's pay is cut.
 - **Payroll app** on the camper computer (sit at the desk → Payroll):

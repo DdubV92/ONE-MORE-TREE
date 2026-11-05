@@ -4,7 +4,7 @@ extends VBoxContainer
 ## in an isolated in-memory session: Preview mode never writes a save, the
 ## real campaign file is untouched, and the island seed/tree count cannot
 ## change. Time acceleration exists only here; the campaign always runs the
-## exact 15 + 5 minute day.
+## exact 20 + 5 minute day.
 
 var hud: Node
 
@@ -44,19 +44,19 @@ func setup(h: Node) -> void:
 				hud.tour_panel.visible = false)
 	b.call("Day 30 dusk", func() -> void:
 		if _need(c):
-			c.clock.restore({"day": 30, "t": 1140.0, "running": true})
+			c.clock.restore({"day": 30, "t": WorkdayClock.NIGHT_AT - 60.0, "running": true})
 			_msg("Day 30, one minute before the contract closes"))
 	b.call("Prepared win", func() -> void:
 		if _need(c):
 			# Development fixture: the contract scope is shrunk to the trees
 			# already cleared, so the deadline evaluates as fulfilled.
 			c.contract.scope_override = maxi(c.contract.counts().felled, 0)
-			c.clock.restore({"day": 30, "t": 1195.0, "running": true})
+			c.clock.restore({"day": 30, "t": WorkdayClock.NIGHT_AT - 5.0, "running": true})
 			_msg("Prepared success: contract scope limited to the trees already cleared (fixture). Wait 5 s."))
 	b.call("Prepared loss", func() -> void:
 		if _need(c):
 			c.contract.scope_override = -1
-			c.clock.restore({"day": 30, "t": 1195.0, "running": true})
+			c.clock.restore({"day": 30, "t": WorkdayClock.NIGHT_AT - 5.0, "running": true})
 			_msg("Prepared failure: day 30, 5 s before the deadline with the island standing."))
 	b.call("Unpaid wages", func() -> void:
 		if _need(c):

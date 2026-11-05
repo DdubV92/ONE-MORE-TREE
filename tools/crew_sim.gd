@@ -6,7 +6,7 @@ extends Node
 ## versus productive time, stuck events, and whether everyone reached a bed
 ## before night.
 ##   godot --headless --fixed-fps 60 res://tools/crew_sim.tscn
-##   env CREW=5 SHIFT_SECONDS=1200
+##   env CREW=5 SHIFT_SECONDS=1500
 
 var world: IslandWorld
 
@@ -42,7 +42,7 @@ func _ready() -> void:
 		for e in cs.payroll.employees:
 			var item := cs.equipment.add_item("chainsaw" if tool_env == "saw" else "axe", "saw" if tool_env == "saw" else tool_env, str(e.id), "sim")
 			cs.equipment.equip(str(e.id), str(item.id))
-	var shift := float(OS.get_environment("SHIFT_SECONDS")) if OS.has_environment("SHIFT_SECONDS") else 1210.0
+	var shift := float(OS.get_environment("SHIFT_SECONDS")) if OS.has_environment("SHIFT_SECONDS") else WorkdayClock.NIGHT_AT + 10.0
 	var t := 0.0
 	var next_report := 0.0
 	var cash0 := cs.wallet.cash

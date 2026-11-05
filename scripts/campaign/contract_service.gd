@@ -2,7 +2,7 @@ class_name ContractService
 extends Node
 ## The thirty-day clearance contract (Phase 3).
 ##
-## Close: the END of day 30's dusk (workday counter reaches 1,200 s). Sleep
+## Close: the END of day 30's dusk (workday counter reaches nightfall). Sleep
 ## is not required; refusing to sleep cannot keep the contract open.
 ## Fulfilled when, from the stable manifest (not a scene count):
 ##   - zero original standing trees (a notched tree still stands),
