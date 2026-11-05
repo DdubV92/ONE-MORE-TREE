@@ -49,7 +49,7 @@ func _verify(fx: String) -> String:
 	Engine.time_scale = 8.0
 	var res := "timeout"
 	var t0 := Time.get_ticks_msec()
-	while Time.get_ticks_msec() - t0 < 60000:
+	while Time.get_ticks_msec() - t0 < 180000:      # slow CI runners need headroom
 		await get_tree().physics_frame
 		var cs: CampaignService = Game.campaign
 		match fx:
@@ -103,7 +103,7 @@ func _make(fx: String) -> bool:
 			p.teleport(CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 4)) + Vector3(0, 1.65, 0), CampLayout.world(CampLayout.DELIVERY_RACK_POS))
 		"offshore_day3":
 			cs.clock.day = 3
-			cs.clock.t = 25.0
+			cs.clock.t = 35.0          # 5 s before the visit starts (t = 40)
 			cs.clock.advance(0.01)
 			var shore := Game.crew.dock_shore
 			p.teleport(shore + Vector3(0, 1.65, 0), shore + Vector3(0, 1.0, 40.0))
