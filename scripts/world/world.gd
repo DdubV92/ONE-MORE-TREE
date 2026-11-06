@@ -371,7 +371,18 @@ func viewpoints() -> Dictionary:
 func teleport_to(name: String) -> void:
 	# Phase 24: the reference cove dressing exists only when visited.
 	if name.begins_with("ref_") and World.island_revision == "r2":
-		ReferenceCove.ensure(self).set_comparison(name == "ref_match")
+		var rc := ReferenceCove.ensure(self)
+		if name == "ref_match":
+			# The player stands at the first-person start; the fixed
+			# comparison camera takes over until they move.
+			var fp: Dictionary = Viewpoints.all().get("ref_fp", {})
+			if player and player.has_method("teleport") and not fp.is_empty():
+				player.teleport(fp.pos, fp.look)
+			if environment and Game.is_preview():
+				environment.apply_named("golden")
+			rc.enter_match.call_deferred()
+			return
+		rc.set_comparison(false)
 	var vp: Dictionary = Viewpoints.all().get(name, Viewpoints.all()["camp"])
 	if vp.has("lighting") and environment and Game.is_preview():
 		environment.apply_named(vp.lighting)

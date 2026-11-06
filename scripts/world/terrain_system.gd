@@ -99,6 +99,29 @@ func _spawn_chunks() -> void:
 				_add_collision(collision_root, i0, j0)
 
 
+## Re-reads World.height into the collision shapes covering grid cells
+## [i_min..i_max] x [j_min..j_max]. Used by in-memory fixtures (the Phase 24
+## reference cove) that reshape terrain locally; the frozen data is untouched.
+func refresh_collision(i_min: int, j_min: int, i_max: int, j_max: int) -> void:
+	World.height_texture.update(Image.create_from_data(World.W, World.H, false, Image.FORMAT_RF, World.height.to_byte_array()))
+	var body := get_node_or_null("TerrainCollision") as StaticBody3D
+	if body == null:
+		return
+	var half := chunk_cells * 0.5 * World.cs
+	var c0 := Vector2i(maxi(i_min, 0) / chunk_cells, maxi(j_min, 0) / chunk_cells)
+	var c1 := Vector2i(mini(i_max, World.W - 1) / chunk_cells, mini(j_max, World.H - 1) / chunk_cells)
+	for cj in range(c0.y, c1.y + 1):
+		for ci in range(c0.x, c1.x + 1):
+			var i0 := ci * chunk_cells
+			var j0 := cj * chunk_cells
+			var centre := Vector3(World.origin.x + i0 * World.cs + half, 0.0, World.origin.y + j0 * World.cs + half)
+			for c in body.get_children():
+				if c is CollisionShape3D and (c as CollisionShape3D).position.is_equal_approx(centre):
+					c.queue_free()
+					collision_shapes -= 1
+			_add_collision(body, i0, j0)
+
+
 func _add_collision(body: StaticBody3D, i0: int, j0: int) -> void:
 	# HeightMapShape3D samples are 1 unit apart: scale the shape node by the
 	# cell size (uniform) and store heights divided by it.

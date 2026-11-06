@@ -141,6 +141,9 @@ const P_WORKER := Vector2(0.55, 7.1)
 const P_DOG := Vector2(-1.3, 6.3)
 const P_TERROR := Vector2(1.2, 26.0)
 const P_TRUNK := Vector2(-3.9, 0.2)
+## Second foreground conifer: frames the left edge of Reference Match and
+## stands beside the First-Person Shoreline start.
+const P_TRUNK2 := Vector2(0.8, -3.0)
 
 var worker: HumanCharacter
 var dog: DogCharacter
@@ -178,6 +181,7 @@ func _node_at(x: float, z: float, name: String, up := 0.0) -> Node3D:
 
 
 func _build_dressed() -> void:
+	_paint_beach()
 	_build_camper()
 	_build_woodpile()
 	_build_stump_and_fire()
@@ -195,7 +199,7 @@ func _build_camper() -> void:
 	var paint := ShaderMaterial.new()
 	paint.shader = load("res://shaders/worn_paint.gdshader")
 	paint.set_shader_parameter("rust_line", -0.55)
-	paint.set_shader_parameter("wear", 0.25)
+	paint.set_shader_parameter("wear", 0.12)
 	paint.set_shader_parameter("rust", Color(0.42, 0.24, 0.14))
 	var roof_paint := ShaderMaterial.new()
 	roof_paint.shader = paint.shader
@@ -378,7 +382,8 @@ func _build_stump_and_fire() -> void:
 # ---- split-rail fence between the clearing and the beach
 func _build_fence() -> void:
 	var wood := _tex_mat("weathered_planks", Color(0.66, 0.52, 0.4), 2.5)
-	var runs := [[Vector2(-4.2, 3.6), Vector2(4.6, 4.6)], [Vector2(4.6, 4.6), Vector2(6.3, 10.8)]]
+	# Front run has a walk-through gap (camp path); beach-side run closes it.
+	var runs := [[Vector2(-4.2, 3.6), Vector2(-0.9, 3.95)], [Vector2(1.3, 4.2), Vector2(4.6, 4.6)], [Vector2(4.6, 4.6), Vector2(6.3, 10.8)]]
 	for run in runs:
 		var a: Vector2 = run[0]
 		var b: Vector2 = run[1]
@@ -400,20 +405,24 @@ func _build_fence() -> void:
 
 # ---- near-left foreground: thick conifer trunk, ferns, mossy rocks
 func _build_foreground() -> void:
-	var trunk := _node_at(P_TRUNK.x, P_TRUNK.y, "ForegroundConifer")
 	var bark := _tex_mat("pine_bark", Color(0.92, 0.66, 0.5), 0.6)
-	BuildKit.cylinder(trunk, 0.62, 14.0, Vector3(0, 7.0, 0), bark, true, 16, 0.42)
 	# A few low drooping boughs into frame (cards from the tree builder look).
 	var needle := StandardMaterial3D.new()
 	needle.albedo_color = Color(0.2, 0.3, 0.14)
 	needle.roughness = 0.9
-	for k in 5:
-		var a := 1.2 + k * 0.5
-		var bough := BuildKit.box(trunk, Vector3(2.6, 0.08, 0.9), Vector3(cos(a) * 1.4, 7.5 + k * 1.2, sin(a) * 1.4), needle, false, -a)
-		bough.rotation.z = -0.25
+	var trunks := [[P_TRUNK, 0.62, 14.0, 1.2], [P_TRUNK2, 0.7, 16.0, 2.6]]
+	for ti in trunks.size():
+		var td: Array = trunks[ti]
+		var tp: Vector2 = td[0]
+		var trunk := _node_at(tp.x, tp.y, "ForegroundConifer" if ti == 0 else "ForegroundConifer%d" % (ti + 1))
+		BuildKit.cylinder(trunk, float(td[1]), float(td[2]), Vector3(0, float(td[2]) * 0.5, 0), bark, true, 16, 0.42)
+		for k in 5:
+			var a := float(td[3]) + k * 0.5
+			var bough := BuildKit.box(trunk, Vector3(2.6, 0.08, 0.9), Vector3(cos(a) * 1.4, 7.5 + k * 1.2, sin(a) * 1.4), needle, false, -a)
+			bough.rotation.z = -0.25
 	var rocks := RockBuilder.build_variants(4)
 	var rmat := RockBuilder.material()
-	var stones := [[-2.2, 1.4, 1.3, 0.4], [0.6, 0.9, 0.95, -0.7], [-3.0, 3.4, 0.8, 1.6], [5.6, 2.6, 0.75, 0.2], [7.2, 6.2, 1.1, 2.4], [6.6, 0.8, 0.6, 1.0], [3.6, 1.6, 0.5, 2.0]]
+	var stones := [[-2.2, 1.4, 1.3, 0.4], [0.6, 0.9, 0.95, -0.7], [-3.0, 3.4, 0.8, 1.6], [5.6, 2.6, 0.75, 0.2], [7.2, 6.2, 1.1, 2.4], [6.6, 0.8, 0.6, 1.0], [3.6, 1.6, 0.5, 2.0], [4.2, 2.2, 1.4, 0.3], [6.0, 3.2, 0.9, 1.2], [2.6, 3.4, 0.7, 2.2], [2.4, 0.9, 1.5, 0.9], [3.8, 1.9, 1.0, 2.8]]
 	for i in stones.size():
 		var sd: Array = stones[i]
 		var r := MeshInstance3D.new()
@@ -426,6 +435,10 @@ func _build_foreground() -> void:
 		r.rotation.y = float(sd[3])
 	# Layered ferns, densest in the near-left corner and along the fence.
 	var ferns := [[-2.9, 1.6, 1.6], [-1.2, 2.0, 1.3], [-2.4, 3.0, 1.4], [-3.6, 2.2, 1.5], [0.0, 1.8, 1.1], [-4.2, 4.0, 1.2], [-1.6, 3.4, 1.0], [1.4, 3.0, 0.9], [3.4, 3.6, 0.9], [5.2, 4.0, 1.0], [-5.6, 5.4, 1.1], [-7.4, 8.4, 1.3], [-0.4, 3.2, 0.8], [2.4, 2.4, 0.8], [-3.2, 5.0, 0.9], [4.4, 2.2, 0.7]]
+	# Big fronds crowding the near-left corner (the painting's foreground).
+	ferns.append_array([[-1.4, 0.4, 2.3], [-2.6, 0.2, 2.6], [-0.2, 0.6, 1.9], [-3.4, 1.0, 2.2], [0.9, 0.3, 1.6]])
+	# ...and the Reference Match corner by the second conifer.
+	ferns.append_array([[1.4, 0.8, 2.4], [2.9, 1.5, 2.0], [1.0, 2.2, 1.8], [3.4, 2.7, 1.5], [4.4, 1.2, 1.6], [2.2, 3.0, 1.3], [0.4, 1.4, 2.1], [5.4, 2.4, 1.2]])
 	for i in ferns.size():
 		var fd: Array = ferns[i]
 		var fp := BuildKit.prop(self, "fern_02", at(fd[0], fd[1]) - global_position, float(i) * 1.7, float(fd[2]))
@@ -551,3 +564,247 @@ static func _terror_texture(eyes_only := false) -> ImageTexture:
 func set_comparison(on: bool) -> void:
 	if terror:
 		terror.visible = on
+
+
+# ------------------------------------------------------------- modes
+## Reference Match: a fixed comparison camera with the scripted figure.
+## Any movement key or click returns control to the first-person player.
+## In play, the figure belongs to the encounter director: the fixture asks
+## for a family T01 ("The Tall Woman Beyond the Trees") reservation when the
+## player looks toward the treeline, and shows it only if the director
+## grants one (its own budget, quiet gaps, cooldowns and nightly limits).
+const TERROR_FAMILY := 0
+const GLIMPSE_S := 4.5
+var match_cam: Camera3D
+var _glimpse_left := 0.0
+var _glimpse_try := 6.0
+var glimpses := 0
+
+
+func enter_match() -> void:
+	var vp: Dictionary = Viewpoints.all().get("ref_match", {})
+	if vp.is_empty():
+		return
+	if match_cam == null:
+		match_cam = Camera3D.new()
+		match_cam.name = "ReferenceMatchCamera"
+		match_cam.fov = 70.0
+		match_cam.far = 6000.0
+		add_child(match_cam)
+	match_cam.fov = float(vp.get("fov", 70.0))
+	match_cam.global_position = vp.pos
+	match_cam.look_at(vp.look)
+	match_cam.make_current()
+	set_comparison(true)
+
+
+func exit_match() -> void:
+	if match_cam and match_cam.current:
+		match_cam.current = false
+		var pc: Camera3D = Game.player.get("camera") if Game.player else null
+		if pc:
+			pc.make_current()
+	set_comparison(false)
+
+
+func in_match() -> bool:
+	return match_cam != null and match_cam.current
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not in_match():
+		return
+	var leave: bool = event is InputEventMouseButton and (event as InputEventMouseButton).pressed
+	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "ui_cancel"]:
+		if InputMap.has_action(a) and event.is_action_pressed(a):
+			leave = true
+	if leave:
+		exit_match()
+		get_viewport().set_input_as_handled()
+
+
+func _process(delta: float) -> void:
+	if in_match() or terror == null:
+		return
+	if _glimpse_left > 0.0:
+		_glimpse_left -= delta
+		if _glimpse_left <= 0.0:
+			terror.visible = false
+			if Game.director:
+				Game.director.release("REF-COVE", 900.0)
+		return
+	_glimpse_try -= delta
+	if _glimpse_try > 0.0:
+		return
+	_glimpse_try = 8.0
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or Game.director == null:
+		return
+	var to_t := terror.global_position - cam.global_position
+	var d := to_t.length()
+	if d < 10.0 or d > 45.0 or (-cam.global_basis.z).dot(to_t / d) < 0.82:
+		return
+	if Game.director.reserve("REF-COVE", TERROR_FAMILY, "treeline_glimpse"):
+		terror.visible = true
+		_glimpse_left = GLIMPSE_S
+		glimpses += 1
+
+
+# ------------------------------------------------------------- beach
+## The cove's real shore is a rocky slope. For the reference composition the
+## fixture paints the terrain's beach channel over the slope down to the
+## waterline - in memory only, never in the frozen world data - so the same
+## terrain and ocean shaders produce sand, wet copper sand and live swash
+## (waves running up and back) here. Restored when the fixture leaves.
+var _mask_backup := {}       # byte index -> original value
+var _height_backup := {}     # height index -> original value
+## Waterline of the fixture beach in frame x, as a function of frame z: the
+## shore curves away to the right into the distance, like the painting.
+static func beach_line(fz: float) -> float:
+	return 19.5 + clampf((fz - 6.0) * 0.14, -1.2, 6.5)
+
+
+## The real cove drops to the sea as a 1:2 rock bank. The painting has a sand
+## beach and a wide turquoise shallow shelf, so the fixture *fills* the slope
+## in memory (never lowers it, so trees, undergrowth and rocks stay grounded;
+## rocks poke out of the sand): a gentle dry beach, a wet swash zone and a
+## shallow shelf that blends back into the real seabed. Terrain rendering,
+## collision, water depth, swash and surf all read the same heights, so the
+## beach is real to walk on. Restored when the fixture leaves.
+func _raise_beach() -> void:
+	var fr := frame()
+	var box := _grid_box(fr, 6.0, 46.0, -26.0, 64.0)
+	var hg: PackedFloat32Array = World.height
+	var sea := World.sea_level
+	for j in range(box[1], box[3] + 1):
+		for i in range(box[0], box[2] + 1):
+			var wp := Vector3(World.origin.x + i * World.cs, 0.0, World.origin.y + j * World.cs)
+			var d := wp - (fr.o as Vector3)
+			var fx := d.dot(fr.r as Vector3)
+			var fz := d.dot(fr.f as Vector3)
+			var xl := beach_line(fz)
+			var dx := fx - xl                       # + seaward
+			# Dry beach 1:14 above the waterline, wet slope 1:9 below, then a
+			# shallow shelf at -1.7 m that fades into the real seabed.
+			var target := sea + (-dx / 14.0 if dx < 0.0 else maxf(-dx / 9.0, -1.7))
+			target = minf(target, sea + 1.9)
+			var w := (1.0 - smoothstep(xl + 13.0, xl + 22.0, fx)) * smoothstep(-24.0, -12.0, fz) * (1.0 - smoothstep(50.0, 62.0, fz)) * smoothstep(7.0, 10.0, fx)
+			var k := j * World.W + i
+			var h0 := hg[k]
+			var h1 := lerpf(h0, maxf(h0, target), w)
+			if h1 > h0 + 0.001:
+				if not _height_backup.has(k):
+					_height_backup[k] = h0
+				hg[k] = h1
+	World.height = hg
+	var world := get_parent()
+	var terrain: TerrainSystem = world.get("terrain")
+	if terrain:
+		terrain.refresh_collision(box[0], box[1], box[2], box[3])
+	else:
+		World.height_texture.update(Image.create_from_data(World.W, World.H, false, Image.FORMAT_RF, World.height.to_byte_array()))
+	var water: WaterSystem = world.get("water")
+	if water and water.surf:
+		water.surf.rebuild(water)
+	print("ReferenceCove beach: %d height samples filled" % _height_backup.size())
+
+
+## Grid index box [i0, j0, i1, j1] covering a frame-space rectangle.
+static func _grid_box(fr: Dictionary, fx0: float, fx1: float, fz0: float, fz1: float) -> Array:
+	var x0 := INF
+	var x1 := -INF
+	var z0 := INF
+	var z1 := -INF
+	for c in [[fx0, fz0], [fx1, fz0], [fx0, fz1], [fx1, fz1]]:
+		var p: Vector3 = (fr.o as Vector3) + (fr.r as Vector3) * float(c[0]) + (fr.f as Vector3) * float(c[1])
+		x0 = minf(x0, p.x)
+		x1 = maxf(x1, p.x)
+		z0 = minf(z0, p.z)
+		z1 = maxf(z1, p.z)
+	return [maxi(int(floor((x0 - World.origin.x) / World.cs)), 0), maxi(int(floor((z0 - World.origin.y) / World.cs)), 0),
+		mini(int(ceil((x1 - World.origin.x) / World.cs)), World.W - 1), mini(int(ceil((z1 - World.origin.y) / World.cs)), World.H - 1)]
+
+
+func _paint_beach() -> void:
+	_raise_beach()
+	var fr := frame()
+	var x0 := INF
+	var x1 := -INF
+	var z0 := INF
+	var z1 := -INF
+	for c in [[8.0, -16.0], [40.0, -16.0], [8.0, 56.0], [40.0, 56.0]]:
+		var p: Vector3 = fr.o + fr.r * float(c[0]) + fr.f * float(c[1])
+		x0 = minf(x0, p.x)
+		x1 = maxf(x1, p.x)
+		z0 = minf(z0, p.z)
+		z1 = maxf(z1, p.z)
+	var o2: Vector3 = fr.o
+	var r3: Vector3 = fr.r
+	var f3: Vector3 = fr.f
+	var i0 := int(floor((x0 - World.origin.x) / World.cs))
+	var i1 := int(ceil((x1 - World.origin.x) / World.cs))
+	var j0 := int(floor((z0 - World.origin.y) / World.cs))
+	var j1 := int(ceil((z1 - World.origin.y) / World.cs))
+	# Packed arrays are values: edit one local copy, assign back once.
+	var m: PackedByteArray = World.masks
+	for j in range(maxi(j0, 0), mini(j1, World.H - 1) + 1):
+		for i in range(maxi(i0, 0), mini(i1, World.W - 1) + 1):
+			var wp := Vector3(World.origin.x + i * World.cs, 0.0, World.origin.y + j * World.cs)
+			var d := wp - o2
+			var fx := d.dot(r3)
+			var fz := d.dot(f3)
+			var xl := beach_line(fz)
+			var w := smoothstep(9.0, 12.0, fx) * (1.0 - smoothstep(xl + 9.0, xl + 15.0, fx)) * smoothstep(-15.0, -8.0, fz) * (1.0 - smoothstep(46.0, 55.0, fz))
+			if w <= 0.01:
+				continue
+			var t := (j * World.W + i) * 4
+			for ch in 4:
+				if not _mask_backup.has(t + ch):
+					_mask_backup[t + ch] = m[t + ch]
+			m[t] = int(maxf(m[t], 255.0 * w))
+			m[t + 1] = int(m[t + 1] * (1.0 - w))
+			m[t + 2] = int(m[t + 2] * (1.0 - w))
+			m[t + 3] = int(m[t + 3] * (1.0 - 0.9 * w))
+	World.masks = m
+	_push_masks()
+	# Dark shore rocks along the waterline and in the shallows: the water's
+	# contact foam breaks around them.
+	var rocks := RockBuilder.build_variants(4)
+	var rmat := RockBuilder.material()
+	var shore := [[12.4, 5.0, 0.9], [13.6, 9.2, 0.7], [14.8, 3.0, 1.1], [15.8, 7.4, 0.8], [16.6, 12.6, 1.3], [17.6, 4.6, 0.6], [14.2, 15.2, 0.9], [18.6, 9.6, 1.0], [12.8, 18.4, 0.8], [16.0, 20.4, 1.2], [19.4, 15.0, 0.7], [11.6, 1.2, 0.6], [21.6, 6.2, 1.1], [23.2, 11.8, 0.8], [22.4, 22.6, 1.4], [25.6, 17.2, 0.9], [20.8, 0.4, 0.9], [27.0, 28.0, 1.6], [24.0, 34.0, 1.0]]
+	for i in shore.size():
+		var sd: Array = shore[i]
+		var r := MeshInstance3D.new()
+		r.name = "ShoreRock%d" % i
+		r.mesh = rocks[(i + 1) % rocks.size()]
+		r.material_override = rmat
+		add_child(r)
+		var p := at(sd[0], sd[1])
+		p.y = minf(p.y, World.height_at(p.x, p.z)) - 0.4 * float(sd[2])
+		r.global_position = p
+		r.scale = Vector3(1.3, 0.8, 1.1) * float(sd[2]) * 1.8
+		r.rotation.y = float(i) * 1.37
+
+
+func _push_masks() -> void:
+	var img := Image.create_from_data(World.W, World.H, false, Image.FORMAT_RGBA8, World.masks)
+	img.generate_mipmaps()
+	World.mask_texture.update(img)
+
+
+func _exit_tree() -> void:
+	if not _height_backup.is_empty():
+		var hg: PackedFloat32Array = World.height
+		for k in _height_backup:
+			hg[int(k)] = float(_height_backup[k])
+		World.height = hg
+		_height_backup.clear()
+		World.height_texture.update(Image.create_from_data(World.W, World.H, false, Image.FORMAT_RF, World.height.to_byte_array()))
+	if _mask_backup.is_empty():
+		return
+	var m: PackedByteArray = World.masks
+	for t in _mask_backup:
+		m[int(t)] = int(_mask_backup[t])
+	World.masks = m
+	_push_masks()
+	_mask_backup.clear()

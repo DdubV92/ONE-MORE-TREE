@@ -147,6 +147,7 @@ func _ready() -> void:
 			world.weather.set_override(weather if weather != "" else "clear", true)
 		if lighting == "night":
 			world.environment.set_moon_phase(0.25)
+		cam.fov = float(vp.get("fov", 70.0))
 		cam.global_position = vp.pos
 		cam.look_at(vp.look)
 		world.vegetation.update_collision_around(vp.pos)

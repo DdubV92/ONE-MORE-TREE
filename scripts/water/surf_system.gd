@@ -65,6 +65,17 @@ func build(water: WaterSystem) -> void:
 	print("SURF: %d breaker lines, %d chunks, %.1f km of surf, %d ms" % [chains.size(), chunks.size(), _total_len() / 1000.0, Time.get_ticks_msec() - t0])
 
 
+## Re-traces the breaker lines after an in-memory terrain edit (the Phase 24
+## reference cove's beach shelf), so surf breaks on the new depth contour.
+func rebuild(water: WaterSystem) -> void:
+	for c in chunks:
+		if is_instance_valid(c):
+			c.queue_free()
+	chunks.clear()
+	chains.clear()
+	build(water)
+
+
 func set_surf_height(h: float) -> void:
 	surf_height = h
 	if material:

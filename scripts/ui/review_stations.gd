@@ -121,6 +121,8 @@ const STATIONS23 := [
 ## Phase 24: HD-2D playtest pass (terrain diagnostics, skill, sawmill, ...).
 const STATIONS24 := [
 	["1 Terrain debug view (cycle)", "p24_terrain_debug"],
+	["2 Reference Match (target painting camera)", "p24_ref_match"],
+	["3 First-Person Shoreline (reference cove)", "p24_ref_fp"],
 ]
 static var _terrain_debug := 0
 static var _p20_i := 0
@@ -509,6 +511,10 @@ static func go(hud: Node, which: String) -> String:
 			return "Preview interruption %s: %s. Watch the states: settling -> interrupted -> resolving -> sleep available. You cannot be hurt in the camper; nothing forces you out." % [pick, str(si20.by_id[pick].title)]
 		"p23_subtle", "p23_severe", "p23_walker", "p23_flash", "p23_missed", "p23_calendar", "p23_schedule":
 			return _p23(hud, w, which)
+		"p24_ref_match", "p24_ref_fp":
+			if w and w.has_method("teleport_to"):
+				w.call("teleport_to", "ref_match" if which == "p24_ref_match" else "ref_fp")
+			return "Reference Match: fixed camera matching the target painting (move or click to take control)." if which == "p24_ref_match" else "First-Person Shoreline: walk past the dog, approach the worker, chop a tree, step onto the wet sand, turn back to the forest."
 		"p24_terrain_debug":
 			_terrain_debug = (_terrain_debug + 1) % 4
 			RenderingServer.global_shader_parameter_set("terrain_debug", _terrain_debug)

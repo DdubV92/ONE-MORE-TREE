@@ -90,6 +90,9 @@ func _build_menu() -> void:
 	extra.custom_minimum_size = Vector2(720, 0)
 	extra.add_child(UITheme.button("Preview Tour (sandbox)", func() -> void: _go(func() -> void: Game.start_preview("camp")), 230))
 	extra.add_child(UITheme.button("Character Preview", func() -> void: _go(func() -> void: Game.open_character_preview()), 200))
+	# Phase 24 reference fixture (the target painting as a walkable cove).
+	extra.add_child(UITheme.button("Reference Match", func() -> void: _go(func() -> void: Game.start_preview("ref_match")), 200))
+	extra.add_child(UITheme.button("First-Person Shoreline", func() -> void: _go(func() -> void: Game.start_preview("ref_fp")), 240))
 	extra.add_child(UITheme.button("Credits", _show_credits, 120))
 	extra.add_child(UITheme.button("Diagnostic report", func() -> void:
 		_status.text = "Report written: " + Diag.sanitize(Diag.write_report()), 190))

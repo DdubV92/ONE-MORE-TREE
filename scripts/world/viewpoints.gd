@@ -101,8 +101,11 @@ static func all() -> Dictionary:
 		var o: Vector3 = fr.o
 		o.y = 0.0
 		var rf := func(x: float, z: float) -> Vector3: return o + (fr.r as Vector3) * x + (fr.f as Vector3) * z
-		vp["ref_match"] = _v(rf.call(-0.4, -1.4) + Vector3(0, 3.1, 0), rf.call(0.6, 9.5) + Vector3(0, -0.9, 0), 0.0, "Reference Match: fixed camera for side-by-side with the target painting", "golden")
-		vp["ref_fp"] = _v(rf.call(-2.6, 1.0), rf.call(1.8, 14.0) + Vector3(0, -0.4, 0), 1.65, "First-Person Shoreline: by the foreground tree, camp, treeline and shore together", "golden")
+		# Elevated on the bank above the beach, narrow lens like the painting:
+		# camp upper-left, beach sweeping bottom-centre to right, sea right.
+		vp["ref_match"] = _v(rf.call(5.0, -9.0) + Vector3(0, 7.5, 0), rf.call(4.5, 12.0) + Vector3(0, 0.9, 0), 0.0, "Reference Match: fixed camera for side-by-side with the target painting", "golden")
+		vp["ref_match"]["fov"] = 50.0
+		vp["ref_fp"] = _v(rf.call(2.1, -2.2), rf.call(2.5, 12.0) + Vector3(0, -0.4, 0), 1.65, "First-Person Shoreline: by the foreground tree, camp, treeline and shore together", "golden")
 	if World.island_revision == "r2":
 		_add_r2(vp, c)
 	_cache = vp

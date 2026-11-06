@@ -14,12 +14,14 @@ const AXES := {
 ## Swing keyframes in camera space: phase (0..1 of cycle), grip centre,
 ## handle direction (bottom->head), blade direction.
 const KEYS := [
-	[0.0, Vector3(0.23, -0.3, -0.5), Vector3(-0.28, 0.86, -0.42), Vector3(-0.85, 0.0, -0.5)],
+	# Rest sits low in the lower-right corner (Phase 24 reference): the head
+	# only enters the frame on the wind-up and lands on the crosshair at contact.
+	[0.0, Vector3(0.27, -0.42, -0.46), Vector3(-0.22, 0.9, -0.38), Vector3(-0.85, 0.0, -0.5)],
 	[0.3, Vector3(0.42, -0.06, -0.16), Vector3(0.28, 0.72, 0.62), Vector3(-0.1, 0.62, -0.78)],
 	[0.4, Vector3(0.3, -0.12, -0.46), Vector3(0.08, 0.5, -0.86), Vector3(-0.35, -0.55, -0.75)],
 	[0.46, Vector3(0.05, -0.26, -0.7), Vector3(-0.4, 0.12, -0.9), Vector3(-0.62, -0.1, -0.78)],
 	[0.56, Vector3(0.12, -0.26, -0.62), Vector3(-0.32, 0.24, -0.9), Vector3(-0.7, 0.05, -0.7)],
-	[1.0, Vector3(0.23, -0.3, -0.5), Vector3(-0.28, 0.86, -0.42), Vector3(-0.85, 0.0, -0.5)],
+	[1.0, Vector3(0.27, -0.42, -0.46), Vector3(-0.22, 0.9, -0.38), Vector3(-0.85, 0.0, -0.5)],
 ]
 
 var tier := "small"
