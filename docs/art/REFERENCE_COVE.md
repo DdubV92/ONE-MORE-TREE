@@ -2,6 +2,21 @@
 
 The owner's target painting (`reference_target.png`) built as one small, real, walkable place on island r2, before the style is applied across the island.
 
+## Deliverables (in this folder)
+- **Reference Match side by side:** `reference_match_compare.jpg`. The target painting is on the left; the Godot capture from the Reference Match bookmark (fixed 50° camera, golden hour, 1280×720) is on the right.
+- **First-person still:** `ref_fp_gameplay.png`, an uncropped 1280×720 screenshot at gameplay settings (HUD on, pixel axe at rest), taken at the First-Person Shoreline start.
+- **Uncut walk:** `ref_walk.mp4` (32 s, 24 fps, with game audio) and `ref_walk_contact_sheet.jpg` (one frame every 2.5 s). The route:
+  1. start by the foreground tree;
+  2. walk past the dog at the campfire and up to the swinging worker;
+  3. chop a real island pine (the notch reaches 16%, 50% and 84%, then "Timber!" and the tree falls);
+  4. walk down the beach onto the wet sand, looking into the shallows while walking along the swash;
+  5. turn back toward the forest.
+
+  Movie Maker recorded it at fixed 24 fps. The container ran out of memory about 2 s before the scripted end, so the file stops just after the turn toward the forest. Nothing inside the clip is cut.
+- **Native test build:**
+  - Windows: a local export from this exact tree (only Windows templates are installed here), plus the CI artifact for every push to `phase-24-hd2d-mill`.
+  - Both builds have **Reference Match** and **First-Person Shoreline** on the title screen.
+
 ## How to open it
 - **Title screen:** **Reference Match** or **First-Person Shoreline**. Both start a preview, and a preview never writes saves.
 - **Review tour (Phase 24 stations):** `p24_ref_match`, `p24_ref_fp`.
@@ -55,4 +70,6 @@ The owner's target painting (`reference_target.png`) built as one small, real, w
 ## Known gaps
 - Every image here was rendered by a software renderer (Mesa lavapipe) in the build container. Real-GPU colour, shadows, TAA and frame time have not been seen.
 - The local container has Windows export templates only. The native test build is Windows (local export, plus CI's artifact for each push). CI also exports Linux.
+- In this Reference Match capture, the comparison Terror stands at frame (1.2, 26), behind the treeline trunks, and is hidden by them from the new camera angle. It needs moving about 2 m to the right (toward the woodpile gap) to read like the painting's figure.
+- The two fixture conifers are plain trunks with flat bough cards. They work as a frame edge from the Reference Match camera, but look bare from the beach (last frames of the clip). They should become real tree-builder trees.
 - The fixture is a comparison place, not a campaign location. A campaign never builds it.
