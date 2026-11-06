@@ -533,6 +533,17 @@ func _build_tour() -> void:
 			tour_panel.visible = false
 			_capture_mouse(), 110))
 	v.add_child(p21)
+	v.add_child(UITheme.label("Phase 23 dynamic weather, storms and storm terrors", 16, UITheme.MUTED))
+	var p23 := GridContainer.new()
+	p23.columns = 4
+	for s23 in ReviewStations.STATIONS23:
+		p23.add_child(UITheme.button(s23[0], func() -> void:
+			var msg := ReviewStations.go(self, s23[1])
+			if msg != "":
+				show_message(msg, 12.0)
+			tour_panel.visible = false
+			_capture_mouse(), 110))
+	v.add_child(p23)
 	v.add_child(UITheme.button("Character Preview", func() -> void: Game.open_character_preview(), 268))
 	v.add_child(UITheme.button("Run 60 s benchmark route", _start_benchmark, 268))
 	v.add_child(UITheme.button("Back to title", func() -> void: Game.return_to_menu(), 268))

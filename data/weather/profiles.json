@@ -288,7 +288,8 @@
   "night_share": 0.35,
   "contract_night_span": 1200.0,
   "strike_rate_per_min": 3.2,
-  "near_share_peak": 0.28
+  "near_share_peak": 0.28,
+  "night_storm_from_day": 6
  },
  "order": [
   "clear_broken",

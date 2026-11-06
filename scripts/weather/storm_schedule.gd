@@ -129,6 +129,7 @@ func _plan() -> void:
 				"phase0": r.randf_range(0.0, TAU), "front": bool(p.get("front", false)), "lead": bool(p.get("lead", false))})
 			cursor = start + total + 120.0
 		days[day] = {"visits": visits}
+	_ensure_night_storm(int(sch.get("night_storm_from_day", 0)))
 	# A storm still running at the end of a contract day leaves the next
 	# morning in its recovery (sleep skipped the rest of it).
 	for day in range(2, LAST_DAY + 1):
@@ -142,6 +143,51 @@ func _plan() -> void:
 			(days[day].visits as Array).push_front({"id": "W%02d-0" % day, "profile": last.profile, "start": -before, "durs": durs,
 				"end": float(durs[4]), "quiet": true, "major": false, "cell": last.cell, "band": last.band, "phase0": last.phase0,
 				"front": false, "lead": false, "tail_of": last.id})
+
+
+## Every campaign meets at least one thunderstorm that owns the night (and
+## carries storm terrors). If the seed gave none, the earliest eligible
+## thunderstorm from `from_day` (never the first, quiet, major storm) moves
+## to peak after nightfall on its own day; later visits that day give way.
+## Same day, so profile gaps and gating are untouched. Deterministic.
+func _ensure_night_storm(from_day: int) -> void:
+	if from_day <= 0:
+		return
+	var first_major := true
+	var cand := {}
+	var cand_day := 0
+	for day in range(1, WorkdayClock.CONTRACT_DAYS + 1):
+		for v in days[day].visits:
+			if not bool(v.major):
+				continue
+			var is_first := first_major
+			first_major = false
+			if not str(v.profile) in ["thunderstorm", "severe_coastal"]:
+				continue
+			var peak := float(v.start) + float(v.durs[0]) + float(v.durs[1]) + float(v.durs[2])
+			if peak > WorkdayClock.NIGHT_AT and not bool(v.quiet):
+				return                                  # already has one
+			if cand.is_empty() and not is_first and day >= from_day:
+				cand = v
+				cand_day = day
+	if cand.is_empty():
+		return
+	var lead := float(cand.durs[0]) + float(cand.durs[1]) + float(cand.durs[2])
+	var total := lead + float(cand.durs[3]) + float(cand.durs[4])
+	var start := WorkdayClock.NIGHT_AT + 240.0 - lead
+	var vs: Array = days[cand_day].visits
+	var keep: Array = []
+	for v in vs:
+		if v == cand:
+			continue
+		if float(v.end) + 120.0 <= start:
+			keep.append(v)
+	cand.start = snappedf(start, 0.1)
+	cand.end = snappedf(start + total, 0.1)
+	cand.quiet = false
+	cand["night_guarantee"] = true
+	keep.append(cand)
+	days[cand_day] = {"visits": keep}
 
 
 func _weighted(r: RandomNumberGenerator, pairs: Array) -> int:

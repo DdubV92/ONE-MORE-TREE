@@ -419,6 +419,13 @@ static func migrate(data: Dictionary) -> Dictionary:
 		# Phase 19 saves: no recordings or interruptions yet.
 		data["phase20"] = {}
 		data["schema"] = 14
+		v = 14
+	if v == 14:
+		# Phase 20-22 saves: no storm encounters yet; the v1 weather block
+		# (seed + wetness) is kept and the seeded storm schedule takes over
+		# from the saved clock (no strikes in flight).
+		data["phase23"] = {}
+		data["schema"] = 15
 	return data
 
 

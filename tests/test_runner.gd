@@ -1974,8 +1974,8 @@ func _t_phase5_world() -> String:
 			err = "rotation step changed %d tiles / %d distinct" % [changed, uniq.size()]
 		if err != "":
 			break
-	if err == "" and seen.size() != 10:
-		err = "only %d of 10 cameras shown in 40 steps" % seen.size()
+	if err == "" and seen.size() != tv.cams.size():
+		err = "only %d of %d cameras shown in 40 steps" % [seen.size(), tv.cams.size()]
 	# Click selects what the tile shows now; focus locks; back gives a set.
 	if err == "":
 		var shown := tv.tiles[2]
@@ -6883,6 +6883,28 @@ func _t_phase23_units() -> String:
 	rep["beats"] = kinds
 	if (beats.beats as Array).size() != 12:
 		return "catalog has %d beats" % (beats.beats as Array).size()
+	# Every campaign seed gets at least one night thunderstorm with terrors
+	# (and visits on a day never overlap after the night move).
+	var no_night := 0
+	for sd in range(1, 201):
+		var s2 := StormSchedule.for_seed(sd * 7919)
+		var has := false
+		for d in range(1, WorkdayClock.CONTRACT_DAYS + 1):
+			var prev_end := -INF
+			for v in s2.days[d].visits:
+				if str(v.id).ends_with("-0"):
+					continue
+				if float(v.start) < prev_end:
+					return "seed %d day %d: visits overlap" % [sd * 7919, d]
+				prev_end = float(v.end)
+				var pk := float(v.start) + float(v.durs[0]) + float(v.durs[1]) + float(v.durs[2])
+				if str(v.profile) in ["thunderstorm", "severe_coastal"] and not bool(v.quiet) and pk > WorkdayClock.NIGHT_AT:
+					has = true
+		if not has:
+			no_night += 1
+	rep["seeds_without_night_storm"] = no_night
+	if no_night > 0:
+		return "%d of 200 seeds have no night thunderstorm with terrors" % no_night
 	p23_report["units"] = rep
 	return ""
 
@@ -7161,5 +7183,18 @@ func _p23_checks(world: IslandWorld) -> String:
 		st._rumor(false, "")
 	if not Game.feed.pub.has("fo.storm.desync.01"):
 		return "rumor not posted"
+	# Review stations: each applies something and none can write a save.
+	var st_msgs := {}
+	for sid in ["p23_subtle", "p23_severe", "p23_flash", "p23_calendar", "p23_missed", "p23_schedule"]:
+		var msg := ReviewStations.go(self, sid)
+		st_msgs[sid] = msg.length()
+		if msg == "":
+			return "review station %s did nothing" % sid
+		await get_tree().process_frame
+	if Game.can_write_campaign_save():
+		return "storm review stations made saves writable"
+	if w.override != "":
+		return "back-to-schedule station left override %s" % w.override
+	rep["stations"] = st_msgs
 	p23_report["world"] = rep
 	return ""

@@ -111,6 +111,13 @@ const STATIONS21 := [
 	["1 Payroll app (camper desk)", "p21_app"], ["2 Worker about to quit", "p21_verge"],
 	["3 Raise request", "p21_request"], ["4 Simulate a pay night", "p21_night"],
 ]
+## Phase 23: dynamic weather, storms and storm terrors.
+const STATIONS23 := [
+	["1 Subtle rain (drizzle)", "p23_subtle"], ["2 Severe coastal storm (shore)", "p23_severe"],
+	["3 Thunder Walker (night storm)", "p23_walker"], ["4 Near strike + thunder delay", "p23_flash"],
+	["5 Missed flash recording", "p23_missed"], ["6 Storm calendar (30 days)", "p23_calendar"],
+	["7 Back to scheduled weather", "p23_schedule"],
+]
 static var _p20_i := 0
 static var _feed_day := 0
 static var _clear_i := 0
@@ -494,6 +501,8 @@ static func go(hud: Node, which: String) -> String:
 			si20.state = "idle"
 			si20.start(pick, Game.campaign.clock.day if Game.campaign else 1)
 			return "Preview interruption %s: %s. Watch the states: settling -> interrupted -> resolving -> sleep available. You cannot be hurt in the camper; nothing forces you out." % [pick, str(si20.by_id[pick].title)]
+		"p23_subtle", "p23_severe", "p23_walker", "p23_flash", "p23_missed", "p23_calendar", "p23_schedule":
+			return _p23(hud, w, which)
 		"p21_app", "p21_verge", "p21_request", "p21_night":
 			var cs21: CampaignService = Game.campaign
 			if cs21 == null or cs21.pay == null:
@@ -905,3 +914,91 @@ static func shared_tree_fixture(w: IslandWorld) -> String:
 	Game.trees.apply_contact(tid, st, req * 0.4, b.id)
 	Game.trees.apply_contact(tid, st, req, a.id)
 	return "%s cut 60%% of the notch and %s 40%%: felling merit %+.0f / %+.0f (300 per tree, split by accepted work). A third contact on the felled tree earned 0. The tree stood %.0f m from camp." % [a.emp.name, b.emp.name, crew.merit.total(a.id) - ma, crew.merit.total(b.id) - mb, bd]
+
+
+## Phase 23 review stations (preview only: nothing here is saved).
+static func _p23(hud: Node, w: IslandWorld, which: String) -> String:
+	var cs: CampaignService = Game.campaign
+	var ws: WeatherService = Game.weather
+	var st: StormTerrors = Game.storm_terrors
+	if cs == null or ws == null or st == null:
+		return ""
+	if not (cs.active or cs.test_route):
+		cs.start_test_route(true, true)
+	if Game.director:
+		Game.director.next_in = 99999.0
+	var p := Game.player as Player
+	match which:
+		"p23_subtle":
+			cs.clock.restore({"day": maxi(cs.clock.day, 2), "t": 600.0, "running": true})
+			ws.set_override("mist_drizzle")
+			w.teleport_to("camp")
+			return "Mist and drizzle blending in over ~20 s: low cloud, fine rain, softer distance, no lightning. Listen to the rain on the camper roof change as you step under it. (Preview: never saved.)"
+		"p23_severe":
+			cs.clock.restore({"day": maxi(cs.clock.day, 2), "t": 700.0, "running": true})
+			ws.set_override("severe_coastal")
+			var shore := Game.crew.dock_shore if Game.crew else Vector3.ZERO
+			p.teleport(shore + Vector3(-6, 2.2, -10), shore + Vector3(10, 0.5, 60.0))
+			return "Severe coastal storm at the shore: gust fronts through the treeline, heavy sea and whitecaps, fog closing in, strikes over the water. Count flash -> thunder: about 3 s per kilometre. (Preview: never saved.)"
+		"p23_flash":
+			ws.set_override("thunderstorm", true)
+			var near := {"id": "PREVIEW-N%d" % Time.get_ticks_msec(), "visit": "preview", "day": cs.clock.day, "t": ws.weather_t, "kind": "near", "off": [-90.0, -220.0], "dist": 236.0, "power": 1.0, "strokes": 3, "seed": 7}
+			ws.fire(near)
+			var lp := p.global_position if p else Vector3.ZERO
+			return "Near strike ~%d m away: the flash now, its thunder %.1f s later (sound travels at 343 m/s; every listener, including each shown camera microphone, hears it at its own distance). Flash comfort: Settings > Accessibility. (Preview: never saved.)" % [int(WeatherService.strike_pos(near).distance_to(lp)), WeatherService.thunder_arrival(near, lp) - ws.weather_t]
+		"p23_walker":
+			ws.set_override("")
+			var sch := ws._sched()
+			var tv := {}
+			var day := 0
+			for d in range(2, 31):
+				for v in sch.days[d].visits:
+					if v.profile in ["thunderstorm", "severe_coastal"] and sch.strikes(d, v).size() > 8:
+						tv = v
+						day = d
+						break
+				if day > 0:
+					break
+			if day == 0:
+				return "No thunderstorm in this seed's 30 days."
+			var peak_t := maxf(float(tv.start) + float(tv.durs[0]) + float(tv.durs[1]) + float(tv.durs[2]) + 15.0, WorkdayClock.NIGHT_AT + 1.0)
+			cs.clock.restore({"day": day, "t": minf(peak_t, WorkdayClock.NIGHT_AT), "night_exposure": maxf(peak_t - WorkdayClock.NIGHT_AT, 0.0), "running": true})
+			w.teleport_to("camp")
+			hud.get_tree().create_timer(2.0).timeout.connect(func() -> void:
+				if Game.director:
+					Game.director.last_end_t = -99999.0
+					Game.director.family_cooldown.clear()
+				st.forced = "sb02"
+				var r := st.start("sb02")
+				st.forced = ""
+				if hud.has_method("show_message"):
+					hud.call("show_message", "Thunder Walker staged: watch the treeline when the lightning flashes." if not r.is_empty() else "Thunder Walker could not be staged: %s" % str(st.records.back().get("reason", "")), 8.0))
+			return "Night storm from the schedule (day %d, %s). The Thunder Walker only moves while thunder masks its steps, and stands still while you watch it. (Preview: never saved.)" % [day, str(tv.profile)]
+		"p23_missed":
+			var sch2 := ws._sched()
+			for d in range(2, 31):
+				for v in sch2.days[d].visits:
+					if not v.profile in ["thunderstorm", "severe_coastal"]:
+						continue
+					for s1 in sch2.strikes(d, v):
+						if float(s1.t) > WorkdayClock.NIGHT_AT and str(s1.kind) != "far":
+							var was_quiet := bool(v.quiet)
+							v.quiet = false
+							Game.night_recorder.nights.erase(str(d))
+							var clip := st.on_night(d)
+							v.quiet = was_quiet
+							w.teleport_to("camper")
+							if clip.is_empty():
+								return "No missed-flash clip could be made for day %d." % d
+							return "A camera caught a night storm you slept through (day %d, %s). Sit at the camper desk -> Recordings to watch the flash and hear its delayed thunder. (Preview: never saved.)" % [d, str(clip.camera)]
+			return "No night storm with near strikes in this seed."
+		"p23_calendar":
+			var sm := ws._sched().summary()
+			var lines := PackedStringArray()
+			for m in sm.major:
+				lines.append("day %d %s" % [int(m[0]), str(m[1])])
+			return "Storm calendar for this seed: %s. Major storms: %s (%d quiet - weather only). %d lightning strikes across 30 days." % [str(sm.profiles), ", ".join(lines), int(sm.quiet_major), int(sm.strikes)]
+		"p23_schedule":
+			ws.set_override("")
+			return "Back to the seeded schedule: %s" % ws.describe()
+	return ""

@@ -98,8 +98,12 @@ func _measure(name: String) -> void:
 	var proc := []
 	var phys := []
 	var last := Time.get_ticks_usec()
+	var vpeak := 0
 	for k in FRAMES:
 		await get_tree().process_frame
+		if SoundService.instance():
+			var ac := SoundService.active_count()
+			vpeak = maxi(vpeak, int(ac.oneshots) + int(ac.loops))
 		var now := Time.get_ticks_usec()
 		ft.append((now - last) / 1000.0)
 		last = now
@@ -114,7 +118,7 @@ func _measure(name: String) -> void:
 		"mem_static_mb": snappedf(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0, 0.1),
 		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
 		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
-		"sound_voices": SoundService.active_count() if SoundService.instance() else {}}
+		"sound_voices": SoundService.active_count() if SoundService.instance() else {}, "voices_peak": vpeak}
 	results[name] = r
 	print("PERF %s %s" % [name, JSON.stringify(r)])
 

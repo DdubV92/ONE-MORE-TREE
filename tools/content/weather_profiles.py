@@ -40,6 +40,7 @@ SCHEDULE = dict(
     contract_night_span=1200.0,                   # awake night seconds the schedule covers
     strike_rate_per_min=3.2,                      # strikes/min at lightning 1.0
     near_share_peak=0.28,                         # share of strikes that land near camp at peak
+    night_storm_from_day=6,                       # every campaign gets at least one night thunderstorm
 )
 
 out = dict(version=1, generator="tools/content/weather_profiles.py", profiles=PROFILES, schedule=SCHEDULE,
