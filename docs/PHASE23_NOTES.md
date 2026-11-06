@@ -128,26 +128,26 @@ Tool: `tools/rc/perf_storm.tscn` (`FRAMES=3600`, about 25 s per row). It measure
 
 | Location | Weather | mean ms | p95 ms | worst ms | peak voices | strikes / thunders in window | listening layer |
 |---|---|---|---|---|---|---|---|
-| dense forest | clear | 6.95 | 7.91 | 211.81 | 17 | 0 / 0 | canopy |
-| dense forest | severe coastal | 6.9 | 8.36 | 10.41 | 23 | 1 / 5 | canopy |
-| cleared land | clear | 6.9 | 8.31 | 15.16 | 20 | 0 / 0 | canopy |
-| cleared land | severe coastal | 6.9 | 7.98 | 11.32 | 21 | 1 / 5 | canopy |
-| shore | clear | 6.9 | 7.99 | 11.41 | 17 | 0 / 0 | shore |
-| shore | severe coastal | 6.9 | 7.92 | 10.35 | 19 | 2 / 5 | shore |
-| camper interior | clear | 6.9 | 8.03 | 14.83 | 17 | 0 / 5 | camper |
-| camper interior | severe coastal | 6.9 | 8.0 | 9.26 | 22 | 1 / 5 | camper |
-| quad surveillance | clear | 6.9 | 8.07 | 13.02 | 20 | 0 / 0 | camper |
-| quad surveillance | severe coastal | 6.9 | 8.04 | 11.58 | 23 | 1 / 5 | camper |
+| dense forest | clear | 6.9 | 7.97 | 16.78 | 17 | 0 / 0 | canopy |
+| dense forest | severe coastal | 6.9 | 8.3 | 11.01 | 24 | 1 / 5 | canopy |
+| cleared land | clear | 6.9 | 8.26 | 13.21 | 20 | 0 / 0 | open |
+| cleared land | severe coastal | 6.9 | 7.96 | 10.7 | 22 | 1 / 5 | open |
+| shore | clear | 6.9 | 8.0 | 10.6 | 16 | 0 / 0 | shore |
+| shore | severe coastal | 6.9 | 7.94 | 10.19 | 21 | 2 / 5 | shore |
+| camper interior | clear | 6.9 | 8.1 | 11.54 | 16 | 0 / 5 | camper |
+| camper interior | severe coastal | 6.9 | 8.1 | 9.26 | 26 | 1 / 5 | camper |
+| quad surveillance | clear | 6.9 | 8.03 | 10.47 | 19 | 0 / 0 | camper |
+| quad surveillance | severe coastal | 6.9 | 8.09 | 10.9 | 25 | 1 / 5 | camper |
 
-Frames per scenario: 3600; renderer:  /  (headless: True).
+Frames per scenario: 3600 (headless).
 
 
 **Reading it:**
 - Means sit at the headless frame-pacing floor (6.9 ms) in both weathers; p95 is within 0.4 ms. Severe storms cost nothing measurable on the CPU side.
 - Peak sound voices rise by 1–6 under a severe storm (rain layers, drip, runoff, gusts, thunder).
-- The one large spike (212 ms) is the first frames of the very first scenario in clear weather, a one-off hitch, not the storm.
+- Worst single frames are 9–17 ms in both weathers; an earlier run's one-off 212 ms hitch on its very first scenario did not repeat.
 - The "clear" camper row shows 5 thunders: thunder still travelling from the previous (severe) scenario, up to 9 s late, as it should.
-- **Fixed after this run:** cleared land reported the *canopy* listening layer. The layer now needs standing trees overhead, so cleared ground is open.
+- Cleared land reports the *open* listening layer (fixed this phase: the canopy layer needs standing trees overhead).
 - **Not measured:**
   - Real-GPU frame times: there is no GPU in the build container. The lavapipe software renderer used for screenshots runs at a few frames per second and says nothing about a real GPU.
   - Real audio hardware listening.
