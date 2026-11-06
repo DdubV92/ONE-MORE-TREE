@@ -48,9 +48,10 @@ void fragment() {
 	float low = 1.0 - smoothstep(rust_line - 0.25, rust_line + 0.25, v_obj.y + (n1 - 0.5) * 0.5);
 	float rusty = clamp(max(low * smoothstep(0.35, 0.65, n1 + wear * 0.3), weep), 0.0, 1.0);
 	// Chipped paint flecks and vertical grime streaks.
-	float chip = smoothstep(0.86 - wear * 0.08, 0.9 - wear * 0.08, n2) * smoothstep(0.2, 0.8, n1);
-	float streak = smoothstep(0.55, 0.9, vn(vec2(uv.x * 9.0, uv.y * 0.6))) * 0.35 * wear;
-	vec3 col = paint * (0.95 + 0.07 * n1);
+	// Chips gather low on the body (kicked gravel), not across the panels.
+	float chip = smoothstep(0.86 - wear * 0.08, 0.9 - wear * 0.08, n2) * smoothstep(0.2, 0.8, n1) * (1.0 - smoothstep(rust_line + 0.2, rust_line + 0.9, v_obj.y));
+	float streak = smoothstep(0.6, 0.9, vn(vec2(uv.x * 9.0, uv.y * 0.6))) * 0.2 * wear;
+	vec3 col = paint * (0.975 + 0.035 * n1);
 	col = mix(col, grime, streak);
 	col = mix(col, rust * (0.8 + 0.4 * n2), max(rusty, chip * 0.8));
 	ALBEDO = col;

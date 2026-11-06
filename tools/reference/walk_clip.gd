@@ -17,6 +17,7 @@ func _ready() -> void:
 	# Gameplay settings = the shipping defaults (this container's saved
 	# settings.cfg was left on "clean" by earlier comparison runs).
 	Settings.values.character_style = "hd2d"
+	Settings.apply()
 	Game.preview_variant = "island_r2"
 	Game.pending_teleport = "ref_fp"
 	world = load("res://scenes/world.tscn").instantiate()

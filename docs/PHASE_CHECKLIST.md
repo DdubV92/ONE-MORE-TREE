@@ -13,6 +13,8 @@ Reference-cove handoff: [art/REFERENCE_COVE.md](art/REFERENCE_COVE.md). The rest
 | Reference Match (fixed 50° comparison camera) and First-Person Shoreline (eye height, normal FOV, free look) on the title screen and in the review tour | ✅ | Title buttons start a preview, which never writes saves |
 | Pixel-sprite worker and dog; comparison Terror in Reference Match only; in play, the director reserves its glimpse | ✅ | `TerrorDirector.reserve("REF-COVE", 0, ...)` |
 | Uncut first-person walk recorded with Movie Maker (`tools/reference/walk_clip`) | ✅ | Software renderer (lavapipe) |
+| Review build look (owner's choice): pixel-art crew, dog and first-person axe enforced over a rich, full-resolution world; F8 compares the previous smooth characters | ✅ | `Settings.REVIEW_ENFORCE_HD2D`; pixel-world filter stays optional (Settings → World art style) |
+| Richness pass on the cove: rounded trailer with framed curtained windows, hitch, propane, wheel and vents; fence lanterns; denser ferns and berry bushes; stones and caustics in clear turquoise shallows; warmer golden-hour sky; warm sun spill on the camp | ✅ | Compared against the painting in `docs/art/` |
 | Real-GPU look of the cove | ⛔ not run | No GPU in the build container |
 
 ## Phase 23: Dynamic weather, storms and storm terrors (pack-21 prompt 21)

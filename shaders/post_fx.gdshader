@@ -17,14 +17,17 @@ uniform float grain = 0.0;
 // on the block grid, given a 1-pixel contour where neighbouring art pixels
 // differ strongly, and a small saturation lift. UI sits above and stays crisp.
 uniform float pixel_px = 0.0;
-uniform float palette_levels = 28.0;
+uniform float palette_levels = 32.0;
+uniform float dither = 0.0;          // clean flat palette steps (no noise)
 uniform float outline_strength = 0.45;
 uniform float saturation = 1.08;
 global uniform float world_time;
 
 vec3 block_col(vec2 cell, vec2 res) {
 	vec2 uv = (cell + 0.5) * pixel_px / res;
-	return textureLod(screen_tex, clamp(uv, vec2(0.0), vec2(1.0)), max(log2(pixel_px) - 0.5, 0.0)).rgb;
+	// The 3D frame is rendered at exactly 1/pixel_px resolution, so a block
+	// centre lands on a rendered texel centre: point-exact, crisp.
+	return textureLod(screen_tex, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).rgb;
 }
 
 float luma(vec3 c) {
@@ -56,7 +59,7 @@ void fragment() {
 		int by = int(mod(cell.y, 4.0));
 		int bi = bx + by * 4;
 		float bayer[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
-		float dth = (bayer[bi] / 16.0 - 0.47) / palette_levels;
+		float dth = (bayer[bi] / 16.0 - 0.47) / palette_levels * dither;
 		vec3 enc = sqrt(max(c0, vec3(0.0)));              // cluster in a perceptual space
 		enc = floor((enc + dth) * palette_levels + 0.5) / palette_levels;
 		col = enc * enc;

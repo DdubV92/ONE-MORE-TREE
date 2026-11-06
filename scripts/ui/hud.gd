@@ -37,6 +37,7 @@ var _timber_t := 0.0
 
 func _ready() -> void:
 	layer = 10
+	add_to_group("hud")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var post := PostFX.new()
 	post.name = "PostFX"

@@ -21,12 +21,12 @@ uniform vec3 shallow_tint : source_color = vec3(0.5, 0.96, 0.86);    // crystal 
 uniform vec3 shallow_scatter : source_color = vec3(0.09, 0.5, 0.46); // aqua inscatter (shallow)
 uniform float shallow_depth = 1.8;      // metres over which the shallows take the tint
 uniform float scatter_ramp_depth = 9.0; // metres from aqua to deep scatter_color
-uniform float contact_foam_width = 0.22;   // metres of water depth that foam at contacts
+uniform float contact_foam_width = 0.32;   // metres of water depth that foam at contacts
 uniform float contact_foam_amount = 0.9;
 uniform float foam_bands = 3.0;            // 0 = smooth foam; 3 = cel bands
 uniform float sparkle_amount = 1.0;
 uniform vec3 aqua_glow : source_color = vec3(0.06, 0.62, 0.56);  // reference-art turquoise glow
-uniform float aqua_glow_amount = 0.55;
+uniform float aqua_glow_amount = 0.42;
 
 float view_depth_at(vec2 uv, mat4 inv_proj) {
 	float d = texture(depth_tex, uv).r;
@@ -101,6 +101,16 @@ float contact_foam_at(vec2 xz, float t, float vthick, float width) {
 	float n = (1.0 - smoothstep(0.0, 0.38, e)) * 0.7 + vnoise(xz * 3.1 - t * 0.3) * 0.3;
 	float pulse = 0.08 * sin(t * 1.4 + vnoise(xz * 0.35) * 6.2831);
 	return smoothstep(r - 0.06, r + 0.06, n + 0.12 - r * 0.25 + pulse);
+}
+
+// Caustic light net on a shallow floor (two drifting, warped Voronoi
+// borders): the bright web the reference painting shows on the sand and
+// stones under clear turquoise water. 0..~1.
+float caustic_at(vec2 p, float t) {
+	vec2 w = vec2(vnoise(p * 0.7 + t * 0.15), vnoise(p * 0.7 - t * 0.13 + 5.0)) * 0.6;
+	float e1 = voronoi_edge(p * 1.7 + w + vec2(t * 0.11, t * 0.07));
+	float e2 = voronoi_edge(p * 2.3 - w * 0.8 - vec2(t * 0.09, -t * 0.12) + 3.7);
+	return (1.0 - smoothstep(0.0, 0.12, e1)) * 0.6 + (1.0 - smoothstep(0.0, 0.1, e2)) * 0.5;
 }
 
 // Small stylized sun sparkles where the rippled surface mirrors the sun.

@@ -139,7 +139,7 @@ const P_STUMP := Vector2(1.3, 7.4)
 const P_WOODPILE := Vector2(2.9, 7.9)
 const P_WORKER := Vector2(0.55, 7.1)
 const P_DOG := Vector2(-1.3, 6.3)
-const P_TERROR := Vector2(1.2, 26.0)
+const P_TERROR := Vector2(3.6, 24.5)
 const P_TRUNK := Vector2(-3.9, 0.2)
 ## Second foreground conifer: frames the left edge of Reference Match and
 ## stands beside the First-Person Shoreline start.
@@ -190,6 +190,7 @@ func _build_dressed() -> void:
 	_build_bushes()
 	_build_actors()
 	_build_terror()
+	_build_richness()
 
 
 # ---- camper: weathered cream-and-rust travel trailer
@@ -452,7 +453,7 @@ func _build_bushes() -> void:
 	var berry := StandardMaterial3D.new()
 	berry.albedo_color = Color(0.72, 0.08, 0.06)
 	berry.roughness = 0.35
-	var bushes := [[-6.6, 4.6, 1.0], [-8.4, 6.6, 0.9], [7.0, 12.4, 0.85], [-1.0, 12.6, 0.8]]
+	var bushes := [[-6.6, 4.6, 1.0], [-8.4, 6.6, 0.9], [7.0, 12.4, 0.85], [-1.0, 12.6, 0.8], [-3.8, 10.8, 0.8], [5.6, 6.2, 0.7], [8.4, 2.6, 0.75], [-7.8, 10.6, 0.9], [-5.0, 2.4, 0.95]]
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2411
 	for i in bushes.size():
@@ -473,6 +474,143 @@ func _build_bushes() -> void:
 			be.material_override = berry
 			b.add_child(be)
 			be.position = Vector3(dir.x * 0.9, 1.1 + dir.y * 0.8, dir.z * 0.9)
+
+
+# ---- richness pass (owner: "rich detailed look", painting as the target)
+## Trailer detail (rounded ends, framed curtained windows, hitch with
+## propane tanks, wheel, roof vents), hanging fence lanterns, denser ferns
+## along the fence and beach edge, and dark stones under the clear shallows.
+func _build_richness() -> void:
+	var c := get_node_or_null("Camper") as Node3D
+	if c != null:
+		var L := 5.4
+		var W := 2.3
+		var side := -W * 0.5 - 0.02
+		var paint := ShaderMaterial.new()
+		paint.shader = load("res://shaders/worn_paint.gdshader")
+		paint.set_shader_parameter("rust_line", -0.55)
+		paint.set_shader_parameter("wear", 0.12)
+		paint.set_shader_parameter("rust", Color(0.42, 0.24, 0.14))
+		var band := ShaderMaterial.new()
+		band.shader = paint.shader
+		band.set_shader_parameter("paint", Color(0.62, 0.17, 0.11))
+		band.set_shader_parameter("rust", Color(0.32, 0.12, 0.07))
+		band.set_shader_parameter("rust_line", -0.2)
+		var trim := StandardMaterial3D.new()
+		trim.albedo_color = Color(0.8, 0.8, 0.78)
+		trim.metallic = 0.8
+		trim.roughness = 0.3
+		var dark := StandardMaterial3D.new()
+		dark.albedo_color = Color(0.08, 0.07, 0.07)
+		dark.roughness = 0.9
+		# Rounded vintage ends.
+		for ex in [-L * 0.5, L * 0.5]:
+			var cap := BuildKit.cylinder(c, W * 0.5, 1.75, Vector3(ex, 0.5, 0), paint, false, 20)
+			cap.scale = Vector3(0.34, 1.0, 1.0)
+			var bcap := BuildKit.cylinder(c, W * 0.5 + 0.01, 0.62, Vector3(ex, -0.06, 0), band, false, 20)
+			bcap.scale = Vector3(0.35, 1.0, 1.0)
+			var rcap := MeshInstance3D.new()
+			var sph := SphereMesh.new()
+			sph.radius = W * 0.5
+			sph.height = W
+			rcap.mesh = sph
+			rcap.material_override = paint
+			c.add_child(rcap)
+			rcap.position = Vector3(ex, 1.37, 0)
+			rcap.scale = Vector3(0.34, 0.32, 1.0)
+		# Second chrome strip above the band, framed windows with curtains.
+		BuildKit.box(c, Vector3(L + 0.04, 0.035, W + 0.04), Vector3(0, 1.28, 0), trim, false)
+		var curtain := StandardMaterial3D.new()
+		curtain.albedo_color = Color(0.96, 0.86, 0.66)
+		curtain.emission_enabled = true
+		curtain.emission = Color(1.0, 0.7, 0.4)
+		curtain.emission_energy_multiplier = 0.5
+		for wx in [-1.6, 0.0]:
+			for cx in [-0.36, 0.36]:
+				BuildKit.box(c, Vector3(0.2, 0.5, 0.02), Vector3(wx + cx, 0.86, side - 0.04), curtain, false)
+			BuildKit.box(c, Vector3(0.04, 0.54, 0.03), Vector3(wx, 0.85, side - 0.045), trim, false)
+			BuildKit.box(c, Vector3(1.12, 0.06, 0.1), Vector3(wx, 0.52, side - 0.05), trim, false)
+		# Door frame and handle.
+		BuildKit.box(c, Vector3(0.9, 0.05, 0.05), Vector3(1.55, 1.27, side - 0.03), trim, false)
+		for dx in [1.12, 1.98]:
+			BuildKit.box(c, Vector3(0.05, 1.7, 0.05), Vector3(dx, 0.42, side - 0.03), trim, false)
+		BuildKit.box(c, Vector3(0.12, 0.04, 0.05), Vector3(1.85, 0.5, side - 0.08), trim, false)
+		# Hitch A-frame with two propane tanks.
+		var front := -L * 0.5 - 0.35
+		for zz in [-0.45, 0.45]:
+			var arm := BuildKit.box(c, Vector3(1.2, 0.08, 0.08), Vector3(front - 0.4, -0.38, zz * 0.5), dark, false)
+			arm.rotation.y = -zz * 0.7
+		BuildKit.cylinder(c, 0.05, 0.4, Vector3(front - 0.95, -0.55, 0), dark, false, 8)
+		var tank := StandardMaterial3D.new()
+		tank.albedo_color = Color(0.86, 0.84, 0.8)
+		tank.roughness = 0.45
+		for zz in [-0.24, 0.24]:
+			BuildKit.cylinder(c, 0.17, 0.5, Vector3(front - 0.15, -0.1, zz), tank, false, 14)
+			BuildKit.cylinder(c, 0.05, 0.08, Vector3(front - 0.15, 0.2, zz), trim, false, 8)
+		# Wheel and wheel well.
+		BuildKit.box(c, Vector3(1.0, 0.42, 0.03), Vector3(0.75, -0.18, side - 0.01), dark, false)
+		var tyre := BuildKit.cylinder(c, 0.33, 0.22, Vector3(0.75, -0.42, side + 0.08), dark, false, 18)
+		tyre.rotation.x = PI * 0.5
+		var hub := BuildKit.cylinder(c, 0.14, 0.24, Vector3(0.75, -0.42, side + 0.07), trim, false, 12)
+		hub.rotation.x = PI * 0.5
+		# Roof vents.
+		for vx in [-0.7, 1.0]:
+			BuildKit.box(c, Vector3(0.45, 0.14, 0.45), Vector3(vx, 1.76, 0.0), trim, false)
+	# Warm low-sun spill over the camp clearing (the painting lights the
+	# camp, the trailer and the crew in gold although the real sun sits
+	# behind the shoreline trees here): a broad, soft, shadowless fill.
+	var spill := OmniLight3D.new()
+	spill.name = "CampSunSpill"
+	spill.light_color = Color(1.0, 0.66, 0.36)
+	spill.light_energy = 0.75
+	spill.omni_range = 13.0
+	spill.omni_attenuation = 1.4
+	spill.shadow_enabled = false
+	add_child(spill)
+	spill.global_position = at(2.0, 4.0, 5.5)
+	# Hanging lanterns on the fence posts, each with a warm pool.
+	for lp in [Vector2(-2.6, 3.75), Vector2(2.2, 4.3)]:
+		var pos := at(lp.x, lp.y, 1.18) - global_position
+		var lan := BuildKit.prop(self, "wooden_lantern_01", pos, 0.4, 0.9)
+		lan.name = "FenceLantern"
+		var ol := OmniLight3D.new()
+		ol.light_color = Color(1.0, 0.6, 0.28)
+		ol.light_energy = 0.9
+		ol.omni_range = 3.6
+		ol.omni_attenuation = 2.0
+		ol.shadow_enabled = false
+		add_child(ol)
+		ol.position = pos + Vector3(0, 0.15, 0)
+		lamp_lights.append(ol)
+	# Denser ferns: along the fence, round the trailer, at the beach edge.
+	var ferns := [[-3.6, 3.0, 1.3], [-2.0, 3.1, 1.1], [-0.6, 3.2, 0.9], [2.0, 3.6, 1.0], [3.4, 3.8, 1.2], [4.9, 5.4, 1.1],
+		[5.6, 7.6, 1.0], [6.0, 9.6, 1.2], [-8.6, 8.8, 1.4], [-8.0, 12.0, 1.3], [-4.2, 12.4, 1.1], [-2.0, 13.6, 1.0],
+		[1.4, 13.0, 1.1], [4.2, 12.6, 1.2], [9.4, 1.0, 1.0], [9.8, 6.4, 1.1], [10.4, 11.0, 0.9], [10.0, 15.6, 1.2],
+		[-9.6, 5.0, 1.5], [-6.0, 1.0, 1.6], [7.4, 1.4, 1.3], [8.0, 4.6, 1.0]]
+	for i in ferns.size():
+		var fd: Array = ferns[i]
+		var fp := BuildKit.prop(self, "fern_02", at(fd[0], fd[1]) - global_position, float(i) * 2.3, float(fd[2]))
+		fp.name = "RichFern%d" % i
+	# Dark stones under the clear shallows (the caustics play over them).
+	var rocks := RockBuilder.build_variants(4)
+	var rmat := RockBuilder.material()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9061
+	for i in 16:
+		var fz := rng.randf_range(-6.0, 32.0)
+		var fx := beach_line(fz) + rng.randf_range(0.8, 7.5)
+		var sc := rng.randf_range(0.5, 1.2)
+		var p := at(fx, fz)
+		if p.y > World.sea_level - 0.25:
+			continue
+		var r := MeshInstance3D.new()
+		r.name = "ShallowStone%d" % i
+		r.mesh = rocks[i % rocks.size()]
+		r.material_override = rmat
+		add_child(r)
+		r.global_position = Vector3(p.x, minf(p.y + 0.15 * sc, World.sea_level - 0.18), p.z)
+		r.scale = Vector3(1.4, 0.45, 1.1) * sc
+		r.rotation.y = rng.randf() * TAU
 
 
 # ---- staged actors: the worker chopping at the stump, the dog watching

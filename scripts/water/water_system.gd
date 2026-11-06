@@ -85,6 +85,12 @@ func _build_ocean() -> void:
 	ocean_material = ShaderMaterial.new()
 	ocean_material.shader = load("res://shaders/ocean.gdshader")
 	_common_params(ocean_material)
+	# Phase 24 reference look: saturated, clear turquoise shallows (the
+	# floor and stones read through; less milky glow).
+	ocean_material.set_shader_parameter("shallow_tint", Color(0.34, 0.9, 0.86))
+	ocean_material.set_shader_parameter("shallow_scatter", Color(0.02, 0.42, 0.46))
+	ocean_material.set_shader_parameter("aqua_glow", Color(0.0, 0.5, 0.52))
+	ocean_material.set_shader_parameter("aqua_glow_amount", 0.36)
 	ocean_material.set_shader_parameter("heightmap", World.height_texture)
 	ocean_material.set_shader_parameter("masks", World.mask_texture)
 	ocean_material.set_shader_parameter("water_region_map", ImageTexture.create_from_image(Image.create_from_data(World.W, World.H, false, Image.FORMAT_R8, World.water_region)))

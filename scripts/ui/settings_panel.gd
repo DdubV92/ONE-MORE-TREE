@@ -40,6 +40,11 @@ func _ready() -> void:
 	_slider(v, "Render scale", "render_scale", 0.5, 1.0, 0.05)
 	_toggle(v, "V-Sync", "vsync")
 	_toggle(v, "Fullscreen", "fullscreen")
+	if Settings.REVIEW_ENFORCE_HD2D:
+		var note := Label.new()
+		note.text = "Review build: pixel-art characters over a detailed world are on for everyone. Press F8 in game to compare the previous characters."
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		v.add_child(note)
 	_choice(v, "World art style", "world_style", ["hd2d", "3d"])
 	_slider(v, "HD-2D pixel rows", "world_pixel_rows", 240, 480, 20)
 	_choice(v, "Character art style", "character_style", ["hd2d", "clean", "pixel"])

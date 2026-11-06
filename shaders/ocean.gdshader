@@ -26,6 +26,7 @@ uniform float detail_strength = 0.35;
 uniform float glint_roughness = 0.035;
 uniform vec3 crest_glow : source_color = vec3(0.16, 0.78, 0.66);   // sunlit wave translucency
 
+uniform float caustic_amount = 1.0;   // Phase 24: caustic net on shallow floors
 varying vec3 v_wpos;
 varying float v_ground;
 varying float v_beach;
@@ -176,8 +177,13 @@ void fragment() {
 	vec3 n_view = normalize(mix(NORMAL, normalize(TANGENT * nmap.x + BINORMAL * nmap.y + NORMAL * nmap.z), 1.0));
 	vec2 uv_seen;
 	vec4 refr = refracted_scene(SCREEN_UV, VERTEX, n_view, INV_PROJECTION_MATRIX, 1.0, uv_seen);
-	float vthick = v_wpos.y - scene_world_at(uv_seen, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX).y;
+	vec3 floor_w = scene_world_at(uv_seen, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX);
+	float vthick = v_wpos.y - floor_w.y;
 	vec3 body = stylized_body(refr.rgb, refr.a, vthick);
+	// Caustics dancing on the shallow floor (sand, stones) under clear water.
+	float ck = caustic_at(floor_w.xz, t) * smoothstep(0.04, 0.35, vthick) * (1.0 - smoothstep(1.4, 4.0, vthick))
+		* daylight * sun_clarity * caustic_amount * (1.0 - smoothstep(35.0, 90.0, v_dist));
+	body += refr.rgb * shallow_tint * ck * 0.85 + vec3(0.95, 1.0, 0.85) * ck * 0.06;
 	// Darker rim just outside foam (foam edge shadow on the water body).
 	body *= 1.0 - 0.35 * contact_shadow;
 	float ndv = clamp(dot(n_view, VIEW), 0.0, 1.0);

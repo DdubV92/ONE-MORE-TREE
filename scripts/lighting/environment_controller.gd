@@ -12,6 +12,7 @@ signal time_changed(hour: float)
 
 const KEYFRAME_FILES := ["night", "dawn", "day", "golden", "sunset", "dusk"]
 
+var _glow_px := -1          # art-pixel size the glow levels were set for
 var keyframes: Array[LightingPreset] = []
 var overcast_preset: LightingPreset
 var hour := 13.0
@@ -354,7 +355,16 @@ func _apply() -> void:
 	env.volumetric_fog_albedo = p.fog_color.lerp(Color(1, 1, 1), 0.4)
 	sun.light_volumetric_fog_energy = 1.6
 	moon.light_volumetric_fog_energy = 0.8
-	env.glow_intensity = p.glow_intensity * (1.0 if Settings.get_v("bloom") else 0.0)
+	# HD-2D world renders at 1/px resolution, where each glow level spreads
+	# px times wider on screen: use the finer levels and less intensity so
+	# the sun keeps a tight pixel-art halo instead of a haze.
+	var px := Settings.world_pixel_px()
+	if px != _glow_px:
+		_glow_px = px
+		var lv: Array = [0.0, 0.6, 1.0, 0.8, 0.5] if px == 0 else [0.5, 0.9, 0.35, 0.0, 0.0]
+		for i in 5:
+			env.set_glow_level(i + 1, float(lv[i]))
+	env.glow_intensity = p.glow_intensity * (1.0 if Settings.get_v("bloom") else 0.0) * (0.55 if px > 0 else 1.0)
 	env.glow_enabled = Settings.get_v("bloom")
 	var grade: float = Settings.get_v("color_grading")
 	# AgX keeps hues in bright light but reads flatter: compensate a little.
@@ -437,11 +447,10 @@ func apply_quality() -> void:
 			env.sdfgi_use_occlusion = true
 			sun.directional_shadow_max_distance = 220.0
 			sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	# Depth of field (never on by default; gameplay stays sharp). Phase 24
-	# HD-2D: a gentle far-only "diorama" blur beyond working distance.
+	# Depth of field (never on by default; gameplay stays sharp). The HD-2D
+	# world keeps its distance crisp too: blur smears art pixels, and the
+	# owner's reference keeps the far treeline sharp.
 	var dof_mode := str(Settings.get_v("dof_mode"))
-	if dof_mode == "off" and str(Settings.get_v("world_style")) == "hd2d":
-		dof_mode = "diorama"
 	match dof_mode:
 		"diorama":
 			cam_attr.dof_blur_far_enabled = true

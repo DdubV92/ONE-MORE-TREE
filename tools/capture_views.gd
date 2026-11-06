@@ -25,6 +25,9 @@ func _ready() -> void:
 	# of the game image; WORLD_STYLE=3d captures the old look.
 	if OS.has_environment("WORLD_STYLE"):
 		Settings.values.world_style = OS.get_environment("WORLD_STYLE")
+	# COMPARE_OLD=1: the previous look (what F8 shows in the review build).
+	Settings.compare_old = OS.has_environment("COMPARE_OLD")
+	Settings.apply()
 	add_child(PostFX.new())
 	var cam := Camera3D.new()
 	cam.fov = 70.0
@@ -137,7 +140,8 @@ func _ready() -> void:
 		if vp_name.begins_with("ref_"):
 			# Reference views use the shipping character style (directional
 			# pixel sprites) whatever a local settings.cfg says.
-			Settings.values.character_style = OS.get_environment("CHAR_STYLE") if OS.has_environment("CHAR_STYLE") else "hd2d"
+			if not Settings.compare_old:
+				Settings.values.character_style = OS.get_environment("CHAR_STYLE") if OS.has_environment("CHAR_STYLE") else "hd2d"
 			ReferenceCove.ensure(world).set_comparison(vp_name == "ref_match")
 			# Let the actors' sprite clips bake before the shot.
 			for i in 90:

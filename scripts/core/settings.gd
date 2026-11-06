@@ -62,11 +62,19 @@ var values := {
 	# Phase 11 art treatment (characters only; world rendering unchanged)
 	"character_style": "hd2d",      # hd2d (Phase 24 directional pixel sprites) / clean / pixel (Phase 11)
 	"character_style_strength": 0.7,
-	"world_style": "3d",            # Phase 24: 3d = painterly world, pixel actors (the reference); hd2d = optional pixel filter over the world
-	"world_pixel_rows": 320,        # art pixels per screen height in hd2d (240 chunky .. 480 fine)
+	"world_style": "3d",            # Phase 24: 3d = rich detailed world (the owner's choice: pixel characters, painted world); hd2d = optional pixel-art world filter
+	"world_pixel_rows": 270,        # art pixels per screen height in hd2d (240 chunky .. 480 fine)
 }
 
 var defaults := {}
+
+
+## Phase 24 review build: enforce the HD-2D characters and world for
+## everyone. Set false to hand the choice back to the settings menu.
+const REVIEW_ENFORCE_HD2D := true
+## F8: show the previous (pre-HD-2D) look while held on, for side-by-side
+## judging. Runtime only.
+var compare_old := false
 
 
 func _ready() -> void:
@@ -260,7 +268,12 @@ func sanitize() -> void:
 	values.character_style_strength = clampf(float(values.character_style_strength), 0.0, 1.0)
 	if not values.get("world_style", "3d") in ["hd2d", "3d"]:
 		values.world_style = "3d"
-	values.world_pixel_rows = clampi(int(values.get("world_pixel_rows", 320)), 180, 720)
+	values.world_pixel_rows = clampi(int(values.get("world_pixel_rows", 270)), 180, 720)
+	# Review build: pixel-art characters (crew, dog, first-person axe) are
+	# enforced over a rich, full-resolution world - the owner's chosen look.
+	# F8 flips to the previous smooth characters for comparison (not saved).
+	if REVIEW_ENFORCE_HD2D:
+		values.character_style = "clean" if compare_old else "hd2d"
 	if typeof(values.binds) != TYPE_DICTIONARY:
 		values.binds = {}
 
@@ -319,4 +332,47 @@ func apply() -> void:
 		if float(values.render_scale) < 0.999:
 			mode = {"bilinear": Viewport.SCALING_3D_MODE_BILINEAR, "fsr1": Viewport.SCALING_3D_MODE_FSR, "fsr2": Viewport.SCALING_3D_MODE_FSR2}[values.upscaler]
 		get_tree().root.scaling_3d_mode = mode
+		_apply_world_style()
 	changed.emit()
+
+
+## Art pixel size in screen pixels for the HD-2D world (0 = off). The 3D
+## world renders at exactly 1/px of the window and the post pass shows
+## each rendered pixel as a crisp px*px block.
+func world_pixel_px() -> int:
+	if str(values.get("world_style", "3d")) != "hd2d" or DisplayServer.get_name() == "headless":
+		return 0
+	var h := float(get_tree().root.size.y) if get_tree() and get_tree().root else 1080.0
+	return maxi(int(round(h / float(values.world_pixel_rows))), 2)
+
+
+func _apply_world_style() -> void:
+	var root := get_tree().root
+	if not root.size_changed.is_connected(_on_root_resized):
+		root.size_changed.connect(_on_root_resized)
+	var px := world_pixel_px()
+	if px > 0:
+		# True low-resolution render: aliased, crisp pixel-art edges (no
+		# temporal or FXAA smoothing, which would smear the art pixels).
+		root.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+		root.scaling_3d_scale = 1.0 / float(px)
+		root.use_taa = false
+		root.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+	else:
+		root.use_taa = bool(ProjectSettings.get_setting("rendering/anti_aliasing/quality/use_taa", true))
+		root.screen_space_aa = int(ProjectSettings.get_setting("rendering/anti_aliasing/quality/screen_space_aa", 1)) as Viewport.ScreenSpaceAA
+
+
+func _on_root_resized() -> void:
+	_apply_world_style()
+	changed.emit()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if REVIEW_ENFORCE_HD2D and event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F8:
+		compare_old = not compare_old
+		apply()
+		var hud := get_tree().get_first_node_in_group("hud")
+		if hud and hud.has_method("show_message"):
+			hud.show_message("Comparing: previous smooth characters (F8 returns to pixel characters)" if compare_old else "Pixel-art characters (F8 compares the previous look)", 3.0)
+		get_viewport().set_input_as_handled()
