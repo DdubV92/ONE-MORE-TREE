@@ -16,12 +16,12 @@ const AXES := {
 const KEYS := [
 	# Rest sits low in the lower-right corner (Phase 24 reference): the head
 	# only enters the frame on the wind-up and lands on the crosshair at contact.
-	[0.0, Vector3(0.27, -0.42, -0.46), Vector3(-0.22, 0.9, -0.38), Vector3(-0.85, 0.0, -0.5)],
+	[0.0, Vector3(0.28, -0.41, -0.5), Vector3(-0.26, 0.86, -0.44), Vector3(-0.85, 0.0, -0.5)],
 	[0.3, Vector3(0.42, -0.06, -0.16), Vector3(0.28, 0.72, 0.62), Vector3(-0.1, 0.62, -0.78)],
 	[0.4, Vector3(0.3, -0.12, -0.46), Vector3(0.08, 0.5, -0.86), Vector3(-0.35, -0.55, -0.75)],
 	[0.46, Vector3(0.05, -0.26, -0.7), Vector3(-0.4, 0.12, -0.9), Vector3(-0.62, -0.1, -0.78)],
 	[0.56, Vector3(0.12, -0.26, -0.62), Vector3(-0.32, 0.24, -0.9), Vector3(-0.7, 0.05, -0.7)],
-	[1.0, Vector3(0.27, -0.42, -0.46), Vector3(-0.22, 0.9, -0.38), Vector3(-0.85, 0.0, -0.5)],
+	[1.0, Vector3(0.28, -0.41, -0.5), Vector3(-0.26, 0.86, -0.44), Vector3(-0.85, 0.0, -0.5)],
 ]
 
 var tier := "small"
@@ -75,6 +75,7 @@ static func vm_pixel_pass() -> ShaderMaterial:
 
 
 func _process(delta: float) -> void:
+	_follow_pixel_cam()
 	_vm_t -= delta
 	if _vm_t > 0.0:
 		return
@@ -83,10 +84,98 @@ func _process(delta: float) -> void:
 	if st != _vm_style:
 		_vm_style = st
 		apply_pixel_style()
+	if _px_vp != null:
+		_set_layers(self, VM_LAYER)       # newly equipped parts join the pixel layer
 
 
 func apply_pixel_style() -> void:
-	_overlay(self, vm_pixel_pass() if str(Settings.get_v("character_style")) == "hd2d" else null)
+	var hd2d := str(Settings.get_v("character_style")) == "hd2d"
+	_overlay(self, vm_pixel_pass() if hd2d else null)
+	_set_pixel_view(hd2d and DisplayServer.get_name() != "headless")
+
+
+# ---- Phase 24: true pixel-art first-person axe and hands -------------------
+## The arms and tool render on their own layer into a low-resolution
+## SubViewport whose camera mirrors the player's (same world, so the same
+## sun, lamps and fog light them), then show upscaled with nearest texels
+## and a dark one-texel outline, under the grade and HUD. The world itself
+## keeps full resolution.
+const VM_LAYER := 1 << 19          # layer 20 (CameraWall.LAYER_VIEWMODEL)
+const VM_ROWS := 200               # pixel rows across the screen height
+var _px_vp: SubViewport
+var _px_cam: Camera3D
+var _px_canvas: CanvasLayer
+var _px_rect: TextureRect
+
+
+func _set_pixel_view(on: bool) -> void:
+	var main_cam := get_parent() as Camera3D
+	if main_cam == null:
+		return
+	if on and _px_vp == null:
+		_px_vp = SubViewport.new()
+		_px_vp.name = "VMPixelView"
+		_px_vp.transparent_bg = true
+		_px_vp.msaa_3d = Viewport.MSAA_DISABLED
+		_px_vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+		_px_vp.use_taa = false
+		_px_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		_px_cam = Camera3D.new()
+		_px_cam.cull_mask = VM_LAYER
+		_px_cam.near = 0.02
+		_px_cam.far = 6.0
+		_px_vp.add_child(_px_cam)
+		add_child(_px_vp)
+		_px_canvas = CanvasLayer.new()
+		_px_canvas.name = "VMPixelLayer"
+		_px_canvas.layer = -1                     # above the 3D world, below grade and HUD
+		_px_rect = TextureRect.new()
+		_px_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_px_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_px_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_px_rect.stretch_mode = TextureRect.STRETCH_SCALE
+		_px_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/vm_pixel_present.gdshader")
+		_px_rect.material = m
+		_px_rect.texture = _px_vp.get_texture()
+		_px_canvas.add_child(_px_rect)
+		add_child(_px_canvas)
+		_px_cam.make_current()
+	if _px_vp != null:
+		_px_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
+		_px_canvas.visible = on
+		_set_layers(self, VM_LAYER if on else 1)
+	if on:
+		main_cam.cull_mask &= ~VM_LAYER
+	else:
+		main_cam.cull_mask |= VM_LAYER
+	_follow_pixel_cam()
+
+
+func _follow_pixel_cam() -> void:
+	if _px_vp == null or not _px_canvas.visible:
+		return
+	var main_cam := get_parent() as Camera3D
+	if main_cam == null:
+		return
+	_px_cam.global_transform = main_cam.global_transform
+	_px_cam.fov = main_cam.fov
+	var vs := get_viewport().get_visible_rect().size
+	var want := Vector2i(maxi(int(round(vs.x * VM_ROWS / maxf(vs.y, 1.0))), 16), VM_ROWS)
+	if _px_vp.size != want:
+		_px_vp.size = want
+	# Hidden viewmodel (UI open, vehicle, carrying) hides the pixel layer too.
+	_px_rect.visible = is_visible_in_tree()
+
+
+static func _set_layers(n: Node, layers: int) -> void:
+	if n is VisualInstance3D:
+		(n as VisualInstance3D).layers = layers
+	for c in n.get_children():
+		if c is SubViewport or c is CanvasLayer:
+			continue
+		_set_layers(c, layers)
 
 
 static func _overlay(n: Node, m: Material) -> void:

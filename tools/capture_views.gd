@@ -135,6 +135,9 @@ func _ready() -> void:
 			continue
 		var vp: Dictionary = vps[vp_name]
 		if vp_name.begins_with("ref_"):
+			# Reference views use the shipping character style (directional
+			# pixel sprites) whatever a local settings.cfg says.
+			Settings.values.character_style = OS.get_environment("CHAR_STYLE") if OS.has_environment("CHAR_STYLE") else "hd2d"
 			ReferenceCove.ensure(world).set_comparison(vp_name == "ref_match")
 			# Let the actors' sprite clips bake before the shot.
 			for i in 90:

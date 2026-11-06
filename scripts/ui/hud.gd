@@ -106,7 +106,9 @@ func _ready() -> void:
 		Game.timber.recovered.connect(func(sid: String, reason: String) -> void: show_message("Recovered log %s (%s) to safe ground." % [sid, reason.replace("_", " ")], 3.0))
 	_build_aid()
 	if Game.is_preview():
-		tour_panel.visible = true
+		# Phase 24: the reference bookmarks drop the player straight into
+		# the view (the tour stays one Tab away).
+		tour_panel.visible = not Game.pending_teleport.begins_with("ref_")
 		show_message("Preview Tour: Tab toggles the tour panel, F1 shows controls")
 	else:
 		show_message("Welcome to the island. F1 for controls.")

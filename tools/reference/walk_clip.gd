@@ -14,6 +14,9 @@ var log_lines: PackedStringArray = []
 
 func _ready() -> void:
 	Game.mode = Game.Mode.PREVIEW
+	# Gameplay settings = the shipping defaults (this container's saved
+	# settings.cfg was left on "clean" by earlier comparison runs).
+	Settings.values.character_style = "hd2d"
 	Game.preview_variant = "island_r2"
 	Game.pending_teleport = "ref_fp"
 	world = load("res://scenes/world.tscn").instantiate()
@@ -36,6 +39,17 @@ func _ready() -> void:
 		var pb: PixelBaker = PixelBaker._inst
 		if i > 30 and (pb == null or pb.pending() == 0):
 			break
+	if OS.has_environment("REF_FP_SHOT"):
+		# The uncropped first-person screenshot at gameplay settings: the
+		# First-Person Shoreline start exactly as the player lands there.
+		await _wait(1.0)
+		await RenderingServer.frame_post_draw
+		var img := get_viewport().get_texture().get_image()
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://captures"))
+		img.save_png("res://captures/ref_fp_gameplay.png")
+		print("WALK shot saved %dx%d" % [img.get_width(), img.get_height()])
+		get_tree().quit()
+		return
 	await _walk_to(ReferenceCove.at(0.4, 3.3), 0.0)              # past the ferns to the fence gap
 	await _walk_to(ReferenceCove.at(0.1, 4.6), 0.0)              # through the gap
 	await _walk_to(ReferenceCove.at(-0.1, 5.6), -0.15)           # past the dog
