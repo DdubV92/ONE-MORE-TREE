@@ -55,6 +55,7 @@ static func mat(name: String) -> Material:
 		"ash": m = _plain(Color(0.16, 0.15, 0.14), 1.0, 0.0)
 		"char": m = _plain(Color(0.06, 0.05, 0.04), 0.9, 0.0)
 		"glass": m = _glass()
+		"glass_dry": m = _glass_dry()
 		"chainlink": m = _chainlink()
 		"lamp_bulb": m = _emissive(Color(1.0, 0.82, 0.55), 6.0)
 		"screen": m = _plain(Color(0.02, 0.02, 0.03), 0.2, 0.0)
@@ -127,8 +128,39 @@ static func _tex_mat_path(base: String, tint: Color, scale: float) -> StandardMa
 	return m
 
 
-static func _glass() -> StandardMaterial3D:
+static func _glass() -> Material:
 	# Readable both ways: low alpha, low reflectance, no mirror at night.
+	# Phase 23: the same glass beads up and runs in rain (glass_rain shader).
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/glass_rain.gdshader")
+	m.set_shader_parameter("tint", Color(0.75, 0.85, 0.88, 0.12))
+	return m
+
+
+## Phase 23: exterior camp materials soak in rain: darker, glossier (logs,
+## siding, decking, roofs, paint, galvanized metal). Interior materials are
+## never touched. Called by WeatherService a few times a second at most.
+const WET_MATS := ["siding", "planks", "dark_wood", "bark", "roof", "camper_paint", "camper_stripe", "galvanized"]
+static var _wet_base := {}
+static var wet_applied := 0.0
+
+static func apply_wetness(w: float) -> void:
+	if absf(w - wet_applied) < 0.02:
+		return
+	wet_applied = w
+	for n in WET_MATS:
+		var m := _mats.get(n) as StandardMaterial3D
+		if m == null:
+			continue
+		if not _wet_base.has(n):
+			_wet_base[n] = [m.albedo_color, m.roughness]
+		var b: Array = _wet_base[n]
+		m.albedo_color = (b[0] as Color).darkened(0.32 * w)
+		m.roughness = lerpf(float(b[1]), minf(float(b[1]), 0.28), w)
+
+
+## Interior glass (mirrors, shower screen, a cup): never rained on.
+static func _glass_dry() -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.albedo_color = Color(0.75, 0.85, 0.88, 0.12)

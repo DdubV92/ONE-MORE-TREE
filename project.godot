@@ -93,3 +93,5 @@ tree_impact={"type": "vec4", "value": Vector4(0, 0, -100, 0)}
 wetness={"type": "float", "value": 0.0}
 rain_amount={"type": "float", "value": 0.0}
 sun_clarity={"type": "float", "value": 1.0}
+storm_gust={"type": "float", "value": 0.0}
+sea_state={"type": "float", "value": 0.2}

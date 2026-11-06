@@ -301,6 +301,11 @@ func sleep() -> Dictionary:
 	# from the world as it is now, BEFORE the morning settlement.
 	if Game.night_recorder:
 		Game.night_recorder.on_night(d)
+	# Phase 23: storm encounters end; a slept-through storm may leave the
+	# missed-flash recording (only if no other recording took the night).
+	if Game.storm_terrors:
+		Game.storm_terrors.morning_cleanup()
+		Game.storm_terrors.on_night(d)
 	var settlement := payroll.settle_day(d)
 	# Phase 21: pay satisfaction moves once per settled day; quits decided.
 	var pay_night := pay.on_settled(d)

@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P23"):
+		_run("phase 23 storm units", _t_phase23_units)
+		await _run_async("phase 23 storm world", _t_phase23_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P22"):
 		await _run_async("phase 22 CampOS", _t_phase22_os)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -185,6 +191,8 @@ func _ready() -> void:
 	_run("phase 21 pay units: $100 minimum, itemised idempotent settlement, raise/cut feelings, personality-dependent quitting (+$50 not always enough), verge before quit, gear raises the fair wage and raise requests, legacy $300 kept, save round trip, report reconciles, morale breaks", _t_phase21_units)
 	await _run_async("phase 21 pay world: real night at each worker's rate, report lines, bonus clears, candidate asking wage, Payroll app rows, quit over pay via departure, save block, preview never writes", _t_phase21_world)
 	await _run_async("phase 22 CampOS: 1280x720 desktop, several program windows, click-to-raise, title-bar drag, maximize/restore, taskbar minimize/restore, close, saved layout and older saves, on-screen pointer, boot on switch-on, reading apps refresh in place", _t_phase22_os)
+	_run("phase 23 storm units: 7 profiles, deterministic schedule, early thunder before severe, severe gaps, quiet majors, full ramp in phase order, no cloud jumps, thunder before rain, stable strike records, silent heavy rain, delay grows with distance, roll envelope, 12-beat catalog", _t_phase23_units)
+	await _run_async("phase 23 storm world: storm reached, pause, load between flash and thunder, per-camera thunder arrival, shelter, wetness reload, masking window, quiet storm, cancelled reservation, Thunder Walker (moves only in windows, reload mid-encounter), reduced flash, Foreman masking, missed-flash recording, feed rumor", _t_phase23_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -1943,8 +1951,8 @@ func _t_phase5_world() -> String:
 	tv.set_mode("quad")
 	for f in 3:
 		await get_tree().process_frame
-	if err == "" and tv.cams.size() != 10:
-		err = "expected 10 cameras, got %d" % tv.cams.size()
+	if err == "" and tv.cams.size() != 11:
+		err = "expected 11 cameras (10 + the Phase 23 dock & shore camera), got %d" % tv.cams.size()
 	var seen := {}
 	for c in tv.tiles:
 		seen[c] = true
@@ -5919,7 +5927,7 @@ func _t_phase20_units() -> String:
 	if sc.size() < 36:
 		return "recording scenarios %d < 36" % sc.size()
 	var beats := {}
-	var cams := ["CAM_01", "CAM_02", "CAM_03", "CAM_04", "CAM_05", "CAM_06", "CAM_07", "CAM_08", "CAM_09", "CAM_10"]
+	var cams := ["CAM_01", "CAM_02", "CAM_03", "CAM_04", "CAM_05", "CAM_06", "CAM_07", "CAM_08", "CAM_09", "CAM_10", "CAM_11"]
 	for s in sc:
 		for k in ["id", "cameras", "requires", "hour", "duration", "actor", "props", "audio", "consequence", "cooldown", "beat"]:
 			if not s.has(k):
@@ -6734,4 +6742,424 @@ func _p22_checks(desk: DeskComputer) -> String:
 	await get_tree().process_frame
 	if desk.windows["News"] != nw or nw.content.get_child_count() == 0:
 		return "reading app refresh replaced its window"
+	return ""
+
+
+# ============================================================ Phase 23 storms
+
+var p23_report := {}
+
+
+func _t_phase23_units() -> String:
+	var rep := {}
+	var data := StormSchedule.data()
+	var profs: Dictionary = data.get("profiles", {})
+	for k in ["clear_broken", "mist_drizzle", "passing_shower", "steady_rain", "squall", "thunderstorm", "severe_coastal"]:
+		if not profs.has(k):
+			return "profile %s missing" % k
+		for f in ["cloud", "rain", "gust", "wind", "visibility", "sea", "lightning", "phases"]:
+			if not (profs[k] as Dictionary).has(f):
+				return "%s lacks %s" % [k, f]
+	var s := StormSchedule.new()
+	s.seed_value = 20261103
+	s._plan()
+	var s2 := StormSchedule.new()
+	s2.seed_value = 20261103
+	s2._plan()
+	if JSON.stringify(s.summary()) != JSON.stringify(s2.summary()):
+		return "schedule not deterministic"
+	rep["summary"] = s.summary()
+	if not (s.days[1].visits as Array).is_empty():
+		return "day 1 is not fair"
+	# Gating: ordinary thunder early, before any severe storm; severe gaps;
+	# the first major storm carries no horror; some majors are quiet.
+	var first_thunder := 99
+	var severe_days := []
+	var first_major := {}
+	var quiet := 0
+	var loud := 0
+	for d in range(1, StormSchedule.LAST_DAY + 1):
+		for v in s.days[d].visits:
+			if str(v.id).ends_with("-0"):
+				continue
+			if v.profile == "thunderstorm":
+				first_thunder = mini(first_thunder, d)
+			if v.profile == "severe_coastal":
+				severe_days.append(d)
+			if bool(v.major):
+				if first_major.is_empty():
+					first_major = v
+				if bool(v.quiet):
+					quiet += 1
+				else:
+					loud += 1
+	if first_thunder > 8:
+		return "no thunderstorm by day 8 (%d)" % first_thunder
+	for sd in severe_days:
+		if sd < first_thunder:
+			return "severe storm before any thunderstorm"
+	for i in range(1, severe_days.size()):
+		if int(severe_days[i]) - int(severe_days[i - 1]) < 6:
+			return "severe storms too close"
+	if first_major.is_empty() or not bool(first_major.quiet) or quiet < 2 or loud < 1:
+		return "quiet/loud majors wrong (first quiet %s, quiet %d, loud %d)" % [str(first_major.get("quiet")), quiet, loud]
+	# A full ramp: phases in order, rain rises then returns to calm; cloud
+	# never jumps; lightning leads the rain (thunder before rain at camp).
+	var tv := {}
+	var tday := 0
+	for d in range(1, StormSchedule.LAST_DAY + 1):
+		for v in s.days[d].visits:
+			if v.profile == "thunderstorm" and not str(v.id).ends_with("-0"):
+				tv = v
+				tday = d
+				break
+		if tday > 0:
+			break
+	var order := []
+	var prev := s.sample(tday, float(tv.start) - 5.0)
+	var peak_rain := 0.0
+	var first_rain_t := -1.0
+	for t in range(int(tv.start) - 5, int(tv.end) + 60):
+		var x := s.sample(tday, float(t))
+		if absf(float(x.cloud) - float(prev.cloud)) > 0.05:
+			return "cloud jumps at %d" % t
+		var ph := str(x.phase)
+		if order.is_empty() or order.back() != ph:
+			order.append(ph)
+		peak_rain = maxf(peak_rain, float(x.rain))
+		if first_rain_t < 0.0 and float(x.rain) > 0.2:
+			first_rain_t = float(t)
+		prev = x
+	rep["ramp_phases"] = order
+	if not ("approach" in order and "peak" in order and "recovery" in order) or order.find("approach") > order.find("peak") or order.find("peak") > order.find("recovery"):
+		return "phase order %s" % str(order)
+	if peak_rain < 0.6 or float(s.sample(tday, float(tv.end) + 30.0).rain) > 0.05:
+		return "ramp did not reach the peak and back to calm"
+	var sts := s.strikes(tday, tv)
+	if sts.is_empty() or float(sts[0].t) >= first_rain_t:
+		return "thunder did not precede the rain (first strike %s, rain at %.0f)" % [str(sts[0].t) if not sts.is_empty() else "-", first_rain_t]
+	var ids := {}
+	var last := -1.0
+	for st in sts:
+		if ids.has(st.id) or float(st.t) < last or not str(st.kind) in ["near", "mid", "far"]:
+			return "strike records not stable/ordered"
+		ids[st.id] = true
+		last = float(st.t)
+	# Heavy rain can stay silent: steady rain has no lightning at all.
+	for d in range(1, StormSchedule.LAST_DAY + 1):
+		for v in s.days[d].visits:
+			if v.profile in ["steady_rain", "mist_drizzle", "passing_shower"] and not s.strikes(d, v).is_empty():
+				return "%s produced lightning" % v.profile
+	# Delay at two positions from one record; masking rises and decays.
+	var near := {}
+	for st in sts:
+		if str(st.kind) == "near":
+			near = st
+	if near.is_empty():
+		near = sts[0]
+	var sp := WeatherService.strike_pos(near) if World.manifest != null and not World.manifest.is_empty() else Vector3.ZERO
+	var p1 := sp + Vector3(150, 0, 0)
+	var p2 := sp + Vector3(900, 0, 0)
+	var d1 := WeatherService.thunder_arrival(near, p1) - float(near.t)
+	var d2 := WeatherService.thunder_arrival(near, p2) - float(near.t)
+	rep["delays"] = [snappedf(d1, 0.01), snappedf(d2, 0.01)]
+	if not (d2 > d1 + 1.5):
+		return "thunder delay does not grow with distance (%.2f / %.2f)" % [d1, d2]
+	if WeatherService.roll_env(str(near.kind), 0.3) < 0.2 or WeatherService.roll_env(str(near.kind), 12.0) > 0.05:
+		return "roll envelope wrong"
+	# Catalog: 12 beats, kinds, families and reused events exist.
+	var bank: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/terror/bank.json"))
+	var evs := {}
+	for e in bank.events:
+		evs[str(e.id)] = true
+	var beats: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/terror/storm_beats.json"))
+	var kinds := {}
+	for b in beats.beats:
+		kinds[str(b.kind)] = int(kinds.get(str(b.kind), 0)) + 1
+		if int(b.family) < 1 or int(b.family) > (bank.families as Array).size():
+			return "beat %s family" % b.id
+		if str(b.kind) == "reused_event" and not evs.has(str(b.reuse_event)):
+			return "beat %s reuses a missing event" % b.id
+	rep["beats"] = kinds
+	if (beats.beats as Array).size() != 12:
+		return "catalog has %d beats" % (beats.beats as Array).size()
+	p23_report["units"] = rep
+	return ""
+
+
+func player_eye_pos() -> Vector3:
+	return Game.player.global_position if Game.player else Vector3.ZERO
+
+
+func _t_phase23_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or Game.storm_terrors == null or not world.systems_ready) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := await _p23_checks(world)
+	print("P23 REPORT ", JSON.stringify(p23_report))
+	Engine.time_scale = 1.0
+	Settings.set_v("flash_reduction", "full")
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p23_checks(world: IslandWorld) -> String:
+	var rep := {}
+	var cs: CampaignService = Game.campaign
+	cs.start_test_route(true, true)
+	var w: WeatherService = Game.weather
+	var st: StormTerrors = Game.storm_terrors
+	var dir: TerrorDirector = Game.director
+	dir.next_in = 99999.0
+	var sch := w._sched()
+	var tv := {}
+	var day := 0
+	for d in range(2, 31):
+		for v in sch.days[d].visits:
+			if v.profile in ["thunderstorm", "severe_coastal"] and sch.strikes(d, v).size() > 8:
+				tv = v
+				day = d
+				break
+		if day > 0:
+			break
+	var peak_t: float = float(tv.start) + float(tv.durs[0]) + float(tv.durs[1]) + float(tv.durs[2]) + 15.0
+	cs.clock.restore({"day": day, "t": minf(peak_t, WorkdayClock.NIGHT_AT), "night_exposure": maxf(peak_t - WorkdayClock.NIGHT_AT, 0.0), "running": true})
+	for k in 20:
+		await get_tree().physics_frame
+	if w.profile_name != str(tv.profile) or w.lightning < 0.3:
+		return "storm not reached (%s, lightning %.2f)" % [w.profile_name, w.lightning]
+	# Pause stops the weather clock.
+	var t0 := w.weather_t
+	get_tree().paused = true
+	for k in 20:
+		await get_tree().physics_frame
+	var t1 := w.weather_t
+	get_tree().paused = false
+	if absf(t1 - t0) > 0.001:
+		return "weather moved while paused"
+	# Load between flash and thunder: the pending thunder survives.
+	var upc := w.upcoming_strikes(w.weather_t, 120.0)
+	if upc.is_empty():
+		return "no strike ahead"
+	Engine.time_scale = 4.0
+	var gw := 0
+	while w.pending.is_empty() and gw < 4000:
+		await get_tree().physics_frame
+		gw += 1
+	Engine.time_scale = 1.0
+	if w.pending.is_empty():
+		return "no thunder in flight after a flash"
+	var cap := w.capture()
+	var want := int(cap.pending.size())
+	w.pending.clear()
+	w.restore(cap)
+	if w.pending.size() != want:
+		return "pending thunder not restored (%d of %d)" % [w.pending.size(), want]
+	var th0 := w.thunders
+	Engine.time_scale = 4.0
+	gw = 0
+	while not w.pending.is_empty() and gw < 4000:
+		await get_tree().physics_frame
+		gw += 1
+	Engine.time_scale = 1.0
+	if w.thunders <= th0:
+		return "restored thunder never arrived"
+	rep["pending_restored"] = want
+	# Camera mics get their own arrival (shown cameras, own distance).
+	var wall: CameraWall = Game.tv
+	wall.force_active = true
+	wall.set_power(true)
+	wall.set_mode("quad")
+	for k in 3:
+		await get_tree().process_frame
+	var fake := {"id": "TEST-S1", "visit": "test", "day": day, "t": w.weather_t, "kind": "mid", "off": [900.0, 300.0], "dist": 950.0, "power": 0.8, "strokes": 1, "seed": 0}
+	w.fire(fake)
+	var mine := w.pending.filter(func(p: Dictionary) -> bool: return str(p.strike.id) == "TEST-S1")
+	var cam_dues := {}
+	for p in mine:
+		var lp := Vector3(p.pos[0], p.pos[1], p.pos[2])
+		var expect := WeatherService.thunder_arrival(fake, lp)
+		if absf(float(p.due) - expect) > 0.01:
+			return "listener %s due %.2f expected %.2f" % [p.listener, float(p.due), expect]
+		cam_dues[str(p.listener)] = snappedf(float(p.due) - w.weather_t, 0.01)
+	rep["thunder_due_by_listener"] = cam_dues
+	if mine.size() < 2:
+		return "no camera microphone got its own thunder"
+	# Shelter: open ground vs under the camper roof.
+	var open_p := CampLayout.world(Vector3(0, 0, 0))
+	var roof_p := NightAnchors.camper().global_position + Vector3(0, 1.2, 0)
+	rep["shelter"] = [w.shelter_at(open_p), w.shelter_at(roof_p)]
+	if w.shelter_at(open_p) > 0.01 or w.shelter_at(roof_p) < 0.4:
+		return "shelter boundary wrong %s" % str(rep.shelter)
+	# Wetness is stable across save/load.
+	w.wetness = 0.73
+	var c2 := w.capture()
+	w.wetness = 0.0
+	w.restore(c2)
+	if absf(w.wetness - 0.73) > 0.002:
+		return "wetness not stable after reload"
+	# Masking: rises at thunder arrival, back to the rain bed later.
+	var near := {"id": "TEST-N", "visit": "test", "day": day, "t": w.weather_t, "kind": "near", "off": [120.0, 80.0], "dist": 144.0, "power": 1.0, "strokes": 2, "seed": 0}
+	var lpos := WeatherService.strike_pos(near) + Vector3(140, 0, 0)
+	var arr := WeatherService.thunder_arrival(near, lpos)
+	var w_db := WeatherService.thunder_level(near, lpos) + linear_to_db(WeatherService.roll_env("near", 0.4))
+	var win := w.masking_window(near, lpos, 30.0)
+	rep["masking"] = {"near_roll_db": snappedf(w_db, 0.1), "window": [snappedf(float(win[0]) - arr, 0.01), snappedf(float(win[1]) - arr, 0.01)] if not win.is_empty() else []}
+	if w_db < 70.0 or win.is_empty() or float(win[0]) < arr:
+		return "masking window wrong %s" % str(rep.masking)
+	# Quiet storms carry no horror.
+	var b2: Dictionary = st.by_id["sb02"]
+	if bool(tv.quiet) and st.eligible(b2) != "quiet storm":
+		return "quiet storm not respected (%s)" % st.eligible(b2)
+	# A reservation held elsewhere cancels the beat (recorded, nothing staged).
+	dir.reserve("OTHER", 9, "test")
+	st.forced = "sb02"
+	var nr := st.start("sb02")
+	if not nr.is_empty() or not str(st.records.back().reason).begins_with("director"):
+		return "beat ignored another reservation"
+	dir.release("OTHER", 0.0, "cancelled")
+	dir.last_end_t = -99999.0
+	dir.family_cooldown.clear()
+	# Thunder Walker: revealed by flashes, moves only inside masking windows.
+	var r := st.start("sb02")
+	st.forced = ""
+	if r.is_empty():
+		return "Thunder Walker not staged: %s" % str(st.records.back())
+	var a: TerrorActor = st._actors.get(r.id)
+	var last := a.global_position
+	var outside := 0.0
+	var moved := 0.0
+	var saved_mid := {}
+	var saved_pos := Vector3.INF
+	Engine.time_scale = 3.0
+	var tw := Time.get_ticks_msec()
+	while st.runs.has(r) and Time.get_ticks_msec() - tw < 90000:
+		await get_tree().physics_frame
+		if not is_instance_valid(a):
+			break
+		var dd := a.global_position.distance_to(last)
+		if dd > 0.0005:
+			moved += dd
+			if st._in_window(r).is_empty():
+				outside += dd
+		last = a.global_position
+		if saved_mid.is_empty() and (r.windows as Array).size() >= 2 and st._in_window(r).is_empty():
+			saved_mid = st.capture()
+			saved_pos = a.global_position
+	Engine.time_scale = 1.0
+	rep["walker"] = {"moved": snappedf(moved, 0.01), "outside_windows": snappedf(outside, 0.001), "windows": (r.get("windows", []) as Array).size(), "reveals": (r.presented as Array).size(), "steps_masked_player": st.stats.steps_masked_player, "steps_heard_player": st.stats.steps_heard_player}
+	if outside > 0.01:
+		return "Thunder Walker moved %.2f m outside masking windows" % outside
+	if (r.get("windows", []) as Array).is_empty() or (r.presented as Array).is_empty() or moved < 1.0:
+		return "Thunder Walker never revealed/moved: %s" % str(rep.walker)
+	# Reload mid-encounter: the same figure, exactly where it stood.
+	if not saved_mid.is_empty():
+		st.restore(saved_mid)
+		var r2: Dictionary = st.runs[0] if not st.runs.is_empty() else {}
+		var a2: TerrorActor = st._actors.get(r2.get("id", "")) if not r2.is_empty() else null
+		if a2 == null or a2.global_position.distance_to(saved_pos) > 0.05 or Game.director.reservation.is_empty():
+			return "mid-encounter reload lost the figure or its reservation"
+		rep["reload_mid"] = "same position, reservation held"
+		st._finish(r2, "test end")
+	elif st.runs.has(r):
+		st._finish(r, "test end")
+	# Reduced flashes: dim swell, and a silhouette cue on the actor.
+	Settings.set_v("flash_reduction", "reduced")
+	var rp := RecordingPlayer.new()
+	rp.clip = {"strike": {"id": "x", "kind": "near", "flash_at": 1.0}}
+	var rf := 0.0
+	for k in 30:
+		rf = maxf(rf, rp.flash_at(1.0 + k * 0.05))
+	rp.free()
+	Settings.set_v("flash_reduction", "full")
+	if rf > 0.23 or rf < 0.05:
+		return "reduced flash envelope %.2f" % rf
+	# Hunt: thunder at the Foreman's ears shortens what it hears; rain haze
+	# shortens what it sees (concealment, never a position).
+	var f := Foreman.new()
+	add_child(f)
+	f.global_position = lpos
+	var quiet_r := 30.0
+	var saved_strikes: Array = w._preview_strikes
+	# A near strike whose roll is sounding at the Foreman right now.
+	var near2 := near.duplicate()
+	near2["t"] = w.weather_t - StormSchedule.thunder_delay(WeatherService.strike_pos(near).distance_to(lpos + Vector3(0, 1.8, 0))) - 0.3
+	w._preview_strikes = [near2]
+	var masked := f.masked_radius(quiet_r)
+	w._preview_strikes = saved_strikes
+	f.queue_free()
+	rep["foreman_hearing"] = [quiet_r, snappedf(masked, 0.1)]
+	# (masking_db reads weather_t; the near strike was emitted "now")
+	if masked >= quiet_r:
+		return "Foreman hearing not masked by thunder"
+	# Missed flash: a slept-through storm leaves one recording with a strike id.
+	# (A night storm whose strikes fell after you went to bed; a quiet one is
+	# made eligible for the check only and restored after.)
+	var mf := {}
+	for d in range(2, 31):
+		for v in sch.days[d].visits:
+			if not v.profile in ["thunderstorm", "severe_coastal"]:
+				continue
+			for s1 in sch.strikes(d, v):
+				if float(s1.t) > WorkdayClock.NIGHT_AT and str(s1.kind) != "far":
+					mf = {"day": d, "visit": v}
+					break
+			if not mf.is_empty():
+				break
+		if not mf.is_empty():
+			break
+	if mf.is_empty():
+		return "no night storm with near/mid strikes in the schedule"
+	var d3 := int(mf.day)
+	var was_quiet := bool(mf.visit.quiet)
+	mf.visit.quiet = false
+	Game.night_recorder.nights.erase(str(d3))
+	w.weather_day = d3
+	w.weather_t = WorkdayClock.NIGHT_AT
+	var clip := st.on_night(d3)
+	mf.visit.quiet = was_quiet
+	rep["missed_flash"] = {"day": d3, "clip": str(clip.get("id", "")), "camera": str(clip.get("camera", "")), "strike": clip.get("strike", {})}
+	if clip.is_empty() or not clip.has("strike") or str(Game.night_recorder.nights.get(str(d3), "")) != str(clip.id):
+		return "missed flash not recorded: %s" % str(rep.missed_flash)
+	# A fully cleared route: no treeline left near camp, the Thunder Walker
+	# still finds grounded, reachable, visible waypoints (stump corridor).
+	var px := player_eye_pos()
+	var removed := 0
+	for i in (World.trees.x as PackedFloat32Array).size():
+		if Vector2(World.trees.x[i] - px.x, World.trees.z[i] - px.z).length() < 110.0:
+			World.removed_trees[int(World.trees.id[i])] = true
+			removed += 1
+	dir.last_end_t = -99999.0
+	dir.family_cooldown.clear()
+	cs.clock.restore({"day": day, "t": minf(peak_t, WorkdayClock.NIGHT_AT), "night_exposure": maxf(peak_t - WorkdayClock.NIGHT_AT, 0.0), "running": true})
+	for k in 5:
+		await get_tree().physics_frame
+	st.forced = "sb02"
+	var cleared_plan := st._plan_thunder_walker()
+	st.forced = ""
+	World.removed_trees.clear()
+	rep["cleared_route"] = {"trees_removed": removed, "plan": "ok" if not cleared_plan.has("fail") else str(cleared_plan.fail)}
+	if cleared_plan.has("fail"):
+		return "no Thunder Walker route on cleared land: %s" % str(cleared_plan.fail)
+	# Feed rumor: generic first, local only after a real camera event.
+	if not Game.feed.visible("fo.storm.desync.01") and not Game.feed.pub.has("fo.storm.desync.01"):
+		st._rumor(false, "")
+	if not Game.feed.pub.has("fo.storm.desync.01"):
+		return "rumor not posted"
+	p23_report["world"] = rep
 	return ""

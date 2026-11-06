@@ -160,6 +160,11 @@ func _ready() -> void:
 	var si := SleepInterrupts.new()
 	add_child(si)
 	Game.sleep_interrupts = si
+	# Phase 23: storm-only encounters (they ask the director for the slot).
+	var stt := StormTerrors.new()
+	stt.name = "StormTerrors"
+	add_child(stt)
+	Game.storm_terrors = stt
 	comfort = CamperComfort.new()
 	comfort.name = "CamperComfort"
 	add_child(comfort)

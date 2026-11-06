@@ -4,7 +4,7 @@ extends RefCounted
 ## can never write here: every write goes through Game.can_write_campaign_save().
 ## Schema history and migration rules: docs/ARCHITECTURE.md "Save schema".
 
-const SCHEMA_VERSION := 14
+const SCHEMA_VERSION := 15       # Phase 23: phase23 block (storm encounters) + weather v2
 const DEFAULT_PATH := "user://saves/campaign.json"   # pre-Phase-3 single save
 const SLOTS := 3
 
@@ -194,6 +194,10 @@ static func capture_state(world: Node) -> Dictionary:
 		# sleep interruptions (state, one-shot nights, cooldowns).
 		"phase20": {"recordings": Game.night_recorder.capture_state() if Game.night_recorder else {},
 			"sleep": Game.sleep_interrupts.capture_state() if Game.sleep_interrupts else {}},
+		# Phase 23: storm encounters mid-run (actor where it stands), records,
+		# once-per-visit marks, the rumor state; weather lives under "weather".
+		"phase23": {"storm": Game.storm_terrors.capture() if Game.storm_terrors else {},
+			"rumor": Game.storm_terrors.rumor.duplicate() if Game.storm_terrors else {}},
 		"time_of_day": env.get("hour") if env else 12.0,
 		# Modified original trees only, keyed by stable ID (state, notch work,
 		# cut side, fall intent, felled guard, trunk pose/velocity).
@@ -474,6 +478,12 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 		Game.night_recorder.restore_state(p20.get("recordings", {}))
 	if Game.sleep_interrupts:
 		Game.sleep_interrupts.restore_state(p20.get("sleep", {}))
+	var p23: Dictionary = data.get("phase23", {})
+	if Game.storm_terrors:
+		Game.storm_terrors.restore(p23.get("storm", {}))
+		var ru: Dictionary = p23.get("rumor", {})
+		if not ru.is_empty():
+			Game.storm_terrors.rumor = ru.duplicate()
 	var hunt_n: Object = world.get("hunt")
 	if hunt_n and str((p6.get("hunt", {}) as Dictionary).get("mode", "none")) != "none":
 		hunt_n.set("pending_restore", true)

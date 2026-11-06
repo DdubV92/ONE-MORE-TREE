@@ -34,6 +34,10 @@ var weather_wind := 1.0
 var weather_wind_dir := Vector2(0.8, 0.6)
 var weather_wetness := 0.0
 var weather_flash := 0.0
+## Phase 23 storm inputs.
+var weather_visibility := 1.0
+var weather_gust := 0.0
+var weather_sea := 0.2
 ## Effective wind strength actually written to the shared shader globals
 ## (trees, grass, water detail, rain and the wind-in-leaves audio read it).
 var wind_now := 0.5
@@ -167,6 +171,14 @@ func set_weather(cloud: float, rain: float, wind_mult: float, wind_dir: Vector2,
 	if changed or force:
 		_blend_presets()
 		_apply()
+
+
+func set_storm(visibility: float, gust_v: float, sea_v: float) -> void:
+	weather_visibility = clampf(visibility, 0.2, 1.0)
+	weather_gust = clampf(gust_v, 0.0, 1.0)
+	weather_sea = clampf(sea_v, 0.0, 1.0)
+	RenderingServer.global_shader_parameter_set("storm_gust", weather_gust)
+	RenderingServer.global_shader_parameter_set("sea_state", weather_sea)
 
 
 func effective_overcast() -> float:
@@ -304,7 +316,7 @@ func _apply() -> void:
 	env.fog_light_color = p.fog_color
 	# Night mist: thicker and darker on moonless nights so the forest fades
 	# to black within a few dozen metres; a full moon thins it.
-	env.fog_density = p.fog_density * lerpf(1.0, lerpf(1.6, 0.55, illum), nf) * (1.0 + weather_rain * 0.35)
+	env.fog_density = p.fog_density * lerpf(1.0, lerpf(1.6, 0.55, illum), nf) * (1.0 + weather_rain * 0.35) * lerpf(1.0, 2.8, 1.0 - weather_visibility)
 	env.fog_height = _ground_fog_y + 2.5
 	env.fog_height_density = lerpf(p.fog_height_density, 0.05, nf)
 	env.volumetric_fog_enabled = quality in ["high", "ultra"] and p.volumetric > 0.0005

@@ -403,6 +403,18 @@ func _build_dock_and_skiff() -> void:
 			BuildKit.cylinder(dock, 0.1, deck_y - bed + 0.6, Vector3(post.x, (deck_y + bed) * 0.5 + 0.2, post.z), "dark_wood", false, 8)
 		z += 2.5
 	BuildKit.marker(dock, "DockPickup", dock_end + Vector3(0, -0.5, 0.5), 0.0, "dock_pickup")
+	# Phase 23: a shore camera on its own post at the dock's shore end,
+	# looking along the beach and the shallows (the only camp camera with
+	# the sea in view: wakes, foam, the survey ship, the rescue vessel).
+	var res := Game.world_root.find_child("Reservations", true, false) if Game.world_root else null
+	if res and res.has_method("_camera"):
+		var mount := dock_shore + Vector3(1.6, 0.0, -1.0)
+		mount.y = World.height_at(mount.x, mount.z)
+		var post := BuildKit.cylinder(dock, 0.045, 2.7, mount + Vector3(0, 1.35, 0), "galvanized", true, 8)
+		post.name = "CAM_11_Post"
+		var look := dock_shore + Vector3(22.0, 0.0, 16.0)
+		look.y = World.sea_level + 0.5
+		res.call("_camera", "CAM_11", "dock_shore", mount + Vector3(0, 2.75, 0), look, "post")
 	dock.set_meta("note", "Minimal service dock + skiff for crew arrivals/departures (Phase 5 polishes the dock).")
 	nav.add_deck(dock_shore, dock_end, deck_y + 0.06)
 	# A simple original skiff: hull, gunwales, bench, outboard.

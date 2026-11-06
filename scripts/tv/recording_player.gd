@@ -33,6 +33,11 @@ var _props := {}            # index -> Node3D
 var _crowns: MultiMeshInstance3D
 var _crown_base: Array = [] # [index, Transform3D] near the camera (sway)
 var _built := false
+## Phase 23: a storm clip replays its ORIGINAL strike: the flash at its
+## recorded time (the thunder comes from the clip's audio rows, at the
+## camera microphone's own delay).
+var _env: Environment
+var _amb0 := 0.55
 
 
 func _ready() -> void:
@@ -201,6 +206,8 @@ func _build() -> void:
 	env.fog_density = 0.012 + 0.01 * float((clip.get("light", {}) as Dictionary).get("rain", 0.0))
 	var we := WorldEnvironment.new()
 	we.environment = env
+	_env = env
+	_amb0 = env.ambient_light_energy
 	_root.add_child(we)
 	var moon := DirectionalLight3D.new()
 	moon.light_energy = 0.25 + 0.35 * float((clip.get("light", {}) as Dictionary).get("moon", 0.3))
@@ -487,7 +494,28 @@ func _event_nodes() -> void:
 
 
 ## Places everything for time `tt` (rendering side of pose()).
+## Flash level at clip time tt (0 without a recorded strike). Follows the
+## flash-reduction setting like live lightning.
+func flash_at(tt: float) -> float:
+	var st: Dictionary = clip.get("strike", {})
+	if st.is_empty():
+		return 0.0
+	var x := tt - float(st.get("flash_at", 0.0))
+	if x < 0.0 or x > 1.4:
+		return 0.0
+	var mode := str(Settings.get_v("flash_reduction"))
+	if mode == "reduced":
+		return 0.22 * sin(clampf(x / 1.2, 0.0, 1.0) * PI)
+	if mode != "full":
+		return 0.0
+	return WeatherService.flash_raw(str(st.get("kind", "mid")), 2, x)
+
+
 func apply_pose(tt: float) -> void:
+	if _env:
+		var f := flash_at(tt)
+		_env.ambient_light_energy = _amb0 * (1.0 + 6.0 * f)
+		_env.background_color = Color(0.03, 0.035, 0.045).lerp(Color(0.5, 0.55, 0.7), f * 0.6)
 	if not _built:
 		return
 	var ps := pose(tt)

@@ -47,7 +47,7 @@ const LAYER_BOSS_BODY := 19   # boss stand-in body: cameras only (not the 1st-pe
 const LAYER_VIEWMODEL := 20   # first-person arms/axe: never captured
 const MAX_REPLAYS := 6
 
-var cams: Array[Node3D] = []          # sorted CAM_01..CAM_10
+var cams: Array[Node3D] = []          # sorted CAM_01..CAM_11 (Phase 23: dock & shore)
 var mode := "quad"                   # quad / focus / entertainment / off
 var tiles: Array[int] = [0, 1, 2, 3]  # camera index on each tile
 var focus_index := 0
@@ -467,7 +467,7 @@ func cam_id(i: int) -> String:
 
 
 func cam_name(i: int) -> String:
-	const NAMES := {"CAM_01": "Cabin to camper", "CAM_02": "Camper to cabin", "CAM_03": "Forest entrance", "CAM_04": "Fence NW", "CAM_05": "Fence NE", "CAM_06": "Fence SW", "CAM_07": "Fence SE", "CAM_08": "West trail", "CAM_09": "East ridge trail", "CAM_10": "Deep woods"}
+	const NAMES := {"CAM_01": "Cabin to camper", "CAM_02": "Camper to cabin", "CAM_03": "Forest entrance", "CAM_04": "Fence NW", "CAM_05": "Fence NE", "CAM_06": "Fence SW", "CAM_07": "Fence SE", "CAM_08": "West trail", "CAM_09": "East ridge trail", "CAM_10": "Deep woods", "CAM_11": "Dock & shore"}
 	var id := str(cams[i].get_meta("camera_id"))
 	return NAMES.get(id, id)
 
@@ -715,6 +715,41 @@ func on_world_sound(stream: AudioStream, pos: Vector3, volume_db: float, categor
 	if label != "" and Game.world_time - _caption_t > 4.0 and Game.player and Game.player.global_position.distance_to(screen.global_position) < 6.0:
 		_caption_t = Game.world_time
 		Game.player.show_message("[TV · %s, remote] %s" % [cam_id(cam_i), label])
+
+
+## Phase 23: a sound that reached ONE camera's microphone by its own path
+## (thunder computed per mic by WeatherService: own arrival time and level).
+## Same relay chain as on_world_sound, without its short mic range.
+func relay_at_camera(stream: AudioStream, cam_i: int, volume_db: float, label := "", category := "weather") -> bool:
+	if not _active or mic_muted or stream == null or mode == "entertainment" or speaker == null:
+		return false
+	var shown := shown_cameras()
+	var ti := shown.find(cam_i)
+	if ti < 0:
+		return false
+	while speaker.get_child_count() >= MAX_REPLAYS:
+		var oldest := speaker.get_child(0)
+		speaker.remove_child(oldest)
+		oldest.queue_free()
+	var p := AudioStreamPlayer3D.new()
+	p.stream = stream
+	p.bus = "Relay"
+	p.unit_size = 3.0
+	var g_db := lerpf(-15.0, -3.0, (_gain - 0.25) / 0.75)
+	p.volume_db = clampf(g_db + clampf(volume_db, -40.0, 6.0) * 0.5 + linear_to_db(maxf(tv_volume, 0.001)), -40.0, 0.0)
+	if mode == "quad":
+		p.position = Vector3(-0.35 if ti % 2 == 0 else 0.35, 0.0, 0.0)
+	speaker.add_child(p)
+	p.play()
+	p.finished.connect(p.queue_free)
+	relayed += 1
+	last_relay = {"camera": cam_id(cam_i), "gain": 1.0, "volume_db": p.volume_db, "mode": mode, "category": category}
+	_set_transmission()
+	return true
+
+
+func camera_position(i: int) -> Vector3:
+	return cams[i].global_position if i >= 0 and i < cams.size() else Vector3.INF
 
 
 func _set_transmission() -> void:

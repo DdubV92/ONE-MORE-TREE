@@ -13,6 +13,8 @@ global uniform float haze_strength;
 global uniform float wetness;       // smoothed exterior surface wetness 0..1
 global uniform float rain_amount;   // current rainfall 0..1
 global uniform float sun_clarity;   // 1 clear sun .. ~0.15 full overcast
+global uniform float storm_gust;    // Phase 23: gust strength 0..1 (gust fronts)
+global uniform float sea_state;     // Phase 23: coastal water response 0..1
 
 float global_haze_level() {
 	return haze_strength;

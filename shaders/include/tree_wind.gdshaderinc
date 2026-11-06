@@ -4,8 +4,12 @@
 
 float gust_at(vec2 xz, float t) {
 	vec2 wd = normalize(wind_dir);
-	float travel = dot(xz, wd) * 0.035 - t * 0.55;
-	return 0.55 + 0.45 * sin(travel) * sin(travel * 0.37 + 1.3);
+	// Phase 23: stronger, faster gust bands in storms (a visible gust
+	// front rolling through canopy, brush and grass).
+	float travel = dot(xz, wd) * 0.035 - t * (0.55 + 0.6 * storm_gust);
+	float base = 0.55 + 0.45 * sin(travel) * sin(travel * 0.37 + 1.3);
+	float front = smoothstep(0.25, 0.9, 0.5 + 0.5 * sin(travel * 0.21 + 2.0));
+	return base * (1.0 + 1.3 * storm_gust * front);
 }
 
 vec3 tree_sway(vec3 local_pos, float tree_height, vec3 inst_origin, float phase, float t) {

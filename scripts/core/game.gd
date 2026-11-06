@@ -34,6 +34,7 @@ var offshore: OffshoreSurvey         # Phase 19 offshore survey visits (ambient)
 var survival_cover: SurvivalCover    # Phase 19 extra hides + region audit
 var night_recorder: NightRecorder    # Phase 20 missed-night recordings
 var sleep_interrupts: SleepInterrupts  # Phase 20 rare sleep interruptions
+var storm_terrors: StormTerrors      # Phase 23 storm encounters (Thunder Walker, catalog)
 var trees: TreeService
 var timber: TimberService
 var yard: YardService                # Phase 13 logging yard

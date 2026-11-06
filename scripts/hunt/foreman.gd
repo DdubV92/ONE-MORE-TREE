@@ -197,6 +197,10 @@ func _sight_range(who: Node3D) -> float:
 		var q: Dictionary = Game.safety.query(who.global_position + Vector3(0, 1.0, 0))
 		if int(q.get("reason", 0)) == SafetyService.Reason.CAMP_LAMP:
 			r = maxf(r, 30.0)      # lamp pools make people easy to see
+	# Phase 23: rain and storm haze cut how far it can see (never below
+	# half; lamp pools still read). Concealment, not a hidden position.
+	if Game.weather:
+		r *= lerpf(0.5, 1.0, clampf(Game.weather.visibility, 0.0, 1.0))
 	return r
 
 
@@ -238,7 +242,8 @@ func can_see(who: Node3D) -> bool:
 
 ## Actual sound events in the world (footsteps, work, doors, engines...).
 func _on_sound(_s: AudioStream, pos: Vector3, volume_db: float, category := "world", _label := "") -> void:
-	if category in ["terror", "dog", "foreman"]:
+	# "horror" is its own footsteps (Horror bus): it never hears itself.
+	if category in ["terror", "dog", "foreman", "horror"]:
 		return
 	var radius := 30.0
 	match category:
@@ -248,7 +253,17 @@ func _on_sound(_s: AudioStream, pos: Vector3, volume_db: float, category := "wor
 	hear(pos, radius, category)
 
 
+## Phase 23: thunder and heavy rain at the Foreman's own ears shorten how
+## far it hears (the same masking model as players, cameras and workers).
+func masked_radius(radius: float) -> float:
+	if Game.weather == null:
+		return radius
+	var excess := maxf(Game.weather.masking_db(global_position + Vector3(0, 1.8, 0)) - 40.0, 0.0)
+	return radius * clampf(pow(10.0, -excess / 20.0), 0.15, 1.0)
+
+
 func hear(pos: Vector3, radius: float, kind: String, spot: HideSpot = null) -> void:
+	radius = masked_radius(radius)
 	if state == "ARRIVAL" or Game.hunt == null:
 		return
 	var d := pos.distance_to(global_position)

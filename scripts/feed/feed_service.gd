@@ -91,7 +91,21 @@ static func _key(u: Dictionary) -> float:
 
 
 static func unit(id: String) -> Dictionary:
-	return _bank_by_id.get(id, {})
+	return _bank_by_id.get(id, _dynamic.get(id, {}))
+
+
+## Phase 23: units written at runtime from what really happened (the storm
+## rumor thread). Saved with the campaign; never duplicated.
+static var _dynamic := {}
+
+func post_dynamic(u: Dictionary, day: int) -> bool:
+	var id := str(u.get("id", ""))
+	if id == "" or _bank_by_id.has(id) or _dynamic.has(id):
+		return false
+	_dynamic[id] = u.duplicate(true)
+	_publish(id, day)
+	published.emit([id])
+	return true
 
 
 static func account(id: String) -> Dictionary:
@@ -481,12 +495,13 @@ func _maybe_notice() -> void:
 # ------------------------------------------------------------ saves
 
 func capture() -> Dictionary:
-	return {"version": 1, "clock": clock, "cursor": cursor, "pub": pub.duplicate(), "pub_day": pub_day.duplicate(), "skipped": skipped.duplicate(), "deferred": deferred.duplicate(), "day_count": day_count.duplicate(), "read": read.keys(), "bookmarks": bookmarks.keys(), "positions": positions.duplicate(true), "last_visit": last_visit.duplicate(), "hooks": hooks.duplicate(), "opportunities": opportunities.duplicate(true), "read_at_night": read_at_night.keys()}
+	return {"dynamic": _dynamic.duplicate(true), "version": 1, "clock": clock, "cursor": cursor, "pub": pub.duplicate(), "pub_day": pub_day.duplicate(), "skipped": skipped.duplicate(), "deferred": deferred.duplicate(), "day_count": day_count.duplicate(), "read": read.keys(), "bookmarks": bookmarks.keys(), "positions": positions.duplicate(true), "last_visit": last_visit.duplicate(), "hooks": hooks.duplicate(), "opportunities": opportunities.duplicate(true), "read_at_night": read_at_night.keys()}
 
 
 func restore(d: Dictionary) -> void:
 	clock = float(d.get("clock", 0.0))
 	cursor = int(d.get("cursor", 0))
+	_dynamic = (d.get("dynamic", {}) as Dictionary).duplicate(true)
 	pub = (d.get("pub", {}) as Dictionary).duplicate()
 	pub_day = (d.get("pub_day", {}) as Dictionary).duplicate()
 	skipped = (d.get("skipped", {}) as Dictionary).duplicate()

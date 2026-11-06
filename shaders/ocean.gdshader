@@ -69,7 +69,7 @@ void vertex() {
 	float beach = m.r;
 	float dist = length(xz - CAMERA_POSITION_WORLD.xz);
 	// Waves calm in shallow water and fade far away (cheap horizon).
-	float amp = wave_scale * clamp(depth / shoal_depth, shoal_min, 1.0) * (1.0 - smoothstep(700.0, 1400.0, dist));
+	float amp = wave_scale * (1.0 + 0.9 * sea_state) * clamp(depth / shoal_depth, shoal_min, 1.0) * (1.0 - smoothstep(700.0, 1400.0, dist));
 	vec3 tangent = vec3(1.0, 0.0, 0.0);
 	vec3 binormal = vec3(0.0, 0.0, 1.0);
 	vec3 disp = vec3(0.0);
@@ -139,7 +139,7 @@ void fragment() {
 	// Occasional open-water crest flecks.
 	float flecks = smoothstep(0.75, 1.0, v_crest) * smoothstep(0.62, 0.85, fn2) * 0.6 * (1.0 - smoothstep(200.0, 500.0, v_dist));
 	// Whitecaps where the swell crests compress (Jacobian foam).
-	float whitecap = (1.0 - smoothstep(0.62, 0.8, v_jac)) * smoothstep(0.35, 0.7, fn * 0.7 + fn2 * 0.5) * (1.0 - smoothstep(300.0, 900.0, v_dist));
+	float whitecap = (1.0 - smoothstep(0.62 + 0.22 * sea_state, 0.8 + 0.15 * sea_state, v_jac)) * smoothstep(0.35 - 0.2 * sea_state, 0.7, fn * 0.7 + fn2 * 0.5) * (1.0 - smoothstep(300.0, 900.0, v_dist));
 	flecks = max(flecks, whitecap);
 	float shore_lace = foam_lace(xz, t, 0.35) * breaking * 0.85;
 	float foam = clamp(edge_foam * 1.2 + shore_lace + lace * 0.8 + rock_foam + flecks, 0.0, 1.0);

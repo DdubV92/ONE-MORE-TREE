@@ -14,6 +14,7 @@ signal finished
 
 var kind := ""
 var state := "idle"          # idle / present / hold / withdraw / gone
+                             # Phase 23: stand (frozen) / stride (moved by its encounter)
 var _from := Vector3.ZERO
 var _to := Vector3.ZERO
 var _t := 0.0
@@ -206,6 +207,47 @@ func hold() -> void:
 	state = "hold"
 
 
+## Phase 23 (storm encounters): appears already there (no fade) and stands
+## perfectly still; it does not even turn its head.
+func stand_at(at: Vector3, look: Vector3) -> void:
+	global_position = at
+	face_target = look
+	_face(look)
+	visible = true
+	_fade = 1.0
+	_set_alpha(1.0)
+	state = "stand"
+	speed = 0.0
+
+
+func stand() -> void:
+	if state in ["stride", "hold", "present"]:
+		state = "stand"
+	speed = 0.0
+
+
+## Moved by its encounter (along a real nav path, grounded every frame);
+## this only drives the walk animation and facing.
+func stride_to(p: Vector3, spd: float) -> void:
+	var d := p - global_position
+	d.y = 0.0
+	if d.length() > 0.01:
+		rotation.y = lerp_angle(rotation.y, atan2(-d.x, -d.z), 0.35)
+	p.y = _ground(p)
+	global_position = p
+	state = "stride"
+	speed = spd
+
+
+## Reduced-flash accessibility cue: a soft, steady rim instead of a strobe,
+## so the silhouette still reads (presentation only; 0 = off).
+func set_cue(k: float) -> void:
+	for m in _mats:
+		m.emission_enabled = k > 0.001
+		m.emission = Color(0.55, 0.6, 0.7)
+		m.emission_energy_multiplier = 0.35 * k
+
+
 ## Leaves along a real route to `to` (cover), optionally dissolving at the end.
 func withdraw(to: Vector3, spd := 1.4) -> void:
 	_from = global_position
@@ -271,7 +313,7 @@ func _ground(p: Vector3) -> float:
 
 
 func _animate(_delta: float) -> void:
-	var moving := state == "withdraw"
+	var moving := state == "withdraw" or state == "stride"
 	if hc:
 		hc.set_locomotion(speed if moving else 0.0)
 	if dog:

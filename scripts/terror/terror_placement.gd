@@ -174,8 +174,20 @@ static func withdrawal(from: Vector3, viewer: Vector3) -> Vector3:
 
 ## Line of sight from eye to point (terrain, buildings, rocks; trunks only
 ## where they have active colliders near the player).
+## Phase 23: see-through bodies (the chain-link fence) block walking but
+## not sight, so a ray that hits one continues past it.
 static func visible_from(eye: Vector3, p: Vector3, space: PhysicsDirectSpaceState3D) -> bool:
 	if space == null:
 		return true
 	var q := PhysicsRayQueryParameters3D.create(eye, p, 1 | 4)
-	return space.intersect_ray(q).is_empty()
+	var ex: Array[RID] = []
+	for k in 6:
+		q.exclude = ex
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return true
+		var col := hit.collider as Node
+		if col == null or not col.is_in_group("see_through"):
+			return false
+		ex.append(hit.rid)
+	return false

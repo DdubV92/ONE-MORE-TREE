@@ -105,6 +105,7 @@ func _build_fence() -> void:
 			root.add_child(quad)
 			# Collision for the panel
 			var body := StaticBody3D.new()
+			body.add_to_group("see_through")     # chain-link: blocks walking, not sight
 			var cs := CollisionShape3D.new()
 			var shape := BoxShape3D.new()
 			shape.size = Vector3(seg, L.FENCE_HEIGHT, 0.06)
@@ -681,9 +682,9 @@ func _build_cabin_extension(c: Node3D, F: float, hx: float, hz: float, t: float)
 	BuildKit.cylinder(toilet, 0.2, 0.04, Vector3(0, 0.42, 0), "white", false, 14)
 	BuildKit.box(e, Vector3(0.45, 0.85, 0.4), Vector3(1.55, F + 0.42, -8.15), "panel", true, 0.0, "ExtVanity")
 	BuildKit.box(e, Vector3(0.38, 0.1, 0.3), Vector3(1.55, F + 0.9, -8.15), "ceramic", false, 0.0, "ExtBathSink")
-	BuildKit.box(e, Vector3(0.4, 0.5, 0.03), Vector3(1.55, F + 1.55, -8.33), "glass", false, 0.0, "Mirror")
+	BuildKit.box(e, Vector3(0.4, 0.5, 0.03), Vector3(1.55, F + 1.55, -8.33), "glass_dry", false, 0.0, "Mirror")
 	BuildKit.box(e, Vector3(1.0, 0.08, 1.0), Vector3(bx1 - 0.55, F + 0.04, -9.8), "ceramic", true, 0.0, "ShowerTray")
-	BuildKit.box(e, Vector3(0.04, 1.9, 1.0), Vector3(bx1 - 1.07, F + 1.03, -9.8), "glass", true, 0.0, "ShowerScreen")
+	BuildKit.box(e, Vector3(0.04, 1.9, 1.0), Vector3(bx1 - 1.07, F + 1.03, -9.8), "glass_dry", true, 0.0, "ShowerScreen")
 	BuildKit.cylinder(e, 0.08, 0.02, Vector3(bx1 - 0.4, F + 2.0, -10.0), "steel", false, 10)
 	# Kitchen along the east wall (counter, sink, stove, fridge, shelves).
 	var k := Node3D.new()

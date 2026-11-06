@@ -114,7 +114,7 @@ func _process(delta: float) -> void:
 	if not night and not forced:
 		return
 	night_active_t += delta
-	if active != null:
+	if active != null or not reservation.is_empty():
 		return
 	next_in -= delta
 	if next_in <= 0.0:
@@ -303,6 +303,53 @@ func _update_profile(delta: float) -> void:
 		profile.retreats = minf(float(profile.retreats) + delta * 0.05, 1.0)
 
 
+# ------------------------------------------------- Phase 23 reservations
+
+## One global opportunity at a time: storm encounters (StormTerrors) ask for
+## it here, so they share the ordinary director's budget, never overlap an
+## encounter, and respect per-family cooldowns (seconds of world time).
+var reservation := {}               # {owner, family, beat, since}
+var family_cooldown := {}           # family (int) -> world time it is free again
+var last_end_t := -99999.0          # world time the last encounter/reservation ended
+const STORM_GAP := 75.0             # quiet seconds after any encounter
+
+func can_reserve(family: int) -> String:
+	if not enabled:
+		return "director off"
+	if active != null:
+		return "encounter active"
+	if not reservation.is_empty():
+		return "reserved by " + str(reservation.owner)
+	if Game.world_time - last_end_t < STORM_GAP:
+		return "quiet gap"
+	if Game.world_time < float(family_cooldown.get(family, -1.0)):
+		return "family cooldown"
+	if fired_tonight.get(family, 0) >= 2:
+		return "family used tonight"
+	return ""
+
+
+func reserve(owner: String, family: int, beat: String) -> bool:
+	if can_reserve(family) != "":
+		return false
+	reservation = {"owner": owner, "family": family, "beat": beat, "since": Game.world_time}
+	return true
+
+
+## Ends a reservation (completed, cancelled or withdrawn): the family cools
+## down and the ordinary budget restarts from a quiet minimum.
+func release(owner: String, cooldown := 900.0, result := "completed") -> void:
+	if reservation.is_empty() or str(reservation.owner) != owner:
+		return
+	var fam := int(reservation.family)
+	family_cooldown[fam] = Game.world_time + cooldown
+	fired_tonight[fam] = int(fired_tonight.get(fam, 0)) + (1 if result != "cancelled" else 0)
+	history.append(str(reservation.beat))
+	reservation = {}
+	last_end_t = Game.world_time
+	next_in = maxf(next_in, QUIET_MIN)
+
+
 # ------------------------------------------------------------- morning
 
 ## Called at morning: ends any encounter and removes night props/actors.
@@ -310,6 +357,7 @@ func morning_cleanup() -> void:
 	if active:
 		active.cancel()
 		active = null
+	reservation = {}
 	for c in _props.get_children():
 		c.queue_free()
 	for n in get_tree().get_nodes_in_group("terror_prop"):
@@ -352,7 +400,7 @@ static func voice_memory_pick(rng: RandomNumberGenerator) -> Dictionary:
 
 
 func capture() -> Dictionary:
-	return {"next_in": next_in, "night_active_t": night_active_t, "last_peak_t": last_peak_t, "peak_refractory": peak_refractory, "history": history.slice(-120), "fired_tonight": fired_tonight.duplicate(), "profile": profile.duplicate(), "observed": observed.duplicate(), "voice_memory": voice_memory.slice(-20)}
+	return {"reservation": reservation.duplicate(), "family_cooldown": family_cooldown.duplicate(), "next_in": next_in, "night_active_t": night_active_t, "last_peak_t": last_peak_t, "peak_refractory": peak_refractory, "history": history.slice(-120), "fired_tonight": fired_tonight.duplicate(), "profile": profile.duplicate(), "observed": observed.duplicate(), "voice_memory": voice_memory.slice(-20)}
 
 
 ## Restores pacing state; never replays an encounter or a stored peak.
@@ -361,6 +409,11 @@ func restore(d: Dictionary) -> void:
 		active.cancel()
 		active = null
 	next_in = maxf(float(d.get("next_in", 60.0)), 20.0)    # input grace after load
+	reservation = (d.get("reservation", {}) as Dictionary).duplicate()
+	family_cooldown = {}
+	var fc: Dictionary = d.get("family_cooldown", {})
+	for k in fc:
+		family_cooldown[int(k)] = float(fc[k])
 	night_active_t = float(d.get("night_active_t", 0.0))
 	last_peak_t = float(d.get("last_peak_t", -99999.0))
 	peak_refractory = float(d.get("peak_refractory", 600.0))

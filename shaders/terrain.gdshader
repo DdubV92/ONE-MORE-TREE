@@ -95,6 +95,24 @@ float layer_desat(int l) {
 	return 0.0;
 }
 
+// Phase 23: rain-ring ripples in puddles (cells of 0.4 m, staggered phases).
+float ripple_h(vec2 p, float t) {
+	vec2 c = floor(p / 0.4);
+	float h = 0.0;
+	for (int dx = -1; dx <= 1; dx++) {
+		for (int dy = -1; dy <= 1; dy++) {
+			vec2 cc = c + vec2(float(dx), float(dy));
+			float rnd = fract(sin(dot(cc, vec2(12.9898, 78.233))) * 43758.5453);
+			vec2 ctr = (cc + vec2(rnd, fract(rnd * 7.13))) * 0.4;
+			float ph = fract(t * 0.9 + rnd);
+			float d = length(p - ctr);
+			float ring = exp(-pow((d - ph * 0.3) * 38.0, 2.0)) * (1.0 - ph);
+			h += ring;
+		}
+	}
+	return h;
+}
+
 void fragment() {
 	vec2 xz = v_wpos.xz;
 	vec2 guv = (xz - grid_origin) / (cell_size * vec2(grid_dims - 1)) + 0.5 / vec2(grid_dims);
@@ -221,6 +239,28 @@ void fragment() {
 	alb *= mix(1.0, 0.58, wet);
 	float rough = mix(clamp(arm.g, 0.35, 1.0), 0.12, wet * 0.75);
 	rough = mix(rough, 0.04, fresh * sand);
+	// Phase 23: puddles gather in flat open hollows as the ground soaks, and
+	// shrink as it dries; rain rings while it is still raining.
+	float puddle = 0.0;
+	if (!inland_water && h > 1.0 && wetness > 0.25) {
+		float pn = fbm2(xz * 0.11 + 11.3) * 0.7 + fbm2(xz * 0.37 - 4.1) * 0.3;
+		float lvl = 1.0 - (wetness - 0.25) * 0.5;
+		puddle = smoothstep(lvl, lvl + 0.05, pn) * smoothstep(0.965, 0.99, wn.y) * (1.0 - sand) * (1.0 - forest * 0.7);
+		if (puddle > 0.001) {
+			alb = mix(alb, alb * 0.32, puddle);
+			rough = mix(rough, 0.03, puddle);
+			if (rain_amount > 0.05) {
+				float e = 0.03;
+				float r0 = ripple_h(xz, world_time);
+				float rx = ripple_h(xz + vec2(e, 0.0), world_time);
+				float rz = ripple_h(xz + vec2(0.0, e), world_time);
+				nrm_ts.xy = mix(nrm_ts.xy, vec2(r0 - rx, r0 - rz) * 2.5 * rain_amount, puddle);
+			} else {
+				nrm_ts.xy = mix(nrm_ts.xy, vec2(0.0), puddle);
+			}
+		}
+	}
+	wet = max(wet, puddle);
 
 	// Caustics on submerged ground (sea, river, ponds), sunlight-scaled.
 	float depth = max(water_lvl - h, 0.0);

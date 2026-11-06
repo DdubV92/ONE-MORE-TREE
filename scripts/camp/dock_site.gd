@@ -298,7 +298,7 @@ func _dog_alcove(b: Node3D) -> void:
 	rim.scale = Vector3(1, 1.4, 1)
 	al.add_child(rim)
 	BuildKit.cylinder(al, 0.13, 0.07, Vector3(-0.35, 0.035, -0.5), "steel", false, 14, 0.15)
-	var water := BuildKit.cylinder(al, 0.11, 0.01, Vector3(-0.35, 0.06, -0.5), "glass", false, 14)
+	var water := BuildKit.cylinder(al, 0.11, 0.01, Vector3(-0.35, 0.06, -0.5), "glass_dry", false, 14)
 	water.name = "WaterBowl"
 	BuildKit.box(al, Vector3(0.6, 0.16, 0.03), Vector3(0.1, 0.85, -dpt * 0.5 + 0.05), "planks", false)
 	var lab := Label3D.new()

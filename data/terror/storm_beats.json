@@ -1,0 +1,480 @@
+{
+ "version": 1,
+ "generator": "tools/content/storm_beats.py",
+ "beats": [
+  {
+   "id": "sb01",
+   "title": "The borrowed shadow",
+   "family": 7,
+   "executor": "borrowed_shadow",
+   "kind": "authored_variant",
+   "profiles": [
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "build",
+    "peak"
+   ],
+   "min_lightning": 0.4,
+   "viewer": "inside_camper",
+   "location": "camper window (exterior)",
+   "evidence": [
+    "player inside the camper",
+    "an exterior flash source beyond a window"
+   ],
+   "setup_s": 6,
+   "cancel": [
+    "player leaves the camper",
+    "no strike within 40 s"
+   ],
+   "outcome": "a human-shaped shadow crosses the window on one flash; the next flash shows the empty patch",
+   "intensity": 1,
+   "weight": 1.0,
+   "per_visit": 1,
+   "per_campaign": 2,
+   "reuse_event": "",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Guest at the Window"
+  },
+  {
+   "id": "sb02",
+   "title": "Thunder Walker",
+   "family": 5,
+   "executor": "thunder_walker",
+   "kind": "authored_variant",
+   "profiles": [
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "build",
+    "peak"
+   ],
+   "min_lightning": 0.5,
+   "viewer": "either",
+   "location": "treeline, stump corridor, fence corner or shoreline break",
+   "evidence": [
+    "grounded, reachable waypoints",
+    "line of sight from the player or a shown camera",
+    "strikes ahead (setup time)"
+   ],
+   "setup_s": 6,
+   "cancel": [
+    "route becomes invalid",
+    "storm runs out of thunder",
+    "director reservation lost"
+   ],
+   "outcome": "revealed at successive waypoints; moves only inside thunder masking windows; withdraws unseen",
+   "intensity": 2,
+   "weight": 1.4,
+   "per_visit": 1,
+   "per_campaign": 3,
+   "reuse_event": "",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Faceless Surveyor"
+  },
+  {
+   "id": "sb03",
+   "title": "Between the trunks",
+   "family": 1,
+   "executor": "between_trunks",
+   "kind": "reused_event",
+   "profiles": [
+    "thunderstorm",
+    "severe_coastal",
+    "squall"
+   ],
+   "phases": [
+    "approach",
+    "onset",
+    "build",
+    "peak"
+   ],
+   "min_lightning": 0.1,
+   "viewer": "player",
+   "location": "two trunks 30-60 m out (stump or rock on cleared land)",
+   "evidence": [
+    "a trunk pair or stump/rock visible from the player",
+    "a low (mid/far) flash"
+   ],
+   "setup_s": 4,
+   "cancel": [
+    "no valid pair",
+    "player closes within 15 m"
+   ],
+   "outcome": "already standing there at the flash; retreats behind terrain while unseen",
+   "intensity": 1,
+   "weight": 1.0,
+   "per_visit": 1,
+   "per_campaign": 3,
+   "reuse_event": "T01-E001",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Tall Woman Beyond the Trees"
+  },
+  {
+   "id": "sb04",
+   "title": "Fence-step",
+   "family": 13,
+   "executor": "fence_step",
+   "kind": "reused_event",
+   "profiles": [
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "build",
+    "peak"
+   ],
+   "min_lightning": 0.5,
+   "viewer": "player",
+   "location": "outside the camp fence",
+   "evidence": [
+    "player inside or near the fence",
+    "a heavy roll that masks steps at the player"
+   ],
+   "setup_s": 3,
+   "cancel": [
+    "no masking window at the player"
+   ],
+   "outcome": "steps along the fence covered by the roll; one final contact exposed in the lull at the real endpoint",
+   "intensity": 1,
+   "weight": 1.0,
+   "per_visit": 1,
+   "per_campaign": 3,
+   "reuse_event": "T13-E007",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Boundary That Seems to Move"
+  },
+  {
+   "id": "sb05",
+   "title": "The porch count",
+   "family": 8,
+   "executor": "porch_count",
+   "kind": "authored_variant",
+   "profiles": [
+    "steady_rain",
+    "squall",
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "peak",
+    "recovery"
+   ],
+   "min_lightning": 0.0,
+   "rain": [
+    0.35,
+    1.0
+   ],
+   "viewer": "near_camper",
+   "location": "camper porch rail",
+   "evidence": [
+    "player within 14 m of the camper porch",
+    "drips audible (rain)"
+   ],
+   "setup_s": 8,
+   "cancel": [
+    "player leaves",
+    "rain stops"
+   ],
+   "outcome": "near-regular drips; one distinct tap from the exterior rail after a worker stops talking (or a lull); fixed in place",
+   "intensity": 1,
+   "weight": 0.9,
+   "per_visit": 1,
+   "per_campaign": 2,
+   "reuse_event": "",
+   "gust_min": 0.0,
+   "family_name": "The Knocking Rule"
+  },
+  {
+   "id": "sb06",
+   "title": "The wrong wake",
+   "family": 11,
+   "executor": "wrong_wake",
+   "kind": "authored_variant",
+   "profiles": [
+    "squall",
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "build",
+    "peak",
+    "recovery"
+   ],
+   "min_lightning": 0.0,
+   "viewer": "camera",
+   "location": "shallow water off the beach, seen by a shore camera",
+   "evidence": [
+    "a shown camera with shallow water in view",
+    "a valid shallow route (0.3-1.5 m)"
+   ],
+   "setup_s": 5,
+   "cancel": [
+    "no shore camera shown",
+    "route leaves shallow water"
+   ],
+   "outcome": "a moving break in the foam along a shallow route on the feed; never the survey ship or the rescue vessel",
+   "intensity": 1,
+   "weight": 0.8,
+   "per_visit": 1,
+   "per_campaign": 2,
+   "reuse_event": "",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Drowned Walker"
+  },
+  {
+   "id": "sb07",
+   "title": "Two windows",
+   "family": 7,
+   "executor": "two_windows",
+   "kind": "reused_event",
+   "profiles": [
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "build",
+    "peak"
+   ],
+   "min_lightning": 0.5,
+   "viewer": "inside_camper",
+   "location": "outside the camper's right-hand window",
+   "evidence": [
+    "player inside the camper",
+    "valid ground outside the right window"
+   ],
+   "setup_s": 6,
+   "cancel": [
+    "player leaves the camper"
+   ],
+   "outcome": "a shape caught through the right window by a flash; a second angle through the other window only where geometry supports it",
+   "intensity": 2,
+   "weight": 0.8,
+   "per_visit": 1,
+   "per_campaign": 2,
+   "reuse_event": "T07-E017",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Guest at the Window"
+  },
+  {
+   "id": "sb08",
+   "title": "Still in the gust",
+   "family": 20,
+   "executor": "still_in_gust",
+   "kind": "authored_variant",
+   "profiles": [
+    "squall",
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "build",
+    "peak"
+   ],
+   "min_lightning": 0.0,
+   "gust_min": 0.55,
+   "viewer": "player",
+   "location": "treeline 20-45 m",
+   "evidence": [
+    "gusts bending the trees",
+    "line of sight from the player"
+   ],
+   "setup_s": 4,
+   "cancel": [
+    "gusts drop",
+    "route out invalid"
+   ],
+   "outcome": "a motionless silhouette among bending branches; leaves along a supported path during a later roll",
+   "intensity": 1,
+   "weight": 1.0,
+   "per_visit": 1,
+   "per_campaign": 3,
+   "reuse_event": "",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "family_name": "The Afterimage on the Trail"
+  },
+  {
+   "id": "sb09",
+   "title": "Camera desync rumor",
+   "family": 25,
+   "executor": "feed_rumor",
+   "kind": "natural_outcome",
+   "profiles": [
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "any"
+   ],
+   "min_lightning": 0.0,
+   "viewer": "none",
+   "location": "the fictional internet (a night-shift camera thread)",
+   "evidence": [
+    "generic post: any stormy night",
+    "local claim: only after a real camera-seen storm encounter at this camp"
+   ],
+   "setup_s": 0,
+   "cancel": [
+    "already posted this campaign"
+   ],
+   "outcome": "a thread about shapes that arrive with the flash; the local reply only after a recorded/relayed camera event",
+   "intensity": 1,
+   "weight": 0.6,
+   "per_visit": 1,
+   "per_campaign": 1,
+   "reuse_event": "",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Live Feed That Lies"
+  },
+  {
+   "id": "sb10",
+   "title": "Unanswered call",
+   "family": 2,
+   "executor": "unanswered_call",
+   "kind": "reused_event",
+   "profiles": [
+    "steady_rain",
+    "squall",
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "peak",
+    "recovery"
+   ],
+   "min_lightning": 0.0,
+   "viewer": "either",
+   "location": "treeline 30-60 m from people",
+   "evidence": [
+    "a lull between rolls (masking low)",
+    "a plausible exterior spot"
+   ],
+   "setup_s": 4,
+   "cancel": [
+    "no lull within 30 s"
+   ],
+   "outcome": "a voice between rolls; a worker who actually heard it may comment without naming the speaker",
+   "intensity": 1,
+   "weight": 1.0,
+   "per_visit": 1,
+   "per_campaign": 3,
+   "reuse_event": "T02-E002",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Voice Wearing Someone Else"
+  },
+  {
+   "id": "sb11",
+   "title": "The missed flash",
+   "family": 15,
+   "executor": "missed_flash",
+   "kind": "natural_outcome",
+   "profiles": [
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "any"
+   ],
+   "min_lightning": 0.0,
+   "viewer": "camera",
+   "location": "a camp camera, overnight",
+   "evidence": [
+    "a strike scheduled in the part of the night you slept through",
+    "a camera with a valid treeline view"
+   ],
+   "setup_s": 0,
+   "cancel": [
+    "another recording already took that night"
+   ],
+   "outcome": "a short recording: one flash, one ambiguous silhouette; morning review in Recordings with the strike's identity",
+   "intensity": 1,
+   "weight": 1.0,
+   "per_visit": 1,
+   "per_campaign": 3,
+   "reuse_event": "",
+   "rain": [
+    0.0,
+    1.0
+   ],
+   "gust_min": 0.0,
+   "family_name": "The Camera Audience"
+  },
+  {
+   "id": "sb12",
+   "title": "After the rain",
+   "family": 6,
+   "executor": "after_the_rain",
+   "kind": "authored_variant",
+   "profiles": [
+    "steady_rain",
+    "squall",
+    "thunderstorm",
+    "severe_coastal"
+   ],
+   "phases": [
+    "recovery"
+   ],
+   "min_lightning": 0.0,
+   "rain": [
+    0.0,
+    0.35
+   ],
+   "viewer": "player",
+   "location": "edge of a clearing 25-45 m",
+   "evidence": [
+    "rain softening (recovery)",
+    "ordinary ambience returning"
+   ],
+   "setup_s": 4,
+   "cancel": [
+    "rain returns",
+    "no valid clearing edge"
+   ],
+   "outcome": "one exposed step or movement at the clearing edge breaks the returning ambience; a quiet withdrawal",
+   "intensity": 1,
+   "weight": 1.0,
+   "per_visit": 1,
+   "per_campaign": 3,
+   "reuse_event": "",
+   "gust_min": 0.0,
+   "family_name": "The Worker Who Never Came Back"
+  }
+ ]
+}

@@ -145,6 +145,9 @@ const EVENTS := {
 	"weather.rain.metal": {"files": ["rain_metal_loop"], "bus": "Ambience", "db": -8.0, "loop": true, "cal": "domestic"},
 	"weather.rain.wood": {"files": ["rain_wood_loop"], "bus": "Ambience", "db": -8.0, "loop": true, "cal": "domestic"},
 	"weather.rain.drips": {"files": ["rain_drips_loop"], "bus": "Ambience", "db": -12.0, "loop": true, "cal": "domestic"},
+	"weather.runoff": {"files": ["water_trickle_loop"], "bus": "Ambience", "db": -9.0, "loop": true, "cal": "domestic"},
+	"weather.canopy": {"files": ["rain_drips_loop"], "bus": "Ambience", "db": -6.0, "loop": true, "cal": "ambient"},
+	"weather.gust": {"files": ["wind_gust_0", "wind_gust_1"], "bus": "Ambience", "cal": "ambient", "db": -4.0, "label": "a gust"},
 	"weather.thunder.near": {"files": ["thunder_near"], "bus": "Ambience", "cal": "distant", "db": 0.0, "label": "thunder"},
 	"weather.thunder.far": {"files": ["thunder_far2_0", "thunder_far2_1"], "bus": "Ambience", "cal": "distant", "db": -4.0, "label": "distant thunder"},
 	# ---- camper, cabin, computer, fence ----
