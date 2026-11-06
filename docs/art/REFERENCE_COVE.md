@@ -13,9 +13,7 @@ The owner's target painting (`reference_target.png`) built as one small, real, w
   5. turn back toward the forest.
 
   Movie Maker recorded it at fixed 24 fps. The container ran out of memory about 2 s before the scripted end, so the file stops just after the turn toward the forest. Nothing inside the clip is cut.
-- **Native test build:**
-  - Windows: a local export from this exact tree (only Windows templates are installed here), plus the CI artifact for every push to `phase-24-hd2d-mill`.
-  - Both builds have **Reference Match** and **First-Person Shoreline** on the title screen.
+- **Native test build:** the Windows artifact that CI builds for each push to `phase-24-hd2d-mill`. It has **Reference Match** and **First-Person Shoreline** on the title screen. A local Windows export also succeeded here, but it predates the pixel-viewmodel commit, so the CI build is the one to test. The container has no Linux export templates; CI exports Linux too.
 
 ## How to open it
 - **Title screen:** **Reference Match** or **First-Person Shoreline**. Both start a preview, and a preview never writes saves.
