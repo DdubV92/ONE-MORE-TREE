@@ -143,7 +143,7 @@ const P_TERROR := Vector2(1.2, 26.0)
 const P_TRUNK := Vector2(-3.9, 0.2)
 ## Second foreground conifer: frames the left edge of Reference Match and
 ## stands beside the First-Person Shoreline start.
-const P_TRUNK2 := Vector2(0.8, -3.0)
+const P_TRUNK2 := Vector2(-0.4, -3.4)
 
 var worker: HumanCharacter
 var dog: DogCharacter
@@ -661,7 +661,7 @@ var _height_backup := {}     # height index -> original value
 ## Waterline of the fixture beach in frame x, as a function of frame z: the
 ## shore curves away to the right into the distance, like the painting.
 static func beach_line(fz: float) -> float:
-	return 19.5 + clampf((fz - 6.0) * 0.14, -1.2, 6.5)
+	return 17.0 + clampf((fz - 6.0) * 0.14, -1.2, 6.5)
 
 
 ## The real cove drops to the sea as a 1:2 rock bank. The painting has a sand
@@ -686,7 +686,7 @@ func _raise_beach() -> void:
 			var dx := fx - xl                       # + seaward
 			# Dry beach 1:14 above the waterline, wet slope 1:9 below, then a
 			# shallow shelf at -1.7 m that fades into the real seabed.
-			var target := sea + (-dx / 14.0 if dx < 0.0 else maxf(-dx / 9.0, -1.7))
+			var target := sea + (-dx / 10.0 if dx < 0.0 else maxf(-dx / 8.0, -1.6))
 			target = minf(target, sea + 1.9)
 			var w := (1.0 - smoothstep(xl + 13.0, xl + 22.0, fx)) * smoothstep(-24.0, -12.0, fz) * (1.0 - smoothstep(50.0, 62.0, fz)) * smoothstep(7.0, 10.0, fx)
 			var k := j * World.W + i
@@ -703,6 +703,22 @@ func _raise_beach() -> void:
 		terrain.refresh_collision(box[0], box[1], box[2], box[3])
 	else:
 		World.height_texture.update(Image.create_from_data(World.W, World.H, false, Image.FORMAT_RF, World.height.to_byte_array()))
+	# Shrubs and grass that grew on the old rock bank give way to sand.
+	var fo: Vector3 = fr.o
+	var fr3: Vector3 = fr.r
+	var ff3: Vector3 = fr.f
+	var on_sand := func(x: float, z: float) -> bool:
+		var q := Vector3(x, 0.0, z) - fo
+		var qx := q.dot(fr3)
+		var qz := q.dot(ff3)
+		return qx > 10.5 and qz > -12.0 and qz < 50.0
+	var area := Rect2(World.origin + Vector2(box[0], box[1]) * World.cs, Vector2(box[2] - box[0], box[3] - box[1]) * World.cs)
+	var ug: UndergrowthSystem = world.get("undergrowth")
+	if ug:
+		ug.exclude(on_sand, area)
+	var gc: Node = world.get("ground_cover")
+	if gc and gc.has_method("invalidate"):
+		gc.invalidate(area)
 	var water: WaterSystem = world.get("water")
 	if water and water.surf:
 		water.surf.rebuild(water)
@@ -771,7 +787,7 @@ func _paint_beach() -> void:
 	# contact foam breaks around them.
 	var rocks := RockBuilder.build_variants(4)
 	var rmat := RockBuilder.material()
-	var shore := [[12.4, 5.0, 0.9], [13.6, 9.2, 0.7], [14.8, 3.0, 1.1], [15.8, 7.4, 0.8], [16.6, 12.6, 1.3], [17.6, 4.6, 0.6], [14.2, 15.2, 0.9], [18.6, 9.6, 1.0], [12.8, 18.4, 0.8], [16.0, 20.4, 1.2], [19.4, 15.0, 0.7], [11.6, 1.2, 0.6], [21.6, 6.2, 1.1], [23.2, 11.8, 0.8], [22.4, 22.6, 1.4], [25.6, 17.2, 0.9], [20.8, 0.4, 0.9], [27.0, 28.0, 1.6], [24.0, 34.0, 1.0]]
+	var shore := [[10.9, 5.0, 0.9], [12.1, 9.2, 0.7], [13.3, 3.0, 1.1], [14.3, 7.4, 0.8], [15.1, 12.6, 1.3], [16.1, 4.6, 0.6], [12.7, 15.2, 0.9], [17.1, 9.6, 1.0], [11.3, 18.4, 0.8], [14.5, 20.4, 1.2], [17.9, 15.0, 0.7], [10.1, 1.2, 0.6], [20.1, 6.2, 1.1], [21.7, 11.8, 0.8], [20.9, 22.6, 1.4], [24.1, 17.2, 0.9], [19.3, 0.4, 0.9], [25.5, 28.0, 1.6], [22.5, 34.0, 1.0]]
 	for i in shore.size():
 		var sd: Array = shore[i]
 		var r := MeshInstance3D.new()

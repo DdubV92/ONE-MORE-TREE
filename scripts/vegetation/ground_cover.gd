@@ -183,6 +183,16 @@ func force_build_around(p: Vector3) -> void:
 			_cells[c] = _build_cell(c)
 
 
+## Drops built cells overlapping `area` so they rebuild from the current
+## masks/heights (used after an in-memory fixture edit).
+func invalidate(area: Rect2) -> void:
+	for c in _cells.keys():
+		if Rect2(Vector2(c) * CELL, Vector2(CELL, CELL)).intersects(area):
+			(_cells[c] as Node).queue_free()
+			_cells.erase(c)
+	_last_center = Vector2i(999999, 999999)
+
+
 func set_anchors(points: Array[Vector3]) -> void:
 	var cells: Array[Vector2i] = []
 	for p in points:

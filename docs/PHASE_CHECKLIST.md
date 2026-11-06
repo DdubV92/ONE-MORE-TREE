@@ -2,6 +2,19 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 24 (in progress): sawmill, soundscape, voices, HD-2D art and the reference cove
+
+Reference-cove handoff: [art/REFERENCE_COVE.md](art/REFERENCE_COVE.md). The rest of Phase 24 is summarised when it closes (P24h).
+
+| Item | Status | Notes |
+|---|---|---|
+| Reference cove fixture: one small, real, walkable place built to the owner's target painting (`docs/art/reference_target.png`) | ✅ | `ReferenceCove`; built only when a `ref_` bookmark is used |
+| Beach: the cove's rock bank filled in memory into a sand beach, swash zone and shallow shelf; collision, water depth, swash and surf all follow | ✅ | Fill only; frozen `data/world` untouched; restored on exit |
+| Reference Match (fixed 50° comparison camera) and First-Person Shoreline (eye height, normal FOV, free look) on the title screen and in the review tour | ✅ | Title buttons start a preview, which never writes saves |
+| Pixel-sprite worker and dog; comparison Terror in Reference Match only; in play, the director reserves its glimpse | ✅ | `TerrorDirector.reserve("REF-COVE", 0, ...)` |
+| Uncut first-person walk recorded with Movie Maker (`tools/reference/walk_clip`) | ✅ | Software renderer (lavapipe) |
+| Real-GPU look of the cove | ⛔ not run | No GPU in the build container |
+
 ## Phase 23: Dynamic weather, storms and storm terrors (pack-21 prompt 21)
 
 Notes: [PHASE23_NOTES.md](PHASE23_NOTES.md).

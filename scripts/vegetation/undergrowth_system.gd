@@ -23,6 +23,9 @@ var protected := PackedByteArray()     # 1 = thicket member (never thinned)
 var _chunks := {}                      # Vector2i -> Array[int] of shrub idx
 var _nodes := {}                       # Vector2i -> Node3D
 var instance_count := 0
+## In-memory fixtures (Phase 24 reference cove) can hide shrubs in an area
+## without touching the frozen shrub data: callables (x, z) -> bool.
+var exclusions: Array[Callable] = []
 
 
 func build() -> void:
@@ -49,6 +52,20 @@ func build() -> void:
 		_build_chunk(c)
 
 
+func exclude(f: Callable, area: Rect2) -> void:
+	exclusions.append(f)
+	for c in _chunks:
+		if Rect2(Vector2(c) * CHUNK, Vector2(CHUNK, CHUNK)).intersects(area):
+			_build_chunk(c)
+
+
+func _excluded(x: float, z: float) -> bool:
+	for f in exclusions:
+		if bool(f.call(x, z)):
+			return true
+	return false
+
+
 func set_density(d: float) -> void:
 	if is_equal_approx(d, density) or World.shrubs.is_empty():
 		return
@@ -70,6 +87,8 @@ func _build_chunk(c: Vector2i) -> void:
 	for i in (_chunks[c] as Array):
 		var sd: int = World.shrubs.seed[i]
 		if protected[i] == 0 and float(sd % 1000) / 1000.0 >= density:
+			continue
+		if not exclusions.is_empty() and _excluded(float(World.shrubs.x[i]), float(World.shrubs.z[i])):
 			continue
 		by_kind[int(World.shrubs.kind[i])].append(i)
 	var n := 0
