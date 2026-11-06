@@ -68,9 +68,15 @@ func _verify(fx: String) -> String:
 	Engine.time_scale = 4.0 if fx == "storm_walker" else 8.0
 	var res := "timeout"
 	var t0 := Time.get_ticks_msec()
-	while Time.get_ticks_msec() - t0 < 180000:      # slow CI runners need headroom
+	while Time.get_ticks_msec() - t0 < 300000:      # slow CI runners need headroom
 		await get_tree().physics_frame
 		var cs: CampaignService = Game.campaign
+		# A one-time card (onboarding, notices) pauses the game exactly as it
+		# would for a player; acknowledge it as its button does.
+		if get_tree().paused and fx != "storm_walker":
+			if Game.end_screen and Game.end_screen.visible and Game.end_screen.has_method("_resume"):
+				Game.end_screen._resume()
+			get_tree().paused = false
 		match fx:
 			"terminal_day30":
 				if cs.contract.is_closed():
@@ -112,6 +118,9 @@ func _verify(fx: String) -> String:
 			print("FXDBG paused=%s now=%s active=%s tr=%s ne=%.1f phase=%d" % [get_tree().paused, str(w._clock_now()), cs.active, cs.test_route, cs.clock.night_exposure, cs.clock.phase()])
 			print("FXDBG t=%.1f hunt=%s/%s ht=%.1f w=%s/%s runs=%s rec=%s" % [cs.clock.t, Game.hunt.mode, Game.hunt.hunt_day, float(Game.hunt.t), w.profile_name, w.phase_name,
 				str(st_d.runs.map(func(r: Dictionary) -> String: return "%s:%s" % [r.beat, r.get("stage", "?")])), str(st_d.records.back() if not st_d.records.is_empty() else {}).left(160)])
+	if res == "timeout":
+		var cs2: CampaignService = Game.campaign
+		res = "timeout (day %d t=%.1f paused=%s offshore=%s hunt=%s)" % [cs2.clock.day, cs2.clock.t, get_tree().paused, str(Game.offshore.visit.get("id", "-")) if Game.offshore else "-", Game.hunt.mode if Game.hunt else "-"]
 	Engine.time_scale = 1.0
 	if w:
 		w.set_override("")
