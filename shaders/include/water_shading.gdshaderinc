@@ -25,6 +25,8 @@ uniform float contact_foam_width = 0.22;   // metres of water depth that foam at
 uniform float contact_foam_amount = 0.9;
 uniform float foam_bands = 3.0;            // 0 = smooth foam; 3 = cel bands
 uniform float sparkle_amount = 1.0;
+uniform vec3 aqua_glow : source_color = vec3(0.06, 0.62, 0.56);  // reference-art turquoise glow
+uniform float aqua_glow_amount = 0.55;
 
 float view_depth_at(vec2 uv, mat4 inv_proj) {
 	float d = texture(depth_tex, uv).r;
@@ -73,7 +75,12 @@ vec3 stylized_body(vec3 scene, float path, float vthick) {
 	float sh = 1.0 - exp(-vt / max(shallow_depth, 0.01));
 	vec3 seen = scene * mix(vec3(1.0), shallow_tint, sh);
 	vec3 sc = mix(shallow_scatter, scatter_color, smoothstep(0.4, scatter_ramp_depth, vt));
-	return seen * tr + sc * (1.0 - tr) * (0.3 + 0.7 * daylight);
+	// Reference-art stylisation: shallows glow turquoise of their own accord
+	// (light added, not a tint of the floor), strongest from ankle to waist
+	// depth, fading into the deep teal; the floor reads a little through it.
+	float glow_k = smoothstep(0.03, 0.7, vt) * (1.0 - smoothstep(2.5, 9.0, vt)) * aqua_glow_amount;
+	vec3 lit = vec3(0.35 + 0.65 * daylight);
+	return seen * tr * (1.0 - 0.35 * glow_k) + sc * (1.0 - tr) * (0.3 + 0.7 * daylight) + aqua_glow * glow_k * lit;
 }
 
 // Cel bands: foam reads as a few flat tones (hand-placed clusters) instead

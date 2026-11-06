@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/reference/spot_view.gd" id="1"]
+
+[node name="SpotView" type="Node"]
+script = ExtResource("1")

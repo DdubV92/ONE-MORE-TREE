@@ -155,6 +155,8 @@ func _build_ponds() -> void:
 	mat.set_shader_parameter("scatter_ramp_depth", 2.5)
 	mat.set_shader_parameter("contact_foam_width", 0.06)
 	mat.set_shader_parameter("contact_foam_amount", 0.45)
+	mat.set_shader_parameter("aqua_glow", Color(0.08, 0.36, 0.26))
+	mat.set_shader_parameter("aqua_glow_amount", 0.3)
 	inland_materials.append(mat)
 	for pd in World.ponds():
 		var mi := MeshInstance3D.new()
@@ -221,6 +223,7 @@ func _build_river() -> void:
 	mat.set_shader_parameter("scatter_ramp_depth", 2.0)
 	mat.set_shader_parameter("contact_foam_width", 0.12)
 	mat.set_shader_parameter("contact_foam_amount", 0.7)
+	mat.set_shader_parameter("aqua_glow_amount", 0.4)
 	inland_materials.append(mat)
 	var pts := World.river_points
 	var count := pts.size()

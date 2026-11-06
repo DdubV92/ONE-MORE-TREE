@@ -94,6 +94,15 @@ static func all() -> Dictionary:
 		var foot := Vector2(b.x, b.z) + acr * (float(b.half_span) + 12.0)
 		var far := Vector2(b.x, b.z) - acr * float(b.half_span)
 		vp["bridge_%d" % bi] = _v(Vector3(foot.x + acr.y * 3.0, 0.0, foot.y - acr.x * 3.0), Vector3(far.x, 0.0, far.y), 1.65, "Trail bridge %d (3.6 m, truck-capable)" % bi)
+	# Phase 24 reference fixture (island r2): the owner's target painting as
+	# a walkable cove. Built by ReferenceCove when one of these is used.
+	if World.island_revision == "r2":
+		var fr := ReferenceCove.frame()
+		var o: Vector3 = fr.o
+		o.y = 0.0
+		var rf := func(x: float, z: float) -> Vector3: return o + (fr.r as Vector3) * x + (fr.f as Vector3) * z
+		vp["ref_match"] = _v(rf.call(-0.4, -1.4) + Vector3(0, 3.1, 0), rf.call(0.6, 9.5) + Vector3(0, -0.9, 0), 0.0, "Reference Match: fixed camera for side-by-side with the target painting", "golden")
+		vp["ref_fp"] = _v(rf.call(-2.6, 1.0), rf.call(1.8, 14.0) + Vector3(0, -0.4, 0), 1.65, "First-Person Shoreline: by the foreground tree, camp, treeline and shore together", "golden")
 	if World.island_revision == "r2":
 		_add_r2(vp, c)
 	_cache = vp

@@ -134,6 +134,14 @@ func _ready() -> void:
 			push_warning("unknown viewpoint " + vp_name)
 			continue
 		var vp: Dictionary = vps[vp_name]
+		if vp_name.begins_with("ref_"):
+			ReferenceCove.ensure(world).set_comparison(vp_name == "ref_match")
+			# Let the actors' sprite clips bake before the shot.
+			for i in 90:
+				await get_tree().process_frame
+				var pb := PixelBaker._inst
+				if i > 20 and (pb == null or pb.pending() == 0):
+					break
 		world.environment.apply_named(lighting)
 		if world.weather:
 			world.weather.set_override(weather if weather != "" else "clear", true)

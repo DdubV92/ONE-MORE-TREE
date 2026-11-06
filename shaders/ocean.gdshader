@@ -190,10 +190,12 @@ void fragment() {
 	float spark = sun_sparkle(n_view, VIEW, VIEW_MATRIX, xz, t) * (1.0 - smoothstep(60.0, 220.0, v_dist));
 
 	ALBEDO = mix(scatter_color * 0.15, foam_col, foam);
-	EMISSION = (body * (1.0 - fres) + crest_glow * crest_lit * 0.55) * (1.0 - foam) + vec3(spark * 3.0);
+	// Stylized (reference art): the turquoise body holds against the sky
+	// reflection even at grazing angles and low sun.
+	EMISSION = (body * (1.0 - fres * 0.6) * 1.15 + crest_glow * crest_lit * 0.55) * (1.0 - foam) + vec3(spark * 3.0);
 	ROUGHNESS = mix(glint_roughness, 0.85, foam);
 	// Stylized: a little less mirror so the turquoise body reads (HD-2D water).
-	SPECULAR = 0.4 * (1.0 - foam);
+	SPECULAR = 0.26 * (1.0 - foam);
 	METALLIC = 0.0;
 	// Soft contact where water meets sand/rock: no hard intersection line.
 	ALPHA = clamp(refr.a * 30.0 + foam, 0.0, 1.0) * smoothstep(0.0, 0.015, thin + 0.01);

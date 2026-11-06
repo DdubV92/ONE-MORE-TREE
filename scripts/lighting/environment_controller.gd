@@ -96,12 +96,20 @@ func build() -> void:
 	env.ssil_radius = 4.0
 	env.ssil_intensity = 0.8
 	env.glow_enabled = true
-	env.glow_bloom = 0.04
-	env.glow_hdr_threshold = 1.1
-	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	# Phase 24 (reference art): soft halos round lanterns, fire and sun-lit
+	# water - screen blend, lower threshold, wider levels.
+	env.glow_bloom = 0.05
+	env.glow_hdr_threshold = 0.92
+	env.glow_hdr_scale = 2.2
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
+	env.set_glow_level(1, 0.0)
+	env.set_glow_level(2, 0.6)
+	env.set_glow_level(3, 1.0)
+	env.set_glow_level(4, 0.8)
+	env.set_glow_level(5, 0.5)
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
-	env.fog_sky_affect = 0.35
+	env.fog_sky_affect = 0.15          # Phase 24: clear painted skies (reference art)
 	env.fog_aerial_perspective = 0.15
 	env.fog_height = 0.0
 	env.adjustment_enabled = true
@@ -146,6 +154,7 @@ func apply_named(preset: String) -> void:
 	match preset:
 		"day": overcast = 0.0; set_time_of_day(12.5)
 		"sunset": overcast = 0.0; set_time_of_day(19.2)
+		"golden": overcast = 0.0; set_time_of_day(17.9)     # Phase 24 reference-art hour
 		"night": overcast = 0.0; set_time_of_day(23.5)
 		"night_new": overcast = 0.0; moon_phase = 0.02; set_time_of_day(23.5)
 		"night_full": overcast = 0.0; moon_phase = 0.5; set_time_of_day(23.5)
