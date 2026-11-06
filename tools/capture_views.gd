@@ -21,6 +21,11 @@ func _ready() -> void:
 	world.build_player = false
 	world.build_ui = false
 	add_child(world)
+	# Phase 24: the final-frame pass (HD-2D world style lives there) is part
+	# of the game image; WORLD_STYLE=3d captures the old look.
+	if OS.has_environment("WORLD_STYLE"):
+		Settings.values.world_style = OS.get_environment("WORLD_STYLE")
+	add_child(PostFX.new())
 	var cam := Camera3D.new()
 	cam.fov = 70.0
 	cam.near = 0.05

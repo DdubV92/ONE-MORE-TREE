@@ -52,6 +52,48 @@ func _ready() -> void:
 	pose_at(0.0)
 
 
+# ------------------------------------------------- Phase 24 pixel viewmodel
+## HD-2D style: the first-person arms and tools get a pixel-textured overlay
+## (texel cells attached to each part + a 3-band light ramp with ordered
+## dither), coarser than on the crew so the hands read as pixel art at arm's
+## length. Applied with material_overlay, so shared character materials are
+## untouched. Off in "clean"; the Phase 11 "pixel" style keeps its own pass.
+static var _vm_pass: ShaderMaterial
+var _vm_style := ""
+var _vm_t := 0.0
+
+
+static func vm_pixel_pass() -> ShaderMaterial:
+	if _vm_pass == null:
+		_vm_pass = ShaderMaterial.new()
+		_vm_pass.shader = load("res://shaders/char_pixel.gdshader")
+		_vm_pass.set_shader_parameter("strength", 1.0)
+		_vm_pass.set_shader_parameter("cell", 0.011)
+	return _vm_pass
+
+
+func _process(delta: float) -> void:
+	_vm_t -= delta
+	if _vm_t > 0.0:
+		return
+	_vm_t = 0.5
+	var st := str(Settings.get_v("character_style"))
+	if st != _vm_style:
+		_vm_style = st
+		apply_pixel_style()
+
+
+func apply_pixel_style() -> void:
+	_overlay(self, vm_pixel_pass() if str(Settings.get_v("character_style")) == "hd2d" else null)
+
+
+static func _overlay(n: Node, m: Material) -> void:
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).material_overlay = m
+	for c in n.get_children():
+		_overlay(c, m)
+
+
 func _build_arms() -> void:
 	var jacket := CharMeshKit.fabric(Color(0.42, 0.2, 0.14))
 	var cuff := CharMeshKit.mat(Color(0.25, 0.12, 0.08), 0.85)
@@ -119,6 +161,7 @@ func equip(t: String) -> void:
 	head_marker = Marker3D.new()
 	head_marker.position = Vector3(0, top - length * 0.08 - grip_centre, 0.04)
 	axe_pivot.add_child(head_marker)
+	_vm_style = ""          # re-apply the Phase 24 overlay to the new tool
 
 
 static func _disable_shadows(n: Node) -> void:

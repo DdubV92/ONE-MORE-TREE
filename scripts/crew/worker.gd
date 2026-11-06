@@ -69,6 +69,8 @@ func setup(c: CrewService, record: Dictionary, m: WorkerMind) -> void:
 	body_char = HumanCharacter.new()
 	body_char.appearance = HumanAppearance.for_employee(id, int(record.get("look_seed", 1)))
 	add_child(body_char)
+	# Phase 24 HD-2D: directional pixel sprite over the (shadow-only) rig.
+	PixelActor.attach(body_char)
 	_flavor_rng.seed = hash(id)
 	refresh_kit_visuals.call_deferred()
 	body_char.step.connect(func(_side: int) -> void:

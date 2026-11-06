@@ -236,7 +236,8 @@ static func go(hud: Node, which: String) -> String:
 			Game.open_character_preview.call_deferred()
 			return "Character Preview: the five employees (Marta, Dale, Priya, Tomas, Joan) and Biscuit. Use its buttons to cycle looks, walk, swing and orbit."
 		"p11_style":
-			var nxt := "pixel" if str(Settings.get_v("character_style")) == "clean" else "clean"
+			var order := ["hd2d", "clean", "pixel"]
+			var nxt: String = order[(order.find(str(Settings.get_v("character_style"))) + 1) % order.size()]
 			Settings.set_v("character_style", nxt)
 			return "Character style: %s (characters only; water, light and fog unchanged). Press again to compare. Strength in Settings." % nxt
 		"p11_work":

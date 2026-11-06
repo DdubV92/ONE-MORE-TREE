@@ -60,8 +60,10 @@ var values := {
 	"subtitle_time": 1.0,           # Phase 17: speech subtitle duration multiplier (0.6..2.0)
 	"binds": {},                    # remapped actions (Keys.capture())
 	# Phase 11 art treatment (characters only; world rendering unchanged)
-	"character_style": "clean",     # clean / pixel
+	"character_style": "hd2d",      # hd2d (Phase 24 directional pixel sprites) / clean / pixel (Phase 11)
 	"character_style_strength": 0.7,
+	"world_style": "hd2d",          # Phase 24: hd2d (pixel-art world pass + diorama depth) / 3d
+	"world_pixel_rows": 320,        # art pixels per screen height in hd2d (240 chunky .. 480 fine)
 }
 
 var defaults := {}
@@ -233,9 +235,12 @@ func sanitize() -> void:
 	values.ui_scale = clampf(float(values.ui_scale), 0.85, 1.6)
 	values.highlight = clampf(float(values.highlight), 0.0, 1.0)
 	values.subtitle_time = clampf(float(values.get("subtitle_time", 1.0)), 0.6, 2.0)
-	if not values.character_style in ["clean", "pixel"]:
-		values.character_style = "clean"
+	if not values.character_style in ["hd2d", "clean", "pixel"]:
+		values.character_style = "hd2d"
 	values.character_style_strength = clampf(float(values.character_style_strength), 0.0, 1.0)
+	if not values.get("world_style", "hd2d") in ["hd2d", "3d"]:
+		values.world_style = "hd2d"
+	values.world_pixel_rows = clampi(int(values.get("world_pixel_rows", 320)), 180, 720)
 	if typeof(values.binds) != TYPE_DICTIONARY:
 		values.binds = {}
 

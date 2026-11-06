@@ -65,6 +65,8 @@ func _ready() -> void:
 
 func build() -> void:
 	for c in get_children():
+		if c is PixelActor:
+			continue          # Phase 24 sprite presenter survives a rebuild
 		c.queue_free()
 	bones.clear()
 	H = appearance.height

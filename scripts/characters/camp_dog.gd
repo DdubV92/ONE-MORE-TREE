@@ -67,6 +67,7 @@ func _ready() -> void:
 	add_to_group("camp_dog")
 	dog = DogCharacter.new()
 	add_child(dog)
+	PixelActor.attach(dog)     # Phase 24 HD-2D sprite (shadow-only rig underneath)
 	_build_collar()
 	voice = AudioStreamPlayer3D.new()
 	voice.bus = "Characters"

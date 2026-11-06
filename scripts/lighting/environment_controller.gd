@@ -428,8 +428,18 @@ func apply_quality() -> void:
 			env.sdfgi_use_occlusion = true
 			sun.directional_shadow_max_distance = 220.0
 			sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	# Depth of field (never on by default; gameplay stays sharp)
-	match Settings.get_v("dof_mode"):
+	# Depth of field (never on by default; gameplay stays sharp). Phase 24
+	# HD-2D: a gentle far-only "diorama" blur beyond working distance.
+	var dof_mode := str(Settings.get_v("dof_mode"))
+	if dof_mode == "off" and str(Settings.get_v("world_style")) == "hd2d":
+		dof_mode = "diorama"
+	match dof_mode:
+		"diorama":
+			cam_attr.dof_blur_far_enabled = true
+			cam_attr.dof_blur_far_distance = 70.0
+			cam_attr.dof_blur_far_transition = 90.0
+			cam_attr.dof_blur_near_enabled = false
+			cam_attr.dof_blur_amount = 0.05
 		"off":
 			cam_attr.dof_blur_far_enabled = false
 			cam_attr.dof_blur_near_enabled = false

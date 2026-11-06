@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/art/hd2d_route.gd" id="1"]
+
+[node name="HD2DRoute" type="Node"]
+script = ExtResource("1")
