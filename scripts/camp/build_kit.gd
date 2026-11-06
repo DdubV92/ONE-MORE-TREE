@@ -33,8 +33,9 @@ static func mat(name: String) -> Material:
 		"mug_blue": m = _plain(Color(0.2, 0.34, 0.5), 0.25, 0.0)
 		"leather": m = _tex_mat("fabric_leather_01", Color(1, 1, 1), 1.0)
 		"bark": m = _tex_mat_path("res://assets/polyhaven/textures/pine_bark/pine_bark", Color(0.9, 0.85, 0.8), 0.8)
-		"camper_paint": m = _plain(Color(0.88, 0.85, 0.76), 0.35, 0.15)
-		"camper_stripe": m = _plain(Color(0.16, 0.45, 0.45), 0.35, 0.15)
+		"camper_paint": m = _plain(Color(0.9, 0.85, 0.73), 0.35, 0.15)
+		# Phase 24 rollout: the reference painting's cream-and-red trailer.
+		"camper_stripe": m = _plain(Color(0.62, 0.17, 0.11), 0.4, 0.1)
 		"camper_trim": m = _plain(Color(0.75, 0.76, 0.78), 0.3, 0.8)
 		"steel": m = _plain(Color(0.42, 0.44, 0.46), 0.45, 0.85)
 		"galvanized": m = _plain(Color(0.62, 0.64, 0.66), 0.4, 0.9)

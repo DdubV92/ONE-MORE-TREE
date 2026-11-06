@@ -96,6 +96,12 @@ func _make_assets() -> void:
 	var rocks := RockBuilder.build_variants(2)
 	_meshes["pebble"] = rocks[0]
 	(_meshes["pebble"] as ArrayMesh).surface_set_material(0, RockBuilder.material())
+	# Phase 24 rollout (the reference painting's detail, island-wide): dark
+	# stones in the shallows and on the wet sand, and red-berry bushes at
+	# forest edges.
+	_meshes["stone"] = rocks[1]
+	(_meshes["stone"] as ArrayMesh).surface_set_material(0, RockBuilder.material())
+	_meshes["berry"] = _berry_mesh(leaf)
 
 
 static func _first_mesh(n: Node) -> Mesh:
@@ -241,7 +247,7 @@ func _build_cell(c: Vector2i) -> Node3D:
 	add_child(node)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(Vector3i(c.x, c.y, 991))
-	var lists := {"grass": [], "dune": [], "reed": [], "fern": [], "bush": [], "pebble": []}
+	var lists := {"grass": [], "dune": [], "reed": [], "fern": [], "bush": [], "pebble": [], "stone": [], "berry": []}
 	var x0 := c.x * CELL
 	var z0 := c.y * CELL
 	var samples := int(520 * density)
@@ -260,6 +266,13 @@ func _build_cell(c: Vector2i) -> Node3D:
 			if r < 0.7:
 				lists.reed.append(_xf(rng, x, h - 0.05, z, 0.8, 1.2))
 			continue
+		# Dark stones along sandy and rocky shores, from knee-deep water up
+		# the wet sand (visual only: never blocks walking or boats).
+		var sea := World.sea_level
+		if region == 0 and h > sea - 1.4 and h < sea + 0.6 and (m.x > 0.3 or m.w > 0.3 or h < sea) and r < 0.11 and _shore_ok(x, z):
+			var ss := rng.randf_range(0.6, 1.8)
+			var sb := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(ss * rng.randf_range(1.0, 1.5), ss * rng.randf_range(0.4, 0.65), ss))
+			lists.stone.append(Transform3D(sb, Vector3(x, h - 0.05 * ss, z)))
 		if h < wl + 0.05:
 			continue
 		if h < World.sea_level + 1.4:
@@ -289,17 +302,21 @@ func _build_cell(c: Vector2i) -> Node3D:
 		var p_bush := 0.004 + m.y * 0.035 * (1.0 - shade * 0.5)
 		if World.island_revision == "r2":
 			p_bush = 0.0    # island r2 has authored undergrowth (UndergrowthSystem)
-		var t := rng.randf() * (p_grass + p_fern + p_bush + 0.6)
+		var p_berry := 0.003 + m.y * 0.012 * (1.0 - shade * 0.5)
+		var t := rng.randf() * (p_grass + p_fern + p_bush + p_berry + 0.6)
 		if t < p_grass:
 			# A small clump of tufts per accepted sample (dense but cheap).
 			for k in 1 + int(rng.randf() * 4.0 * (1.0 - shade)):
 				var gx := x + rng.randf_range(-0.7, 0.7)
 				var gz := z + rng.randf_range(-0.7, 0.7)
 				lists.grass.append(_xf(rng, gx, World.height_at(gx, gz), gz, 0.7, 1.3))
-		elif t < p_grass + p_fern * 0.35:
-			lists.fern.append(_xf(rng, x, h, z, 0.55, 1.0))
-		elif t < p_grass + p_fern * 0.35 + p_bush:
+		elif t < p_grass + p_fern * 0.65:
+			# Fuller, layered ferns (the painting's foreground fronds).
+			lists.fern.append(_xf(rng, x, h, z, 0.7, 1.4))
+		elif t < p_grass + p_fern * 0.65 + p_bush:
 			lists.bush.append(_xf(rng, x, h - 0.1, z, 0.8, 1.4))
+		elif t < p_grass + p_fern * 0.65 + p_bush + p_berry:
+			lists.berry.append(_xf(rng, x, h - 0.08, z, 0.45, 0.75))
 	for kind in lists:
 		var arr: Array = lists[kind]
 		if arr.is_empty() or _meshes.get(kind) == null:
@@ -307,25 +324,68 @@ func _build_cell(c: Vector2i) -> Node3D:
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.mesh = _meshes[kind]
-		mm.use_custom_data = kind == "bush"
+		mm.use_custom_data = kind in ["bush", "berry"]
 		mm.instance_count = arr.size()
 		for k in arr.size():
 			mm.set_instance_transform(k, (arr[k] as Transform3D).translated(-node.position))
-			if kind == "bush":
+			if kind in ["bush", "berry"]:
 				mm.set_instance_custom_data(k, Color(rng.randf(), rng.randf(), 1.2, 0))
 		var mmi := MultiMeshInstance3D.new()
+		mmi.name = str(kind)
 		mmi.multimesh = mm
 		if kind in ["grass", "dune", "reed"]:
 			mmi.material_override = _materials[kind]
 			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		else:
 			# Low cover: shadows only for bushes (they read as volumes).
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if kind == "bush" else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mmi.visibility_range_end = {"grass": 48.0, "dune": 60.0, "reed": 90.0, "fern": 50.0, "bush": 110.0, "pebble": 35.0}[kind]
+			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if kind in ["bush", "berry", "stone"] else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mmi.visibility_range_end = {"grass": 48.0, "dune": 60.0, "reed": 90.0, "fern": 60.0, "bush": 110.0, "pebble": 35.0, "stone": 120.0, "berry": 80.0}[kind]
 		mmi.visibility_range_end_margin = 10.0
 		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		node.add_child(mmi)
 	return node
+
+
+## Stones stay off the dock approach (boats and the skiff land there).
+var _shore_exclude: Array = []
+
+
+func _shore_ok(x: float, z: float) -> bool:
+	if _shore_exclude.is_empty():
+		_shore_exclude.append(Vector2(INF, INF))
+		var vps: Dictionary = Viewpoints.all()
+		for k in ["dock"]:
+			if vps.has(k):
+				var f: Vector3 = vps[k].get("feet", vps[k].pos)
+				_shore_exclude.append(Vector2(f.x, f.z))
+	for e in _shore_exclude:
+		if Vector2(x, z).distance_to(e) < 35.0:
+			return false
+	return true
+
+
+## The bush card cluster with red berries dotted over its crown.
+func _berry_mesh(leaf: Material) -> ArrayMesh:
+	var m := _bush_mesh()
+	m.surface_set_material(0, leaf)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var sph := SphereMesh.new()
+	sph.radius = 0.06
+	sph.height = 0.12
+	sph.radial_segments = 6
+	sph.rings = 3
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	for k in 40:
+		var d := Vector3(rng.randf_range(-1, 1), rng.randf_range(-0.2, 1.0), rng.randf_range(-1, 1)).normalized()
+		st.append_from(sph, 0, Transform3D(Basis(), Vector3(0, 0.75, 0) + d * rng.randf_range(1.05, 1.3)))
+	st.commit(m)
+	var berry := StandardMaterial3D.new()
+	berry.albedo_color = Color(0.78, 0.07, 0.05)
+	berry.roughness = 0.35
+	m.surface_set_material(1, berry)
+	return m
 
 
 static func _xf(rng: RandomNumberGenerator, x: float, y: float, z: float, smin: float, smax: float) -> Transform3D:
