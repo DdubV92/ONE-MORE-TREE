@@ -9,6 +9,11 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Also publish the verified Windows build as a direct-download GitHub pre-release"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -225,3 +230,44 @@ jobs:
           Write-Output "game exit code: $code"
           $pass = ($out -match "RC_SMOKE PASS") -or ($json -match '"result": "PASS"')
           if ($pass) { exit 0 } else { exit 1 }
+
+  # Manual runs only (Run workflow > publish_release): the exact build that
+  # passed the tests and the clean-folder launch, zipped and attached to a
+  # GitHub pre-release so testers get a direct download link (no sign-in).
+  publish-release:
+    name: Publish a direct-download pre-release
+    needs: [windows-build, windows-launch]
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Download the exact verified build
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.windows-build.outputs.label }} - build ${{ github.run_number }} (Windows)
+          path: game
+      - name: Zip and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LABEL: ${{ needs.windows-build.outputs.label }}
+        run: |
+          TAG="${GITHUB_REF_NAME}-build-${GITHUB_RUN_NUMBER}"
+          ZIP="OneMoreTree-${GITHUB_REF_NAME}-build-${GITHUB_RUN_NUMBER}-windows.zip"
+          (cd game && zip -qr -9 "../${ZIP}" .)
+          ls -la "${ZIP}"
+          cat > notes.md <<EOF
+          **${LABEL} - build ${GITHUB_RUN_NUMBER} (Windows)**, commit ${GITHUB_SHA}.
+
+          Test build (not a finished release). It passed the automated tests, the smoke test, the prepared-save checks and a launch from a clean folder on Windows in CI.
+
+          1. Download \`${ZIP}\` below and extract it to a new folder.
+          2. Run \`OneMoreTree.exe\`. The build is unsigned: if SmartScreen warns, choose More info, then Run anyway.
+          3. Needs a GPU with Vulkan 1.2 support. F1 shows the controls.
+
+          Prepared saves for testing are in \`prepared_saves/\` (see the README inside). What's new: \`docs/builds/LATEST_BUILD.md\` in the repository.
+          EOF
+          gh release create "${TAG}" "${ZIP}" --repo "${GITHUB_REPOSITORY}" --target "${GITHUB_SHA}" \
+            --prerelease --title "${LABEL} - build ${GITHUB_RUN_NUMBER} (Windows)" --notes-file notes.md
+          echo "Direct download: https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${ZIP}"
