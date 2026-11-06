@@ -145,9 +145,16 @@ func _apply_level(l: float) -> void:
 		wet_smoke = clampf(1.0 - _out_t / 120.0, 0.0, 1.0)
 	_smoke.amount_ratio = clampf(maxf(0.25 + 0.6 * x, 0.35 + 0.65 * wet_smoke), 0.0, 1.0) if (x > 0.01 or wet_smoke > 0.01) else 0.0
 	_flames.visible = x > 0.02
+	# Soaked: the flames die back to a few licks long before the coals do.
+	var fk := smoothstep(0.1, 0.85, heat)
+	_flames.amount_ratio *= lerpf(0.15, 1.0, fk)
+	_flames.scale *= lerpf(0.45, 1.0, fk)
 	_embers.visible = x > 0.01 or heat > 0.0
 	if _coal:
-		_coal.emission_energy_multiplier = 2.5 * (lerpf(0.25, 1.0, heat) if heat > 0.0 else 0.04)
+		# Out: the last coals die within a minute under the rain.
+		_coal.emission_energy_multiplier = 2.5 * (lerpf(0.25, 1.0, heat) if heat > 0.0 else 0.06 * clampf(1.0 - _out_t / 60.0, 0.0, 1.0))
+	if _glow:
+		_glow.visible = heat > 0.0 and x > 0.01
 	if _glow:
 		_glow.scale = Vector3.ONE * lerpf(0.6, 1.2, clampf(x, 0.0, 1.0))
 	_haze.visible = Settings.get_v("heat_haze") and x > 0.25

@@ -120,6 +120,78 @@ Kinds: {'authored_variant': 6, 'reused_event': 4, 'natural_outcome': 2} families
   6. 30-day storm calendar
   7. Back to scheduled weather
 
+## Performance: clear vs severe coastal storm
+
+Tool: `tools/rc/perf_storm.tscn` (`FRAMES=3600`, about 25 s per row). It measures the same five places under the `clear` override and the `severe_coastal` override. The severe override includes rain, gust fronts, sea state, fog and synthetic strikes with their flashes, thunder and the near-strike light.
+
+**Headless** (CPU, game logic and audio voices; no rendering):
+
+| Location | Weather | mean ms | p95 ms | worst ms | peak voices | strikes / thunders in window | listening layer |
+|---|---|---|---|---|---|---|---|
+| dense forest | clear | 6.95 | 7.91 | 211.81 | 17 | 0 / 0 | canopy |
+| dense forest | severe coastal | 6.9 | 8.36 | 10.41 | 23 | 1 / 5 | canopy |
+| cleared land | clear | 6.9 | 8.31 | 15.16 | 20 | 0 / 0 | canopy |
+| cleared land | severe coastal | 6.9 | 7.98 | 11.32 | 21 | 1 / 5 | canopy |
+| shore | clear | 6.9 | 7.99 | 11.41 | 17 | 0 / 0 | shore |
+| shore | severe coastal | 6.9 | 7.92 | 10.35 | 19 | 2 / 5 | shore |
+| camper interior | clear | 6.9 | 8.03 | 14.83 | 17 | 0 / 5 | camper |
+| camper interior | severe coastal | 6.9 | 8.0 | 9.26 | 22 | 1 / 5 | camper |
+| quad surveillance | clear | 6.9 | 8.07 | 13.02 | 20 | 0 / 0 | camper |
+| quad surveillance | severe coastal | 6.9 | 8.04 | 11.58 | 23 | 1 / 5 | camper |
+
+Frames per scenario: 3600; renderer:  /  (headless: True).
+
+
+**Reading it:**
+- Means sit at the headless frame-pacing floor (6.9 ms) in both weathers; p95 is within 0.4 ms. Severe storms cost nothing measurable on the CPU side.
+- Peak sound voices rise by 1–6 under a severe storm (rain layers, drip, runoff, gusts, thunder).
+- The one large spike (212 ms) is the first frames of the very first scenario in clear weather, a one-off hitch, not the storm.
+- The "clear" camper row shows 5 thunders: thunder still travelling from the previous (severe) scenario, up to 9 s late, as it should.
+- **Fixed after this run:** cleared land reported the *canopy* listening layer. The layer now needs standing trees overhead, so cleared ground is open.
+- **Not measured:**
+  - Real-GPU frame times: there is no GPU in the build container. The lavapipe software renderer used for screenshots runs at a few frames per second and says nothing about a real GPU.
+  - Real audio hardware listening.
+
+## Screenshots (software renderer)
+
+All in `captures/` (lavapipe, no GPU: shadows and particles are rougher than on a real GPU):
+- `p23_severe_shore.png`: severe coastal storm at the dock.
+- `p23_night_flash.png`: a night thunderstorm at the instant of a near flash.
+- `p23_wet_glass.png`: rain beads on the camper window.
+- `p23_puddles.png`: steady rain in camp.
+- `p23_fire_smoulder.png`: the burn pit smouldering in the rain.
+- `p23_fire_out.png`: the burn pit just put out.
+
+The **Thunder Walker** shot was not captured: in the software-rendered frame the figure (41 m away, behind the fence) did not show distinctly, and staging the encounter live is too slow there. Its behaviour is covered by the tests and by the prepared save, which CI loads and plays until the encounter ends.
+
+## Tests and checks
+
+- **Unit:** `phase 23 storm units`:
+  - schedule rules and determinism, envelopes and ramps, thunder delays;
+  - the masking model, the beat catalog (12 beats, 11 families);
+  - every seed has a night storm (200 seeds);
+  - rain on the burn pit (drizzle 8 min → heat 0.42 smouldering; steady rain out after 228 s; relight refused while pouring).
+- **World:** `phase 23 storm world`:
+  - the storm ramp, pause, and pending thunder across save/load;
+  - per-camera thunder, shelter, wetness stability, masking windows, quiet storms, director reservation conflicts;
+  - Thunder Walker: 0.0 m outside masking windows, reload mid-encounter;
+  - a cleared-land route, Foreman hearing 30 → 4.5 m;
+  - missed-flash recording, feed rumor;
+  - the 7 review stations (no save writes).
+- **Full suite:** see "Results" below.
+- **Prepared saves** (`tools/rc/make_fixture_saves.tscn`), made and verified by playing them; CI requires all 7:
+  - subtle rain: *mist_drizzle onset, rain 0.08, visibility 0.73, no lightning*;
+  - severe storm: *thunderstorm build, strikes and thunders arrive*;
+  - Thunder Walker: *resumed after load and ended, 3 reveals*;
+  - Day 36 rescue under a forced severe coastal storm: *ship at dawn, visibility 0.38*;
+  - plus the three Phase 20 saves.
+
+### Blocked or not run
+- ⛔ Real-GPU visuals and frame times (no GPU here).
+- ⛔ Listening on real speakers/headphones (no audio device): the mix levels, thunder rolls and rain layers are unheard.
+- ⛔ A native playtest by a person (route below).
+- ⛔ Thunder Walker screenshot (see above).
+
 ## Short native playtest route (about 20 minutes)
 
 Use the Windows build. Turn on headphones: most of this phase is heard.

@@ -29,7 +29,7 @@ func _ready() -> void:
 	Settings.set_v("flash_reduction", "full")   # capture the real flash (the default is reduced)
 	# (The Thunder Walker shot is taken from its prepared save by
 	# tools/rc/capture_walker.tscn; "thunder_walker" here stages it live.)
-	var shots := ["severe_shore", "puddles", "wet_glass", "night_flash"]
+	var shots := ["severe_shore", "puddles", "wet_glass", "night_flash", "fire_smoulder", "fire_out"]
 	if "thunder_walker" in only:
 		shots.append("thunder_walker")
 	for s in shots:
@@ -73,6 +73,22 @@ func _ready() -> void:
 					await get_tree().process_frame
 					g2 += 1
 				Engine.time_scale = 1.0
+			"fire_smoulder", "fire_out":
+				# Dusk, steady rain, facing the burn pit: smouldering, then
+				# just put out (steam plume, dark coals).
+				_clock(cs, 2, WorkdayClock.DAYLIGHT_SECONDS + 200.0)
+				w.set_override("steady_rain", true)
+				w.wetness = 1.0
+				var pit: Node3D = get_tree().get_nodes_in_group("interactable_fire")[0]
+				var pp := pit.global_position
+				var tm: TimberService = Game.timber
+				tm.fire_out = s == "fire_out"
+				tm.fire_heat = 0.0 if s == "fire_out" else 0.3
+				var from := pp + Vector3(3.2, 1.6, 3.2)
+				p.teleport(from, pp + Vector3(0, 0.6, 0))
+				await _settle(150)
+				if s == "fire_out":
+					tm.update_fire_weather(0.01, w.rain)
 			"thunder_walker":
 				if not await _walker(cs, p, w):
 					print("CAPTURE thunder_walker could not be staged")
