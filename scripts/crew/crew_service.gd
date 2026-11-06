@@ -55,6 +55,7 @@ var coord: CrewCoordinator
 ## Phase 16: conserved merit ledger + persistent profiles/levels/skills.
 var merit := MeritLedger.new()
 var progression := CrewProgression.new(merit)
+var woodcutting := Woodcutting.new()        # Phase 24 (shared with the boss)
 var _tr_t := 0.0
 ## Phase 17: authored crew conversations (one owner per camp).
 var talk: ConversationService
@@ -63,6 +64,8 @@ var routine: CampRoutine     # Phase 19: day roles, transport plan, midday gathe
 
 func setup(c: CampaignService) -> void:
 	campaign = c
+	if not woodcutting.leveled.is_connected(_on_wc_leveled):
+		woodcutting.leveled.connect(_on_wc_leveled)
 	payroll = c.payroll
 	timber = Game.timber
 	trees = Game.trees
@@ -834,11 +837,30 @@ func kit(w: Worker) -> Dictionary:
 	k["hard_working"] = w.mind != null and w.mind.has("hard_working")
 	# Phase 16: the ONE capped skill factor (cutting skill; career level
 	# multiplies nothing). Recomputed when a skill level changes.
-	k["skill"] = progression.cut_factor(w.id)
+	# Phase 24: cutting skill is the shared Woodcutting level (the Phase 16
+	# merit cutting factor is retired so the two never stack).
+	k["skill"] = 1.0
+	k["wc_level"] = woodcutting.level_of(w.id)
 	return k
 
 
 var _fx := {}
+
+
+## Phase 24: a Woodcutting level-up changes that actor's cutting effects at
+## once (cached kits are rebuilt; the boss's axe too).
+func _on_wc_leveled(actor: String, level: int) -> void:
+	_fx.erase(actor)
+	if actor == MeritLedger.BOSS:
+		var p := Game.player as Player
+		if p and p.axe:
+			p.axe.invalidate_kit()
+		if campaign and not Game.is_preview():
+			campaign.notice.emit("Woodcutting level %d: +%d%% damage, +%d%% cutting speed." % [level, level, level], 4.0)
+	elif workers.has(actor):
+		var w: Worker = workers[actor]
+		if campaign and not Game.is_preview() and level % 5 == 0:
+			campaign.notice.emit("%s reached Woodcutting %d." % [str(w.emp.get("name", actor)), level], 4.0)
 
 
 func tool_effects(w: Worker) -> Dictionary:
@@ -866,7 +888,7 @@ func work_per_contact(w: Worker) -> float:
 
 
 func carry_budget(w: Worker) -> int:
-	return int(round(TimberService.HAND_BUDGET_MTE * (CampaignRules.STRONGER_CARRY_MULTIPLIER if w.mind.has("stronger") else 1.0)))
+	return CampaignRules.hand_budget_mte(w.mind.has("stronger"))
 
 
 func claim(key: String, w: Worker) -> bool:
@@ -1518,7 +1540,7 @@ func capture() -> Dictionary:
 	var ms := {}
 	for id in minds:
 		ms[id] = (minds[id] as WorkerMind).capture()
-	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture()}
+	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture(), "woodcutting": woodcutting.capture()}
 
 
 ## Restores the crew without duplicating anyone: one Worker per active or
@@ -1541,6 +1563,7 @@ func restore(d: Dictionary) -> void:
 	# starts every employee at level 1 with no merit (older work had no
 	# reliable per-actor attribution, so none is assigned retroactively).
 	merit.restore(d.get("merit", {}))
+	woodcutting.restore(d.get("woodcutting", {}))
 	progression.restore(d.get("progression", {}))
 	talk.restore(d.get("talk", {}))
 	stats = (d.get("stats", {}) as Dictionary).duplicate(true)

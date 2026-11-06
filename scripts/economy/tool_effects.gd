@@ -22,6 +22,16 @@ extends RefCounted
 ## (0.85..1.00, player only) x load x slope/water (controller's own).
 ## One item per slot, so each factor appears at most once; totals are also
 ## clamped (MAX_* below) in case a future source adds another factor.
+## Phase 24: the shared Woodcutting skill (level 0-50, `wc_level`) adds
+##   damage x(1 + 0.01 L) on work per contact / saw work per strike, and
+##   speed  x(1 + 0.01 L) as an ACTION RATE: the axe cycle is divided by it
+##   and the saw's strikes per second are multiplied by it.
+## It replaces the Phase 16 merit cutting factor (`skill` is now 1.0 for
+## cutting), so the two never stack. Stacking order (all multiplicative,
+## rounded nowhere - work is a float; only XP and money are integers):
+##   axe  work/contact = BASE x tier x Hard-working x WC damage x helmet x fatigue
+##        cycle        = AXE_CYCLE / gloves / WC speed
+##   saw  rate/s       = SAW_RATE x Hard-working x WC damage x WC speed x fatigue
 
 ## Common legal swing cycle for every axe (s): the old small-axe cycle, so
 ## the 1.00/1.40/1.96 work per second of Phases 1-13 is preserved exactly.
@@ -61,13 +71,16 @@ static func breakdown(who: Dictionary) -> Dictionary:
 	var helmet := minf(1.0 + float(GearCatalog.HELMET_WORK.get(str(who.get("helmet", "")), 0.0)), MAX_HELMET)
 	var gloves := minf(1.0 + float(GearCatalog.GLOVES_CADENCE.get(str(who.get("gloves", "")), 0.0)), MAX_CADENCE)
 	var boots := minf(1.0 + float(GearCatalog.BOOTS_WALK.get(str(who.get("boots", "")), 0.0)), MAX_WALK)
+	var wcl := clampi(int(who.get("wc_level", 0)), 0, Woodcutting.MAX_LEVEL)
+	var wc_dmg := Woodcutting.damage_factor(wcl)
+	var wc_spd := Woodcutting.speed_factor(wcl)
 	var out := {
 		"tool": tool, "tier": tier,
-		"factors": {"tier": float(AXE_TIER.get(tier, 1.0)) if tool == "axe" else 1.0, "hard_working": hw, "skill": skill, "helmet": helmet if tool == "axe" else 1.0, "gloves": gloves, "fatigue": fatigue, "boots": boots, "rest_walk": rest_walk},
+		"factors": {"tier": float(AXE_TIER.get(tier, 1.0)) if tool == "axe" else 1.0, "hard_working": hw, "skill": skill, "helmet": helmet if tool == "axe" else 1.0, "gloves": gloves, "fatigue": fatigue, "boots": boots, "rest_walk": rest_walk, "wc_level": wcl, "wc_damage": wc_dmg, "wc_speed": wc_spd},
 		"walk_mult": boots * rest_walk,
 	}
 	if tool == "chainsaw":
-		var rate := SAW_RATE * hw * skill * fatigue
+		var rate := SAW_RATE * hw * skill * wc_dmg * wc_spd * fatigue
 		out["saw_rate"] = rate
 		out["work_per_second"] = rate
 		out["start_s"] = SAW_START_S / gloves
@@ -75,8 +88,8 @@ static func breakdown(who: Dictionary) -> Dictionary:
 		out["work_per_contact"] = rate * SAW_TICK
 		out["vs_hatchet"] = rate / (BASE_WORK / AXE_CYCLE)
 	else:
-		var wpc := BASE_WORK * float(AXE_TIER.get(tier, 1.0)) * hw * skill * helmet * fatigue
-		var cyc := AXE_CYCLE / gloves
+		var wpc := BASE_WORK * float(AXE_TIER.get(tier, 1.0)) * hw * skill * wc_dmg * helmet * fatigue
+		var cyc := AXE_CYCLE / gloves / wc_spd
 		out["work_per_contact"] = wpc
 		out["cycle_s"] = cyc
 		out["work_per_second"] = wpc / cyc
@@ -94,13 +107,15 @@ static func describe(b: Dictionary) -> PackedStringArray:
 			lines.append("  x%.2f Hard-working" % float(f.hard_working))
 		if float(f.skill) != 1.0:
 			lines.append("  x%.2f cutting skill" % float(f.skill))
+		if int(f.get("wc_level", 0)) > 0:
+			lines.append("  x%.2f Woodcutting %d damage, x%.2f speed" % [float(f.wc_damage), int(f.wc_level), float(f.wc_speed)])
 		if float(f.fatigue) != 1.0:
 			lines.append("  x%.2f tiredness (restedness)" % float(f.fatigue))
 		lines.append("  start pull %.2f s%s" % [float(b.start_s), (" (gloves x%.2f quicker)" % float(f.gloves)) if float(f.gloves) > 1.0 else ""])
 		lines.append("  helmet: no effect on the saw")
 	else:
 		lines.append("%s axe: %.2f work per hit, one hit every %.2f s = %.2f work/s (%.2fx hatchet)" % [str(b.tier).capitalize(), float(b.work_per_contact), float(b.cycle_s), float(b.work_per_second), float(b.vs_hatchet)])
-		lines.append("  tier x%.2f%s%s%s%s%s" % [float(f.tier), ("  · Hard-working x%.2f" % float(f.hard_working)) if float(f.hard_working) != 1.0 else "", ("  · cutting skill x%.2f" % float(f.skill)) if float(f.skill) != 1.0 else "", ("  · helmet x%.2f" % float(f.helmet)) if float(f.helmet) != 1.0 else "", ("  · gloves cadence x%.2f" % float(f.gloves)) if float(f.gloves) != 1.0 else "", ("  · tired x%.2f" % float(f.fatigue)) if float(f.fatigue) != 1.0 else ""])
+		lines.append("  tier x%.2f%s%s%s%s%s%s" % [float(f.tier), ("  · Hard-working x%.2f" % float(f.hard_working)) if float(f.hard_working) != 1.0 else "", ("  · cutting skill x%.2f" % float(f.skill)) if float(f.skill) != 1.0 else "", ("  · Woodcutting %d: x%.2f dmg, x%.2f speed" % [int(f.wc_level), float(f.wc_damage), float(f.wc_speed)]) if int(f.get("wc_level", 0)) > 0 else "", ("  · helmet x%.2f" % float(f.helmet)) if float(f.helmet) != 1.0 else "", ("  · gloves cadence x%.2f" % float(f.gloves)) if float(f.gloves) != 1.0 else "", ("  · tired x%.2f" % float(f.fatigue)) if float(f.fatigue) != 1.0 else ""])
 	if float(f.boots) != 1.0:
 		lines.append("  boots: walking x%.2f" % float(f.boots))
 	if float(f.rest_walk) != 1.0:

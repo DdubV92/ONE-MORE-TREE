@@ -107,7 +107,9 @@ func _transition(id: int, to: int) -> bool:
 
 ## One valid axe contact. `from_pos` is where the chopper stands (world).
 ## Returns {"accepted", "progress", "felled"}.
-func apply_contact(id: int, from_pos: Vector3, work: float, actor := "") -> Dictionary:
+## Phase 24: `tool` ("axe"/"saw") and `saw_s` (accepted loaded saw seconds)
+## feed the shared Woodcutting skill, awarded only for accepted work.
+func apply_contact(id: int, from_pos: Vector3, work: float, actor := "", tool := "axe", saw_s := 0.0) -> Dictionary:
 	var r := record(id)
 	var st: int = r.state
 	if st != State.STANDING and st != State.NOTCHED:
@@ -132,6 +134,9 @@ func apply_contact(id: int, from_pos: Vector3, work: float, actor := "") -> Dict
 		tree_notched.emit(id)
 	r.work = float(r.work) + work
 	r.hits = int(r.hits) + 1
+	var wc := Woodcutting.active()
+	if wc and work > 0.0:
+		wc.on_hit(actor, tool, "%s|t%d|%.4f" % [actor, id, float(r.work)], saw_s)
 	var p := progress(id)
 	# Phase 16: merit follows ACCEPTED notch progress (not swings), so a
 	# saw earns the same per tree as an axe, only sooner.
@@ -159,11 +164,14 @@ func stump_required(id: int) -> float:
 	return float(record(id).required) * 0.45
 
 
-func apply_stump_work(id: int, work: float, actor := "") -> Dictionary:
+func apply_stump_work(id: int, work: float, actor := "", tool := "axe", saw_s := 0.0) -> Dictionary:
 	var r := record(id)
 	if int(r.state) != State.SECTIONED:
 		return {"accepted": false, "progress": 0.0, "removed": false, "reason": "trunk_first" if int(r.state) < State.SECTIONED else "gone"}
 	r.stump_work = float(r.get("stump_work", 0.0)) + work
+	var wcs := Woodcutting.active()
+	if wcs and work > 0.0:
+		wcs.on_hit(actor, tool, "%s|s%d|%.4f" % [actor, id, float(r.stump_work)], saw_s)
 	var p := clampf(float(r.stump_work) / maxf(stump_required(id), 0.001), 0.0, 1.0)
 	var ml := MeritLedger.active()
 	if ml:

@@ -205,6 +205,11 @@ func _saw_audio() -> SawAudio:
 ## validated the target, range and facing). Axe: the worker's work per
 ## contact exactly once per swing at contact. Chainsaw: the engine starts
 ## once, then rate x SAW_TICK per completed loaded tick.
+## Phase 24: which tool produced the last work step (Woodcutting XP).
+var _wc_tool := "axe"
+var _wc_saw_s := 0.0
+
+
 func _work_step(delta: float) -> float:
 	var fx := crew.tool_effects(self)
 	if str(fx.tool) == "chainsaw":
@@ -214,7 +219,11 @@ func _work_step(delta: float) -> float:
 			saw.start(float(fx.start_s))
 		var n := saw.step(delta, saw.state != SawMachine.S.STARTING, true)
 		work_seconds += delta
+		_wc_tool = "saw"
+		_wc_saw_s = float(n) * ToolEffects.SAW_TICK * float((fx.factors as Dictionary).get("wc_speed", 1.0))
 		return float(n) * float(fx.saw_rate) * ToolEffects.SAW_TICK
+	_wc_tool = "axe"
+	_wc_saw_s = 0.0
 	return float(fx.work_per_contact) if _swing(delta) else 0.0
 
 
@@ -647,7 +656,7 @@ func _do_fell(delta: float) -> void:
 	_face(Vector3(base.x - global_position.x, 0, base.z - global_position.z).normalized(), delta * 3.0)
 	var wk := _work_step(delta)
 	if wk > 0.0:
-		var res := Game.trees.apply_contact(tid, global_position, wk, id)
+		var res := Game.trees.apply_contact(tid, global_position, wk, id, _wc_tool, _wc_saw_s)
 		if bool(res.get("accepted", false)):
 			crew.contributions.add_work(id, wk)
 		if saw.state == SawMachine.S.STOPPED:
@@ -710,7 +719,7 @@ func _do_buck(delta: float) -> void:
 		return
 	var wk := _work_step(delta)
 	if wk > 0.0:
-		var res := crew.timber.apply_cut(body, y, wk, id)
+		var res := crew.timber.apply_cut(body, y, wk, id, _wc_tool, _wc_saw_s)
 		if str(res.get("reason", "")) == "wait":
 			return
 		if not bool(res.get("accepted", false)):
@@ -746,7 +755,7 @@ func _do_stump(delta: float) -> void:
 		return
 	var wk := _work_step(delta)
 	if wk > 0.0:
-		var res := crew.trees.apply_stump_work(tid, wk, id)
+		var res := crew.trees.apply_stump_work(tid, wk, id, _wc_tool, _wc_saw_s)
 		if not bool(res.get("accepted", false)):
 			abandon("no stump there")
 			return

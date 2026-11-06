@@ -327,7 +327,7 @@ func _journal_payroll() -> Control:
 				note = status
 		var owed := svc.payroll.owed_for(str(e.id))
 		var due := svc.payroll.due_day_for(str(e.id))
-		_text(v, "%s  (%s)  -  %s%s" % [e.name, ", ".join(PackedStringArray(e.traits)).replace("_", " "), note, ("\n    owes $%s, due by the end of day %d" % [Money.format_cents(owed), due]) if owed > 0 else ""])
+		_text(v, "%s  (%s)  -  %s%s" % [e.name, WorkerMind.traits_text(e.traits), note, ("\n    owes $%s, due by the end of day %d" % [Money.format_cents(owed), due]) if owed > 0 else ""])
 		if owed > 0:
 			var eid := str(e.id)
 			v.add_child(UITheme.button("Pay %s now" % e.name, func() -> void:
@@ -555,7 +555,7 @@ func _journal_crew() -> Control:
 		var m: WorkerMind = crew.minds.get(eid)
 		var axe := crew.equipment_axe_of(eid)
 		var owed := svc.payroll.owed_for(eid)
-		var lines := "%s  ·  %s\n%s · %s · bed %d · %s axe%s" % [e.name, ", ".join(PackedStringArray(e.traits)).replace("_", " "), {"active": "working", "pending_arrival": "arriving on the next daylight boat", "departing": "leaving (%s)" % e.get("departure_reason", ""), "pending_integration": "arriving"}.get(st, st), (w.activity_words() if w else "-"), int(e.get("bed", 0)), str(axe.get("tier", "no")), ("  ·  owed $%s by day %d" % [Money.format_cents(owed), svc.payroll.due_day_for(eid)]) if owed > 0 else ""]
+		var lines := "%s  ·  %s\n%s · %s · bed %d · %s axe%s" % [e.name, WorkerMind.traits_text(e.traits), {"active": "working", "pending_arrival": "arriving on the next daylight boat", "departing": "leaving (%s)" % e.get("departure_reason", ""), "pending_integration": "arriving"}.get(st, st), (w.activity_words() if w else "-"), int(e.get("bed", 0)), str(axe.get("tier", "no")), ("  ·  owed $%s by day %d" % [Money.format_cents(owed), svc.payroll.due_day_for(eid)]) if owed > 0 else ""]
 		if m:
 			lines += "\nMood: %s  ·  %s" % [m.state_word(), m.belief_word()]
 		if st == Payroll.ACTIVE:
@@ -609,7 +609,7 @@ func _journal_crew() -> Control:
 	crew.refresh_candidates()
 	for c in crew.candidates:
 		var row := HBoxContainer.new()
-		var l := UITheme.label("%s  ·  %s  ·  asks $%s/day" % [c.name, ", ".join(PackedStringArray(c.traits)).replace("_", " "), Money.format_cents(int(c.get("wage", PayMorale.MIN_WAGE)))], 15)
+		var l := UITheme.label("%s  ·  %s  ·  asks $%s/day" % [c.name, WorkerMind.traits_text(c.traits), Money.format_cents(int(c.get("wage", PayMorale.MIN_WAGE)))], 15)
 		l.custom_minimum_size = Vector2(430, 0)
 		row.add_child(l)
 		var cid := str(c.cid)
@@ -735,7 +735,7 @@ func open_talk(w: Worker) -> void:
 		return t if t != "" else str(fallback.call())
 	var reply := _text(v, "\"%s\"" % authored.call("greet", func() -> String: return w.say("greet")), 17)
 	var m := w.mind
-	_text(v, "%s · %s · %s" % [w.activity_words(), m.state_word(), ", ".join(PackedStringArray(m.traits)).replace("_", " ")], 14, UITheme.MUTED)
+	_text(v, "%s · %s · %s" % [w.activity_words(), m.state_word(), WorkerMind.traits_text(m.traits)], 14, UITheme.MUTED)
 	var opts := GridContainer.new()
 	opts.columns = 2
 	v.add_child(opts)

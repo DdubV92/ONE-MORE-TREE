@@ -21,6 +21,20 @@ const REASSURE_COOLDOWN := 90.0
 const SAME_KIND_WINDOW := 600.0       # repeats within 10 min count less
 
 const TRAITS := ["timid", "hard_working", "stronger", "level_headed", "sociable", "skeptical", "observant", "reliable_driver"]
+## Phase 24: display names. "stronger" is shown as Strongman (+1 standard log
+## of hand-carry capacity; the id stays so saves and dialogue keys keep working).
+const TRAIT_WORDS := {"stronger": "Strongman", "hard_working": "hard-working", "level_headed": "level-headed", "reliable_driver": "reliable driver"}
+
+
+static func trait_word(t: String) -> String:
+	return str(TRAIT_WORDS.get(t, t.replace("_", " ")))
+
+
+static func traits_text(traits: Array) -> String:
+	var out := PackedStringArray()
+	for t in traits:
+		out.append(trait_word(str(t)))
+	return ", ".join(out)
 ## Incompatible pairs (a person is not both).
 const CLASH := [["timid", "level_headed"]]
 

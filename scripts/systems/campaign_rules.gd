@@ -40,7 +40,13 @@ const CABIN_BEDS := 6                  # existing 4 + attached 2-bed room
 # --- tools and traits ----------------------------------------------------------
 const AXE_RATES := {"small": 1.0, "medium": 1.4, "large": 1.96}
 const HARD_WORKING_MULTIPLIER := 1.25  # applied once to effective cut rate
-const STRONGER_CARRY_MULTIPLIER := 1.5 # proposed: 1/3 -> 1/2 tree-equivalent
+const STRONGER_CARRY_MULTIPLIER := 1.5 # Phases 4-23 (superseded by Strongman below)
+## Phase 24: Strongman (the "stronger" trait id, shown as Strongman) carries
+## ONE more standard log by hand than baseline. A standard log is the
+## hand-load piece: 1/3 tree-equivalent = TimberService.HAND_BUDGET_MTE.
+## Capacity is mTE, so a heavier log still uses more of it. Never touches
+## damage, chopping speed or truck volume.
+const STRONGMAN_EXTRA_LOGS := 1
 
 # --- cargo (Prompts 2 and 5) -------------------------------------------------
 const HAND_LOAD_TREE_EQUIVALENTS := 1.0 / 3.0
@@ -57,7 +63,12 @@ static func cut_rate(tier: String, hard_working: bool) -> float:
 
 
 static func hand_capacity(stronger: bool) -> float:
-	return HAND_LOAD_TREE_EQUIVALENTS * (STRONGER_CARRY_MULTIPLIER if stronger else 1.0)
+	return HAND_LOAD_TREE_EQUIVALENTS * (1.0 + (STRONGMAN_EXTRA_LOGS if stronger else 0))
+
+
+## Hand-carry budget in mTE (the one rule for the boss and every worker).
+static func hand_budget_mte(strongman: bool) -> int:
+	return TimberService.HAND_BUDGET_MTE * (1 + (STRONGMAN_EXTRA_LOGS if strongman else 0))
 
 
 static func state_name(s: int) -> String:

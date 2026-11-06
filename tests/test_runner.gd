@@ -20,6 +20,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P24"):
+		_run("phase 24 woodcutting units", _t_phase24_wc_units)
+		await _run_async("phase 24 woodcutting world", _t_phase24_wc_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P23"):
 		_run("phase 23 storm units", _t_phase23_units)
 		await _run_async("phase 23 storm world", _t_phase23_world)
@@ -193,6 +199,8 @@ func _ready() -> void:
 	await _run_async("phase 22 CampOS: 1280x720 desktop, several program windows, click-to-raise, title-bar drag, maximize/restore, taskbar minimize/restore, close, saved layout and older saves, on-screen pointer, boot on switch-on, reading apps refresh in place", _t_phase22_os)
 	_run("phase 23 storm units: 7 profiles, deterministic schedule, early thunder before severe, severe gaps, quiet majors, full ramp in phase order, no cloud jumps, thunder before rain, stable strike records, silent heavy rain, delay grows with distance, roll envelope, 12-beat catalog", _t_phase23_units)
 	await _run_async("phase 23 storm world: storm reached, pause, load between flash and thunder, per-camera thunder arrival, shelter, wetness reload, masking window, quiet storm, cancelled reservation, Thunder Walker (moves only in windows, reload mid-encounter), reduced flash, Foreman masking, missed-flash recording, feed rumor", _t_phase23_world)
+	_run("phase 24 woodcutting units: curve thresholds, carry-over, cap 33,125 XP / 6,625 hits, duplicate hit ignored, saw strikes, boss/worker parity, one formula (damage + action rate), Strongman capacity, save mid-progression", _t_phase24_wc_units)
+	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -1003,7 +1011,7 @@ func _t_timber_ledger() -> String:
 				refused = true
 		if t.carried_mte() > TimberService.HAND_BUDGET_MTE + 2 or not refused:
 			err = "hand budget not enforced (%d mTE, refused %s)" % [t.carried_mte(), str(refused)]
-		var stronger := int(round(TimberService.HAND_BUDGET_MTE * CampaignRules.STRONGER_CARRY_MULTIPLIER))
+		var stronger := CampaignRules.hand_budget_mte(true)
 		var extra := 0
 		for key in t.bodies.keys():
 			if bool(t.pick_up(t.bodies[key], stronger).ok):
@@ -1623,7 +1631,7 @@ func _t_crew_world() -> String:
 		err = "hard-working rate wrong"
 	if err == "" and absf(crew.work_per_contact(st) - cfg.work_per_contact("small", false)) > 0.0001:
 		err = "plain rate wrong"
-	if err == "" and (crew.carry_budget(st) != 500 or crew.carry_budget(hw) != 333):
+	if err == "" and (crew.carry_budget(st) != 666 or crew.carry_budget(hw) != 333):
 		err = "carry budgets %d / %d" % [crew.carry_budget(st), crew.carry_budget(hw)]
 	# Hiring: fee once, five maximum (pending arrivals count), no id reuse.
 	cs.wallet.grant(10000000, "test", "T", "cash")
@@ -7224,4 +7232,198 @@ func _p23_checks(world: IslandWorld) -> String:
 		return "back-to-schedule station left override %s" % w.override
 	rep["stations"] = st_msgs
 	p23_report["world"] = rep
+	return ""
+
+
+
+# ===================================================== Phase 24: Woodcutting
+
+var p24_report := {}
+
+
+func _t_phase24_wc_units() -> String:
+	var rep := {}
+	# Curve: 50 + 25 L per level, cumulative, cap at 50.
+	if Woodcutting.cost(0) != 50 or Woodcutting.cost(1) != 75 or Woodcutting.cost(49) != 1275:
+		return "per-level cost wrong"
+	if Woodcutting.total_to(1) != 50 or Woodcutting.total_to(2) != 125 or Woodcutting.total_to(50) != 33125:
+		return "cumulative totals wrong (%d)" % Woodcutting.total_to(50)
+	if Woodcutting.cap_xp() / Woodcutting.XP_PER_HIT != 6625:
+		return "hits to cap %d" % (Woodcutting.cap_xp() / Woodcutting.XP_PER_HIT)
+	var wc := Woodcutting.new()
+	# First level-up after exactly 10 valid hits.
+	for i in 9:
+		wc.on_hit("boss", "axe", "k%d" % i)
+	if wc.level_of("boss") != 0 or int(wc.xp.boss) != 45:
+		return "9 hits gave level %d / %d XP" % [wc.level_of("boss"), int(wc.xp.boss)]
+	wc.on_hit("boss", "axe", "k9")
+	if wc.level_of("boss") != 1 or int(wc.progress("boss").into) != 0:
+		return "10th hit did not reach level 1 exactly"
+	# Duplicate hit key (save/load at an action boundary) grants nothing.
+	if wc.on_hit("boss", "axe", "k9") != 0 or int(wc.xp.boss) != 50:
+		return "duplicate hit granted XP"
+	# Remainder carries over across a level-up (130 XP = L2 + 5).
+	var wc2 := Woodcutting.new()
+	wc2.xp["EMP-01"] = 120
+	wc2.on_hit("EMP-01", "axe", "x1")
+	wc2.on_hit("EMP-01", "axe", "x2")
+	var p2 := wc2.progress("EMP-01")
+	if int(p2.level) != 2 or int(p2.into) != 5 or int(p2.need) != 100:
+		return "carry-over wrong: %s" % str(p2)
+	# Cap: clamps at 33,125 XP, level 50, nothing beyond.
+	wc2.xp["EMP-01"] = Woodcutting.cap_xp() - 5
+	wc2.on_hit("EMP-01", "axe", "c1")
+	var g := wc2.on_hit("EMP-01", "axe", "c2")
+	if wc2.level_of("EMP-01") != 50 or int(wc2.xp["EMP-01"]) != 33125 or g != 0:
+		return "cap not clamped (%d XP, L%d, +%d)" % [int(wc2.xp["EMP-01"]), wc2.level_of("EMP-01"), g]
+	# Saw strikes: one per 0.95 s of accepted cutting; partial carries over.
+	var wc3 := Woodcutting.new()
+	var got := 0
+	for i in 9:
+		got += wc3.on_hit("EMP-02", "saw", "s%d" % i, 0.1)
+	if got != 0:
+		return "saw paid before a full strike"
+	got += wc3.on_hit("EMP-02", "saw", "s9", 0.1)
+	if got != 5 or absf(float(wc3.saw_carry["EMP-02"]) - 0.05) > 0.001:
+		return "saw strike wrong (%d XP, carry %.3f)" % [got, float(wc3.saw_carry["EMP-02"])]
+	# Boss / worker parity: the same hits give the same XP and level.
+	var wc4 := Woodcutting.new()
+	for i in 37:
+		wc4.on_hit("boss", "axe", "b%d" % i)
+		wc4.on_hit("EMP-03", "axe", "e%d" % i)
+	if wc4.progress("boss") != wc4.progress("EMP-03"):
+		return "boss and worker differ for the same hits"
+	# One formula: level 0 = the Phase 23 numbers; level 50 = x1.5 damage
+	# and x1.5 action rate (axe cycle / 1.5, saw strikes x 1.5).
+	var a0 := ToolEffects.breakdown({"tool": "axe", "tier": "medium"})
+	var a50 := ToolEffects.breakdown({"tool": "axe", "tier": "medium", "wc_level": 50})
+	var a25 := ToolEffects.breakdown({"tool": "axe", "tier": "medium", "wc_level": 25})
+	if absf(float(a0.work_per_contact) - 1.4) > 1e-6 or absf(float(a0.cycle_s) - 0.95) > 1e-6:
+		return "level 0 changed the base axe numbers"
+	if absf(float(a50.work_per_contact) / float(a0.work_per_contact) - 1.5) > 1e-6 or absf(float(a0.cycle_s) / float(a50.cycle_s) - 1.5) > 1e-6:
+		return "level 50 axe not x1.5 damage and x1.5 rate"
+	if absf(float(a25.work_per_second) / float(a0.work_per_second) - 1.5625) > 1e-6:
+		return "level 25 axe work/s not 1.25 x 1.25"
+	var s0 := ToolEffects.breakdown({"tool": "chainsaw"})
+	var s50 := ToolEffects.breakdown({"tool": "chainsaw", "wc_level": 50})
+	if absf(float(s50.saw_rate) / float(s0.saw_rate) - 2.25) > 1e-6:
+		return "level 50 saw rate not x2.25"
+	if absf(float(ToolEffects.breakdown({"tool": "axe", "wc_level": 99}).work_per_contact) - 1.5) > 1e-6:
+		return "level above 50 not clamped"
+	rep["axe_medium_work_per_s"] = {"L0": snappedf(float(a0.work_per_second), 0.001), "L25": snappedf(float(a25.work_per_second), 0.001), "L50": snappedf(float(a50.work_per_second), 0.001)}
+	# Strongman: exactly one more standard log (333 mTE) of hand capacity.
+	if CampaignRules.hand_budget_mte(false) != 333 or CampaignRules.hand_budget_mte(true) != 666:
+		return "Strongman capacity %d / %d" % [CampaignRules.hand_budget_mte(false), CampaignRules.hand_budget_mte(true)]
+	if WorkerMind.trait_word("stronger") != "Strongman":
+		return "Strongman label"
+	# Save mid-progression: same totals, same pending saw time, same keys.
+	var cap := wc3.capture()
+	var wc5 := Woodcutting.new()
+	wc5.restore(cap)
+	if wc5.progress("EMP-02") != wc3.progress("EMP-02") or absf(float(wc5.saw_carry["EMP-02"]) - 0.05) > 0.001 or wc5.on_hit("EMP-02", "saw", "s9", 0.1) != 0:
+		return "save/restore mid-progression lost state"
+	var old := Woodcutting.new()
+	old.restore({})
+	if old.level_of("EMP-01") != 0:
+		return "old saves should start at level 0"
+	rep["hits_to_cap"] = 6625
+	p24_report["units"] = rep
+	return ""
+
+
+func _t_phase24_wc_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for c in get_children():
+		if c is IslandWorld:
+			c.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or not world.systems_ready) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := await _p24_wc_checks(world)
+	print("P24 REPORT ", JSON.stringify(p24_report))
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p24_wc_checks(_world: IslandWorld) -> String:
+	var rep := {}
+	var cs: CampaignService = Game.campaign
+	cs.start_test_route(true, true)
+	for k in 30:
+		await get_tree().physics_frame
+	var wc := Woodcutting.active()
+	if wc == null:
+		return "no Woodcutting service"
+	wc.restore({})
+	# A standing tree near camp.
+	var px := (Game.player as Player).global_position
+	var tid := -1
+	var best := INF
+	for i in (World.trees.x as PackedFloat32Array).size():
+		var id := int(World.trees.id[i])
+		if World.removed_trees.has(id) or Game.trees.state_of(id) != TreeService.State.STANDING:
+			continue
+		var d := Vector2(World.trees.x[i] - px.x, World.trees.z[i] - px.z).length()
+		if d < best and d > 20.0:
+			best = d
+			tid = id
+	if tid < 0:
+		return "no standing tree"
+	var i0: int = Game.vegetation.tree_index_by_id.get(tid, tid)
+	var stand := World.tree_position(i0) + Vector3(1.5, 0, 0)
+	# Accepted axe hit: +5 to the hitter only.
+	var r1 := Game.trees.apply_contact(tid, stand, 0.5, MeritLedger.BOSS)
+	if not bool(r1.accepted) or int(wc.xp.get(MeritLedger.BOSS, 0)) != 5:
+		return "accepted axe hit did not give the boss 5 XP (%s)" % str(wc.xp)
+	# A worker's hit on the same tree credits the worker, not the boss.
+	var r2 := Game.trees.apply_contact(tid, stand, 0.5, "EMP-01")
+	if not bool(r2.accepted) or int(wc.xp.get("EMP-01", 0)) != 5 or int(wc.xp.get(MeritLedger.BOSS, 0)) != 5:
+		return "worker hit credited wrongly (%s)" % str(wc.xp)
+	# Saw ticks: ten 0.1 s accepted ticks = one strike.
+	var saw_xp0 := int(wc.xp.get("EMP-02", 0))
+	for k in 10:
+		Game.trees.apply_contact(tid, stand, 0.05, "EMP-02", "saw", 0.1)
+	if int(wc.xp.get("EMP-02", 0)) - saw_xp0 != 5:
+		return "ten saw ticks gave %d XP" % (int(wc.xp.get("EMP-02", 0)) - saw_xp0)
+	# Fell it, then a further hit is rejected: no XP.
+	Game.trees.apply_contact(tid, stand, 9999.0, MeritLedger.BOSS)
+	var before := int(wc.xp.get(MeritLedger.BOSS, 0))
+	var r3 := Game.trees.apply_contact(tid, stand, 1.0, MeritLedger.BOSS)
+	if bool(r3.accepted) or int(wc.xp.get(MeritLedger.BOSS, 0)) != before:
+		return "a rejected hit awarded XP"
+	rep["tree_hits"] = {"boss": int(wc.xp.get(MeritLedger.BOSS, 0)), "EMP-01": int(wc.xp.get("EMP-01", 0)), "EMP-02 saw": int(wc.xp.get("EMP-02", 0))}
+	# Level-up refreshes the boss's axe kit.
+	var p := Game.player as Player
+	p.axe.equip("small")
+	var c0 := float(p.axe.effects().cycle_s)
+	wc.xp[MeritLedger.BOSS] = Woodcutting.total_to(10) - 5
+	wc.on_hit(MeritLedger.BOSS, "axe", "lvl-up-test")
+	var c1 := float(p.axe.effects().cycle_s)
+	if wc.level_of(MeritLedger.BOSS) != 10 or absf(c0 / c1 - 1.1) > 0.02:
+		return "boss level-up did not refresh the axe (L%d, cycle %.3f -> %.3f)" % [wc.level_of(MeritLedger.BOSS), c0, c1]
+	rep["boss_cycle_L0_L10"] = [snappedf(c0, 0.001), snappedf(c1, 0.001)]
+	# Worker kit follows its own level.
+	var w: Worker = Game.crew.workers.values()[0] if not Game.crew.workers.is_empty() else null
+	if w:
+		wc.xp[w.id] = Woodcutting.total_to(20)
+		wc.leveled.emit(w.id, 20)
+		var fx := Game.crew.tool_effects(w)
+		if int((fx.factors as Dictionary).get("wc_level", -1)) != 20:
+			return "worker kit not at level 20"
+	# Saved in the crew block.
+	var cap: Dictionary = Game.crew.capture()
+	if not cap.has("woodcutting") or int((cap.woodcutting.xp as Dictionary).get(MeritLedger.BOSS, 0)) != int(wc.xp[MeritLedger.BOSS]):
+		return "woodcutting not saved with the crew"
+	p24_report["world"] = rep
 	return ""

@@ -108,6 +108,9 @@ func kit() -> Dictionary:
 		for s in preview_gear:
 			k[s] = preview_gear[s]
 	k["hard_working"] = false      # traits are employees' (the boss has none)
+	# Phase 24: the shared Woodcutting level (same curve as every worker).
+	var wc := Woodcutting.active()
+	k["wc_level"] = wc.level_of(MeritLedger.BOSS) if wc else 0
 	# Phase 16: the boss's restedness (once each: cutting work per contact,
 	# walking); 1.0 when well rested or outside a campaign.
 	if Game.rest:
@@ -247,10 +250,12 @@ func saw_contact_key(p: Dictionary) -> String:
 ## Applies one saw tick (rate x SAW_TICK) to the validated target.
 func apply_saw_tick(p: Dictionary) -> bool:
 	var work: float = float(effects().saw_rate) * ToolEffects.SAW_TICK
+	# Phase 24: Woodcutting strike time (action rate x the speed factor).
+	var ss := ToolEffects.SAW_TICK * float((effects().factors as Dictionary).get("wc_speed", 1.0))
 	var ok := false
 	match str(p.kind):
 		"tree":
-			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work, MeritLedger.BOSS)
+			var res: Dictionary = Game.trees.apply_contact(p.id, player.global_position, work, MeritLedger.BOSS, "saw", ss)
 			ok = bool(res.get("accepted", false))
 			if ok:
 				var bark := Color(0.35, 0.25, 0.18) if int(World.trees.species[Game.vegetation.tree_index_by_id.get(p.id, p.id)]) != 2 else Color(0.85, 0.83, 0.78)
@@ -262,7 +267,7 @@ func apply_saw_tick(p: Dictionary) -> bool:
 				_target_info = _describe(p.id)
 				target_changed.emit(_target_info)
 		"timber":
-			var res2: Dictionary = Game.timber.apply_cut(p.body, float(p.y), work, MeritLedger.BOSS) if Game.timber else {"accepted": false}
+			var res2: Dictionary = Game.timber.apply_cut(p.body, float(p.y), work, MeritLedger.BOSS, "saw", ss) if Game.timber else {"accepted": false}
 			ok = bool(res2.get("accepted", false))
 			if ok:
 				if saw_ticks_applied % 2 == 0:
@@ -272,7 +277,7 @@ func apply_saw_tick(p: Dictionary) -> bool:
 					Game.rest.note_effort_hit()
 				target_tree = -3
 		"stump":
-			var res3: Dictionary = Game.trees.apply_stump_work(int(p.id), work, MeritLedger.BOSS)
+			var res3: Dictionary = Game.trees.apply_stump_work(int(p.id), work, MeritLedger.BOSS, "saw", ss)
 			ok = bool(res3.get("accepted", false))
 			if ok:
 				if saw_ticks_applied % 2 == 0:

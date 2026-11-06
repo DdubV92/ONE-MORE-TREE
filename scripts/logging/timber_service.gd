@@ -331,7 +331,7 @@ func _set_state(sid: String, st: int) -> void:
 
 ## Axe contact on a timber body near local length `y` (m from the base along
 ## the trunk axis). Returns {"accepted", "progress", "separated", "reason"}.
-func apply_cut(body: TimberBody, y: float, work: float, actor := "") -> Dictionary:
+func apply_cut(body: TimberBody, y: float, work: float, actor := "", tool := "axe", saw_s := 0.0) -> Dictionary:
 	if not body.is_resting():
 		return {"accepted": false, "reason": "wait"}
 	var rec: Dictionary = records[body.tree_id]
@@ -341,6 +341,9 @@ func apply_cut(body: TimberBody, y: float, work: float, actor := "") -> Dictiona
 	if target.kind == "crown":
 		var c: Dictionary = rec.crown
 		c.work = float(c.work) + work
+		var wcc := Woodcutting.active()
+		if wcc and work > 0.0:
+			wcc.on_hit(actor, tool, "%s|c%d|%.4f" % [actor, body.tree_id, float(c.work)], saw_s)
 		var pr := clampf(float(c.work) / float(c.required), 0.0, 1.0)
 		var mlc := MeritLedger.active()
 		if mlc:
@@ -352,6 +355,9 @@ func apply_cut(body: TimberBody, y: float, work: float, actor := "") -> Dictiona
 		return {"accepted": true, "progress": pr, "separated": false}
 	var bd: Dictionary = rec.bounds[target.k]
 	bd.work = float(bd.work) + work
+	var wc := Woodcutting.active()
+	if wc and work > 0.0:
+		wc.on_hit(actor, tool, "%s|b%d:%d|%.4f" % [actor, body.tree_id, int(target.k), float(bd.work)], saw_s)
 	var p := clampf(float(bd.work) / float(bd.required), 0.0, 1.0)
 	var ml := MeritLedger.active()
 	if ml:

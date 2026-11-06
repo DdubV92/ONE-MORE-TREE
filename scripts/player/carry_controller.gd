@@ -32,7 +32,7 @@ func setup(p: Player) -> void:
 
 
 func budget() -> int:
-	return int(round(TimberService.HAND_BUDGET_MTE * (CampaignRules.STRONGER_CARRY_MULTIPLIER if stronger else 1.0)))
+	return CampaignRules.hand_budget_mte(stronger)
 
 
 func is_carrying() -> bool:

@@ -15,7 +15,7 @@ extends Control
 ## Every number comes from PayMorale / Payroll / the merit and time ledgers;
 ## the buttons call the same service methods the tests use.
 
-const COLS := [["Employee", 128], ["Pay mood", 132], ["Useful", 46], ["Work", 42], ["Value", 50], ["Rate", 48], ["Bonus", 46], ["Perf", 36], ["Tonight", 56]]
+const COLS := [["Employee", 128], ["Woodcut", 58], ["Pay mood", 132], ["Useful", 46], ["Work", 42], ["Value", 50], ["Rate", 48], ["Bonus", 46], ["Perf", 36], ["Tonight", 56]]
 const GOOD := Color(0.45, 0.78, 0.42)
 const OKAY := Color(0.86, 0.78, 0.36)
 const BAD := Color(0.92, 0.55, 0.25)
@@ -166,6 +166,10 @@ func _crew(cs: CampaignService) -> void:
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 3)
 	h.add_child(left)
+	var wcb := Woodcutting.active()
+	if wcb:
+		var bp := wcb.progress(MeritLedger.BOSS)
+		left.add_child(UITheme.label("You: Woodcutting %d%s  ·  +%d%% damage, +%d%% cutting speed%s" % [int(bp.level), ("  (%d / %d XP to %d)" % [int(bp.into), int(bp.need), int(bp.level) + 1]) if int(bp.need) > 0 else "  (max level)", int(bp.level), int(bp.level), "" if int(bp.level) < Woodcutting.MAX_LEVEL else "  ·  capped at +50%"], 13, UITheme.ACCENT))
 	var hdr := HBoxContainer.new()
 	hdr.add_theme_constant_override("separation", 4)
 	for c in COLS:
@@ -204,6 +208,7 @@ func _crew(cs: CampaignService) -> void:
 		row.add_child(r)
 		var nm := str(e.name) + ("" if str(e.status) == Payroll.ACTIVE else " (%s)" % str(e.status).replace("_", " "))
 		r.add_child(_cell(("! " if not pay.pending_request(eid).is_empty() else "") + nm, 128))
+		r.add_child(_cell(_wc_short(eid), 58, UITheme.TEXT, 12))
 		var mood := HBoxContainer.new()
 		mood.custom_minimum_size = Vector2(132, 0)
 		mood.add_theme_constant_override("separation", 4)
@@ -246,7 +251,21 @@ func _detail(cs: CampaignService, eid: String) -> Control:
 	var s := float(r.get("sat", 0.6))
 	v.add_child(UITheme.label(str(e.get("name", eid)), 17, UITheme.ACCENT))
 	var tr: Array = e.get("traits", [])
-	v.add_child(_wrap("%s  ·  %s" % [", ".join(PackedStringArray(tr.map(func(x) -> String: return str(x).replace("_", " ")))), _temper(r)], 12, UITheme.MUTED))
+	v.add_child(_wrap("%s  ·  %s" % [WorkerMind.traits_text(tr), _temper(r)], 12, UITheme.MUTED))
+	# Phase 24: the shared Woodcutting skill (same curve as the boss).
+	var wc := Woodcutting.active()
+	if wc:
+		var wp := wc.progress(eid)
+		var lv := int(wp.level)
+		v.add_child(UITheme.label("Woodcutting %d / %d" % [lv, Woodcutting.MAX_LEVEL], 14, UITheme.ACCENT))
+		var wb := HBoxContainer.new()
+		wb.add_child(_bar(float(wp.into) / maxf(float(wp.need), 1.0) if int(wp.need) > 0 else 1.0, 160))
+		wb.add_child(UITheme.label(("  %d / %d XP to level %d" % [int(wp.into), int(wp.need), lv + 1]) if int(wp.need) > 0 else "  max level", 12))
+		v.add_child(wb)
+		var tb: Dictionary = wc.by_tool.get(eid, {})
+		v.add_child(_wrap("+%d%% cutting damage, +%d%% cutting speed (cap +50%% each at level 50). %d valid hits so far (axe %d, saw strikes %d); 5 XP per hit that actually cuts wood." % [lv, lv, int(wc.hits.get(eid, 0)), int(tb.get("axe", 0)), int(tb.get("saw", 0))], 12))
+		if "stronger" in tr:
+			v.add_child(_wrap("Strongman: carries one more standard log by hand than baseline (heavy logs still use more of it).", 12, UITheme.MUTED))
 	var m := HBoxContainer.new()
 	m.add_child(_bar(s, 120))
 	m.add_child(UITheme.label("%s (%d%%)" % [PayMorale.status_of(s), int(round(s * 100.0))], 13, mood_color(s)))
@@ -348,3 +367,14 @@ func _campaign(cs: CampaignService) -> void:
 	_body.add_child(_table(rows, [150, 44, 84, 80, 84, 70, 54, 80, 270], ["Employee", "Days", "Rates", "Bonuses", "Total paid", "Per day", "Work", "Value", "Now"]))
 	var ratio := float(t.value) / maxf(float(t.total), 1.0)
 	_body.add_child(_wrap("You paid %s in wages for work worth %s at the contract price (%.0f%%)." % [money(int(t.total)), money(int(t.value)), ratio * 100.0], 13))
+
+
+## Phase 24: "L12 40%" for the table (level and progress to the next).
+func _wc_short(eid: String) -> String:
+	var wc := Woodcutting.active()
+	if wc == null:
+		return "-"
+	var p := wc.progress(eid)
+	if int(p.need) <= 0:
+		return "L%d max" % int(p.level)
+	return "L%d %d%%" % [int(p.level), int(100.0 * float(p.into) / float(p.need))]
