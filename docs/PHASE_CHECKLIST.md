@@ -13,6 +13,7 @@ Notes: [PHASE23_NOTES.md](PHASE23_NOTES.md).
 | Every campaign has at least one night thunderstorm with terrors | ✅ | Post-pass; 200 seeds tested |
 | Lightning strike records; per-listener thunder delay (player + each shown camera microphone); thunder in flight survives save/load | ✅ | |
 | Fog/visibility, gust fronts in the trees, sea state, puddles with rain rings, rain on exterior glass, wet materials, canopy drip, eave runoff, listening layers | ✅ | Shown in screenshots; not yet seen on a real GPU |
+| Rain smoulders the burn-pit fire and steady rain puts it out; relit by the player when the rain eases, by the crew after a dry spell or in the morning; saved | ✅ | Owner request; contract delivery unaffected |
 | Flash comfort (full / reduced / off) for every flash; reduced → rim cue on encounter figures | ✅ | |
 | Masking model shared by mix, AI and encounters; Foreman hearing masked by thunder, sight × visibility | ✅ | 30 m → 4.5 m measured |
 | Thunder Walker: director reservation, validated waypoints (incl. cleared land), flash reveals, moves only inside masking windows, still while watched, save/load mid-encounter | ✅ | 0.0 m outside windows (test) |

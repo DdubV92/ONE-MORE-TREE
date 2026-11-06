@@ -65,6 +65,7 @@ const EVENTS := {
 	"fire.bed.small": {"files": ["fire_bed_small_loop"], "bus": "Ambience", "cal": "domestic", "db": -6.0, "loop": true},
 	"fire.bed.large": {"files": ["fire_bed_large_loop"], "bus": "Ambience", "cal": "domestic", "db": -4.0, "loop": true},
 	"fire.pop": {"files": ["fire_pop_0", "fire_pop_1", "fire_pop_2", "fire_pop_3", "fire_hiss_sap", "fire_embers_settle"], "bus": "Ambience", "cal": "domestic", "db": -8.0, "pitch": [0.9, 1.1]},
+	"fire.hiss": {"files": ["fire_hiss_sap"], "bus": "Ambience", "cal": "domestic", "db": -6.0, "pitch": [0.8, 1.15]},
 	"fire.log.place": {"files": ["fire_log_place"], "bus": "Work", "cal": "contact", "db": -6.0},
 	# ---- vehicles ----
 	"truck.engine.idle": {"files": ["truck_engine_idle_loop"], "bus": "Work", "cal": "engine", "db": -6.0, "loop": true},

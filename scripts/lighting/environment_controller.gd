@@ -327,9 +327,13 @@ func _apply() -> void:
 	# lamps or anything SafetyService reads. Level already follows the
 	# flash-reduction comfort setting.
 	var fl := weather_flash * (1.0 - interior_k * 0.6)
-	env.ambient_light_energy = p.ambient_energy * lerpf(1.0, 0.6 + 0.4 * illum, nf) * lerpf(1.0, 0.35, interior_k) * (1.0 + fl * 2.0 * nf + fl * 0.4)
-	env.background_energy_multiplier = 1.0 + fl * (0.6 + 2.4 * nf)
-	env.ambient_light_sky_contribution = 1.0
+	# At night a near flash lights the whole landscape for an instant: the
+	# dark sky cannot carry that, so the flash brings its own cold ambient.
+	var flk := fl * nf
+	env.ambient_light_energy = p.ambient_energy * lerpf(1.0, 0.6 + 0.4 * illum, nf) * lerpf(1.0, 0.35, interior_k) * (1.0 + fl * 2.0 * nf + fl * 0.4) + flk * 1.6
+	env.background_energy_multiplier = 1.0 + fl * (0.6 + 9.0 * nf)
+	env.ambient_light_color = Color(0.62, 0.68, 0.86)
+	env.ambient_light_sky_contribution = 1.0 - 0.85 * clampf(flk * 1.5, 0.0, 1.0)
 	env.fog_light_color = p.fog_color
 	# Night mist: thicker and darker on moonless nights so the forest fades
 	# to black within a few dozen metres; a full moon thins it.

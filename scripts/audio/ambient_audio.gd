@@ -179,6 +179,11 @@ func _update_fire_v2() -> void:
 	# Fuel decides the voice: embers only, a small bed or a big one.
 	_layer("fire_small", "fire.bed.small", _fire_m, linear_to_db(clampf(lvl * 2.0, 0.0, 1.0)), lvl > 0.02)
 	_layer("fire_large", "fire.bed.large", _fire_m, linear_to_db(clampf((lvl - 0.6) * 1.5, 0.0, 1.0)), lvl > 0.6)
+	# Rain on hot coals: hisses (more as the fire is beaten down).
+	var rain: float = Game.weather.rain if Game.weather else 0.0
+	var heat: float = Game.timber.fire_heat if Game.timber and not Game.timber.fire_out else 0.0
+	if rain > 0.15 and heat > 0.0 and _rng.randf() < 0.05 + 0.15 * rain:
+		SoundService.play("fire.hiss", _fire_m.global_position + Vector3(_rng.randf_range(-0.5, 0.5), 0.1, _rng.randf_range(-0.5, 0.5)), {"emit": false})
 	if lvl > 0.05 and _rng.randf() < 0.04 + 0.12 * lvl:
 		SoundService.play("fire.pop", _fire_m.global_position + Vector3(_rng.randf_range(-0.4, 0.4), 0.1, _rng.randf_range(-0.4, 0.4)), {"emit": false})
 

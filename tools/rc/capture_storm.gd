@@ -27,7 +27,11 @@ func _ready() -> void:
 	var p := Game.player as Player
 	var w: WeatherService = Game.weather
 	Settings.set_v("flash_reduction", "full")   # capture the real flash (the default is reduced)
-	var shots := ["severe_shore", "puddles", "wet_glass", "night_flash", "thunder_walker"]
+	# (The Thunder Walker shot is taken from its prepared save by
+	# tools/rc/capture_walker.tscn; "thunder_walker" here stages it live.)
+	var shots := ["severe_shore", "puddles", "wet_glass", "night_flash"]
+	if "thunder_walker" in only:
+		shots.append("thunder_walker")
 	for s in shots:
 		if not only.is_empty() and not s in only:
 			continue
@@ -61,17 +65,20 @@ func _ready() -> void:
 				p.teleport(c2 + Vector3(0, 1.65, 0), c2 + Vector3(-30, 6, -80))
 				await _settle(120)
 				var near := {"id": "CAP-N", "visit": "capture", "day": 3, "t": w.weather_t, "kind": "near", "off": [-90.0, -220.0], "dist": 236.0, "power": 1.0, "strokes": 3, "seed": 7}
+				# Strokes are tens of ms long; slow time so a frame lands on one.
+				Engine.time_scale = 0.03
 				w.fire(near)
 				var g2 := 0
-				while w.flash < 0.6 and g2 < 120:
+				while w.flash < 0.6 and g2 < 400:
 					await get_tree().process_frame
 					g2 += 1
+				Engine.time_scale = 1.0
 			"thunder_walker":
 				if not await _walker(cs, p, w):
 					print("CAPTURE thunder_walker could not be staged")
 					continue
-		await get_tree().process_frame
 		get_viewport().get_texture().get_image().save_png("res://captures/p23_%s.png" % s)
+		Engine.time_scale = 1.0
 		print("CAPTURE %s ok (%s %s rain %.2f vis %.2f flash %.2f)" % [s, w.profile_name, w.phase_name, w.rain, w.visibility, w.flash])
 	w.set_override("", true)
 	get_tree().quit()
@@ -134,9 +141,9 @@ func _walker(cs: CampaignService, p: Player, w: WeatherService) -> bool:
 		print("walker: ", st.records.back() if not st.records.is_empty() else {})
 		return false
 	var a: TerrorActor = st._actors.get(r.id)
-	Engine.time_scale = 2.0
+	Engine.time_scale = 4.0
 	var g := 0
-	while st.runs.has(r) and (r.presented as Array).is_empty() and g < 8000:
+	while st.runs.has(r) and (r.presented as Array).is_empty() and g < 2500:
 		await get_tree().process_frame
 		g += 1
 	Engine.time_scale = 1.0
@@ -146,9 +153,16 @@ func _walker(cs: CampaignService, p: Player, w: WeatherService) -> bool:
 	var eye := p.global_position + Vector3(0, 1.65, 0)
 	p.teleport(eye, a.global_position + Vector3(0, 1.3, 0))
 	g = 0
-	while w.flash < 0.35 and g < 6000:
+	Engine.time_scale = 2.0
+	while w.flash < 0.35 and g < 2500:
 		await get_tree().process_frame
 		g += 1
+		if w.flash > 0.02 or not w._flashes_live.is_empty():
+			Engine.time_scale = 0.03         # a flash began: slow down to land on a stroke
+		elif Engine.time_scale < 1.0:
+			Engine.time_scale = 2.0
 		if g % 60 == 0 and is_instance_valid(a):
 			p.teleport(eye, a.global_position + Vector3(0, 1.3, 0))
+	Engine.time_scale = 1.0
+	print("walker: presented %d, flash %.2f, at %s, %.0f m" % [(r.presented as Array).size(), w.flash, str(a.global_position) if is_instance_valid(a) else "-", eye.distance_to(a.global_position) if is_instance_valid(a) else -1.0])
 	return w.flash >= 0.35

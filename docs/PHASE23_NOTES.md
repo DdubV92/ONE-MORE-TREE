@@ -53,7 +53,17 @@ Schedule rules: `{"visits_per_day": [[0, 40], [1, 48], [2, 12]], "first_thunders
 
 **Flashes.** Near, mid and far flashes have their own envelopes; near strikes also light a pooled local light. The existing **Lightning / bright flashes** setting (full / reduced, the default / off) applies to every storm flash. With reduced or off, an encounter's flash reveal becomes a soft rim cue on the figure, so nothing depends on seeing a bright flash.
 
-**Listening layers.** The ear knows where it is: open, canopy, shore, porch, camper, cabin or vehicle. Rain on the roof, canopy drip, runoff from the nearest eave and gust one-shots change with the layer.
+**Rain on the burn pit (owner request).** The open fire gets wet:
+- **Soaking:** heat drops by (rain − 0.06) / 150 per second and recovers within about 90 s once dry.
+- **Smouldering** (heat below 0.6): more smoke than flame, dimmer coals and light, slower burning (25–100% of the normal rate), and rain hissing on the coals. Eight minutes of drizzle leave it smouldering.
+- **Out:** steady rain puts it out in about 3¾ minutes, a severe storm in about 2½. A plume of steam follows, then cold coals. Nothing burns while it is out: the logs wait in the pit and on the loading pile, and contract delivery is untouched (pieces count once accepted).
+- **Relighting:**
+  - You, at the pit, once the rain is below 0.3.
+  - The crew, after 2 dry minutes in the workday.
+  - The crew in the morning, if it went out overnight (no overnight burning then).
+- **Saved:** heat, out and the dry timer are kept with the timber state.
+
+**Listening layers.** The ear knows where it is: open, canopy, shore, porch, camper, cabin or vehicle. Rain on the roof, canopy drip (only with standing trees overhead: a cleared forest floor is open ground), runoff from the nearest eave and gust one-shots change with the layer.
 
 **Masking model.** A single dB model used by the mix, the AI and the encounters:
 - Thunder at its source: near 118, mid 110, far 102 dB, with a rolling envelope.

@@ -678,13 +678,31 @@ func listening_layer() -> String:
 	if _roof_kind != "":
 		return "porch"
 	if World.manifest != null and not World.manifest.is_empty():
-		if World.surface_at(lp.x, lp.z) == World.Surface.FOREST:
+		if World.surface_at(lp.x, lp.z) == World.Surface.FOREST and _canopy_overhead(lp):
 			return "canopy"
 		for k in 6:
 			var a := TAU * k / 6.0
 			if World.water_depth_at(lp.x + cos(a) * 22.0, lp.z + sin(a) * 22.0) > 0.3:
 				return "shore"
 	return "open"
+
+
+var _canopy_at := Vector3.INF
+var _canopy_t := -1.0
+var _canopy_v := false
+
+
+## Standing trees overhead (forest ground that has been cleared is open:
+## no drip, the rain falls straight). Cached ~1 s / 3 m.
+func _canopy_overhead(lp: Vector3) -> bool:
+	var now := Time.get_ticks_msec() / 1000.0
+	if _canopy_at.distance_to(lp) < 3.0 and now - _canopy_t < 1.0:
+		return _canopy_v
+	_canopy_at = lp
+	_canopy_t = now
+	var veg: Node = Game.world_root.get("vegetation") if Game.world_root else null
+	_canopy_v = veg == null or (veg.call("standing_trees_near", lp, 9.0, 4) as PackedInt32Array).size() >= 2
+	return _canopy_v
 
 
 ## The nearest roof edge around a sheltered listener (first open sky found

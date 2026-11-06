@@ -316,7 +316,13 @@ func sleep() -> Dictionary:
 	if Game.feed:
 		Game.feed.on_day_end(d)
 	if Game.timber:
-		Game.timber.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS)
+		# A fire the rain put out stays out overnight; the crew relights it
+		# first thing in the morning (Phase 23).
+		if not Game.timber.fire_out:
+			Game.timber.advance_burn(TimberService.OVERNIGHT_BURN_SECONDS * Game.timber.burn_factor())
+		else:
+			Game.timber.relight("crew_morning")
+		Game.timber.fire_heat = 1.0
 	var report := build_report(d, settlement)
 	report["pay"] = pay_night
 	if not rest_night.is_empty():

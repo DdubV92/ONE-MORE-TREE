@@ -710,15 +710,103 @@ func _process(delta: float) -> void:
 	# Pause stops burning (this node pauses with the tree); time scale
 	# follows the shared world clock.
 	if not get_tree().paused:
-		advance_burn(delta * Game.time_scale)
+		var dt := delta * Game.time_scale
+		update_fire_weather(dt, Game.weather.rain if Game.weather else 0.0)
+		advance_burn(dt * burn_factor())
 
 
-## Fire intensity 0..1.5 from the actual fuel in the pit (FirePit reads it).
+# ------------------------------------------------- rain on the open pit
+# Phase 23 (owner request): rain soaks the fire. Drizzle and short showers
+# only beat it down to a smoky smoulder (it burns slower); steady rain or a
+# storm puts it out. Nothing burns while it is out (the logs wait in the pit
+# and on the pile; contract delivery never depended on burning). It is
+# relit by the player once the rain eases, by the crew after two dry
+# minutes of the workday, or by the crew in the morning.
+
+const FIRE_RAIN_MIN := 0.06        # lighter than this the fire shrugs it off
+const FIRE_SOAK_S := 150.0         # heat lost per second = (rain - 0.06) / 150
+const FIRE_DRY_S := 90.0           # a smouldering fire recovers in ~90 s dry
+const FIRE_RELIGHT_RAIN := 0.3     # too wet to relight above this
+const FIRE_CREW_RELIGHT_S := 120.0
+
+signal fire_state_changed(out: bool, by: String)
+
+var fire_heat := 1.0               # 1 = healthy, < ~0.6 smouldering
+var fire_out := false
+var fire_dry_s := 0.0              # seconds without rain since it went out
+
+
+func update_fire_weather(dt: float, rain: float) -> void:
+	if dt <= 0.0:
+		return
+	if fire_out:
+		fire_dry_s = fire_dry_s + dt if rain < 0.05 else 0.0
+		if fire_dry_s >= FIRE_CREW_RELIGHT_S and _crew_can_relight():
+			relight("crew")
+		return
+	if rain > FIRE_RAIN_MIN:
+		fire_heat = maxf(fire_heat - dt * (rain - FIRE_RAIN_MIN) / FIRE_SOAK_S, 0.0)
+		if fire_heat <= 0.0:
+			fire_out = true
+			fire_dry_s = 0.0
+			fire_state_changed.emit(true, "rain")
+			_fire_notice("The rain has put the burn-pit fire out.")
+	else:
+		fire_heat = minf(fire_heat + dt / FIRE_DRY_S, 1.0)
+
+
+## How fast the pit burns now: 0 when out, slower while smouldering.
+func burn_factor() -> float:
+	return 0.0 if fire_out else lerpf(0.25, 1.0, fire_heat)
+
+
+func fire_smouldering() -> bool:
+	return not fire_out and fire_heat < 0.6
+
+
+## "" if it can be relit now, else why not.
+func relight_blocker(rain: float) -> String:
+	if not fire_out:
+		return "already burning"
+	if rain > FIRE_RELIGHT_RAIN:
+		return "too wet: it's still pouring"
+	return ""
+
+
+func relight(by: String) -> bool:
+	if not fire_out:
+		return false
+	fire_out = false
+	fire_heat = 0.35                # starts smouldering and catches up dry
+	fire_dry_s = 0.0
+	fire_state_changed.emit(false, by)
+	if by == "crew":
+		_fire_notice("The crew relit the burn-pit fire now the rain has passed.")
+	return true
+
+
+func _fire_notice(text: String) -> void:
+	var cs: CampaignService = Game.campaign
+	if cs and (cs.active or cs.test_route) and not Game.is_preview():
+		cs.notice.emit(text, 5.0)
+
+
+func _crew_can_relight() -> bool:
+	var cs: CampaignService = Game.campaign
+	if cs == null or cs.clock == null or cs.clock.phase() == WorkdayClock.Phase.NIGHT:
+		return false
+	if Game.hunt and Game.hunt.hunt_active():
+		return false
+	return Game.crew != null and not Game.crew.workers.is_empty()
+
+
+## Fire intensity 0..1.5 from the actual fuel in the pit (FirePit reads it),
+## damped while smouldering and nothing while out.
 func fire_level() -> float:
-	if burning.is_empty():
+	if burning.is_empty() or fire_out:
 		return 0.0
 	var f := burning_mte() / float(HAND_BUDGET_MTE * BURN_SLOTS)
-	return clampf(0.35 + f * 0.9 + clampf(float(queue_mte()) / TREE_MTE, 0.0, 1.0) * 0.25, 0.0, 1.5)
+	return clampf(0.35 + f * 0.9 + clampf(float(queue_mte()) / TREE_MTE, 0.0, 1.0) * 0.25, 0.0, 1.5) * lerpf(0.2, 1.0, fire_heat)
 
 
 # ----------------------------------------------------------------- recovery
@@ -843,7 +931,8 @@ func capture() -> Dictionary:
 	for key in bodies:
 		var b: TimberBody = bodies[key]
 		body_list.append({"tree": b.tree_id, "ks": b.ks.duplicate(), "crown": b.crown, "pose": TreeService._xf_to_array(b.global_transform)})
-	var out := {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "loads": loads.duplicate(true), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50)}
+	var out := {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "loads": loads.duplicate(true), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50),
+		"fire": {"heat": snappedf(fire_heat, 0.001), "out": fire_out, "dry_s": snappedf(fire_dry_s, 0.1)}}
 	# Phase 13: yard places of accepted wood (cradle / decks / mid-move).
 	if Game.yard and is_instance_valid(Game.yard):
 		out["yard"] = Game.yard.capture()
@@ -864,6 +953,10 @@ func capture() -> Dictionary:
 ## consumed); a segment claimed twice keeps its most-advanced legal owner.
 func restore(data: Dictionary) -> void:
 	clear_all()
+	var fd: Dictionary = data.get("fire", {})
+	fire_heat = clampf(float(fd.get("heat", 1.0)), 0.0, 1.0)
+	fire_out = bool(fd.get("out", false))
+	fire_dry_s = float(fd.get("dry_s", 0.0))
 	for key in data.get("records", {}):
 		var id := int(key)
 		var idx: int = Game.vegetation.tree_index_by_id.get(id, -1) if Game.vegetation else id

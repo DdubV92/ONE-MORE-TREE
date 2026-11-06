@@ -6902,6 +6902,33 @@ func _t_phase23_units() -> String:
 					has = true
 		if not has:
 			no_night += 1
+	# Rain on the burn pit (owner request): drizzle only smoulders it, steady
+	# rain puts it out, nothing burns while out, relight waits for the rain
+	# to ease, the state survives a save.
+	var fire := TimberService.new()
+	for k in 480:
+		fire.update_fire_weather(1.0, 0.24)          # 8 min of drizzle peak
+	var drizzle_heat := fire.fire_heat
+	if fire.fire_out or not fire.fire_smouldering():
+		fire.free()
+		return "drizzle should only smoulder the fire (heat %.2f, out %s)" % [drizzle_heat, fire.fire_out]
+	fire.fire_heat = 1.0
+	var out_after := -1
+	for k in 600:
+		fire.update_fire_weather(1.0, 0.72)          # steady rain
+		if fire.fire_out:
+			out_after = k + 1
+			break
+	if out_after < 0 or fire.burn_factor() != 0.0 or fire.fire_level() != 0.0:
+		fire.free()
+		return "steady rain did not put the fire out (heat %.2f)" % fire.fire_heat
+	var blocked := fire.relight_blocker(0.7)
+	var cap_f: Dictionary = {"heat": fire.fire_heat, "out": fire.fire_out}
+	var ok_relight := fire.relight_blocker(0.1) == "" and fire.relight("player") and not fire.fire_out
+	fire.free()
+	if blocked == "" or not ok_relight or not bool(cap_f.out):
+		return "relight rules wrong (blocked in rain: '%s', relit dry: %s)" % [blocked, ok_relight]
+	rep["fire_rain"] = {"drizzle_8min_heat": snappedf(drizzle_heat, 0.01), "steady_rain_out_after_s": out_after, "relight_in_rain": blocked}
 	rep["seeds_without_night_storm"] = no_night
 	if no_night > 0:
 		return "%d of 200 seeds have no night thunderstorm with terrors" % no_night

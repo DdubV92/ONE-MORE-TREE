@@ -27,6 +27,8 @@ var _smoke: GPUParticles3D
 var _haze: MeshInstance3D
 var _base_energy := 3.2
 var _t := 0.0
+var _coal: StandardMaterial3D
+var _out_t := 999.0              # seconds since the rain put it out (steam)
 
 
 func _ready() -> void:
@@ -53,6 +55,7 @@ func _ready() -> void:
 	coal.emission = Color(1.0, 0.32, 0.08)
 	coal.emission_energy_multiplier = 2.5
 	coal.roughness = 0.9
+	_coal = coal
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 51
 	for k in 14:
@@ -111,8 +114,19 @@ func add_fuel(_amount: float) -> void:
 func _target_level() -> float:
 	var t: TimberService = Game.timber
 	var real := t.fire_level() if t else 0.0
-	demo = Game.is_preview() and real <= 0.0
-	return 0.9 if demo else real
+	demo = Game.is_preview() and real <= 0.0 and (t == null or t.burning.is_empty())
+	if demo:
+		# The preview's display fire follows the rain the same way.
+		return 0.0 if (t and t.fire_out) else 0.9 * (lerpf(0.2, 1.0, t.fire_heat) if t else 1.0)
+	return real
+
+
+## 0 out, ~0.2-0.6 smouldering, 1 healthy (presentation of the rain state).
+func _heat() -> float:
+	var t: TimberService = Game.timber
+	if t == null:
+		return 1.0
+	return 0.0 if t.fire_out else t.fire_heat
 
 
 func _apply_level(l: float) -> void:
@@ -121,7 +135,19 @@ func _apply_level(l: float) -> void:
 	_flames.amount_ratio = clampf(0.12 + 0.6 * x, 0.12, 1.0)
 	_flames.scale = Vector3.ONE * lerpf(0.45, 1.25, clampf(x / 1.5, 0.0, 1.0))
 	_embers.amount_ratio = clampf(0.25 + 0.55 * x, 0.2, 1.0)
-	_smoke.amount_ratio = clampf(0.25 + 0.6 * x, 0.25, 1.0)
+	# Smouldering in the rain: little flame, thick low smoke; just put out:
+	# a white plume of steam that thins away over a minute or two.
+	var heat := _heat()
+	var wet_smoke := 0.0
+	if heat > 0.0 and heat < 0.8:
+		wet_smoke = (0.8 - heat) / 0.8
+	elif heat <= 0.0:
+		wet_smoke = clampf(1.0 - _out_t / 120.0, 0.0, 1.0)
+	_smoke.amount_ratio = clampf(maxf(0.25 + 0.6 * x, 0.35 + 0.65 * wet_smoke), 0.0, 1.0) if (x > 0.01 or wet_smoke > 0.01) else 0.0
+	_flames.visible = x > 0.02
+	_embers.visible = x > 0.01 or heat > 0.0
+	if _coal:
+		_coal.emission_energy_multiplier = 2.5 * (lerpf(0.25, 1.0, heat) if heat > 0.0 else 0.04)
 	if _glow:
 		_glow.scale = Vector3.ONE * lerpf(0.6, 1.2, clampf(x, 0.0, 1.0))
 	_haze.visible = Settings.get_v("heat_haze") and x > 0.25
@@ -132,11 +158,16 @@ func _apply_level(l: float) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	level = move_toward(level, _target_level(), delta * 0.25)
+	_out_t = _out_t + delta if _heat() <= 0.0 else 0.0
+	# The rain kills flames faster than fuel builds them.
+	var tl := _target_level()
+	level = move_toward(level, tl, delta * (0.6 if tl < level else 0.25))
 	_apply_level(level)
 	_update_burning_logs()
 	var flicker := 0.82 + 0.1 * sin(_t * 13.0) + 0.06 * sin(_t * 23.7 + 1.3) + 0.05 * sin(_t * 5.1)
-	_light.light_energy = _base_energy * flicker * lerpf(0.22, 1.15, clampf(level, 0.0, 1.5) / 1.5 * 1.3)
+	var hk := _heat()
+	_light.light_energy = _base_energy * flicker * lerpf(0.22, 1.15, clampf(level, 0.0, 1.5) / 1.5 * 1.3) * (lerpf(0.35, 1.0, hk) if hk > 0.0 else 0.0)
+	_light.visible = _light.light_energy > 0.01
 	_light.position = Vector3(0.05 * sin(_t * 7.0), 0.9 + 0.05 * sin(_t * 11.0), 0.05 * cos(_t * 6.0))
 
 
@@ -444,11 +475,16 @@ func _update_burning_logs() -> void:
 		mi.scale = Vector3(shrink, ls * (1.0 - 0.3 * b), shrink)
 		var bark := mi.get_surface_override_material(0) as ShaderMaterial
 		bark.set_shader_parameter("char_amount", clampf(b * 1.6, 0.0, 1.0))
-		bark.set_shader_parameter("glow", clampf(b * 2.5, 0.0, 1.0) * (1.0 - smoothstep(0.85, 1.0, b) * 0.6))
+		var gk := _heat()
+		bark.set_shader_parameter("glow", clampf(b * 2.5, 0.0, 1.0) * (1.0 - smoothstep(0.85, 1.0, b) * 0.6) * (lerpf(0.3, 1.0, gk) if gk > 0.0 else 0.0))
 		if mi.get_surface_override_material(1):
 			var w := mi.get_surface_override_material(1) as ShaderMaterial
 			w.set_shader_parameter("char_amount", clampf(b * 1.3, 0.0, 1.0))
 			w.set_shader_parameter("glow", clampf(b * 2.0, 0.0, 1.0))
-	if _fire_body and t:
+	if _fire_body and t and t.fire_out:
+		_fire_body.set("message", "The rain has put the fire out. %d log%s wait in the pit, %d on the loading pile. Relight it once the rain eases (the crew will, after a dry spell in the workday)." % [t.burning.size(), "" if t.burning.size() == 1 else "s", t.queue.size()])
+	elif _fire_body and t and t.fire_smouldering():
+		_fire_body.set("message", "Smouldering in the rain: more smoke than flame, burning slowly. %d log%s in the pit, %d on the loading pile." % [t.burning.size(), "" if t.burning.size() == 1 else "s", t.queue.size()])
+	elif _fire_body and t:
 		var tot := t.totals()
 		_fire_body.set("message", "Burning %d log%s, %d on the loading pile (max %d). Yard decks hold the rest of the paid stock." % [t.burning.size(), "" if t.burning.size() == 1 else "s", t.queue.size(), CampLayout.PIT_QUEUE_CAP] if not t.burning.is_empty() else "Coals glowing. Carry paid logs from a yard deck to the loading pile beside the pit; the fire takes them from there.")
