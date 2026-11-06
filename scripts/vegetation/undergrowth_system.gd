@@ -161,17 +161,23 @@ func _shrub_mesh(kind: int, leaf: Material, bark: Material) -> ArrayMesh:
 	rng.seed = 4400 + kind * 17
 	match kind:
 		0:
-			# Hazel: several slim stems from one root crown, leafy dome.
-			b.set("_crown_center", Vector3(0, 1.5, 0))
-			for s in 6:
-				var a := TAU * s / 6.0 + rng.randf_range(-0.3, 0.3)
-				var top := Vector3(cos(a) * rng.randf_range(0.5, 0.9), rng.randf_range(1.9, 2.4), sin(a) * rng.randf_range(0.5, 0.9))
-				var pts: Array[Vector3] = [Vector3(cos(a) * 0.05, 0, sin(a) * 0.05), top * Vector3(0.5, 0.55, 0.5), top]
-				var rr: Array[float] = [0.035, 0.025, 0.012]
+			# Hazel (Phase 24 rebuild: no tent-pole stems). Curved, tapered
+			# stems that end INSIDE an irregular leaf mass; the mass is many
+			# overlapping 3-card clusters, lumpy on top and reaching low.
+			b.set("_crown_center", Vector3(0, 1.3, 0))
+			for s2 in 5:
+				var a := TAU * s2 / 5.0 + rng.randf_range(-0.35, 0.35)
+				var tip := Vector3(cos(a) * rng.randf_range(0.25, 0.45), rng.randf_range(1.2, 1.55), sin(a) * rng.randf_range(0.25, 0.45))
+				var pts: Array[Vector3] = [Vector3(cos(a) * 0.04, 0, sin(a) * 0.04), Vector3(cos(a) * 0.1, 0.45, sin(a) * 0.1) + Vector3(rng.randf_range(-0.05, 0.05), 0, rng.randf_range(-0.05, 0.05)), tip * Vector3(0.7, 0.75, 0.7), tip]
+				var rr: Array[float] = [0.034, 0.026, 0.017, 0.008]
 				b.call("_tube", pts, rr, 5, 0.6)
-			for k in 11:
-				var p := Vector3(rng.randf_range(-0.85, 0.85), rng.randf_range(0.9, 2.1), rng.randf_range(-0.85, 0.85))
-				b.call("_ball", p, rng.randf_range(0.8, 1.05), 2)
+			for k in 26:
+				# Clusters on an irregular ellipsoid shell plus a filled core.
+				var dir := Vector3(rng.randf_range(-1, 1), rng.randf_range(-0.35, 1.0), rng.randf_range(-1, 1)).normalized()
+				var shell := rng.randf_range(0.55, 1.0) if k < 18 else rng.randf_range(0.0, 0.45)
+				var p := Vector3(dir.x * 0.85, dir.y * 0.7, dir.z * 0.85) * shell + Vector3(0, 1.25, 0)
+				p.y = maxf(p.y, 0.45)
+				b.call("_ball", p, rng.randf_range(0.5, 0.78), 3)
 		1:
 			# Juniper: low spreading conifer of upward sprays.
 			b.set("_crown_center", Vector3(0, 0.6, 0))
@@ -185,19 +191,23 @@ func _shrub_mesh(kind: int, leaf: Material, bark: Material) -> ArrayMesh:
 				var p := Vector3(rng.randf_range(-0.3, 0.3), 0.7 + k * 0.12, rng.randf_range(-0.3, 0.3))
 				b.call("_ball", p, 0.7, 2)
 		_:
-			# Bramble: a wide low mound of leaves over arching canes.
+			# Bramble (Phase 24 rebuild): a wide low irregular mound; the
+			# arching canes are curved, tapered and stay under the leaves.
 			b.set("_crown_center", Vector3(0, 0.4, 0))
-			for s in 7:
-				var a := TAU * s / 7.0 + rng.randf_range(-0.3, 0.3)
+			for s2 in 6:
+				var a := TAU * s2 / 6.0 + rng.randf_range(-0.3, 0.3)
 				var out := Vector3(cos(a), 0, sin(a))
-				var pts: Array[Vector3] = [out * 0.1, out * 0.6 + Vector3(0, 0.85, 0), out * 1.3 + Vector3(0, 0.2, 0)]
-				var rr: Array[float] = [0.014, 0.011, 0.006]
+				var pts: Array[Vector3] = []
+				for q in 6:
+					var t := float(q) / 5.0
+					pts.append(out * (0.08 + t * 0.85) + Vector3(0, sin(t * PI) * 0.55 + 0.02, 0))
+				var rr: Array[float] = [0.013, 0.012, 0.010, 0.008, 0.006, 0.004]
 				b.call("_tube", pts, rr, 4, 0.4)
-			for k in 12:
+			for k in 24:
 				var a := rng.randf() * TAU
 				var r := sqrt(rng.randf()) * 1.05
-				var p := Vector3(cos(a) * r, rng.randf_range(0.3, 0.75) * (1.0 - r * 0.35), sin(a) * r)
-				b.call("_ball", p, rng.randf_range(0.65, 0.85), 2)
+				var p := Vector3(cos(a) * r, rng.randf_range(0.25, 0.7) * (1.0 - r * 0.4) + 0.05, sin(a) * r)
+				b.call("_ball", p, rng.randf_range(0.45, 0.68), 3)
 	var mesh := ArrayMesh.new()
 	var has_bark := kind != 1        # juniper is all foliage sprays
 	if has_bark:

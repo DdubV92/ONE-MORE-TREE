@@ -154,6 +154,13 @@ func _ensure_buses() -> void:
 			rv2.dry = 0.0
 			rv2.spread = 0.6
 			AudioServer.add_bus_effect(ri, rv2)
+	# Phase 24: a neutral Amplify on Ambience and Work that SoundService uses
+	# to duck them under nearby dialogue (see SoundService._update_duck).
+	for db in ["Ambience", "Work"]:
+		if duck_effect(db) == null:
+			var amp := AudioEffectAmplify.new()
+			amp.volume_db = 0.0
+			AudioServer.add_bus_effect(AudioServer.get_bus_index(db), amp)
 	var chars := AudioServer.get_bus_index("Characters")
 	if AudioServer.get_bus_effect_count(chars) == 0:
 		var rv := AudioEffectReverb.new()
@@ -162,6 +169,18 @@ func _ensure_buses() -> void:
 		rv.wet = 0.0
 		rv.dry = 1.0
 		AudioServer.add_bus_effect(chars, rv)
+
+
+## The dialogue-duck Amplify effect on a bus (or null).
+static func duck_effect(bus: String) -> AudioEffectAmplify:
+	var bi := AudioServer.get_bus_index(bus)
+	if bi < 0:
+		return null
+	for i in AudioServer.get_bus_effect_count(bi):
+		var e := AudioServer.get_bus_effect(bi, i)
+		if e is AudioEffectAmplify:
+			return e
+	return null
 
 
 func get_v(key: String) -> Variant:

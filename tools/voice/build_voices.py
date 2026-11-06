@@ -43,6 +43,156 @@ MANIFEST = os.path.join(ROOT, "data/voice/manifest.json")
 INDEX = os.path.join(ROOT, "data/voice/index.json")
 
 
+# ---------------------------------------------------------------- Phase 24
+# Flite (CMU, permissive BSD-style licence, installed as the system library
+# libflite1) statistical-parametric voices trained on recorded speakers: far
+# less robotic than eSpeak's formant synthesis. Called through ctypes (no
+# command-line tool or model download). A small resample after synthesis
+# moves pitch and vocal-tract size together (a slightly bigger or smaller
+# speaker) while the duration stretch is pre-compensated so timing holds.
+_FLITE = {}
+
+
+def _flite():
+    if "lib" in _FLITE:
+        return _FLITE
+    import ctypes as C
+    lib = C.CDLL("libflite.so.1", mode=C.RTLD_GLOBAL)
+    for d in ["libflite_usenglish.so.1", "libflite_cmulex.so.1"]:
+        C.CDLL(d, mode=C.RTLD_GLOBAL)
+    lib.flite_init()
+
+    class Voice(C.Structure):
+        _fields_ = [("name", C.c_char_p), ("features", C.c_void_p), ("ffunctions", C.c_void_p)]
+
+    lib.flite_text_to_wave.restype = C.c_void_p
+    lib.flite_text_to_wave.argtypes = [C.c_char_p, C.c_void_p]
+    lib.cst_wave_save_riff.argtypes = [C.c_void_p, C.c_char_p]
+    lib.delete_wave.argtypes = [C.c_void_p]
+    lib.feat_set_float.argtypes = [C.c_void_p, C.c_char_p, C.c_float]
+    lib.get_param_float.restype = C.c_float
+    lib.get_param_float.argtypes = [C.c_void_p, C.c_char_p, C.c_float]
+    _FLITE["lib"] = lib
+    _FLITE["voices"] = {}
+    _FLITE["defaults"] = {}
+    for v in ["slt", "rms", "awb"]:
+        vl = C.CDLL("libflite_cmu_us_%s.so.1" % v, mode=C.RTLD_GLOBAL)
+        reg = getattr(vl, "register_cmu_us_%s" % v)
+        reg.restype = C.POINTER(Voice)
+        reg.argtypes = [C.c_char_p]
+        vo = reg(None)
+        f = vo.contents.features
+        _FLITE["voices"][v] = vo
+        _FLITE["defaults"][v] = {k: lib.get_param_float(f, k.encode(), dflt) for k, dflt in
+                                  [("int_f0_target_mean", 110.0), ("int_f0_target_stddev", 20.0), ("duration_stretch", 1.0)]}
+    return _FLITE
+
+
+def flite_version():
+    if "version" in _FLITE:
+        return _FLITE["version"]
+    try:
+        import subprocess as sp
+        out = sp.run(["dpkg-query", "-W", "-f=${Version}", "libflite1"], capture_output=True, text=True).stdout.strip()
+        _FLITE["version"] = "flite " + (out or "unknown")
+        return _FLITE["version"]
+    except Exception:
+        return "flite unknown"
+
+
+def generator_version():
+    return flite_version() if PROFILES["generator"] == "flite" else espeak_version()
+
+
+def _lpc(frame, order):
+    r = np.correlate(frame, frame, "full")[len(frame) - 1:len(frame) + order]
+    if r[0] <= 1e-12:
+        return np.zeros(order + 1)
+    a = np.zeros(order + 1)
+    a[0] = 1.0
+    e = r[0]
+    for i in range(1, order + 1):
+        k = -(r[i] + np.dot(a[1:i], r[i - 1:0:-1])) / e
+        a[1:i] = a[1:i] + k * a[i - 1:0:-1]
+        a[i] = k
+        e *= (1 - k * k)
+        if e <= 1e-12:
+            break
+    return a
+
+
+def whisperize(y, sr, seed):
+    """Whispered speech: the voice's own spectral envelope (LPC, per 20 ms
+    frame) excited by noise instead of a pitched source."""
+    from scipy.signal import lfilter
+    g = np.random.default_rng(seed)
+    n = int(0.02 * sr)
+    hop = n // 2
+    win = np.hanning(n)
+    out = np.zeros(y.size + n)
+    for i in range(0, y.size - n, hop):
+        fr = y[i:i + n] * win
+        en = np.sqrt(np.mean(fr ** 2))
+        if en < 1e-5:
+            continue
+        a = _lpc(fr, 18)
+        ex = g.standard_normal(n)
+        sh = lfilter([1.0], a, ex)
+        sh *= en / max(np.sqrt(np.mean(sh ** 2)), 1e-9)
+        out[i:i + n] += sh * win
+    return out[: y.size]
+
+
+def render_flite(text, st):
+    from scipy.signal import resample_poly
+    F = _flite()
+    lib = F["lib"]
+    vo = F["voices"][st["fvoice"]]
+    f = vo.contents.features
+    d = F["defaults"][st["fvoice"]]
+    shift = float(st.get("shift", 1.0))
+    lib.feat_set_float(f, b"int_f0_target_mean", float(st.get("f0", d["int_f0_target_mean"])) / shift)
+    lib.feat_set_float(f, b"int_f0_target_stddev", float(st.get("f0_sd", d["int_f0_target_stddev"])) / shift)
+    lib.feat_set_float(f, b"duration_stretch", float(st.get("stretch", 1.0)) * shift)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tf:
+        path = tf.name
+    w = lib.flite_text_to_wave(text.encode("utf-8"), vo)
+    lib.cst_wave_save_riff(w, path.encode())
+    lib.delete_wave(w)
+    y, sr = sf.read(path, dtype="float64")
+    os.unlink(path)
+    if y.ndim > 1:
+        y = y.mean(axis=1)
+    if abs(shift - 1.0) > 1e-3 and y.size:
+        # Play back `shift` times faster: pitch and formants x shift.
+        up, down = 200, int(round(200 * shift))
+        y = resample_poly(y, up, down)
+    if st.get("whisper"):
+        y = whisperize(y, sr, int(hashlib.sha1(text.encode()).hexdigest()[:6], 16))
+    return y, sr
+
+
+def clean_speech(y, sr):
+    """Phase 24 cleanup: DC/rumble out, a gentle presence lift for
+    intelligibility (2-4 kHz), soft top to tame vocoder buzz, light
+    compression so quiet syllables carry at distance."""
+    from scipy.signal import butter, sosfilt
+    if y.size == 0:
+        return y
+    y = sosfilt(butter(2, 80, "hp", fs=sr, output="sos"), y)
+    pres = sosfilt(butter(2, [2000, 4200], "bandpass", fs=sr, output="sos"), y)
+    y = y + 0.35 * pres
+    y = sosfilt(butter(2, min(7200, sr / 2 - 200), "lp", fs=sr, output="sos"), y)
+    # RMS envelope compressor (2:1 above -24 dBFS relative, 10 ms / 120 ms).
+    env = np.sqrt(np.convolve(y * y, np.ones(int(0.01 * sr)) / int(0.01 * sr), "same")) + 1e-9
+    ref = np.sqrt(np.mean(y * y)) + 1e-9
+    lvl = 20 * np.log10(env / ref)
+    gain_db = np.where(lvl > -6.0, -(lvl + 6.0) * 0.5, 0.0)
+    k = int(0.12 * sr)
+    gain_db = np.convolve(gain_db, np.ones(k) / k, "same")
+    return y * 10 ** (gain_db / 20)
+
+
 def espeak_version():
     try:
         return subprocess.run(["espeak-ng", "--version"], capture_output=True, text=True).stdout.strip()
@@ -88,6 +238,12 @@ def spoken_text(text, listener="you"):
 def settings(profile, delivery):
     p = dict(PROFILES["profiles"][profile])
     d = PROFILES["deliveries"][delivery]
+    if PROFILES["generator"] == "flite":
+        fl = p["flite"]
+        return {"fvoice": fl["voice"], "f0": round(fl["f0"] * d.get("f0_mul", 1.0), 1),
+                "f0_sd": round(fl["f0_sd"] * d.get("sd_mul", 1.0), 1),
+                "stretch": round(fl["stretch"] * d.get("stretch_mul", 1.0), 3), "shift": fl["shift"],
+                "whisper": bool(d.get("whisper", False)), "rms_db": d["rms_db"]}
     var = p["variant"]
     if delivery == "whisper":
         var = d["variant_f"] if profile in PROFILES["female"] else d["variant"]
@@ -97,7 +253,7 @@ def settings(profile, delivery):
 
 
 def cache_key(text, st):
-    raw = json.dumps({"t": text.lower(), "s": st, "g": PROFILES["generator"], "v": espeak_version(), "p": PROFILES["preset"]}, sort_keys=True)
+    raw = json.dumps({"t": text.lower(), "s": st, "g": PROFILES["generator"], "v": generator_version(), "p": PROFILES["preset"]}, sort_keys=True)
     return hashlib.sha1(raw.encode()).hexdigest()
 
 
@@ -182,7 +338,11 @@ def main():
             continue
         if check:
             continue
-        y, sr = render(text, st)
+        if PROFILES["generator"] == "flite":
+            y, sr = render_flite(text, st)
+            y = clean_speech(y, sr)
+        else:
+            y, sr = render(text, st)
         y, flags = process(y, sr, st["rms_db"])
         # Game asset: 16 kHz mono speech (ample for spatial voice), Vorbis.
         if sr != 16000 and y.size:
@@ -194,7 +354,7 @@ def main():
             if pk > 10 ** (-1 / 20):
                 y = y * (10 ** (-1 / 20) / pk)
         dur = y.size / sr if sr else 0.0
-        expect = 0.35 + len(text) * 0.055 * (175.0 / st["speed"])
+        expect = 0.35 + len(text) * 0.055 * (175.0 / st["speed"] if "speed" in st else float(st.get("stretch", 1.0)))
         if dur < 0.35:
             flags.append("too_short")
         if dur > expect * 2.6 + 1.0:
@@ -205,8 +365,8 @@ def main():
         maps[key] = {"line": ln["id"], "profile": p, "delivery": d, "text_sha1": hashlib.sha1(ln["text"].encode()).hexdigest(),
                      "spoken": text, "clip": rel, "duration": round(dur, 3), "codec": "vorbis", "channels": 1, "rate": sr,
                      "content_sha1": content, "cache_key": ck, "settings": st, "generator": PROFILES["generator"],
-                     "generator_version": espeak_version(), "preset": PROFILES["preset"],
-                     "provenance": "original synthetic voice (eSpeak NG formant synthesis); no recorded or cloned person",
+                     "generator_version": generator_version(), "preset": PROFILES["preset"],
+                     "provenance": PROFILES.get("provenance", "original synthetic voice (eSpeak NG formant synthesis); no recorded or cloned person"),
                      "review": "flagged: " + ",".join(flags) if flags else "validated", "envelope": envelope(y, sr)}
         made += 1
         flagged += 1 if flags else 0
@@ -219,7 +379,7 @@ def main():
     if not only and not check:
         for k in stale:
             maps.pop(k, None)
-    man = {"version": 1, "generator": PROFILES["generator"], "generator_version": espeak_version(), "preset": PROFILES["preset"], "mappings": maps}
+    man = {"version": 1, "generator": PROFILES["generator"], "generator_version": generator_version(), "preset": PROFILES["preset"], "mappings": maps}
     if not check:
         json.dump(man, open(MANIFEST, "w", encoding="utf-8"), indent=0, sort_keys=True)
         idx = {k: [v["duration"], v["delivery"], v["envelope"]] for k, v in maps.items()}

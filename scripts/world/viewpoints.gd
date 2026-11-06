@@ -27,6 +27,9 @@ static func all() -> Dictionary:
 	vp["p13_yard"] = _v(c + Vector3(4.0, 3.2, -12.0), yc + Vector3(0, -1.0, 0), eye, "Logging yard: receiving cradle, three log decks, fire loading pile")
 	vp["p13_decks"] = _v(c + Vector3(6.5, 0, -19.6), yc + Vector3(4.0, 0, -0.6), eye, "Log decks from the yard walkway")
 	vp["p13_cradle"] = _v(rack + Vector3(2.8, 0, 4.2), rack + Vector3(-1.0, 0, -1.2), eye, "Receiving cradle (paid intake) and the fire's loading pile")
+	# Phase 24 sawmill (back of camp, west): the line and the lumber yard.
+	vp["p24_mill"] = _v(c + Vector3(-17.5, 0, -9.5), c + Vector3(-30.0, -0.5, -1.0), eye, "Sawmill through the west gate: feed rack, rollers, saw, conveyor and stacker")
+	vp["p24_lumber"] = _v(c + Vector3(-20.0, 1.8, 19.5), c + Vector3(-30.0, -0.6, 9.0), eye, "Sawmill lumber yard: today's pallets (48 shown; the rest still pay)")
 	var lk := c + CampLayout.PARCEL_LOCKER_POS
 	vp["p14_locker"] = _v(lk + Vector3(-2.2, 0, -3.4), lk + Vector3(0.2, -0.2, 0), eye, "Parcel locker by the payroll board (supplier deliveries)")
 	vp["p13_cart"] = _v(c + CampLayout.CART_PARK + Vector3(2.6, 0, 2.4), c + CampLayout.CART_PARK + Vector3(-0.4, -0.6, -0.8), eye, "Handcart parked by the fire")

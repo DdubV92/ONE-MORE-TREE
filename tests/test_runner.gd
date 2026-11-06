@@ -29,6 +29,7 @@ func _ready() -> void:
 	if OS.has_environment("ONLY_P24"):
 		_run("phase 24 woodcutting units", _t_phase24_wc_units)
 		_run("phase 24 mill ledger units", _t_phase24_mill_units)
+		_run("phase 24 soundscape units", _t_phase24_sound_units)
 		await _run_async("phase 24 woodcutting world", _t_phase24_wc_world)
 		await _run_async("phase 24 sawmill world", _t_phase24_mill_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -210,6 +211,7 @@ func _ready() -> void:
 	_run("phase 24 woodcutting units: curve thresholds, carry-over, cap 33,125 XP / 6,625 hits, duplicate hit ignored, saw strikes, boss/worker parity, one formula (damage + action rate), Strongman capacity, save mid-progression", _t_phase24_wc_units)
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
+	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -7443,6 +7445,40 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 
 
 # ======================================================== Phase 24: sawmill
+
+func _t_phase24_sound_units() -> String:
+	# Every new event resolves to real files (beds, plant contact families).
+	for ev in ["amb.bed.brush", "amb.bed.grove", "plant.grass", "plant.fern", "plant.shrub", "plant.wet"]:
+		var def: Dictionary = SoundBank.EVENTS.get(ev, {})
+		if def.is_empty():
+			return "missing sound event %s" % ev
+		for f in def.files:
+			if SoundBank.path_of(str(f)) == "":
+				return "event %s file %s not found" % [ev, f]
+	# Every footstep surface (old and new) has its five variants.
+	var step_db: Dictionary = (load("res://scripts/audio/ambient_audio.gd") as GDScript).get_script_constant_map()["STEP_DB"]
+	for surf in step_db:
+		for v in 5:
+			if not ResourceLoader.exists("res://audio/generated/step_%s_%d.wav" % [surf, v]):
+				return "missing footstep step_%s_%d" % [surf, v]
+	# The motif: three arrangements of one cue, long enough to state it.
+	for k in ["day", "dusk", "night"]:
+		var st: AudioStreamWAV = load("res://audio/generated/motif_%s.wav" % k)
+		if st == null or st.get_length() < 20.0:
+			return "motif_%s missing or too short" % k
+	# Dialogue ducking: a neutral Amplify on Ambience and Work, at 0 dB when
+	# nobody is speaking (the player's sliders stay untouched).
+	for db in ["Ambience", "Work"]:
+		var amp: AudioEffectAmplify = Settings.duck_effect(db)
+		if amp == null:
+			return "no dialogue-duck effect on the %s bus" % db
+	# Plant families cover every undergrowth kind; thin grass is family 0.
+	if CoverService.PLANT_FAMILY.size() != UndergrowthSystem.NAMES.size():
+		return "plant families do not cover every undergrowth kind"
+	if CoverService.PLANT_FAMILY[UndergrowthSystem.NAMES.find("sedge")] != 0 or CoverService.PLANT_FAMILY[UndergrowthSystem.NAMES.find("bracken")] != 1 or CoverService.PLANT_FAMILY[UndergrowthSystem.NAMES.find("bramble")] != 2:
+		return "plant family mapping changed"
+	return ""
+
 
 func _t_phase24_mill_units() -> String:
 	var rep := {}

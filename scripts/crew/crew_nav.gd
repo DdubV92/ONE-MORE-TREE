@@ -8,7 +8,7 @@ extends Node
 ##    moderate slopes cost more, rocks are solid, cells with standing trees
 ##    cost more (local steering walks around the trunks), resting logs mark
 ##    their cells solid while they lie there. The camp interior is solid on
-##    this grid except at the two gates; inside the fence the camp grid takes
+##    this grid except at the gates; inside the fence the camp grid takes
 ##    over.
 ##  - Camp grid, 0.5 m cells over the fenced camp, rasterised from the real
 ##    collision geometry at startup: walls, furniture, beds, the fire pit and
@@ -139,6 +139,16 @@ func _build_island() -> void:
 				for pi in range(pa.x, pb.x + 1):
 					if _in_island(Vector2i(pi, pj)):
 						grid.set_point_solid(Vector2i(pi, pj), true)
+	# The annex fence (camp fence continued around the mill) blocks walking.
+	for ai in CampLayout.MILL_ANNEX_LINE.size() - 1:
+		var fa: Vector2 = CampLayout.MILL_ANNEX_LINE[ai]
+		var fb: Vector2 = CampLayout.MILL_ANNEX_LINE[ai + 1]
+		var fn := int(ceil(fa.distance_to(fb) / 0.5))
+		for fk in fn + 1:
+			var fp: Vector2 = fa.lerp(fb, float(fk) / fn)
+			var fc := to_cell(Vector2(om.x + fp.x, om.z + fp.y))
+			if _in_island(fc):
+				grid.set_point_solid(fc, true)
 	# The mill's rack standpoint stays walkable (crew load the rack there).
 	var mks := to_cell(Vector2(om.x + CampLayout.MILL_RACK_STAND.x, om.z + CampLayout.MILL_RACK_STAND.z))
 	if _in_island(mks):
@@ -315,7 +325,9 @@ func _build_camp() -> void:
 	# Gates: north entrance and the beach gate, with points just inside and
 	# just outside the fence line.
 	gates.clear()
-	for g in [[Vector2(0, -half.y), Vector2(0, -1)], [Vector2(0, half.y), Vector2(0, 1)]]:
+	# Phase 24: the west wicket into the sawmill annex is the third gate
+	# (index order matters: gates[0] is the forest entrance).
+	for g in [[Vector2(0, -half.y), Vector2(0, -1)], [Vector2(0, half.y), Vector2(0, 1)], [Vector2(-half.x, CampLayout.MILL_GATE_Z), Vector2(-1, 0)]]:
 		var gp: Vector2 = Vector2(o.x, o.z) + (g[0] as Vector2)
 		var out_dir: Vector2 = g[1]
 		var inside := gp - out_dir * GATE_INSET

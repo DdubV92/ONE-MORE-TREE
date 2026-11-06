@@ -49,7 +49,77 @@ func build(root: Node3D) -> void:
 		_pool.append(p)
 
 
+## Phase 24 plant contact: per cell, the contact family of the vegetation
+## you push through (0 grass/sedge, 1 leafy fern/bracken/hazel, 2 dry
+## juniper/bramble/deadwood) and its density. Built from every shrub kind,
+## including the decorative ones that give no cover.
+const PLANT_FAMILY := [1, 2, 2, 1, 0, 2]   # hazel, juniper, bramble, bracken, sedge, deadfall
+const PLANT_EVENTS := ["plant.grass", "plant.fern", "plant.shrub"]
+var _plant := {}             # cell -> Vector2(family, density)
+var _plant_cell_t := {}      # cell -> msec of the last contact sound (shared by all actors)
+var plant_contacts := 0
+
+
+func _build_plant_grid() -> void:
+	var xs: PackedFloat32Array = World.shrubs.x
+	var zs: PackedFloat32Array = World.shrubs.z
+	for i in xs.size():
+		var k: int = World.shrubs.kind[i]
+		if k >= PLANT_FAMILY.size():
+			continue
+		if CampLayout.in_yard(Vector3(xs[i], 0, zs[i]), 1.0) or CampLayout.in_mill(Vector3(xs[i], 0, zs[i]), 1.0):
+			continue
+		var r := UndergrowthSystem.crown_radius(i)
+		var fam: int = PLANT_FAMILY[k]
+		var c0 := Vector2i(int(floor((xs[i] - r) / CELL)), int(floor((zs[i] - r) / CELL)))
+		var c1 := Vector2i(int(floor((xs[i] + r) / CELL)), int(floor((zs[i] + r) / CELL)))
+		for cx in range(c0.x, c1.x + 1):
+			for cz in range(c0.y, c1.y + 1):
+				var c := Vector2i(cx, cz)
+				var d := Vector2((cx + 0.5) * CELL, (cz + 0.5) * CELL).distance_to(Vector2(xs[i], zs[i]))
+				if d > r + CELL * 0.5:
+					continue
+				var dens := clampf(1.0 - d / (r + CELL * 0.5), 0.2, 1.0)
+				var cur: Vector2 = _plant.get(c, Vector2(-1, 0))
+				# The louder family wins a shared cell (dry over leafy over grass).
+				if fam > int(cur.x) or (fam == int(cur.x) and dens > cur.y):
+					_plant[c] = Vector2(fam, maxf(dens, cur.y))
+
+
+func plant_at(p: Vector3) -> Vector2:
+	var c := Vector2i(int(floor(p.x / CELL)), int(floor(p.z / CELL)))
+	return _plant.get(c, Vector2(-1, 0))
+
+
+## One contact sound for an actor moving through vegetation (or null). The
+## family, wetness, density and speed choose the event and level; a shared
+## per-cell cooldown stops two actors in one bush from doubling up.
+func _plant_contact(n: Node3D, spd: float) -> bool:
+	var pc := plant_at(n.global_position)
+	if pc.x < 0.0:
+		return false
+	var fam := int(pc.x)
+	if fam == 0 and spd < 2.2:
+		return false        # thin grass is quiet at a walk
+	var c := Vector2i(int(floor(n.global_position.x / CELL)), int(floor(n.global_position.z / CELL)))
+	var now := Time.get_ticks_msec()
+	if now - int(_plant_cell_t.get(c, -100000)) < 260:
+		return false
+	_plant_cell_t[c] = now
+	var wet: float = float(Game.weather.get("wetness")) if Game.weather != null else 0.0
+	var ev: String = "plant.wet" if wet > 0.4 and fam > 0 else PLANT_EVENTS[fam]
+	var db := linear_to_db(clampf(pc.y, 0.3, 1.0)) + clampf((spd - 1.5) * 1.5, -3.0, 4.0)
+	plant_contacts += 1
+	rustles += 1
+	if SoundService.instance() != null:
+		SoundService.play(ev, n.global_position + Vector3(0, 0.5, 0), {"db": db})
+	else:
+		_emit_rustle(n.global_position + Vector3(0, 0.5, 0), -16.0 + db)
+	return true
+
+
 func _build_grid() -> void:
+	_build_plant_grid()
 	var xs: PackedFloat32Array = World.shrubs.x
 	var zs: PackedFloat32Array = World.shrubs.z
 	for i in xs.size():
@@ -174,14 +244,12 @@ func _process(delta: float) -> void:
 		if cd > 0.0:
 			continue
 		var v: Variant = n.get("velocity")
-		var spd := (v as Vector3).length() if v is Vector3 else 0.0
-		if spd < 1.2:
-			continue
-		var s := soft_at(n.global_position)
-		if s.x < 0.4:
-			continue
-		_rustle_t[n] = 0.55
-		_emit_rustle(n.global_position + Vector3(0, 0.5, 0), -16.0 + spd * 2.5)
+		var spd := Vector2((v as Vector3).x, (v as Vector3).z).length() if v is Vector3 else 0.0
+		if spd < 0.6:
+			continue        # standing (or turning) inside a bush makes no loop of rustles
+		# Phase 24: family-aware plant contact; faster movement brushes more often.
+		if _plant_contact(n, spd):
+			_rustle_t[n] = clampf(0.95 - spd * 0.12, 0.38, 0.9)
 
 
 func _emit_rustle(pos: Vector3, db: float) -> void:

@@ -1,4 +1,44 @@
-# Voice cast sheet (Phase 18)
+# Voice cast sheet
+
+## Phase 24: current voices (CMU Flite)
+Owner feedback: the Phase 18 voices were "awful and robotic". Diagnosis:
+- eSpeak NG is formant synthesis: buzzy, with no recorded-speech texture.
+- Its female profiles had a narrow pitch range of 4–6 semitones.
+
+The bank is now rendered with **CMU Flite 2.2** (Ubuntu `libflite1`, already installed; called through ctypes, so no model download). Its clustergen voices are statistical models trained on recorded speakers:
+
+| Flite voice | Speaker | Used by |
+|---|---|---|
+| `cmu_us_slt` | US female | Marta, Priya, Joan, crew_f |
+| `cmu_us_awb` | Scottish male | Dale, crew_m |
+| `cmu_us_rms` | US male | Tomas |
+
+**Licence:** permissive CMU terms: free use, modification and redistribution; keep the notice; mark modifications. Our modifications are listed below. No person was recorded or cloned for this project.
+
+**Per-profile settings** (`tools/voice/profiles.json`, preset `p24-flite-v2`):
+- target pitch and intonation spread, tuned so every character speaks with a natural 5.4–8.8 semitone range (measured);
+- tempo;
+- a small post-synthesis resample (`shift`), which acts like a slightly bigger or smaller speaker.
+
+**Deliveries:**
+- calm, effort, uneasy and frightened scale pitch, spread and tempo;
+- whisper is an LPC noise-excited re-synthesis of the line (measured periodicity 0.34 against 0.87 for voiced speech, so genuinely unvoiced).
+
+**Cleanup chain:**
+- 80 Hz high-pass, a +3 dB presence band at 2–4.2 kHz for intelligibility, a 7.2 kHz soft top and light 2:1 compression;
+- then the existing trim, per-delivery loudness, -1 dBFS peak limit and fades.
+
+**QC:** every one of the 3,316 mappings validated (no empty, silent, clipped, too-short or too-long clips).
+
+**In-game mix:**
+- While a crew member speaks within 16 m (and not behind heavy occlusion), ambience dips 6 dB and work noise 3 dB. This uses an Amplify effect on those buses, so the player's sliders are untouched. Attack takes about 0.25 s and release about 1.1 s.
+- Captions and mouth motion use the new durations from `data/voice/index.json`.
+
+**Trade-off:** Flite's voices speak US English, apart from awb's Scottish speaker, while the cast notes below describe British accents. Intelligibility and a human sound were chosen over accent. The neural route (for example Kokoro) remains a possible later upgrade that needs the owner's go-ahead.
+
+**Listening review:** awaiting the owner. The A/B pack (old, then new, for each profile) was delivered with the Phase 24 progress update.
+
+## Phase 18: original eSpeak cast (kept for provenance)
 
 All voices are **original synthetic voices** generated offline with **eSpeak NG 1.51** (Ubuntu package `espeak-ng 1.51+dfsg-12build1`), a formant speech synthesizer:
 - No recorded performer and no cloned or imitated real person.

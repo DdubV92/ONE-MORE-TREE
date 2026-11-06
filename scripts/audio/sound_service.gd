@@ -404,6 +404,7 @@ func _process(delta: float) -> void:
 				continue
 			_play(str(d[1]), at, d[3], false)
 	var lis := _listener()
+	var speech_near := false
 	for v in voices:
 		var vv := v as Voice
 		if vv.busy:
@@ -411,6 +412,9 @@ func _process(delta: float) -> void:
 				_release(vv)
 				continue
 			_update_voice(vv, delta, lis)
+			if vv.event.begins_with("voice.") and vv.pos.distance_to(lis) < DUCK_RANGE and vv.occ_db < 14.0:
+				speech_near = true
+	_update_duck(delta, speech_near)
 	for h in loops.keys():
 		var lv: Voice = loops[h]
 		if lv.attached and not is_instance_valid(lv.attach):
@@ -439,6 +443,24 @@ func _process(delta: float) -> void:
 			checks += 1
 			if checks >= OCC_PER_FRAME:
 				break
+
+
+## Phase 24 dialogue intelligibility: while a crew member speaks within
+## DUCK_RANGE (and not behind heavy occlusion), ambience dips 6 dB and work
+## noise 3 dB, through an Amplify effect on those buses (the player's volume
+## sliders are untouched). Fast attack, slow release, so it never pumps.
+const DUCK_RANGE := 16.0
+const DUCK_DB := {"Ambience": -6.0, "Work": -3.0}
+var duck := 0.0               # 0..1 (exposed for tests)
+
+
+func _update_duck(delta: float, speech_near: bool) -> void:
+	var target := 1.0 if speech_near else 0.0
+	duck = move_toward(duck, target, delta * (4.0 if target > duck else 0.9))
+	for b in DUCK_DB:
+		var amp := Settings.duck_effect(b)
+		if amp != null:
+			amp.volume_db = float(DUCK_DB[b]) * duck
 
 
 func _update_voice(v: Voice, delta: float, lis: Vector3) -> void:

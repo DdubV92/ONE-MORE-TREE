@@ -135,6 +135,13 @@ const EVENTS := {
 	"amb.wind.cleared": {"files": ["wind_cleared_loop"], "bus": "Ambience", "cal": "ambient", "db": -10.0, "loop": true},
 	"amb.wind.gust": {"files": ["wind_gust_0", "wind_gust_1"], "bus": "Ambience", "cal": "ambient", "db": -10.0},
 	"amb.forest.air": {"files": ["forest_air_loop"], "bus": "Ambience", "cal": "ambient", "db": -18.0, "loop": true},
+	# ---- Phase 24 place beds and plant contact (tools/content/soundscape24.py) ----
+	"amb.bed.brush": {"files": ["bed_brush_loop"], "bus": "Ambience", "cal": "ambient", "db": -24.0, "loop": true},
+	"amb.bed.grove": {"files": ["bed_grove_loop"], "bus": "Ambience", "cal": "ambient", "db": -24.0, "loop": true},
+	"plant.grass": {"files": ["plant_grass_0", "plant_grass_1", "plant_grass_2"], "bus": "Characters", "cal": "step", "db": -22.0, "pitch": [0.92, 1.08], "label": "grass brushing"},
+	"plant.fern": {"files": ["plant_fern_0", "plant_fern_1", "plant_fern_2"], "bus": "Characters", "cal": "step", "db": -14.0, "pitch": [0.92, 1.08], "label": "brush"},
+	"plant.shrub": {"files": ["plant_shrub_0", "plant_shrub_1", "plant_shrub_2"], "bus": "Characters", "cal": "step", "db": -12.0, "pitch": [0.93, 1.07], "label": "brush"},
+	"plant.wet": {"files": ["plant_wet_0", "plant_wet_1", "plant_wet_2"], "bus": "Characters", "cal": "step", "db": -16.0, "pitch": [0.92, 1.06], "label": "wet brush"},
 	"amb.field.air": {"files": ["field_air_loop"], "bus": "Ambience", "cal": "ambient", "db": -18.0, "loop": true},
 	"amb.insects.day": {"files": ["insects_day_loop", "bees_loop"], "bus": "Ambience", "cal": "domestic", "db": -18.0, "loop": true},
 	"amb.crickets": {"files": ["crickets_loop"], "bus": "Ambience", "cal": "ambient", "db": -14.0, "loop": true},

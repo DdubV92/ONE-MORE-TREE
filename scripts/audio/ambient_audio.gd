@@ -20,7 +20,8 @@ var _birds: Array[AudioStreamPlayer3D] = []
 var _steps: Array[AudioStreamPlayer] = []
 var _last_step := -1
 ## Relative loudness per surface (files are peak-normalized).
-const STEP_DB := {"grass": -25.0, "forest": -23.0, "dirt": -24.0, "sand": -26.0, "rock": -22.0, "wood": -21.0, "water": -21.0}
+const STEP_DB := {"grass": -25.0, "forest": -23.0, "dirt": -24.0, "sand": -26.0, "rock": -22.0, "wood": -21.0, "water": -21.0,
+	"needles": -23.0, "gravel": -22.0, "puddle": -20.0, "wetgrass": -24.0, "mud": -22.0}
 var _step_i := 0
 var _wind: AudioStreamPlayer
 var _fire: AudioStreamPlayer3D
@@ -152,21 +153,63 @@ func _update_emitters(lp: Vector3) -> void:
 		for k in 2:
 			_layer("wind%d" % k, "", null, 0.0, false)
 		_wind_kind = kind
-	var wdb := linear_to_db(maxf(0.08 + ws * 0.7, 0.001))
+	# Phase 24 (soundscape audit): the wind loops sat at full level 9 m
+	# either side of the head on calm days too, and with the air bed and
+	# insects at the head made one place-blind wash (~-27.5 dBFS everywhere
+	# inland). Wind now follows the real wind (quiet when calm, square law),
+	# is sheltered inside thick brush, and the beds identify the place.
+	var brush := 0.0
+	if Game.cover != null:
+		brush = Game.cover.soft_at(lp).x
+	place = "shore" if _near_shore(lp) else ("brush" if brush > 0.4 else ("grove" if standing >= 14 else ("forest" if standing >= 4 else "open")))
+	var wdb := linear_to_db(maxf(0.03 + ws * ws * 0.75, 0.001)) - (5.0 if place == "brush" else 0.0)
 	for k in 2:
 		_layer("wind%d" % k, kind, _wind_m[k], wdb)
-	# A quiet air bed: forest room tone under canopy, open-field air when cleared.
 	_bed_m.global_position = lp + Vector3(0, 2.0, 0)
-	_layer("bed_forest", "amb.forest.air", _bed_m, 0.0, standing >= 4)
-	_layer("bed_field", "amb.field.air", _bed_m, 0.0, standing < 4)
-	# Day insects in good weather; crickets at night (not in rain).
+	_layer("bed_forest", "amb.forest.air", _bed_m, -7.0, place == "forest")
+	_layer("bed_field", "amb.field.air", _bed_m, -6.0, place == "open" or place == "shore")
+	_layer("bed_brush", "amb.bed.brush", _bed_m, linear_to_db(0.5 + 0.5 * ws), place == "brush")
+	_layer("bed_grove", "amb.bed.grove", _bed_m, 0.0, place == "grove")
+	# Day insects live in the undergrowth and edges (not the dark grove, not
+	# the shore); crickets at night (not in rain).
 	var raining: bool = Game.weather != null and float(Game.weather.get("rain")) > 0.3
-	_layer("insects", "amb.insects.day", _bed_m, -4.0, not night and not raining and standing >= 2)
-	_layer("crickets", "amb.crickets", _bed_m, -2.0, night and not raining)
+	_layer("insects", "amb.insects.day", _bed_m, -6.0 if place == "brush" else -11.0, not night and not raining and standing >= 2 and place != "grove" and place != "shore")
+	_layer("crickets", "amb.crickets", _bed_m, -4.0, night and not raining)
+	_conifer_floor = standing > 0 and birch * 2 < standing
 	_update_fire_v2()
 
 
 var _river_db := 0.0
+## Phase 24: the place the listener is in (shore / brush / grove / forest /
+## open) - drives the place bed - and whether the forest floor is conifer
+## litter (needle footsteps).
+var place := ""
+var _conifer_floor := false
+
+
+func _near_shore(lp: Vector3) -> bool:
+	for m in _ocean_m:
+		if m.position != Vector3.ZERO and m.global_position.distance_to(lp) < 28.0:
+			return true
+	return false
+
+
+## Phase 24: the footstep surface the ground really is: needles under
+## conifers, gravel on the mill pad, and wet variants (wet grass, mud,
+## puddles in fixed hollows) when the ground is soaked.
+func refine_surface(surf: String, pos: Vector3) -> String:
+	if surf == "forest" and _conifer_floor and pos.distance_to(_listener_pos()) < 30.0:
+		surf = "needles"
+	if CampLayout.in_mill(pos, 0.0) and surf in ["dirt", "grass", "forest"]:
+		return "gravel"
+	var wet: float = float(Game.weather.get("wetness")) if Game.weather != null else 0.0
+	if wet > 0.45 and surf in ["grass", "dirt", "forest", "needles"]:
+		var cell := Vector2i(int(floor(pos.x / 1.6)), int(floor(pos.z / 1.6)))
+		var hsh := float(absi(hash(cell)) % 1000) / 1000.0
+		if wet > 0.7 and surf != "needles" and hsh < 0.22:
+			return "puddle"
+		return "wetgrass" if surf == "grass" else ("mud" if surf == "dirt" else surf)
+	return surf
 
 
 func _update_fire_v2() -> void:
@@ -262,6 +305,7 @@ func _update_fire() -> void:
 var _music: AudioStreamPlayer
 var _t_music := 75.0
 var _dusk_played_hour := -1.0
+var _night_motif_hour := -1.0
 var music_plays := 0
 
 
@@ -277,6 +321,22 @@ func _update_music(delta: float) -> void:
 	var raining: bool = Game.weather != null and float(Game.weather.get("rain")) > 0.4
 	var on: bool = bool(Settings.get_v("music")) and not hunting
 	var h := env.hour
+	# Phase 24: the night arrangement of the same motif (altered harmony,
+	# drifting tuning, unresolved) once per night in the quiet late evening,
+	# never during the hunt or a storm, and it never marks a threat (it is
+	# scheduled by the clock only, not by any Terror state).
+	var night_window: bool = h >= 21.5 and h < 23.0
+	if on and env.is_night() and night_window and not raining and _night_motif_hour < 0.0 and not _music.playing:
+		_night_motif_hour = h
+		_music.stream = _stream("motif_night", false)
+		_music.volume_db = -19.0
+		_music.play()
+		music_plays += 1
+		return
+	if h >= 8.0 and h < 21.0:
+		_night_motif_hour = -1.0
+	if on and env.is_night() and _music.playing and _music.stream == _stream("motif_night", false):
+		return          # let the night cue finish its phrase
 	if not on or env.is_night():
 		if _music.playing:
 			_music.volume_db = move_toward(_music.volume_db, -60.0, delta * 12.0)
@@ -287,8 +347,8 @@ func _update_music(delta: float) -> void:
 	if h >= 18.1 and h < 19.5:
 		if _dusk_played_hour < 0.0 and not _music.playing:
 			_dusk_played_hour = h
-			_music.stream = _stream("music_dusk", false)
-			_music.volume_db = -16.0
+			_music.stream = _stream("motif_dusk", false)
+			_music.volume_db = -17.0
 			_music.play()
 			music_plays += 1
 		return
@@ -299,8 +359,10 @@ func _update_music(delta: float) -> void:
 	_t_music -= delta
 	if _t_music <= 0.0 and not _music.playing:
 		_t_music = _rng.randf_range(150.0, 320.0)
-		_music.stream = _stream("music_day_%d" % (_rng.randi() % 3), false)
-		_music.volume_db = -13.0
+		# Phase 24: the motif's warm day arrangement (rests built in; long
+		# silences between plays leave room for the island).
+		_music.stream = _stream("motif_day", false)
+		_music.volume_db = -14.0
 		_music.play()
 		music_plays += 1
 
@@ -488,6 +550,8 @@ func play_crowd_step(pos: Vector3, speed: float) -> void:
 	# On decks, floors and bridges (well above the terrain) it is wood.
 	if pos.y > World.height_at(pos.x, pos.z) + 0.25:
 		surf = "wood"
+	else:
+		surf = refine_surface(surf, pos)
 	var p := _crowd[_crowd_i]
 	_crowd_i = (_crowd_i + 1) % _crowd.size()
 	p.stream = _stream("step_%s_%d" % [surf, _rng.randi() % 5], false)
@@ -499,6 +563,7 @@ func play_crowd_step(pos: Vector3, speed: float) -> void:
 
 
 func play_footstep(surface: String, pos: Vector3, intensity: float) -> void:
+	surface = refine_surface(surface, pos)
 	var p := _steps[_step_i]
 	_step_i = (_step_i + 1) % _steps.size()
 	var v := _rng.randi() % 5

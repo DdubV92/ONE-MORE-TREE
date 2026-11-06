@@ -94,6 +94,14 @@ const PARCEL_LOCKER_POS := Vector3(6.6, 0.0, 7.6)
 ## stays clear at every stack height. Not a safety place (no LAMPS entry).
 const MILL_LINE_X := -29.5
 const MILL_BAY := {"center": Vector3(-31.5, 0.0, 0.5), "size": Vector3(11.0, 4.2, 9.0)}
+# The mill annex: a west wicket in the camp fence lines up with the rack
+# standpoint, and the camp fence continues around the mill and its lumber
+# yard (south side and far west side). The north side stays open to the
+# logging road for trucks. The annex is part of the camp compound, not of
+# the fenced camp interior (in_camp / night rules are unchanged).
+const MILL_GATE_Z := -6.0
+const MILL_GATE_HALF_WIDTH := 1.8
+const MILL_ANNEX_LINE := [Vector2(-22.5, 18.5), Vector2(-39.0, 18.5), Vector2(-39.0, -12.5)]
 const MILL_INTAKE := Vector3(-29.5, 0.0, -9.6)       # truck tailgate stop
 const MILL_RACK_POS := Vector3(-29.5, 0.0, -3.3)     # feed rack (logs lie along Z)
 const MILL_RACK_SIZE := Vector3(6.0, 0.9, 2.4)

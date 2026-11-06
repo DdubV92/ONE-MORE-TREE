@@ -78,8 +78,13 @@ func _build_fence() -> void:
 		[Vector2(hx, -hz), Vector2(hx, hz)],
 		[Vector2(hx, hz), Vector2(L.BEACH_GATE_HALF_WIDTH, hz)],
 		[Vector2(-L.BEACH_GATE_HALF_WIDTH, hz), Vector2(-hx, hz)],
-		[Vector2(-hx, hz), Vector2(-hx, -hz)],
+		# West side: Phase 24 wicket into the sawmill annex.
+		[Vector2(-hx, hz), Vector2(-hx, L.MILL_GATE_Z + L.MILL_GATE_HALF_WIDTH)],
+		[Vector2(-hx, L.MILL_GATE_Z - L.MILL_GATE_HALF_WIDTH), Vector2(-hx, -hz)],
 	]
+	# Phase 24: the fence continues around the sawmill annex.
+	for ai in L.MILL_ANNEX_LINE.size() - 1:
+		sides.append([L.MILL_ANNEX_LINE[ai], L.MILL_ANNEX_LINE[ai + 1]])
 	var mesh_mat := BuildKit.mat("chainlink")
 	for span in sides:
 		var a: Vector2 = span[0]

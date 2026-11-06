@@ -46,8 +46,9 @@ const EVENTS := {
 	"weather.rain.open": {"files": ["rain_open"], "grade": "placeholder"},
 	"weather.rain.roof": {"files": ["rain_roof"], "grade": "placeholder"},
 	"weather.thunder.far": {"files": ["thunder_far_0", "thunder_far_1"], "grade": "placeholder"},
-	"music.day": {"files": ["music_day_0", "music_day_1", "music_day_2"], "grade": "placeholder"},
-	"music.dusk": {"files": ["music_dusk"], "grade": "placeholder"},
+	"music.day": {"files": ["motif_day"], "grade": "original", "note": "Phase 24 motif, warm day arrangement (tools/content/soundscape24.py)"},
+	"music.dusk": {"files": ["motif_dusk"], "grade": "original", "note": "same motif, thinned"},
+	"music.night": {"files": ["motif_night"], "grade": "original", "note": "same motif, altered harmony / drifting tuning / unresolved"},
 	# Horror and hunt
 	"terror.knock": {"files": ["t_knock_0", "t_knock_1", "t_knock_2"], "grade": "placeholder"},
 	"terror.call": {"files": ["t_call"], "grade": "placeholder"},
