@@ -119,6 +119,8 @@ var island_mismatch := false
 
 ## Fresh timed campaign (30 days of 20 + 5 minutes; Phase 22 added 5 min).
 func new_campaign() -> void:
+	if Game.timber:
+		Game.timber.mill_economy = true    # Phase 24: wood is paid at the sawmill
 	if Game.feed:
 		Game.feed.restore({})      # Phase 17: a new contract starts with an unread internet
 	if Game.rest:
@@ -325,6 +327,12 @@ func sleep() -> Dictionary:
 		Game.timber.fire_heat = 1.0
 	var report := build_report(d, settlement)
 	report["pay"] = pay_night
+	# Phase 24: the day's lumber (each pallet was credited once, when it was
+	# strapped); the lumber boat takes the yard overnight. The rack, the log
+	# in the saw and the open pallet stay for tomorrow.
+	if Game.timber:
+		var ml := Game.timber.mill.new_day(d + 1)
+		report["lumber"] = {"pallets": int(ml.pallets), "overflow": int(ml.overflow), "cents": int(ml.earnings), "open_pallet_l": Game.timber.mill.open_fill(), "rack": Game.timber.mill.rack.size()}
 	if not rest_night.is_empty():
 		report["rest"] = rest_night
 	var night_note := Game.sleep_interrupts.morning_note(d) if Game.sleep_interrupts else ""
@@ -384,7 +392,7 @@ func build_report(d: int, settlement: Dictionary) -> Dictionary:
 		if int(tx.day) != d:
 			continue
 		match str(tx.kind):
-			"delivery":
+			"delivery", "lumber":
 				income += int(tx.amount)
 			"purchase", "hire":
 				purchases += -int(tx.amount)

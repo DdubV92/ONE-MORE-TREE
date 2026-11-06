@@ -84,6 +84,72 @@ const CART_PARK := Vector3(0.8, 0.0, -4.0)
 ## doors face north into camp.
 const PARCEL_LOCKER_POS := Vector3(6.6, 0.0, 7.6)
 
+## Phase 24 sawmill, outside the west fence behind the camper (surveyed
+## tree-free and flat on both islands: tools/mill/corridor_probe.gd). The
+## line runs north -> south: trucks stop at MILL_INTAKE (reached out of the
+## north entrance and down a clear lane west of the fence), logs land on the
+## feed rack, cross to the infeed rollers, pass the saw, ride the outfeed
+## conveyor to the stacker at the bay's south edge; finished pallets go to
+## the lumber yard south of the bay. The finishing lane (x = MILL_LINE_X)
+## stays clear at every stack height. Not a safety place (no LAMPS entry).
+const MILL_LINE_X := -29.5
+const MILL_BAY := {"center": Vector3(-31.5, 0.0, 0.5), "size": Vector3(11.0, 4.2, 9.0)}
+const MILL_INTAKE := Vector3(-29.5, 0.0, -9.6)       # truck tailgate stop
+const MILL_RACK_POS := Vector3(-29.5, 0.0, -3.3)     # feed rack (logs lie along Z)
+const MILL_RACK_SIZE := Vector3(6.0, 0.9, 2.4)
+const MILL_RACK_STAND := Vector3(-29.5, 0.0, -6.0)   # where carriers drop logs
+const MILL_ROLLERS_POS := Vector3(-29.5, 0.0, -1.5)
+const MILL_SAW_POS := Vector3(-29.5, 0.0, 0.6)
+const MILL_OUTFEED := [Vector3(-29.5, 0.0, 1.6), Vector3(-29.5, 0.0, 4.6)]
+const MILL_STACKER_POS := Vector3(-29.5, 0.0, 5.7)
+const MILL_OPERATOR := Vector3(-27.3, 0.0, 0.6)
+const MILL_BOARD_POS := Vector3(-25.9, 0.0, -4.4)    # yard board (status sign)
+## Lumber yard: marked bays either side of the finishing lane, rows south,
+## stacked up to MILL_LAYERS high -> MILL_DISPLAY_CAP visible pallets.
+const MILL_YARD_BAYS_X := [-35.4, -32.6, -26.4]
+const MILL_YARD_ROWS_Z := [8.6, 11.1, 13.6, 16.1]
+const MILL_LAYERS := 4
+const MILL_DISPLAY_CAP := 48
+const MILL_PALLET_SIZE := Vector3(1.2, 0.62, 1.2)
+## Solid footprints (navigation), [center, size] in camp-local metres.
+const MILL_SOLIDS := [
+	[Vector3(-29.5, 0.0, -3.3), Vector3(6.0, 0.0, 2.4)],     # feed rack
+	[Vector3(-29.5, 0.0, 0.1), Vector3(1.6, 0.0, 4.2)],      # rollers + saw
+	[Vector3(-29.5, 0.0, 3.4), Vector3(1.2, 0.0, 3.4)],      # outfeed + stacker
+	[Vector3(-36.6, 0.0, 0.5), Vector3(0.4, 0.0, 9.0)],      # back wall
+]
+
+
+static func mill_world(local: Vector3) -> Vector3:
+	return world(local)
+
+
+## True inside the sawmill bay or its lumber yard (+margin): decorative
+## ground cover, undergrowth and soft cover keep out.
+static func in_mill(p: Vector3, margin := 0.0) -> bool:
+	var o := origin()
+	var lx := p.x - o.x
+	var lz := p.z - o.z
+	var c: Vector3 = MILL_BAY.center
+	var sz: Vector3 = MILL_BAY.size
+	if absf(lx - c.x) < sz.x * 0.5 + margin and absf(lz - c.z) < sz.z * 0.5 + margin:
+		return true
+	# Lumber yard and the approach apron in front of the feed rack.
+	if lx > -38.0 - margin and lx < -24.4 + margin and lz > 5.0 - margin and lz < 17.6 + margin:
+		return true
+	return lx > -33.5 - margin and lx < -25.5 + margin and lz > -11.5 - margin and lz < -3.9 + margin
+
+
+## Lumber-yard slot (0..MILL_DISPLAY_CAP-1) -> camp-local pallet base.
+## Fills bays from the back row forward, then the next layer up.
+static func mill_slot(i: int) -> Vector3:
+	var per_layer: int = MILL_YARD_BAYS_X.size() * MILL_YARD_ROWS_Z.size()
+	var layer := i / per_layer
+	var k := i % per_layer
+	var row: int = MILL_YARD_ROWS_Z.size() - 1 - k / MILL_YARD_BAYS_X.size()
+	var bay: int = k % MILL_YARD_BAYS_X.size()
+	return Vector3(float(MILL_YARD_BAYS_X[bay]), float(layer) * MILL_PALLET_SIZE.y, float(MILL_YARD_ROWS_Z[row]))
+
 
 static func deck_standpoint(i: int) -> Vector3:
 	var c: Vector3 = YARD_DECKS[i].center

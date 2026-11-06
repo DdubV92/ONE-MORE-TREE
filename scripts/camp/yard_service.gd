@@ -156,6 +156,59 @@ func pit_free() -> int:
 	return CampLayout.PIT_QUEUE_CAP - Game.timber.queue.size() - _incoming("pit").size()
 
 
+# ----------------------------------------------------------- sawmill (P24)
+
+## Free places on the sawmill feed rack (counting logs already on the way).
+func mill_free() -> int:
+	return MillLedger.RACK_CAP - Game.timber.mill.rack.size() - _incoming("mill").size()
+
+
+## Under the mill economy paid wood goes to the sawmill (it pays there);
+## otherwise (older rules) it feeds the fire as before.
+func feed_destination() -> String:
+	return "mill" if Game.timber and Game.timber.mill_economy else "pit"
+
+
+## Puts an accepted piece on the feed rack (ledger + segment state).
+func mill_enqueue(sid: String) -> bool:
+	var t: TimberService = Game.timber
+	var s := t.segment(sid)
+	if s.is_empty():
+		return false
+	var tid := int(sid.trim_prefix("T").split("_S")[0])
+	var litres := TimberService.segment_litres(t.records[tid], int(s.k))
+	if not t.mill.enqueue(sid, litres, t.prepaid(sid)):
+		last_reason = "The sawmill's feed rack is full (%d logs). Let the saw catch up." % MillLedger.RACK_CAP
+		return false
+	t.set_state(sid, TimberService.Seg.MILL_RACK)
+	counters["milled_in"] = int(counters.get("milled_in", 0)) + 1
+	_day_stat("mill_fed", 1)
+	return true
+
+
+## Puts a moving piece on the sawmill feed rack.
+func load_mill(carrier: String, sid: String) -> bool:
+	last_reason = ""
+	if not moving.has(sid) or str(moving[sid].carrier) != carrier:
+		return false
+	var keep: Dictionary = moving[sid]
+	moving.erase(sid)
+	if MillLedger.RACK_CAP - Game.timber.mill.rack.size() <= 0:
+		moving[sid] = keep
+		last_reason = "The sawmill's feed rack is full."
+		return false
+	_release_hand(carrier, sid)
+	if not mill_enqueue(sid):
+		# Never strand it: back where it came from.
+		moving[sid] = keep
+		_hand(carrier, sid, 99999)
+		return false
+	_contribute(carrier, "fed", sid)
+	_dirty = true
+	changed.emit()
+	return true
+
+
 ## Rough free capacity of the decks in pieces of median size (for UI).
 func deck_free_estimate() -> int:
 	var n := 0
@@ -215,6 +268,14 @@ func intake_destination(sid: String, at: Vector3) -> String:
 			return "cradle"
 		last_reason = "The receiving cradle is full (%d logs). Move logs to the decks or feed the fire first." % cradle.size()
 		return ""
+	# Phase 24: deliveries at the sawmill go straight onto its feed rack.
+	var mill_rack := CampLayout.world(CampLayout.MILL_RACK_POS)
+	var mill_in := CampLayout.world(CampLayout.MILL_INTAKE)
+	if Vector2(at.x - mill_rack.x, at.z - mill_rack.z).length() < 7.5 or Vector2(at.x - mill_in.x, at.z - mill_in.z).length() < 6.0:
+		if mill_free() > 0:
+			return "mill"
+		last_reason = "The sawmill's feed rack is full (%d logs). Let the saw catch up or deliver to the yard." % MillLedger.RACK_CAP
+		return ""
 	# The deck delivered onto is the nearest one (decks are ~6.4 m apart).
 	var near := -1
 	var nd := 6.5
@@ -236,6 +297,11 @@ func intake_destination(sid: String, at: Vector3) -> String:
 ## Called by TimberService.accept() after the receipt exists.
 func receive(sid: String, dest: String) -> void:
 	var t: TimberService = Game.timber
+	if dest == "mill":
+		mill_enqueue(sid)
+		_dirty = true
+		changed.emit()
+		return
 	if dest == "cradle":
 		cradle.append(sid)
 		t.set_state(sid, TimberService.Seg.ACCEPTED_STAGED)
@@ -275,14 +341,20 @@ func take_from_cradle(carrier: String, budget: int, from_pos := Vector3.INF) -> 
 	return ""
 
 
-## Takes the top piece from deck i for the fire (needs room on the pile).
-func take_from_deck(carrier: String, i: int, budget: int) -> String:
+## Takes the top piece from deck i for the sawmill (Phase 24 mill economy)
+## or the fire (older rules); needs room at that destination.
+func take_from_deck(carrier: String, i: int, budget: int, dest := "") -> String:
 	last_reason = ""
+	if dest == "":
+		dest = feed_destination()
 	var list: Array = decks[i]
 	if list.is_empty():
 		last_reason = "Deck %d is empty." % (i + 1)
 		return ""
-	if pit_free() <= 0:
+	if dest == "mill" and mill_free() <= 0:
+		last_reason = "The sawmill's feed rack is full (%d logs). Let the saw catch up." % MillLedger.RACK_CAP
+		return ""
+	if dest == "pit" and pit_free() <= 0:
 		last_reason = "The fire's loading pile is full (%d logs). Let it burn down." % CampLayout.PIT_QUEUE_CAP
 		return ""
 	var sid := str(list[list.size() - 1])
@@ -292,7 +364,7 @@ func take_from_deck(carrier: String, i: int, budget: int) -> String:
 	if not _hand(carrier, sid, budget):
 		return ""
 	list.erase(sid)
-	moving[sid] = {"carrier": carrier, "from": "deck:%d" % i, "dest": "pit"}
+	moving[sid] = {"carrier": carrier, "from": "deck:%d" % i, "dest": dest}
 	_dirty = true
 	changed.emit()
 	return sid

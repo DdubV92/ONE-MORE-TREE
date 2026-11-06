@@ -258,8 +258,8 @@ func _build_cell(c: Vector2i) -> Node3D:
 			continue
 		if m.z > 0.45 or m.w > 0.6:
 			continue
-		if CampLayout.in_yard(Vector3(x, h, z), 0.8):
-			continue       # Phase 13 yard extension: no tufts through the decks
+		if CampLayout.in_yard(Vector3(x, h, z), 0.8) or CampLayout.in_mill(Vector3(x, h, z), 0.5):
+			continue       # Phase 13 yard / Phase 24 sawmill: no tufts through the decks
 		var n := World.normal_at(x, z)
 		if n.y < 0.75:
 			continue

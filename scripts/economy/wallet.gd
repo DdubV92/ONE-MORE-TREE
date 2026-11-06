@@ -55,6 +55,12 @@ func credit_receipt(receipt_id: String, kind := "delivery") -> String:
 	if r.is_empty():
 		push_warning("Wallet: unknown receipt %s refused" % receipt_id)
 		return ""
+	# Phase 24: wood accepted under the mill economy is paid when the sawmill
+	# finishes a pallet from it, never on delivery (one payment per log).
+	if str(r.get("pay", "")) == "mill":
+		r["settled"] = true
+		r["deferred"] = true
+		return ""
 	var seg := timber.segment(str(r.sid))
 	if seg.is_empty() or int(seg.state) < TimberService.Seg.ACCEPTED_QUEUED or str(seg.receipt) != receipt_id:
 		push_warning("Wallet: receipt %s is not a genuine acceptance" % receipt_id)
@@ -85,9 +91,24 @@ func reconcile_receipts(kind := "delivery") -> int:
 		if credited.has(rid):
 			r["settled"] = true
 			r["tx"] = credited[rid]
+		elif str(r.get("pay", "")) == "mill":
+			r["settled"] = true
+			r["deferred"] = true
 		elif credit_receipt(rid, kind) != "":
 			n += 1
 	return n
+
+
+## Phase 24: one completed lumber pallet, credited once ever (by pallet id).
+func credit_pallet(pallet_id: String, cents: int, note: String) -> String:
+	if pallet_id == "" or cents <= 0:
+		return ""
+	var key := "pallet:" + pallet_id
+	if credited.has(key):
+		return str(credited[key])
+	var tx := _new_tx("lumber", cents, pallet_id, note)
+	credited[key] = tx.id
+	return str(tx.id)
 
 
 func can_afford(cents: int) -> bool:

@@ -39,8 +39,8 @@ func build() -> void:
 			if p.distance_to(Vector2(t.center[0], t.center[1])) <= float(t.radius) + 0.5:
 				protected[i] = 1
 				break
-		if CampLayout.in_yard(Vector3(xs[i], 0, zs[i]), 1.5):
-			continue       # Phase 13 yard extension stays clear
+		if CampLayout.in_yard(Vector3(xs[i], 0, zs[i]), 1.5) or CampLayout.in_mill(Vector3(xs[i], 0, zs[i]), 1.5):
+			continue       # Phase 13 yard extension / Phase 24 sawmill stay clear
 		var c := Vector2i(int(floor(xs[i] / CHUNK)), int(floor(zs[i] / CHUNK)))
 		if not _chunks.has(c):
 			_chunks[c] = []

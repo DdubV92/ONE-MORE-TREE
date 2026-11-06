@@ -75,13 +75,25 @@ void fragment() {
 	vec3 nmap = normalize(vec3(slope, 1.0));
 	NORMAL_MAP = nmap * 0.5 + 0.5;
 	vec3 n_view = normalize(TANGENT * nmap.x + BINORMAL * nmap.y + NORMAL * nmap.z);
-	vec4 refr = refracted_scene(SCREEN_UV, VERTEX, n_view, INV_PROJECTION_MATRIX, is_river ? 1.2 : 0.7);
-	vec3 body = apply_absorption(refr.rgb, refr.a, 1.0);
+	vec2 uv_seen;
+	vec4 refr = refracted_scene(SCREEN_UV, VERTEX, n_view, INV_PROJECTION_MATRIX, is_river ? 1.2 : 0.7, uv_seen);
+	float vthick = v_wpos.y - scene_world_at(uv_seen, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX).y;
+	vec3 body = stylized_body(refr.rgb, refr.a, vthick);
+	// Contact foam around rocks, banks and bridge posts (Phase 24).
+	float dist = length(v_wpos - CAMERA_POSITION_WORLD);
+	float vthick0 = v_wpos.y - scene_world_at(SCREEN_UV, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX).y;
+	float contact = 0.0;
+	if (vthick0 < contact_foam_width && dist < 120.0) {
+		contact = contact_foam_at(xz, t, vthick0, contact_foam_width) * contact_foam_amount * (1.0 - smoothstep(70.0, 120.0, dist));
+		vec2 so = (length(sun_dir_world.xz) > 1e-3 ? normalize(sun_dir_world.xz) : vec2(0.0, 1.0)) * 0.08;
+		body *= 1.0 - 0.3 * max(contact_foam_at(xz + so, t, vthick0, contact_foam_width) * contact_foam_amount - contact, 0.0);
+	}
 	float ndv = clamp(dot(n_view, VIEW), 0.0, 1.0);
 	float fres = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
-	foam = clamp(foam, 0.0, 1.0);
+	foam = foam_cel(clamp(max(foam, contact), 0.0, 1.0));
+	float spark = sun_sparkle(n_view, VIEW, VIEW_MATRIX, xz, t) * (1.0 - smoothstep(40.0, 150.0, dist));
 	ALBEDO = mix(scatter_color * 0.12, vec3(0.9, 0.93, 0.92), foam);
-	EMISSION = body * (1.0 - fres) * (1.0 - foam);
+	EMISSION = body * (1.0 - fres) * (1.0 - foam) + vec3(spark * 2.0);
 	ROUGHNESS = mix(is_river ? mix(0.13, 0.28, v_rapid) : 0.04, 0.8, foam);
 	SPECULAR = (is_river ? 0.35 : 0.5) * (1.0 - foam);
 	// Only the last few centimetres fade out (soft contact line).

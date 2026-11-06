@@ -129,7 +129,8 @@ func deliver_from(by: Node) -> void:
 		if rs.is_empty():
 			by.show_message("Not accepted: %s" % t.last_refusal)
 		else:
-			by.show_message("Delivered %d log%s to receiving. Contract entitlement +$%s.%s" % [rs.size(), "" if rs.size() == 1 else "s", Money.format_cents(cents), (" %d still in hand: %s" % [t.carried.size(), t.last_refusal]) if not t.carried.is_empty() else ""])
+			var payline := ("Contract credit for %d log%s; paid at the sawmill per finished pallet." % [rs.size(), "" if rs.size() == 1 else "s"]) if t.mill_economy else ("Contract entitlement +$%s." % Money.format_cents(cents))
+			by.show_message("Delivered %d log%s to receiving. %s%s" % [rs.size(), "" if rs.size() == 1 else "s", payline, (" %d still in hand: %s" % [t.carried.size(), t.last_refusal]) if not t.carried.is_empty() else ""])
 
 
 func _status_short() -> String:

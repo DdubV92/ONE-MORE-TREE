@@ -664,7 +664,15 @@ func _decide_inner(w: Worker) -> void:
 		if not try_yard(w):
 			w.go_to(CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 4.5)), "idle", "the yard")
 		return
-	if job == "automatic" and Game.yard and (Game.yard.cradle_free() <= 3 or (Game.yard.pit_free() >= CampLayout.PIT_QUEUE_CAP - 1 and Game.yard.stock_count() > Game.yard.cradle.size())) and try_yard(w):
+	# Phase 24: under the mill economy the decks feed the sawmill instead
+	# (automatic workers top up its rack when it is nearly empty).
+	var feed_low := false
+	if Game.yard:
+		if Game.yard.feed_destination() == "mill":
+			feed_low = Game.yard.mill_free() >= MillLedger.RACK_CAP - 2
+		else:
+			feed_low = Game.yard.pit_free() >= CampLayout.PIT_QUEUE_CAP - 1
+	if job == "automatic" and Game.yard and (Game.yard.cradle_free() <= 3 or (feed_low and Game.yard.stock_count() > Game.yard.cradle.size())) and try_yard(w):
 		return
 	match job:
 		"ride":
@@ -1214,7 +1222,8 @@ func try_yard(w: Worker) -> bool:
 				w.target["yard_from"] = "cradle"
 				return true
 			claims.erase("yard:cradle")
-	if y.pit_free() > 0:
+	var room := y.mill_free() if y.feed_destination() == "mill" else y.pit_free()
+	if room > 0:
 		for i in y.decks.size():
 			if (y.decks[i] as Array).is_empty() or not claim("yard:deck%d" % i, w):
 				continue
@@ -1237,6 +1246,8 @@ func yard_destination_point(sid: String) -> Vector3:
 	var dest := str(y.moving[sid].dest) if y.moving.has(sid) else "pit"
 	if dest.begins_with("deck:"):
 		return CampLayout.world(CampLayout.deck_standpoint(int(dest.get_slice(":", 1))))
+	if dest == "mill":
+		return CampLayout.world(CampLayout.MILL_RACK_STAND)
 	return CampLayout.world(CampLayout.PIT_LOAD_POS + Vector3(0, 0, 1.4))
 
 

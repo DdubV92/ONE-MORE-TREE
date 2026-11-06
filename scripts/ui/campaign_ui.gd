@@ -421,7 +421,10 @@ func show_report(r: Dictionary) -> void:
 	var p: PanelContainer = f[0]
 	var v: VBoxContainer = f[1]
 	_text(v, "Cash: opened $%s, closed $%s%s" % [Money.format_cents(int(r.opening_cash)), Money.format_cents(int(r.closing_cash)), "" if bool(r.reconciles) else "  (MISMATCH - please report)"])
-	_text(v, "  + deliveries credited during the day  $%s\n  - purchases  $%s%s\n  - wages paid tonight  $%s" % [Money.format_cents(int(r.income)), Money.format_cents(int(r.purchases)), ("  (" + ", ".join(PackedStringArray(r.purchase_lines)) + ")") if not (r.purchase_lines as Array).is_empty() else "", Money.format_cents(int(r.wages_paid))], 15)
+	if r.has("lumber"):
+		var lb: Dictionary = r.lumber
+		_text(v, "Sawmill: %d pallet%s finished (+$%s)%s. Next pallet %d L into %d L; %d log%s waiting on the rack." % [int(lb.pallets), "" if int(lb.pallets) == 1 else "s", Money.format_cents(int(lb.cents)), (", %d beyond the visible yard" % int(lb.overflow)) if int(lb.overflow) > 0 else "", int(lb.open_pallet_l), MillLedger.PALLET_INPUT_L, int(lb.rack), "" if int(lb.rack) == 1 else "s"], 15)
+	_text(v, "  + deliveries and lumber credited during the day  $%s\n  - purchases  $%s%s\n  - wages paid tonight  $%s" % [Money.format_cents(int(r.income)), Money.format_cents(int(r.purchases)), ("  (" + ", ".join(PackedStringArray(r.purchase_lines)) + ")") if not (r.purchase_lines as Array).is_empty() else "", Money.format_cents(int(r.wages_paid))], 15)
 	_text(v, "Trees felled today: %d  ·  stumps removed: %d  ·  original trees remaining: %d\nDelivered today: %.2f tree-equivalents" % [int(r.felled), int(r.stumps_removed), int(r.trees_remaining), int(r.delivered_mte) / 1000.0])
 	if r.has("processed"):
 		var y: Dictionary = r.get("yard", {})
@@ -513,7 +516,7 @@ func success_summary() -> PackedStringArray:
 	for tx in svc.wallet.transactions:
 		var a := int(tx.amount)
 		match str(tx.kind):
-			"delivery": earned += a
+			"delivery", "lumber": earned += a
 			"wage": wages += -a
 		if a < 0 and str(tx.kind) != "wage":
 			spent += -a

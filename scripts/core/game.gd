@@ -38,6 +38,7 @@ var storm_terrors: StormTerrors      # Phase 23 storm encounters (Thunder Walker
 var trees: TreeService
 var timber: TimberService
 var yard: YardService                # Phase 13 logging yard
+var mill: Sawmill                    # Phase 24 sawmill
 var cart: TimberCart                 # Phase 13 early handcart
 var campaign: CampaignService
 var crew: CrewService

@@ -68,6 +68,14 @@ const EVENTS := {
 	"fire.hiss": {"files": ["fire_hiss_sap"], "bus": "Ambience", "cal": "domestic", "db": -6.0, "pitch": [0.8, 1.15]},
 	"fire.log.place": {"files": ["fire_log_place"], "bus": "Work", "cal": "contact", "db": -6.0},
 	# ---- vehicles ----
+	# Phase 24 sawmill (tools/content/mill_sounds.py; original procedural).
+	"mill.motor": {"files": ["mill_motor_loop"], "bus": "Work", "cal": "engine", "db": -8.0, "loop": true},
+	"mill.blade": {"files": ["mill_blade_loop"], "bus": "Work", "cal": "engine", "db": -6.0, "loop": true},
+	"mill.rollers": {"files": ["mill_rollers_loop"], "bus": "Work", "cal": "engine", "db": -9.0, "loop": true},
+	"mill.board": {"files": ["mill_board_0", "mill_board_1", "mill_board_2", "mill_board_3"], "bus": "Work", "cal": "contact", "db": -8.0, "pitch": [0.92, 1.08]},
+	"mill.band": {"files": ["mill_band"], "bus": "Work", "cal": "contact", "db": -6.0},
+	"mill.winddown": {"files": ["mill_winddown"], "bus": "Work", "cal": "engine", "db": -6.0},
+	"mill.rollers.turn": {"files": ["mill_rollers_turn"], "bus": "Work", "cal": "engine", "db": -7.0},
 	"truck.engine.idle": {"files": ["truck_engine_idle_loop"], "bus": "Work", "cal": "engine", "db": -6.0, "loop": true},
 	"truck.engine.low": {"files": ["truck_engine_low_loop"], "bus": "Work", "cal": "engine", "db": -5.0, "loop": true},
 	"truck.engine.mid": {"files": ["truck_engine_mid_loop"], "bus": "Work", "cal": "engine", "db": -4.0, "loop": true},

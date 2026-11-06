@@ -334,7 +334,13 @@ func load_from(carrier: String, t: Truck) -> int:
 func unload_accept(t: Truck, source: String) -> Array:
 	if SoundService.instance() != null:
 		SoundService.play("truck.tailgate.open", t.tailgate_point())
-	var rs := timber.accept(timber.load_of(t.carrier()).duplicate(), source, CampLayout.world(CampLayout.DELIVERY_RACK_POS))
+	# Phase 24: a truck backed up to the sawmill intake unloads onto its rack.
+	var at := CampLayout.world(CampLayout.DELIVERY_RACK_POS)
+	var mi := CampLayout.world(CampLayout.MILL_INTAKE)
+	var tg := t.tailgate_point()
+	if Vector2(tg.x - mi.x, tg.z - mi.z).length() < 6.0:
+		at = tg
+	var rs := timber.accept(timber.load_of(t.carrier()).duplicate(), source, at)
 	t.refresh_cargo_visual()
 	return rs
 

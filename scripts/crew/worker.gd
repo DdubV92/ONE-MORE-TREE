@@ -935,6 +935,8 @@ func _do_yard_drop() -> void:
 		if not ok:
 			var alt := y.nearest_deck(global_position, sid)
 			ok = alt >= 0 and y.place_on_deck(id, sid, alt)
+	elif dest == "mill":
+		ok = y.load_mill(id, sid)
 	else:
 		ok = y.load_pit(id, sid)
 	if ok:

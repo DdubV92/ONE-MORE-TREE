@@ -129,6 +129,9 @@ float foam_lace(vec2 xz, float t, float coverage) {
 	float web = smoothstep(thr, thr + 0.05, r);
 	float mask = smoothstep(0.55 - coverage * 0.5, 0.8 - coverage * 0.4, fbm2(xz * 0.4 + w * 0.3));
 	float patch = smoothstep(1.02 - coverage, 1.32 - coverage, fbm2(xz * 0.65 - w * 0.25) + 0.12 * vnoise(xz * 3.3));
+	// Leftover lace (low coverage) is a thin film, not solid paper-white
+	// scraps: patches only turn opaque in fresh whitewater.
+	patch *= smoothstep(0.2, 0.5, coverage);
 	return clamp(max(web * mask, patch), 0.0, 1.0);
 }
 

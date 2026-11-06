@@ -116,6 +116,33 @@ func _build_island() -> void:
 		var rad := World.rock_radius(r)
 		if rad > 0.9:
 			_mark_disc(rp, rad, true)
+	# Phase 24: the sawmill's machine line and back wall are solid.
+	var om := World.camp_origin()
+	for ms in CampLayout.MILL_SOLIDS:
+		var mc: Vector3 = ms[0]
+		var msz: Vector3 = ms[1]
+		var ma := to_cell(Vector2(om.x + mc.x - msz.x * 0.5 - 0.3, om.z + mc.z - msz.z * 0.5 - 0.3))
+		var mb := to_cell(Vector2(om.x + mc.x + msz.x * 0.5 + 0.3, om.z + mc.z + msz.z * 0.5 + 0.3))
+		for mj in range(ma.y, mb.y + 1):
+			for mi in range(ma.x, mb.x + 1):
+				var mk := Vector2i(mi, mj)
+				var mcc := cell_center(mk)
+				# Only cells whose centre lies on the footprint (3 m cells
+				# would otherwise swallow the standpoints around it).
+				if _in_island(mk) and absf(mcc.x - (om.x + mc.x)) < msz.x * 0.5 + 1.2 and absf(mcc.y - (om.z + mc.z)) < msz.z * 0.5 + 1.2:
+					grid.set_point_solid(mk, true)
+	for bx in CampLayout.MILL_YARD_BAYS_X:
+		for rz in CampLayout.MILL_YARD_ROWS_Z:
+			var pa := to_cell(Vector2(om.x + float(bx) - 0.75, om.z + float(rz) - 0.75))
+			var pb := to_cell(Vector2(om.x + float(bx) + 0.75, om.z + float(rz) + 0.75))
+			for pj in range(pa.y, pb.y + 1):
+				for pi in range(pa.x, pb.x + 1):
+					if _in_island(Vector2i(pi, pj)):
+						grid.set_point_solid(Vector2i(pi, pj), true)
+	# The mill's rack standpoint stays walkable (crew load the rack there).
+	var mks := to_cell(Vector2(om.x + CampLayout.MILL_RACK_STAND.x, om.z + CampLayout.MILL_RACK_STAND.z))
+	if _in_island(mks):
+		grid.set_point_solid(mks, false)
 	# Phase 13: yard log decks are solid; their standpoints stay walkable.
 	var o := World.camp_origin()
 	for d in CampLayout.YARD_DECKS:

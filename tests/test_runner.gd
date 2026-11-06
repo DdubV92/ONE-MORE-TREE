@@ -20,9 +20,17 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_LEGACY_PAY"):
+		await _run_async("contract: pay once on delivery, final-frame delivery wins, late cannot reopen, reload", _t_campaign_world)
+		await _run_async("phase 5: trucks, seats, cargo once, TV rotation/focus/pool, mics, arcade pause, dog door route, refuge, couch, saves", _t_phase5_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P24"):
 		_run("phase 24 woodcutting units", _t_phase24_wc_units)
+		_run("phase 24 mill ledger units", _t_phase24_mill_units)
 		await _run_async("phase 24 woodcutting world", _t_phase24_wc_world)
+		await _run_async("phase 24 sawmill world", _t_phase24_mill_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
@@ -201,6 +209,8 @@ func _ready() -> void:
 	await _run_async("phase 23 storm world: storm reached, pause, load between flash and thunder, per-camera thunder arrival, shelter, wetness reload, masking window, quiet storm, cancelled reservation, Thunder Walker (moves only in windows, reload mid-encounter), reduced flash, Foreman masking, missed-flash recording, feed rumor", _t_phase23_world)
 	_run("phase 24 woodcutting units: curve thresholds, carry-over, cap 33,125 XP / 6,625 hits, duplicate hit ignored, saw strikes, boss/worker parity, one formula (damage + action rate), Strongman capacity, save mid-progression", _t_phase24_wc_units)
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
+	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
+	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
@@ -1305,6 +1315,7 @@ func _t_campaign_world() -> String:
 	cs.start_test_route(true, false)
 	cs.contract.scope_override = 1       # development fixture: one-tree contract
 	var t: TimberService = world.timber
+	t.mill_economy = false               # legacy pay-on-delivery path (Phase 24 mill has its own tests)
 	var i := LoggingTest.find("small")
 	var id: int = World.trees.id[i]
 	var stand := PlacementValidator.cut_stands(i)[0]
@@ -1851,6 +1862,7 @@ func _t_phase5_world() -> String:
 	var err := ""
 	var cs: CampaignService = world.campaign
 	cs.start_test_route(false)
+	world.timber.mill_economy = false    # legacy pay-on-delivery path (Phase 24 mill has its own tests)
 	await get_tree().physics_frame
 	var vs: VehicleService = world.vehicles
 	# --- purchase: locked without deliveries, two max, charged once each.
@@ -1959,8 +1971,8 @@ func _t_phase5_world() -> String:
 	tv.set_mode("quad")
 	for f in 3:
 		await get_tree().process_frame
-	if err == "" and tv.cams.size() != 11:
-		err = "expected 11 cameras (10 + the Phase 23 dock & shore camera), got %d" % tv.cams.size()
+	if err == "" and tv.cams.size() != 12:
+		err = "expected 12 cameras (10 + the Phase 23 dock & shore camera + the Phase 24 sawmill), got %d" % tv.cams.size()
 	var seen := {}
 	for c in tv.tiles:
 		seen[c] = true
@@ -7426,4 +7438,295 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 	if not cap.has("woodcutting") or int((cap.woodcutting.xp as Dictionary).get(MeritLedger.BOSS, 0)) != int(wc.xp[MeritLedger.BOSS]):
 		return "woodcutting not saved with the crew"
 	p24_report["world"] = rep
+	return ""
+
+
+
+# ======================================================== Phase 24: sawmill
+
+func _t_phase24_mill_units() -> String:
+	var rep := {}
+	var pays: Array = []
+	var pay := func(id: String, cents: int, _note: String) -> String:
+		pays.append([id, cents])
+		return "TX-" + id
+	# The prompt's example in 100-unit pallets.
+	var m := MillLedger.new(100, 4800)
+	m.pay_fn = pay
+	for e in [["a", 30], ["b", 45], ["c", 70]]:
+		m.enqueue(str(e[0]), int(e[1]), false)
+	m.step(1000.0, true)
+	if m.pallets_total != 1 or m.open_fill() != 45:
+		return "30+45+70: %d pallets, %d open (want 1, 45)" % [m.pallets_total, m.open_fill()]
+	m.enqueue("d", 220, false)
+	m.step(1000.0, true)
+	if m.pallets_total != 3 or m.open_fill() != 65:
+		return "+220: %d pallets, %d open (want 3, 65)" % [m.pallets_total, m.open_fill()]
+	if pays.size() != 3 or int(pays[0][1]) != 4800 or m.processed_l != 365:
+		return "payouts %s / processed %d" % [str(pays), m.processed_l]
+	# Pay once: reconcile never re-credits a pallet with a transaction.
+	if m.reconcile() != 0 or pays.size() != 3:
+		return "reconcile paid again"
+	# A single log crossing several recipe boundaries.
+	var m2 := MillLedger.new(100, 1000)
+	m2.enqueue("big", 350, false)
+	m2.step(1000.0, true)
+	if m2.pallets_total != 3 or m2.open_fill() != 50:
+		return "one 350 L log: %d pallets, %d open" % [m2.pallets_total, m2.open_fill()]
+	# Prepaid share pays nothing; payable share pays its proportion.
+	var m3 := MillLedger.new(100, 4800)
+	var p3: Array = []
+	m3.pay_fn = func(id: String, cents: int, _n: String) -> String:
+		p3.append(cents)
+		return "TX"
+	m3.enqueue("old", 60, true)
+	m3.enqueue("new", 40, false)
+	m3.step(1000.0, true)
+	if p3 != [1920] or int(m3.records[0].prepaid_l) != 60:
+		return "mixed pallet paid %s (want [1920])" % str(p3)
+	# Cent remainder carried, never lost: 333 + 667 payable L = exactly $48.
+	var m4 := MillLedger.new(1000, 4800)
+	var p4: Array = []
+	m4.pay_fn = func(id: String, cents: int, _n: String) -> String:
+		p4.append(cents)
+		return "TX"
+	m4.enqueue("x", 333, true)
+	m4.enqueue("y", 333, false)
+	m4.enqueue("z", 334, true)
+	m4.step(1000.0, true)
+	m4.enqueue("w", 1000, false)
+	m4.step(1000.0, true)
+	var paid := 0
+	for c in p4:
+		paid += int(c)
+	if paid != (1333 * 4800) / 1000:
+		return "remainder lost: paid %d" % paid
+	rep["remainder_check"] = {"pallets": p4, "cents_carry": m4.cents_carry}
+	# Overflow beyond the visible yard still pays.
+	var m5 := MillLedger.new(10, 100)
+	var n5 := [0]
+	m5.pay_fn = func(id: String, cents: int, _n: String) -> String:
+		n5[0] += 1
+		return "TX"
+	for i in CampLayout.MILL_DISPLAY_CAP + 7:
+		m5.enqueue("p%d" % i, 10, false)
+		m5.step(100.0, true)
+	if m5.displayed() != CampLayout.MILL_DISPLAY_CAP or m5.overflow_today != 7 or n5[0] != CampLayout.MILL_DISPLAY_CAP + 7:
+		return "overflow: shown %d, overflow %d, paid %d" % [m5.displayed(), m5.overflow_today, n5[0]]
+	# Dusk: the log in the saw finishes, nothing new starts.
+	var m6 := MillLedger.new(1000, 4800)
+	m6.enqueue("a", 300, false)
+	m6.enqueue("b", 300, false)
+	m6.step(MillLedger.TRANSFER_S + 1.0, true)
+	if not m6.busy():
+		return "first log did not start"
+	m6.step(1000.0, false)
+	if m6.busy() or m6.rack.size() != 1 or m6.processed_l != 300:
+		return "dusk wind-down wrong (busy %s, rack %d, processed %d)" % [m6.busy(), m6.rack.size(), m6.processed_l]
+	# Day rollover keeps the open pallet and the rack; today's counters reset.
+	m.new_day(5)
+	if m.open_fill() != 65 or m.pallets_today != 0 or m.pallets_total != 3:
+		return "day rollover lost work"
+	# Save mid-job = the same result as never saving.
+	var a := MillLedger.new(1000, 4800)
+	var b := MillLedger.new(1000, 4800)
+	for l in [a, b]:
+		for i in 6:
+			l.enqueue("s%d" % i, 230 + i * 17, i % 2 == 0)
+	a.step(9.3, true)
+	b.step(9.3, true)
+	var c := MillLedger.new()
+	c.restore(b.capture())
+	a.step(500.0, true)
+	c.step(500.0, true)
+	if a.capture().hash() != c.capture().hash():
+		return "save mid-job changed the outcome"
+	# Invalid volumes and duplicates refused.
+	if m.enqueue("bad", 0, false) or not m.enqueue("dup", 10, false) or m.enqueue("dup", 10, false):
+		return "invalid/duplicate enqueue accepted"
+	p24_report["mill_units"] = rep
+	return ""
+
+
+func _t_phase24_mill_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for ch in get_children():
+		if ch is IslandWorld:
+			ch.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or not world.systems_ready or Game.mill == null) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := await _p24_mill_checks(world)
+	print("P24 REPORT ", JSON.stringify(p24_report))
+	Engine.time_scale = 1.0
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p24_mill_checks(_world: IslandWorld) -> String:
+	var rep := {}
+	var cs: CampaignService = Game.campaign
+	cs.start_test_route(true, true)
+	for k in 20:
+		await get_tree().physics_frame
+	var t: TimberService = Game.timber
+	var y: YardService = Game.yard
+	var mill: Sawmill = Game.mill
+	if mill == null or not is_instance_valid(mill):
+		return "no sawmill"
+	t.clear_all()
+	t.mill_economy = true
+	mill.ledger = t.mill
+	t.mill.pay_fn = mill._pay
+	var w := cs.wallet
+	var was_enabled := w.enabled
+	w.enabled = true
+	var cash0 := w.cash
+	# Real pieces from one tree, carried by the player.
+	var tid := -1
+	for ti in range(1234, World.tree_count(), 7):
+		var rec_try := t._build_record(int(World.trees.id[ti]), ti, {})
+		if (rec_try.segments as Array).size() >= 3 and (rec_try.segments as Array).size() <= 8:
+			tid = int(World.trees.id[ti])
+			t.records[tid] = rec_try
+			break
+	if tid < 0:
+		return "no 3-8 piece tree found"
+	var sids: Array = []
+	for sg in t.records[tid].segments:
+		t.carried.append(str(sg.sid))
+		t.claims[str(sg.sid)] = "player"
+		sg.state = TimberService.Seg.CARRIED
+		sids.append(str(sg.sid))
+	var total_l := 0
+	for sg in t.records[tid].segments:
+		total_l += TimberService.segment_litres(t.records[tid], int(sg.k))
+	# Delivery at the cradle: contract credit, no money yet.
+	var first := [sids[0]]
+	var rs := t.accept(first, "test", CampLayout.world(CampLayout.DELIVERY_RACK_POS))
+	if rs.is_empty() or w.cash != cash0 or str(rs[0].get("pay", "")) != "mill":
+		return "mill-economy delivery paid on acceptance (cash %d -> %d)" % [cash0, w.cash]
+	if w.reconcile_receipts() != 0 or w.cash != cash0:
+		return "reconcile paid a deferred receipt"
+	# The rest straight onto the mill rack (delivery at the mill).
+	var rest: Array = sids.slice(1)
+	var rs2 := t.accept(rest, "test", CampLayout.world(CampLayout.MILL_RACK_POS))
+	if rs2.size() != rest.size() or t.mill.rack.size() != rest.size():
+		return "delivery at the mill: %d accepted, rack %d (want %d)" % [rs2.size(), t.mill.rack.size(), rest.size()]
+	for sid in rest:
+		if int(t.segment(str(sid)).state) != TimberService.Seg.MILL_RACK:
+			return "rack piece state wrong"
+	# Cradle piece: cradle -> deck -> mill rack through the yard.
+	var c_sid := y.take_from_cradle("player", 9999)
+	if c_sid == "":
+		return "could not take the cradle piece: %s" % y.last_reason
+	if not y.place_on_deck("player", c_sid, int(str(y.moving[c_sid].dest).get_slice(":", 1))):
+		return "could not stack the cradle piece: %s" % y.last_reason
+	var dk := -1
+	for i in y.decks.size():
+		if str(first[0]) in (y.decks[i] as Array):
+			dk = i
+	if dk < 0:
+		return "cradle piece never reached a deck"
+	var d_sid := y.take_from_deck("player", dk, 9999)
+	if d_sid == "" or str(y.moving[d_sid].dest) != "mill" or not y.load_mill("player", d_sid):
+		return "deck -> mill move failed: %s" % y.last_reason
+	# Save mid-job and reload: same rack, same job, nothing paid twice.
+	Engine.time_scale = 1.0
+	for k in 240:
+		await get_tree().physics_frame
+	var snap := t.capture()
+	var job_sid := str(t.mill.job.get("sid", ""))
+	t.restore(snap)
+	mill.ledger = t.mill
+	t.mill.pay_fn = mill._pay
+	if job_sid != "" and (str(t.mill.job.get("sid", "")) != job_sid or int(t.segment(job_sid).state) != TimberService.Seg.MILLING):
+		return "reload lost the log in the saw"
+	# Run the line to the end of the queue.
+	Engine.time_scale = 8.0
+	var tw := Time.get_ticks_msec()
+	while (t.mill.busy() or not t.mill.rack.is_empty()) and Time.get_ticks_msec() - tw < 120000:
+		await get_tree().physics_frame
+	Engine.time_scale = 1.0
+	if t.mill.busy() or not t.mill.rack.is_empty():
+		return "the line did not finish (rack %d)" % t.mill.rack.size()
+	var pallets := t.mill.pallets_total
+	var expect_cents := 0
+	for r in t.mill.records:
+		expect_cents += int(r.cents)
+	if t.mill.processed_l != total_l or w.cash - cash0 != expect_cents or pallets != total_l / t.mill.pallet_l:
+		return "volume/money mismatch: processed %d of %d L, %d pallets, paid %d of %d" % [t.mill.processed_l, total_l, pallets, w.cash - cash0, expect_cents]
+	for sid in sids:
+		if int(t.segment(str(sid)).state) != TimberService.Seg.MILLED:
+			return "piece %s not MILLED" % sid
+	# Contract credit unchanged by milling (trees still count as delivered).
+	if not t.tree_delivered(tid):
+		return "milled tree lost its contract credit"
+	rep["tree"] = {"litres": total_l, "pieces": sids.size(), "pallets": pallets, "cents": w.cash - cash0, "open_l": t.mill.open_fill()}
+	# A prepaid (pre-Phase-24) piece makes pallets but pays nothing.
+	var tid2: int = World.trees.id[2345]
+	t.records[tid2] = t._build_record(tid2, 2345, {})
+	var sid2 := str(t.records[tid2].segments[0].sid)
+	t.carried.append(sid2)
+	t.claims[sid2] = "player"
+	t.segment(sid2).state = TimberService.Seg.CARRIED
+	t.mill_economy = false
+	var rs3 := t.accept([sid2], "legacy", CampLayout.world(CampLayout.MILL_RACK_POS))
+	t.mill_economy = true
+	if rs3.is_empty() or not t.prepaid(sid2):
+		return "legacy-paid piece not marked prepaid"
+	var cash1 := w.cash
+	var pay_before := t.mill.records.size()
+	t.mill.fill_payable = 0
+	t.mill.fill_prepaid = t.mill.pallet_l - 1
+	Engine.time_scale = 8.0
+	tw = Time.get_ticks_msec()
+	while (t.mill.busy() or not t.mill.rack.is_empty()) and Time.get_ticks_msec() - tw < 60000:
+		await get_tree().physics_frame
+	Engine.time_scale = 1.0
+	var legacy_cents := int(rs3[0].cents)
+	if t.mill.records.size() <= pay_before or w.cash - cash1 != 0:
+		return "prepaid wood was paid again (+%d cents; delivery had paid %d)" % [w.cash - cash1, legacy_cents]
+	# Rack full: a refused delivery keeps the logs in hand (not accepted).
+	t.mill.rack.clear()
+	for i in MillLedger.RACK_CAP:
+		t.mill.rack.append({"sid": "FAKE%d" % i, "litres": 1, "prepaid": false})
+	var tid3: int = World.trees.id[3456]
+	t.records[tid3] = t._build_record(tid3, 3456, {})
+	var sid3 := str(t.records[tid3].segments[0].sid)
+	t.carried.append(sid3)
+	t.claims[sid3] = "player"
+	t.segment(sid3).state = TimberService.Seg.CARRIED
+	var rs4 := t.accept([sid3], "test", CampLayout.world(CampLayout.MILL_RACK_POS))
+	if not rs4.is_empty() or not sid3 in t.carried or t.last_refusal == "":
+		return "full rack still accepted a delivery"
+	t.mill.rack.clear()
+	# Nightly lumber line; nav marks the machine line solid; the camera.
+	var nav: CrewNav = Game.crew.nav
+	var saw_cell := nav.to_cell(Vector2(CampLayout.world(CampLayout.MILL_SAW_POS).x, CampLayout.world(CampLayout.MILL_SAW_POS).z))
+	if not nav.grid.is_point_solid(saw_cell):
+		return "the saw is not solid for navigation"
+	var stand := CampLayout.world(CampLayout.MILL_RACK_STAND)
+	if nav.grid.is_point_solid(nav.to_cell(Vector2(stand.x, stand.z))):
+		return "the rack standpoint is blocked"
+	var cam12 := false
+	for c in Game.tv.cams:
+		if str(c.get_meta("camera_id", "")) == "CAM_12":
+			cam12 = true
+	if not cam12:
+		return "no sawmill camera on the wall"
+	w.enabled = was_enabled
+	rep["status"] = mill.status_text().split("\n").size()
+	p24_report["mill_world"] = rep
 	return ""

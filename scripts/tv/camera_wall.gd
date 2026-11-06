@@ -467,7 +467,7 @@ func cam_id(i: int) -> String:
 
 
 func cam_name(i: int) -> String:
-	const NAMES := {"CAM_01": "Cabin to camper", "CAM_02": "Camper to cabin", "CAM_03": "Forest entrance", "CAM_04": "Fence NW", "CAM_05": "Fence NE", "CAM_06": "Fence SW", "CAM_07": "Fence SE", "CAM_08": "West trail", "CAM_09": "East ridge trail", "CAM_10": "Deep woods", "CAM_11": "Dock & shore"}
+	const NAMES := {"CAM_01": "Cabin to camper", "CAM_02": "Camper to cabin", "CAM_03": "Forest entrance", "CAM_04": "Fence NW", "CAM_05": "Fence NE", "CAM_06": "Fence SW", "CAM_07": "Fence SE", "CAM_08": "West trail", "CAM_09": "East ridge trail", "CAM_10": "Deep woods", "CAM_11": "Dock & shore", "CAM_12": "Sawmill"}
 	var id := str(cams[i].get_meta("camera_id"))
 	return NAMES.get(id, id)
 

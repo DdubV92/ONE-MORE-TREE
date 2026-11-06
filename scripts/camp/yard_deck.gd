@@ -26,7 +26,7 @@ func get_interact_text() -> String:
 	var n := (y.decks[index] as Array).size()
 	if n == 0:
 		return "Deck %d: empty" % (index + 1)
-	return "Take a log to the fire (deck %d: %d logs)" % [index + 1, n]
+	return "Take a log to the %s (deck %d: %d logs)" % ["sawmill" if y.feed_destination() == "mill" else "fire", index + 1, n]
 
 
 func interact(by: Node) -> void:
@@ -49,7 +49,7 @@ func interact(by: Node) -> void:
 			var cents := 0
 			for r in rs:
 				cents += int(r.cents)
-			msg = ("Delivered %d log%s onto deck %d. Contract entitlement +$%s." % [rs.size(), "" if rs.size() == 1 else "s", index + 1, Money.format_cents(cents)]) if not rs.is_empty() else t.last_refusal
+			msg = ("Delivered %d log%s onto deck %d. %s" % [rs.size(), "" if rs.size() == 1 else "s", index + 1, "Contract credit; paid at the sawmill per finished pallet." if t.mill_economy else "Contract entitlement +$%s." % Money.format_cents(cents)]) if not rs.is_empty() else t.last_refusal
 			if not rs.is_empty():
 				LoggingFX.play(LoggingFX.Sound.CLUNK, global_position + Vector3(0, 0.8, 0), 0.0, {"event": "log.stack"})
 	else:
@@ -57,6 +57,9 @@ func interact(by: Node) -> void:
 		if by.get("carry"):
 			budget = by.carry.budget()
 		var sid := y.take_from_deck("player", index, budget)
-		msg = "Carry it to the fire's loading pile (%s at the pit)." % Keys.label("interact") if sid != "" else y.last_reason
+		if sid != "" and y.feed_destination() == "mill":
+			msg = "Carry it to the sawmill's feed rack, behind the camper (%s at the rack)." % Keys.label("interact")
+		else:
+			msg = "Carry it to the fire's loading pile (%s at the pit)." % Keys.label("interact") if sid != "" else y.last_reason
 	if msg != "" and by.has_method("show_message"):
 		by.show_message(msg)

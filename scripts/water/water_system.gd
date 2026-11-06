@@ -146,8 +146,15 @@ func _build_ponds() -> void:
 	mat.shader = load("res://shaders/inland_water.gdshader")
 	_common_params(mat)
 	mat.set_shader_parameter("is_river", false)
-	mat.set_shader_parameter("absorption", Vector3(1.9, 1.2, 1.1))
-	mat.set_shader_parameter("scatter_color", Color(0.06, 0.13, 0.1))
+	mat.set_shader_parameter("absorption", Vector3(1.25, 0.72, 0.66))
+	mat.set_shader_parameter("scatter_color", Color(0.05, 0.13, 0.1))
+	# Phase 24 stylized water: clear green-tinted lowland ponds.
+	mat.set_shader_parameter("shallow_tint", Color(0.8, 0.96, 0.84))
+	mat.set_shader_parameter("shallow_scatter", Color(0.08, 0.24, 0.19))
+	mat.set_shader_parameter("shallow_depth", 1.0)
+	mat.set_shader_parameter("scatter_ramp_depth", 2.5)
+	mat.set_shader_parameter("contact_foam_width", 0.06)
+	mat.set_shader_parameter("contact_foam_amount", 0.45)
 	inland_materials.append(mat)
 	for pd in World.ponds():
 		var mi := MeshInstance3D.new()
@@ -207,6 +214,13 @@ func _build_river() -> void:
 	mat.set_shader_parameter("is_river", true)
 	mat.set_shader_parameter("absorption", Vector3(0.75, 0.38, 0.36))
 	mat.set_shader_parameter("scatter_color", Color(0.05, 0.14, 0.12))
+	# Phase 24 stylized water: clear aqua stream, foam at stones and banks.
+	mat.set_shader_parameter("shallow_tint", Color(0.72, 0.97, 0.9))
+	mat.set_shader_parameter("shallow_scatter", Color(0.08, 0.3, 0.27))
+	mat.set_shader_parameter("shallow_depth", 0.8)
+	mat.set_shader_parameter("scatter_ramp_depth", 2.0)
+	mat.set_shader_parameter("contact_foam_width", 0.12)
+	mat.set_shader_parameter("contact_foam_amount", 0.7)
 	inland_materials.append(mat)
 	var pts := World.river_points
 	var count := pts.size()

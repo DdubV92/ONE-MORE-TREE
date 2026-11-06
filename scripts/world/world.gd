@@ -216,6 +216,11 @@ func _ready() -> void:
 		add_child(locker)
 		var lp := CampLayout.world(CampLayout.PARCEL_LOCKER_POS)
 		locker.setup(Vector3(lp.x, World.height_at(lp.x, lp.z), lp.z))
+		# Phase 24: the sawmill behind the camper (its camera joins the wall).
+		var mill := Sawmill.new()
+		add_child(mill)
+		mill.setup()
+		Game.mill = mill
 	if camp:
 		dog = CampDog.new()
 		dog.name = "Dog"

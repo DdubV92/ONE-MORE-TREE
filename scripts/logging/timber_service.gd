@@ -15,13 +15,15 @@ extends Node
 ## entitlement receipt. Phase 3's PaymentService turns receipts into cash
 ## exactly once.
 
-enum Seg { ATTACHED, WORLD, CARRIED, VEHICLE_RESERVED, ACCEPTED_QUEUED, BURNING, CONSUMED, ACCEPTED_STAGED, ACCEPTED_RACKED, ACCEPTED_MOVING }
+enum Seg { ATTACHED, WORLD, CARRIED, VEHICLE_RESERVED, ACCEPTED_QUEUED, BURNING, CONSUMED, ACCEPTED_STAGED, ACCEPTED_RACKED, ACCEPTED_MOVING, MILL_RACK, MILLING, MILLED }
+## Phase 24 states (appended): MILL_RACK on the sawmill feed rack, MILLING
+## in the saw, MILLED turned into boards (terminal, like CONSUMED).
 ## Phase 13 states (appended so saved integers keep their meaning):
 ##   ACCEPTED_STAGED  paid, lying in the receiving cradle
 ##   ACCEPTED_RACKED  paid, stacked on a yard log deck
 ##   ACCEPTED_MOVING  paid, in someone's hands between yard places
 ## Every accepted state is >= ACCEPTED_QUEUED, so "accepted" checks hold.
-const SEG_MAX := Seg.ACCEPTED_MOVING
+const SEG_MAX := Seg.MILLED
 ## Segmentation plans: v1 = Phases 2-12 (0.9-2.0 m targets, at least three
 ## pieces, each within a hand load); v2 = Phase 13 (targets x1.5, equal
 ## pieces, as few as one; pieces over a hand load are dragged or carted).
@@ -217,6 +219,27 @@ static func allocate(weights: PackedFloat64Array, total: int) -> PackedInt32Arra
 
 
 # ----------------------------------------------------------------- records
+
+## Phase 24: a log piece's wood volume in whole litres, taper-aware (Simpson
+## over the persisted length with the trunk radius at each station; bark
+## included, as felled). Deterministic from the frozen tree record, so it is
+## never saved and can't drift. The sawmill's only volume measure.
+static func segment_litres(rec: Dictionary, k: int) -> int:
+	var s: Dictionary = rec.segments[k]
+	var a := float(s.a)
+	var b := float(s.b)
+	if not (b > a) or not is_finite(a) or not is_finite(b):
+		return 0
+	var n := 6
+	var h := (b - a) / float(n)
+	var acc := 0.0
+	for i in n + 1:
+		var r := maxf(TimberMesh.radius_at(rec, a + h * float(i)), 0.0)
+		var area := PI * r * r
+		acc += area * (1.0 if i == 0 or i == n else (4.0 if i % 2 == 1 else 2.0))
+	var m3 := acc * h / 3.0
+	return maxi(int(round(m3 * 1000.0)), 1)
+
 
 func has_record(tree_id: int) -> bool:
 	return records.has(tree_id)
@@ -622,6 +645,47 @@ func put_down_for(carrier: String, sid: String, centre: Vector3, dir: Vector3, d
 ## destination = the piece is NOT accepted and NOT paid; `last_refusal`
 ## says why and the carrier/truck keeps it.
 var last_refusal := ""
+## Phase 24: true from Phase 24 on (new campaigns and upgraded saves): wood
+## is paid at the sawmill per completed pallet, not on delivery.
+var mill_economy := false
+## Phase 24: the sawmill's ledger lives here so it is saved atomically with
+## the segment states it refers to (rack / in the saw / milled).
+var mill := MillLedger.new()
+
+
+## Phase 24: advances the sawmill line and keeps segment states in step
+## (MILL_RACK -> MILLING -> MILLED). The Sawmill node only presents the
+## returned events. Offcuts and sawdust become fuel for the burn pit.
+var scrap_fuel_l := 0.0
+const SCRAP_FUEL_CAP_L := 4000.0
+const SCRAP_BURN_LPS := 0.5
+
+
+func mill_step(dt: float, feeding: bool, t_now := 0.0) -> Array:
+	var before_scrap := mill.scrap_l
+	var ev := mill.step(dt, feeding, t_now)
+	for e in ev:
+		match str(e.kind):
+			"log_in":
+				_set_state(str(e.sid), Seg.MILLING)
+			"log_done":
+				_set_state(str(e.sid), Seg.MILLED)
+	if mill.scrap_l > before_scrap:
+		scrap_fuel_l = minf(scrap_fuel_l + float(mill.scrap_l - before_scrap), SCRAP_FUEL_CAP_L)
+	return ev
+
+
+## Phase 24: was this accepted piece's delivery already paid in cash (before
+## the mill economy)? Such wood still makes pallets but pays nothing again.
+func prepaid(sid: String) -> bool:
+	var s := segment(sid)
+	var rid := str(s.get("receipt", ""))
+	if rid == "":
+		return false
+	for r in receipts:
+		if str(r.id) == rid:
+			return str(r.get("pay", "")) != "mill"
+	return true
 
 
 func accept(sids: Array, source: String, at := Vector3.INF) -> Array[Dictionary]:
@@ -644,6 +708,10 @@ func accept(sids: Array, source: String, at := Vector3.INF) -> Array[Dictionary]
 				continue
 		_receipt_counter += 1
 		var r := {"id": "RCPT-%06d" % _receipt_counter, "sid": sid, "tree": int(sid.trim_prefix("T").split("_S")[0]), "mte": int(s.mte), "cents": int(s.cents), "source": source, "time": Game.world_time, "settled": false}
+		# Phase 24: under the mill economy the delivery is the contract credit;
+		# the money comes when the sawmill finishes a pallet from this wood.
+		if mill_economy:
+			r["pay"] = "mill"
 		s.receipt = r.id
 		receipts.append(r)
 		carried.erase(sid)
@@ -719,6 +787,8 @@ func _process(delta: float) -> void:
 		var dt := delta * Game.time_scale
 		update_fire_weather(dt, Game.weather.rain if Game.weather else 0.0)
 		advance_burn(dt * burn_factor())
+		if scrap_fuel_l > 0.0:
+			scrap_fuel_l = maxf(scrap_fuel_l - dt * SCRAP_BURN_LPS * burn_factor(), 0.0)
 
 
 # ------------------------------------------------- rain on the open pit
@@ -809,8 +879,11 @@ func _crew_can_relight() -> bool:
 ## Fire intensity 0..1.5 from the actual fuel in the pit (FirePit reads it),
 ## damped while smouldering and nothing while out.
 func fire_level() -> float:
-	if burning.is_empty() or fire_out:
+	if fire_out:
 		return 0.0
+	if burning.is_empty():
+		# Phase 24: the mill's offcuts keep a modest fire going.
+		return clampf(scrap_fuel_l / 1500.0, 0.0, 0.6) * lerpf(0.2, 1.0, fire_heat) if scrap_fuel_l > 1.0 else 0.0
 	var f := burning_mte() / float(HAND_BUDGET_MTE * BURN_SLOTS)
 	return clampf(0.35 + f * 0.9 + clampf(float(queue_mte()) / TREE_MTE, 0.0, 1.0) * 0.25, 0.0, 1.5) * lerpf(0.2, 1.0, fire_heat)
 
@@ -938,7 +1011,8 @@ func capture() -> Dictionary:
 		var b: TimberBody = bodies[key]
 		body_list.append({"tree": b.tree_id, "ks": b.ks.duplicate(), "crown": b.crown, "pose": TreeService._xf_to_array(b.global_transform)})
 	var out := {"records": recs, "bodies": body_list, "carried": carried.duplicate(), "loads": loads.duplicate(true), "queue": queue.duplicate(), "burning": burning.duplicate(), "receipts": receipts.duplicate(true), "receipt_counter": _receipt_counter, "recovery_log": recovery_log.slice(-50),
-		"fire": {"heat": snappedf(fire_heat, 0.001), "out": fire_out, "dry_s": snappedf(fire_dry_s, 0.1)}}
+		"fire": {"heat": snappedf(fire_heat, 0.001), "out": fire_out, "dry_s": snappedf(fire_dry_s, 0.1)},
+		"mill_economy": mill_economy, "mill": mill.capture(), "scrap_fuel_l": snappedf(scrap_fuel_l, 0.1)}
 	# Phase 13: yard places of accepted wood (cradle / decks / mid-move).
 	if Game.yard and is_instance_valid(Game.yard):
 		out["yard"] = Game.yard.capture()
@@ -963,6 +1037,11 @@ func restore(data: Dictionary) -> void:
 	fire_heat = clampf(float(fd.get("heat", 1.0)), 0.0, 1.0)
 	fire_out = bool(fd.get("out", false))
 	fire_dry_s = float(fd.get("dry_s", 0.0))
+	# Phase 24: saves from before the sawmill switch to the mill economy from
+	# this load on (wood already paid stays paid and is marked prepaid).
+	mill_economy = bool(data.get("mill_economy", true))
+	mill.restore(data.get("mill", {}))
+	scrap_fuel_l = clampf(float(data.get("scrap_fuel_l", 0.0)), 0.0, SCRAP_FUEL_CAP_L)
 	for key in data.get("records", {}):
 		var id := int(key)
 		var idx: int = Game.vegetation.tree_index_by_id.get(id, -1) if Game.vegetation else id
@@ -984,13 +1063,30 @@ func restore(data: Dictionary) -> void:
 	for sid in data.get("queue", []):
 		if accepted.has(str(sid)) and not str(sid) in burning and not str(sid) in queue:
 			queue.append(str(sid))
+	# Phase 24 mill places: only accepted pieces, each once.
+	var mill_places := {}
+	var keep_rack: Array = []
+	for r in mill.rack:
+		var rsid := str(r.sid)
+		if accepted.has(rsid) and not mill_places.has(rsid) and not rsid in burning and not rsid in queue:
+			mill_places[rsid] = "rack"
+			keep_rack.append(r)
+		else:
+			recovery_log.append({"sid": rsid, "reason": "mill_rack_invalid", "to": "dropped", "time": Game.world_time})
+	mill.rack = keep_rack
+	if not mill.job.is_empty():
+		var jsid := str(mill.job.sid)
+		if accepted.has(jsid) and not mill_places.has(jsid):
+			mill_places[jsid] = "saw"
+		else:
+			mill.job = {}
 	# Phase 13 yard places (accepted pieces only; never re-paid).
 	var yard_places := {}
 	if Game.yard and is_instance_valid(Game.yard):
 		var yd: Dictionary = data.get("yard", {})
 		var clean := {}
 		for sid in accepted:
-			if not str(sid) in burning and not str(sid) in queue:
+			if not str(sid) in burning and not str(sid) in queue and not mill_places.has(str(sid)):
 				clean[sid] = true
 		Game.yard.restore(yd, clean)
 		yard_places = Game.yard.all_yard_sids()
@@ -1002,8 +1098,12 @@ func restore(data: Dictionary) -> void:
 			sg.state = Seg.BURNING
 		elif sid in queue:
 			sg.state = Seg.ACCEPTED_QUEUED
+		elif mill_places.has(sid):
+			sg.state = Seg.MILL_RACK if str(mill_places[sid]) == "rack" else Seg.MILLING
 		elif yard_places.has(sid):
 			sg.state = Seg.ACCEPTED_STAGED if str(yard_places[sid]) == "cradle" else Seg.ACCEPTED_RACKED
+		elif int(sg.state) == Seg.MILLED:
+			pass                     # boards: terminal, like CONSUMED
 		else:
 			sg.state = Seg.CONSUMED
 	for sid in data.get("carried", []):
@@ -1080,6 +1180,9 @@ func clear_all() -> void:
 	queue.clear()
 	burning.clear()
 	receipts.clear()
+	var pf := mill.pay_fn
+	mill = MillLedger.new()
+	mill.pay_fn = pf
 	if Game.yard and is_instance_valid(Game.yard):
 		Game.yard.restore({"migrated_queue": true}, {})
 	claims.clear()
