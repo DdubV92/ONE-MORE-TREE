@@ -1,8 +1,35 @@
-# ONE MORE TREE LATEST BUILD PHASE 22 (longer workdays, CampOS desktop)
+# ONE MORE TREE LATEST BUILD PHASE 23 (dynamic weather, storms and storm terrors)
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 22 - build N (Windows)").
+The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 23 - build N (Windows)").
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
+
+## New in Phase 23
+
+- **Real weather that comes and goes:** drizzle, passing showers, steady rain, squalls, thunderstorms and severe coastal storms. Each one approaches, builds, peaks and clears; the cloud arrives before the rain and the sea calms last. The first big storm is only weather.
+- **Lightning and thunder:**
+  - Thunder arrives about 3 seconds per kilometre after the flash.
+  - Each camera microphone you are watching hears it at its own distance.
+  - A near strike lights the whole camp for an instant at night.
+  - The flash comfort setting (Settings → Lightning / bright flashes) applies to every storm.
+- **A wet island:**
+  - Fog and darker skies in heavy storms.
+  - Gusts you can see travelling through the trees, a rough white sea.
+  - Puddles, and rain beads on the windows.
+  - Rain sounds that change with where you stand: under trees, on the porch, in the camper or the cabin, in a truck.
+- **The burn-pit fire gets wet (your request):** drizzle beats it down to a smoky smoulder; steady rain or a storm puts it out. Relight it at the pit once the rain eases; the crew relights it after a dry spell in the workday, or in the morning.
+- **The Foreman hunts by ear less well in a storm:** thunder covers your steps, and it sees less in fog and rain.
+- **Storm terrors:**
+  - 12 new encounters during storms.
+  - Among them the **Thunder Walker**, which only moves while thunder covers its steps and stands still while you watch it.
+  - A night storm you slept through can leave a camera recording.
+  - A new **dock & shore camera (CAM_11)** comes with the dock.
+- **Preview tour → Phase 23 row:** subtle rain, a severe storm at the shore, the Thunder Walker, a near strike, the missed-flash recording, the storm calendar, and back to scheduled weather.
+- **Prepared saves** in `prepared_saves/`:
+  - subtle rain;
+  - severe storm;
+  - Thunder Walker (mid-encounter).
+  - Copy one to `%APPDATA%\Godot\app_userdata\One More Tree\saves\slot_2.json`, then Load → Slot 2.
 
 ## New in Phase 22
 

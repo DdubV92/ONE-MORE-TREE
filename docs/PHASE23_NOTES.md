@@ -178,7 +178,8 @@ The **Thunder Walker** shot was not captured: in the software-rendered frame the
   - a cleared-land route, Foreman hearing 30 → 4.5 m;
   - missed-flash recording, feed rumor;
   - the 7 review stations (no save writes).
-- **Full suite:** see "Results" below.
+- **Full suite:** 75 / 75 pass, including the older save migrations, which now chain 14 → 15.
+- **Smoke test:** clean (0 errors, 0 warnings).
 - **Prepared saves** (`tools/rc/make_fixture_saves.tscn`), made and verified by playing them; CI requires all 7:
   - subtle rain: *mist_drizzle onset, rain 0.08, visibility 0.73, no lightning*;
   - severe storm: *thunderstorm build, strikes and thunders arrive*;
