@@ -30,6 +30,7 @@ func _ready() -> void:
 		_run("phase 24 woodcutting units", _t_phase24_wc_units)
 		_run("phase 24 mill ledger units", _t_phase24_mill_units)
 		_run("phase 24 soundscape units", _t_phase24_sound_units)
+		_run("phase 24 settings migration", _t_phase24_settings_migration)
 		await _run_async("phase 24 woodcutting world", _t_phase24_wc_world)
 		await _run_async("phase 24 sawmill world", _t_phase24_mill_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -211,6 +212,7 @@ func _ready() -> void:
 	_run("phase 24 woodcutting units: curve thresholds, carry-over, cap 33,125 XP / 6,625 hits, duplicate hit ignored, saw strikes, boss/worker parity, one formula (damage + action rate), Strongman capacity, save mid-progression", _t_phase24_wc_units)
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
+	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
 	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
 	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
@@ -7445,6 +7447,20 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 
 
 # ======================================================== Phase 24: sawmill
+
+func _t_phase24_settings_migration() -> String:
+	var keep: String = Settings.values.character_style
+	var cases := [["clean", 0, "hd2d"], ["clean", 23, "hd2d"], ["pixel", 0, "pixel"], ["hd2d", 0, "hd2d"], ["clean", 24, "clean"]]
+	var err := ""
+	for c in cases:
+		Settings.values.character_style = c[0]
+		Settings.apply_migrations(int(c[1]))
+		if str(Settings.values.character_style) != str(c[2]):
+			err = "%s from v%d gave %s, expected %s" % [c[0], c[1], Settings.values.character_style, c[2]]
+			break
+	Settings.values.character_style = keep
+	return err
+
 
 func _t_phase24_sound_units() -> String:
 	# Every new event resolves to real files (beds, plant contact families).

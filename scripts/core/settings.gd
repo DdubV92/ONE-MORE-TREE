@@ -196,6 +196,12 @@ func set_v(key: String, v: Variant, save := true) -> void:
 		save_settings()
 
 
+## Settings file format version. save_settings() writes every value, so an
+## old default stays pinned in the file after the default changes; bumping
+## this lets apply_migrations() move such values once.
+const SETTINGS_VERSION := 24
+
+
 func load_settings() -> void:
 	var cf := ConfigFile.new()
 	if cf.load(PATH) != OK:
@@ -205,7 +211,21 @@ func load_settings() -> void:
 			var v: Variant = cf.get_value("settings", k)
 			if typeof(v) == typeof(values[k]) or (typeof(values[k]) == TYPE_FLOAT and typeof(v) == TYPE_INT):
 				values[k] = v
+	var ver := int(cf.get_value("meta", "version", 0))
+	apply_migrations(ver)
 	sanitize()
+	if ver < SETTINGS_VERSION:
+		save_settings()
+
+
+## One-time moves for files saved by older builds.
+func apply_migrations(from_version: int) -> void:
+	# Phase 24: "clean" was the stored default before the HD-2D style
+	# existed, so old installs never saw the pixel sprites and pixel axe.
+	# Move them to the new default once; "pixel" was always a deliberate
+	# pick and stays, and a "clean" chosen after Phase 24 is respected.
+	if from_version < 24 and str(values.get("character_style", "")) == "clean":
+		values.character_style = "hd2d"
 
 
 func sanitize() -> void:
@@ -249,6 +269,7 @@ func save_settings() -> void:
 	var cf := ConfigFile.new()
 	for k in values:
 		cf.set_value("settings", k, values[k])
+	cf.set_value("meta", "version", SETTINGS_VERSION)
 	cf.save(PATH)
 
 
