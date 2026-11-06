@@ -174,7 +174,11 @@ func set_weather(cloud: float, rain: float, wind_mult: float, wind_dir: Vector2,
 
 
 func set_storm(visibility: float, gust_v: float, sea_v: float) -> void:
+	var vis_changed := absf(clampf(visibility, 0.2, 1.0) - weather_visibility) > 0.01
 	weather_visibility = clampf(visibility, 0.2, 1.0)
+	if vis_changed:
+		_blend_presets()
+		_apply()
 	weather_gust = clampf(gust_v, 0.0, 1.0)
 	weather_sea = clampf(sea_v, 0.0, 1.0)
 	RenderingServer.global_shader_parameter_set("storm_gust", weather_gust)
@@ -220,6 +224,19 @@ func _blend_presets() -> void:
 	var oc := effective_overcast() * (1.0 - _night_factor() * 0.7)
 	current = _lerp_preset(mixed, _overcast_at(mixed), oc)
 	current.label = a.label if t < 0.5 else b.label
+	# Phase 23: heavy storms are darker than plain overcast (cloud x rain x
+	# lost visibility: severe coastal ~1, thunderstorm ~0.6, drizzle ~0.2).
+	var sd := storm_darkness()
+	if sd > 0.001:
+		current.sky_zenith *= 1.0 - 0.55 * sd
+		current.sky_horizon *= 1.0 - 0.45 * sd
+		current.ambient_energy *= 1.0 - 0.45 * sd
+		current.sun_energy *= 1.0 - 0.65 * sd
+		current.fog_color *= 1.0 - 0.45 * sd
+
+
+func storm_darkness() -> float:
+	return clampf(weather_cloud * clampf(weather_rain, 0.0, 1.0) * (1.0 - weather_visibility) / 0.62, 0.0, 1.0)
 
 
 func _night_factor() -> float:

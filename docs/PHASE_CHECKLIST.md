@@ -2,6 +2,29 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 23: Dynamic weather, storms and storm terrors (pack-21 prompt 21)
+
+Notes: [PHASE23_NOTES.md](PHASE23_NOTES.md).
+
+| Item | Status | Notes |
+|---|---|---|
+| 7 authored profiles (clear/broken, mist & drizzle, passing shower, steady rain, squall, thunderstorm, severe coastal) with approach → onset → build → peak → recovery and per-parameter envelopes | ✅ | `data/weather/profiles.json` from `tools/content/weather_profiles.py` |
+| Seeded schedule: fair day 1, thunder by day 8 before any severe storm, gaps between majors, quiet first major + 40% quiet, night visits, storms carried into the next morning | ✅ | `StormSchedule`, pure function of the seed |
+| Every campaign has at least one night thunderstorm with terrors | ✅ | Post-pass; 200 seeds tested |
+| Lightning strike records; per-listener thunder delay (player + each shown camera microphone); thunder in flight survives save/load | ✅ | |
+| Fog/visibility, gust fronts in the trees, sea state, puddles with rain rings, rain on exterior glass, wet materials, canopy drip, eave runoff, listening layers | ✅ | Shown in screenshots; not yet seen on a real GPU |
+| Flash comfort (full / reduced / off) for every flash; reduced → rim cue on encounter figures | ✅ | |
+| Masking model shared by mix, AI and encounters; Foreman hearing masked by thunder, sight × visibility | ✅ | 30 m → 4.5 m measured |
+| Thunder Walker: director reservation, validated waypoints (incl. cleared land), flash reveals, moves only inside masking windows, still while watched, save/load mid-encounter | ✅ | 0.0 m outside windows (test) |
+| 12-beat storm catalog as variants of existing families (6 authored, 4 reused, 2 natural outcomes) | ✅ | `data/terror/storm_beats.json` |
+| Missed-flash recording, feed rumor (generic before local), quiet storms carry no horror | ✅ | |
+| CAM_11 dock & shore camera (built with the dock) | ✅ | Needed to see the sea at night |
+| Save schema 15 + 14 → 15 migration | ✅ | |
+| Prepared saves: subtle rain, severe storm, Thunder Walker; day 36 rescue in a severe storm | ✅ | Made and verified by CI; see the build's `prepared_saves/` |
+| Storm review stations (Preview tour, 7) | ✅ | |
+| Clear vs severe performance comparison | ✅ | Headless CPU + lavapipe upper bound only (no real GPU) |
+| Listening on real audio hardware; real-GPU frame times | ⛔ not run | No audio device or GPU in the build container |
+
 ## Phase 22: Longer workdays (owner request)
 
 The contract stays at 30 days; each workday gains 5 real minutes of daylight (20 + 5 minutes of dusk = 25 minutes). The owner plans to extend the contract to 100 days with more content, and to shorten the hunt to 3 days, later.

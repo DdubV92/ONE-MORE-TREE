@@ -65,7 +65,7 @@ jobs:
       label: ${{ steps.label.outputs.label }}
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/phase-')))
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -146,10 +146,10 @@ jobs:
 
       - name: Prepared fixture saves for testers (made and verified by playing them)
         run: |
-          timeout 1200 ~/godot/godot --headless res://tools/rc/make_fixture_saves.tscn 2>&1 | tee fixtures.log | grep -E "FIXTURE" || true
-          test "$(grep -c '^FIXTURE_VERIFY .* ok' fixtures.log)" = "3"
+          timeout 2700 ~/godot/godot --headless res://tools/rc/make_fixture_saves.tscn 2>&1 | tee fixtures.log | grep -E "FIXTURE" || true
+          test "$(grep -c '^FIXTURE_VERIFY .* ok' fixtures.log)" = "7"
           mkdir -p build/windows/prepared_saves
-          for fx in terminal_day30 offshore_day3 extraction_day35; do
+          for fx in terminal_day30 offshore_day3 extraction_day35 storm_subtle_rain storm_severe storm_walker; do
             cp ~/.local/share/godot/app_userdata/"One More Tree"/fixtures/slot_2_${fx}.json build/windows/prepared_saves/
           done
           cat > build/windows/prepared_saves/README.txt <<'EOF2'
@@ -161,6 +161,11 @@ jobs:
             slot_2_terminal_day30.json    day 30, 50 s before the cutoff (contract close)
             slot_2_offshore_day3.json     day 3, on the shore before the first survey ship visit
             slot_2_extraction_day35.json  hunt night 35, about a minute before the day 36 rescue
+                                          (CI also played it under a severe storm: the rescue still came)
+            slot_2_storm_subtle_rain.json daylight, seconds before a drizzle or passing shower sets in
+            slot_2_storm_severe.json      a thunderstorm just starting to build towards its peak
+            slot_2_storm_walker.json      a night thunderstorm with the Thunder Walker mid-encounter
+                                          (watch the treeline when the lightning flashes)
 
           To use one: copy it to
             %APPDATA%\Godot\app_userdata\One More Tree\saves\slot_2.json

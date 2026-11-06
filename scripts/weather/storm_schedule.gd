@@ -171,7 +171,11 @@ func _ensure_night_storm(from_day: int) -> void:
 				cand = v
 				cand_day = day
 	if cand.is_empty():
-		return
+		cand = _add_night_thunderstorm(from_day)
+		if cand.is_empty():
+			return
+		cand_day = int(cand.day)
+		cand.erase("day")
 	var lead := float(cand.durs[0]) + float(cand.durs[1]) + float(cand.durs[2])
 	var total := lead + float(cand.durs[3]) + float(cand.durs[4])
 	var start := WorkdayClock.NIGHT_AT + 240.0 - lead
@@ -188,6 +192,34 @@ func _ensure_night_storm(from_day: int) -> void:
 	cand["night_guarantee"] = true
 	keep.append(cand)
 	days[cand_day] = {"visits": keep}
+
+
+## No thunderstorm to move: a new one on the first day from `from_day`
+## with no major storm within two days either side (the thunderstorm gap).
+func _add_night_thunderstorm(from_day: int) -> Dictionary:
+	var p := profile("thunderstorm")
+	for day in range(from_day, WorkdayClock.CONTRACT_DAYS + 1):
+		var clear := true
+		for d2 in range(maxi(1, day - 2), mini(WorkdayClock.CONTRACT_DAYS, day + 2) + 1):
+			for v in days[d2].visits:
+				if bool(v.major):
+					clear = false
+		if not clear:
+			continue
+		var r := RandomNumberGenerator.new()
+		r.seed = hash([seed_value, day, "night-storm"])
+		var durs: Array = []
+		for ph in PHASES:
+			var rng: Array = p.phases[ph]
+			durs.append(snappedf(r.randf_range(float(rng[0]), float(rng[1])), 0.1))
+		var cells: Array = p.get("cells", [])
+		var v := {"id": "W%02d-%d" % [day, (days[day].visits as Array).size() + 1], "profile": "thunderstorm", "start": 0.0, "durs": durs,
+			"end": 0.0, "quiet": false, "major": true,
+			"cell": [r.randf_range(float(cells[0]), float(cells[1])), r.randf_range(float(cells[2]), float(cells[3]))] if cells.size() == 4 else [],
+			"band": 0.0, "phase0": r.randf_range(0.0, TAU), "front": bool(p.get("front", false)), "lead": bool(p.get("lead", false)), "day": day}
+		(days[day].visits as Array).append(v)
+		return v
+	return {}
 
 
 func _weighted(r: RandomNumberGenerator, pairs: Array) -> int:

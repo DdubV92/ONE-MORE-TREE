@@ -97,16 +97,17 @@ float layer_desat(int l) {
 
 // Phase 23: rain-ring ripples in puddles (cells of 0.4 m, staggered phases).
 float ripple_h(vec2 p, float t) {
-	vec2 c = floor(p / 0.4);
+	// Raindrop rings: ~16 cm cells, rings grow to ~7 cm and fade in ~0.6 s.
+	vec2 c = floor(p / 0.16);
 	float h = 0.0;
 	for (int dx = -1; dx <= 1; dx++) {
 		for (int dy = -1; dy <= 1; dy++) {
 			vec2 cc = c + vec2(float(dx), float(dy));
 			float rnd = fract(sin(dot(cc, vec2(12.9898, 78.233))) * 43758.5453);
-			vec2 ctr = (cc + vec2(rnd, fract(rnd * 7.13))) * 0.4;
-			float ph = fract(t * 0.9 + rnd);
+			vec2 ctr = (cc + vec2(rnd, fract(rnd * 7.13))) * 0.16;
+			float ph = fract(t * 1.7 + rnd);
 			float d = length(p - ctr);
-			float ring = exp(-pow((d - ph * 0.3) * 38.0, 2.0)) * (1.0 - ph);
+			float ring = exp(-pow((d - ph * 0.07) * 110.0, 2.0)) * (1.0 - ph) * (1.0 - ph);
 			h += ring;
 		}
 	}
@@ -250,11 +251,11 @@ void fragment() {
 			alb = mix(alb, alb * 0.32, puddle);
 			rough = mix(rough, 0.03, puddle);
 			if (rain_amount > 0.05) {
-				float e = 0.03;
+				float e = 0.006;
 				float r0 = ripple_h(xz, world_time);
 				float rx = ripple_h(xz + vec2(e, 0.0), world_time);
 				float rz = ripple_h(xz + vec2(0.0, e), world_time);
-				nrm_ts.xy = mix(nrm_ts.xy, vec2(r0 - rx, r0 - rz) * 2.5 * rain_amount, puddle);
+				nrm_ts.xy = mix(nrm_ts.xy, vec2(r0 - rx, r0 - rz) * 1.2 * rain_amount, puddle);
 			} else {
 				nrm_ts.xy = mix(nrm_ts.xy, vec2(0.0), puddle);
 			}

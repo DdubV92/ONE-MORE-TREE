@@ -26,6 +26,7 @@ func _ready() -> void:
 	var only := OS.get_cmdline_user_args()
 	var p := Game.player as Player
 	var w: WeatherService = Game.weather
+	Settings.set_v("flash_reduction", "full")   # capture the real flash (the default is reduced)
 	var shots := ["severe_shore", "puddles", "wet_glass", "night_flash", "thunder_walker"]
 	for s in shots:
 		if not only.is_empty() and not s in only:
@@ -61,7 +62,10 @@ func _ready() -> void:
 				await _settle(120)
 				var near := {"id": "CAP-N", "visit": "capture", "day": 3, "t": w.weather_t, "kind": "near", "off": [-90.0, -220.0], "dist": 236.0, "power": 1.0, "strokes": 3, "seed": 7}
 				w.fire(near)
-				await _settle(4)
+				var g2 := 0
+				while w.flash < 0.6 and g2 < 120:
+					await get_tree().process_frame
+					g2 += 1
 			"thunder_walker":
 				if not await _walker(cs, p, w):
 					print("CAPTURE thunder_walker could not be staged")

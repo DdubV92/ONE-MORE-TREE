@@ -6887,11 +6887,11 @@ func _t_phase23_units() -> String:
 	# (and visits on a day never overlap after the night move).
 	var no_night := 0
 	for sd in range(1, 201):
-		var s2 := StormSchedule.for_seed(sd * 7919)
+		var sch_n := StormSchedule.for_seed(sd * 7919)
 		var has := false
 		for d in range(1, WorkdayClock.CONTRACT_DAYS + 1):
 			var prev_end := -INF
-			for v in s2.days[d].visits:
+			for v in sch_n.days[d].visits:
 				if str(v.id).ends_with("-0"):
 					continue
 				if float(v.start) < prev_end:

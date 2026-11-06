@@ -94,6 +94,8 @@ func _verify(fx: String) -> String:
 				if w.thunders > th0 + 1 and w.strikes_fired > sf0 + 1:
 					res = "ok: %s %s, %d strikes, %d thunders, gust %.2f, visibility %.2f" % [w.profile_name, w.phase_name, w.strikes_fired - sf0, w.thunders - th0, w.gust, w.visibility]
 			"storm_walker":
+				if get_tree().paused:
+					res = "paused after load (a card is open)"
 				var st: StormTerrors = Game.storm_terrors
 				var live := st.runs.filter(func(r: Dictionary) -> bool: return str(r.beat) == "sb02")
 				if not live.is_empty() and st._actors.has(live[0].id):
@@ -105,6 +107,11 @@ func _verify(fx: String) -> String:
 					res = "walker not restored from the save"
 		if res != "timeout":
 			break
+		if OS.has_environment("FX_DEBUG") and Engine.get_physics_frames() % 240 == 0:
+			var st_d: StormTerrors = Game.storm_terrors
+			print("FXDBG paused=%s now=%s active=%s tr=%s ne=%.1f phase=%d" % [get_tree().paused, str(w._clock_now()), cs.active, cs.test_route, cs.clock.night_exposure, cs.clock.phase()])
+			print("FXDBG t=%.1f hunt=%s/%s ht=%.1f w=%s/%s runs=%s rec=%s" % [cs.clock.t, Game.hunt.mode, Game.hunt.hunt_day, float(Game.hunt.t), w.profile_name, w.phase_name,
+				str(st_d.runs.map(func(r: Dictionary) -> String: return "%s:%s" % [r.beat, r.get("stage", "?")])), str(st_d.records.back() if not st_d.records.is_empty() else {}).left(160)])
 	Engine.time_scale = 1.0
 	if w:
 		w.set_override("")
@@ -217,6 +224,14 @@ func _storm_point(fx: String, cs: CampaignService, p: Player) -> String:
 			break
 	if pick.is_empty():
 		return "no %s visit in this seed" % str(want)
+	# Moved to a later day: the first-night rules card was read on night 1
+	# (acknowledged exactly as its button does), so nothing pauses the save.
+	cs.onboarding.night_rules_ack = true
+	if not cs.onboarding.done.has("dusk"):
+		cs.onboarding.done.append("dusk")
+	if Game.end_screen and Game.end_screen.visible and Game.end_screen.has_method("_resume"):
+		Game.end_screen._resume()
+	get_tree().paused = false
 	var d0 := float(pick.start) + float(pick.durs[0])
 	var t := d0 - 10.0                                   # subtle: just before onset
 	if fx == "storm_severe":
@@ -229,6 +244,8 @@ func _storm_point(fx: String, cs: CampaignService, p: Player) -> String:
 	p.teleport(camp + Vector3(0, 1.65, 0), camp + Vector3(0, 1.0, 30.0))
 	for k in 30:
 		await get_tree().physics_frame
+	if get_tree().paused:
+		return "the game paused at the fixture point (a card is open)"
 	if fx != "storm_walker":
 		return ""
 	if w.visit_id != str(pick.id) and w.profile_name != str(pick.profile):
