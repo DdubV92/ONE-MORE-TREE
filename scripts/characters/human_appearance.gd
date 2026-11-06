@@ -25,6 +25,8 @@ extends Resource
 @export var cheek := 1.0             # cheekbone fullness
 @export var ear := 1.0
 @export var accent := Color(0.95, 0.75, 0.15)   # small hi-vis/stitch accent
+## Phase 24 (reference art): a work hard hat over the hair (alpha 0 = none).
+@export var hard_hat := Color(0, 0, 0, 0)
 ## hair_style: 0 short crop, 1 beanie, 2 bun, 3 cap, 4 curly crop,
 ## 5 low ponytail, 6 buzz with side part. beard: 0 none, 1 stubble,
 ## 2 full, 3 moustache.
@@ -63,7 +65,19 @@ static func for_employee(emp_id: String, seed_v: int) -> HumanAppearance:
 			a.brow_tilt = 0.2; a.posture = 0.1; a.jaw = 1.02; a.nose = 1.0; a.cheek = 1.1; a.accent = Color(0.95, 0.55, 0.15)
 		_:
 			return from_seed(seed_v)
+	if emp_id == "EMP-01":
+		a.jacket = Color(0.66, 0.17, 0.12)     # the reference worker's red plaid
+	workwear(a, hash(emp_id))
 	return a
+
+
+## Phase 24 reference look: every crew member wears a plaid work shirt in
+## their own colour and a work hard hat (identity stays readable by colour,
+## build, beard and height).
+static func workwear(a: HumanAppearance, seed_v: int) -> void:
+	a.jacket_texture = "plaid"
+	const HATS := [Color(0.86, 0.64, 0.24), Color(0.92, 0.74, 0.2), Color(0.88, 0.5, 0.16), Color(0.9, 0.88, 0.82)]
+	a.hard_hat = HATS[absi(seed_v) % HATS.size()]
 
 
 static func presets() -> Array[HumanAppearance]:
@@ -143,4 +157,5 @@ static func from_seed(seed_v: int) -> HumanAppearance:
 	a.gloves = Color(0.55, 0.42, 0.25).lerp(Color(0.6, 0.55, 0.2), r.randf() * 0.6)
 	a.brow_tilt = r.randf_range(-0.2, 0.25)
 	a.posture = r.randf_range(-0.5, 0.45)
+	workwear(a, seed_v)
 	return a

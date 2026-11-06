@@ -213,7 +213,11 @@ func _build_head(head: Node3D, skin: Material, hair: Material, eye_white: Materi
 		var brow := CharMeshKit.blob(head, hair, Vector3(s * 0.028 * H, 0.087 * H, -0.06 * H), Vector3(0.034 * H, 0.008 * H, 0.012 * H), Vector3(0, 0, s * (-0.15 + a.brow_tilt)), "Brow")
 		brow.name = "Brow" + ("L" if s < 0 else "R")
 	CharMeshKit.blob(head, lip, Vector3(0, 0.028 * H, -0.064 * H), Vector3(0.032 * H, 0.007 * H, 0.012 * H), Vector3.ZERO, "Mouth")
-	match a.hair_style:
+	# Phase 24: under a hard hat, caps and beanies give way to plain hair.
+	var style := a.hair_style
+	if a.hard_hat.a > 0.0 and style in [1, 3, 4]:
+		style = 0 if style != 4 else 6
+	match style:
 		0:
 			CharMeshKit.blob(head, hair, Vector3(0, 0.095 * H, 0.008 * H), Vector3(0.132 * H, 0.085 * H, 0.138 * H), Vector3(-0.15, 0, 0), "Hair")
 		1:
@@ -245,6 +249,12 @@ func _build_head(head: Node3D, skin: Material, hair: Material, eye_white: Materi
 			var cap := CharMeshKit.mat(Color(0.75, 0.62, 0.3), 0.8)
 			CharMeshKit.blob(head, cap, Vector3(0, 0.103 * H, 0.004 * H), Vector3(0.134 * H, 0.072 * H, 0.138 * H), Vector3(-0.08, 0, 0), "Cap")
 			CharMeshKit.blob(head, cap, Vector3(0, 0.092 * H, -0.072 * H), Vector3(0.1 * H, 0.008 * H, 0.07 * H), Vector3(-0.1, 0, 0), "Brim")
+	if a.hard_hat.a > 0.0:
+		# Work hard hat: a domed shell with a ridge and an all-round brim.
+		var hat := CharMeshKit.mat(Color(a.hard_hat.r, a.hard_hat.g, a.hard_hat.b), 0.45)
+		CharMeshKit.blob(head, hat, Vector3(0, 0.118 * H, 0.004 * H), Vector3(0.148 * H, 0.082 * H, 0.158 * H), Vector3(-0.06, 0, 0), "HardHat")
+		CharMeshKit.blob(head, hat, Vector3(0, 0.152 * H, 0.004 * H), Vector3(0.026 * H, 0.03 * H, 0.15 * H), Vector3(-0.06, 0, 0), "HatRidge")
+		CharMeshKit.blob(head, hat, Vector3(0, 0.094 * H, -0.006 * H), Vector3(0.19 * H, 0.012 * H, 0.21 * H), Vector3(-0.08, 0, 0), "HatBrim")
 	if a.beard == 2:
 		CharMeshKit.blob(head, hair, Vector3(0, 0.018 * H, -0.038 * H), Vector3(0.106 * H, 0.072 * H, 0.08 * H), Vector3.ZERO, "Beard")
 		CharMeshKit.blob(head, hair, Vector3(0, 0.038 * H, -0.066 * H), Vector3(0.04 * H, 0.01 * H, 0.012 * H), Vector3.ZERO, "Moustache")

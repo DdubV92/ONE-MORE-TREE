@@ -13,9 +13,10 @@ const TROT_PERIOD := 0.42
 const WALK_PERIOD := 0.62
 const STANCE := 0.6
 
-@export var fur := Color(0.64, 0.5, 0.33)
-@export var saddle := Color(0.38, 0.28, 0.19)
-@export var cream := Color(0.92, 0.87, 0.78)
+# Phase 24 reference: a white dog with warm brown patches and dark saddle.
+@export var fur := Color(0.9, 0.86, 0.79)       # white coat
+@export var saddle := Color(0.56, 0.31, 0.13)   # warm brown saddle, ears, scruff
+@export var cream := Color(0.96, 0.94, 0.9)
 
 var rig: Node3D
 var bones := {}

@@ -62,7 +62,7 @@ var values := {
 	# Phase 11 art treatment (characters only; world rendering unchanged)
 	"character_style": "hd2d",      # hd2d (Phase 24 directional pixel sprites) / clean / pixel (Phase 11)
 	"character_style_strength": 0.7,
-	"world_style": "hd2d",          # Phase 24: hd2d (pixel-art world pass + diorama depth) / 3d
+	"world_style": "3d",            # Phase 24: 3d = painterly world, pixel actors (the reference); hd2d = optional pixel filter over the world
 	"world_pixel_rows": 320,        # art pixels per screen height in hd2d (240 chunky .. 480 fine)
 }
 
@@ -238,8 +238,8 @@ func sanitize() -> void:
 	if not values.character_style in ["hd2d", "clean", "pixel"]:
 		values.character_style = "hd2d"
 	values.character_style_strength = clampf(float(values.character_style_strength), 0.0, 1.0)
-	if not values.get("world_style", "hd2d") in ["hd2d", "3d"]:
-		values.world_style = "hd2d"
+	if not values.get("world_style", "3d") in ["hd2d", "3d"]:
+		values.world_style = "3d"
 	values.world_pixel_rows = clampi(int(values.get("world_pixel_rows", 320)), 180, 720)
 	if typeof(values.binds) != TYPE_DICTIONARY:
 		values.binds = {}

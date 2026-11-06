@@ -114,6 +114,18 @@ static func fabric(color: Color, texture: String = "denim_fabric") -> StandardMa
 	var key := "fab_%s_%s" % [color.to_html(), texture]
 	if _mat_cache.has(key):
 		return _mat_cache[key]
+	if texture == "plaid":
+		var pm := StandardMaterial3D.new()
+		pm.albedo_texture = plaid_texture()
+		pm.albedo_color = Color(minf(color.r * 1.7, 2.0), minf(color.g * 1.7, 2.0), minf(color.b * 1.7, 2.0))
+		pm.roughness = 0.92
+		pm.uv1_triplanar = true
+		pm.uv1_scale = Vector3.ONE * 8.0
+		pm.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+		_styled(pm)
+		pm.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+		_mat_cache[key] = pm
+		return pm
 	var base := "res://assets/polyhaven/textures/%s/%s" % [texture, texture]
 	var m := StandardMaterial3D.new()
 	# Phase 12: neutral-grey version of the scan (tools/bake_fabrics.py) tinted
@@ -157,3 +169,31 @@ static func blob(parent: Node3D, material: Material, pos: Vector3, size: Vector3
 
 static func limb(parent: Node3D, material: Material, r0: float, r1: float, length: float, name := "") -> MeshInstance3D:
 	return part(parent, tapered_capsule(r0, r1, length), material, Vector3.ZERO, Vector3.ONE, Vector3.ZERO, name)
+
+
+## Phase 24: a buffalo-check work-shirt plaid (grey; the garment colour
+## tints it): light field, darker bands both ways, near-black crossings,
+## and a thin bright pinstripe - reads as plaid on pixel sprites.
+static var _plaid: ImageTexture
+
+
+static func plaid_texture() -> ImageTexture:
+	if _plaid != null:
+		return _plaid
+	var n := 32
+	var img := Image.create(n, n, true, Image.FORMAT_RGB8)
+	for y in n:
+		for x in n:
+			var bx := (x % 16) < 8
+			var by := (y % 16) < 8
+			var v := 0.6
+			if bx and by:
+				v = 0.1
+			elif bx or by:
+				v = 0.32
+			if x % 16 == 12 or y % 16 == 12:
+				v = minf(v + 0.18, 0.75)
+			img.set_pixel(x, y, Color(v, v, v))
+	img.generate_mipmaps()
+	_plaid = ImageTexture.create_from_image(img)
+	return _plaid
