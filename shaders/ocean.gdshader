@@ -110,7 +110,7 @@ void fragment() {
 	float t = world_time;
 
 	// Detail normals: two scrolling layers following the wind.
-	vec2 wd = normalize(wind_dir);
+	vec2 wd = (length(wind_dir) > 1e-4 ? normalize(wind_dir) : vec2(0.8, 0.6));
 	vec3 na = texture(detail_normal_a, xz * 0.055 + wd * t * 0.018).rgb * 2.0 - 1.0;
 	vec3 nb = texture(detail_normal_b, xz * 0.13 - wd.yx * t * 0.026).rgb * 2.0 - 1.0;
 	vec2 slope = (na.xy + nb.xy * 0.6) * detail_strength * (0.5 + 0.5 * wind_strength);

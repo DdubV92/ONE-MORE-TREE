@@ -64,7 +64,7 @@ void fragment() {
 		foam += smoothstep(0.1, 0.4, v_rapid) * smoothstep(0.72, 0.9, fb) * 0.25;
 		foam += smoothstep(0.85, 1.0, v_edge) * smoothstep(0.65, 0.85, fa) * 0.18;
 	} else {
-		vec2 wd = normalize(wind_dir);
+		vec2 wd = (length(wind_dir) > 1e-4 ? normalize(wind_dir) : vec2(0.8, 0.6));
 		vec3 na = texture(detail_normal_a, xz * 0.09 + wd * t * 0.01).rgb * 2.0 - 1.0;
 		vec3 nb = texture(detail_normal_b, xz * 0.21 - wd.yx * t * 0.013).rgb * 2.0 - 1.0;
 		slope = (na.xy + nb.xy * 0.5) * 0.12 * (0.3 + wind_strength);

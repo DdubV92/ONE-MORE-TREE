@@ -12,7 +12,7 @@ void vertex() {
 	v_col = COLOR.rgb * mix(0.85, 1.12, INSTANCE_CUSTOM.r);
 	float h = max(INSTANCE_CUSTOM.b, 1.0);
 	float hn = clamp(VERTEX.y / max(h / max(length(MODEL_MATRIX[1].xyz), 0.01), 1.0), 0.0, 1.0);
-	vec2 wd = normalize(wind_dir);
+	vec2 wd = (length(wind_dir) > 1e-4 ? normalize(wind_dir) : vec2(0.8, 0.6));
 	VERTEX.xz += wd * hn * hn * 0.25 * wind_strength * sin(world_time * 0.9 + INSTANCE_CUSTOM.g * 6.28);
 }
 

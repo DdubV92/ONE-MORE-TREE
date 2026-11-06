@@ -22,6 +22,9 @@ uniform sampler2DArray normal_array : filter_linear_mipmap_anisotropic, repeat_e
 uniform sampler2DArray arm_array : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform float normal_strength = 0.9;
 uniform float caustic_strength = 1.0;
+// Phase 24 diagnostic (Preview tour > Terrain debug view): 0 off,
+// 1 invalid values (magenta), 2 layer ids, 3 texture detail level.
+global uniform int terrain_debug;
 
 varying vec3 v_wpos;
 varying vec3 v_wnormal;
@@ -184,6 +187,13 @@ void fragment() {
 	// Distance-aware sampling: close up two blended scales; mid distance a
 	// 4x larger scale (kills tiling and moire); far away the layer's average
 	// colour (top mip) so distant hills read as calm, varied colour fields.
+	// Phase 24 (white-patch fix): screen-space derivatives are taken here, in
+	// uniform control flow. Inside the per-layer loop below some pixels of a
+	// 2x2 quad skip a layer (`continue`), and derivatives there are undefined
+	// on real GPUs (garbage mip selection / invalid values where layer weights
+	// change, e.g. at forest-floor edges around trees).
+	vec2 dxz_x = dFdx(xz);
+	vec2 dxz_y = dFdy(xz);
 	float dist = length(v_wpos - CAMERA_POSITION_WORLD);
 	float far_k = smoothstep(30.0, 90.0, dist);
 	float vfar_k = smoothstep(140.0, 420.0, dist);
@@ -192,8 +202,8 @@ void fragment() {
 		if (wi < 0.02) continue;
 		float sc = layer_scale(i);
 		vec2 uv = xz / sc;
-		vec2 dx = dFdx(uv);
-		vec2 dy = dFdy(uv);
+		vec2 dx = dxz_x / sc;
+		vec2 dy = dxz_y / sc;
 		vec3 col = vec3(0.0);
 		if (vfar_k < 0.999) {
 			vec3 a1 = textureGrad(albedo_array, vec3(uv, float(i)), dx, dy).rgb;
@@ -276,7 +286,24 @@ void fragment() {
 		alb *= mix(1.0, 0.85, smoothstep(0.0, 2.0, depth));
 	}
 
-	ALBEDO = alb;
+	// Intentional fallback: never let an invalid value reach the G-buffer
+	// (it shows as a white/black blot that bloom spreads).
+	bool bad = any(isnan(alb)) || any(isinf(alb)) || any(isnan(nrm_ts)) || isnan(total);
+	if (any(isnan(alb)) || any(isinf(alb))) { alb = vec3(0.24, 0.21, 0.15); }
+	if (isnan(rough) || isinf(rough)) { rough = 0.8; }
+	if (any(isnan(nrm_ts)) || any(isinf(nrm_ts))) { nrm_ts = vec3(0.0, 0.0, 1.0); }
+	if (any(isnan(emit)) || any(isinf(emit))) { emit = vec3(0.0); }
+	if (terrain_debug == 1) {
+		alb = bad ? vec3(1.0, 0.0, 1.0) : vec3(dot(alb, vec3(0.33)));
+	} else if (terrain_debug == 2) {
+		int top = 0;
+		for (int i = 1; i < LAYERS; i++) { if (w[i] > w[top]) top = i; }
+		alb = vec3(fract(float(top) * 0.37), fract(float(top) * 0.61 + 0.2), fract(float(top) * 0.83 + 0.5));
+	} else if (terrain_debug == 3) {
+		float px = max(length(dxz_x), length(dxz_y));
+		alb = mix(vec3(0.0, 0.8, 0.2), vec3(1.0, 0.1, 0.0), clamp(log2(max(px, 1e-4) * 512.0) / 10.0, 0.0, 1.0));
+	}
+	ALBEDO = clamp(alb, vec3(0.0), vec3(1.0));
 	ROUGHNESS = rough;
 	SPECULAR = mix(0.4, 0.6, wet);
 	AO = clamp(arm.r, 0.4, 1.0);

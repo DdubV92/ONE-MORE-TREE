@@ -95,3 +95,4 @@ rain_amount={"type": "float", "value": 0.0}
 sun_clarity={"type": "float", "value": 1.0}
 storm_gust={"type": "float", "value": 0.0}
 sea_state={"type": "float", "value": 0.2}
+terrain_debug={"type": "int", "value": 0}

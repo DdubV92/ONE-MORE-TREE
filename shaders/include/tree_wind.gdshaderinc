@@ -3,7 +3,7 @@
 // neighbouring trees move together, not in lockstep.
 
 float gust_at(vec2 xz, float t) {
-	vec2 wd = normalize(wind_dir);
+	vec2 wd = (length(wind_dir) > 1e-4 ? normalize(wind_dir) : vec2(0.8, 0.6));
 	// Phase 23: stronger, faster gust bands in storms (a visible gust
 	// front rolling through canopy, brush and grass).
 	float travel = dot(xz, wd) * 0.035 - t * (0.55 + 0.6 * storm_gust);
@@ -17,7 +17,7 @@ vec3 tree_sway(vec3 local_pos, float tree_height, vec3 inst_origin, float phase,
 	float bend = hn * hn;
 	float g = gust_at(inst_origin.xz, t) * wind_strength;
 	float sway = sin(t * 0.9 + phase) * 0.35 + sin(t * 1.7 + phase * 1.3) * 0.15;
-	vec2 wd = normalize(wind_dir);
+	vec2 wd = (length(wind_dir) > 1e-4 ? normalize(wind_dir) : vec2(0.8, 0.6));
 	vec2 off = wd * (g * 0.55 + sway * g * 0.4) * bend * min(tree_height * 0.045, 0.9);
 	return vec3(off.x, -dot(off, off) * 0.3, off.y);
 }

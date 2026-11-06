@@ -8,6 +8,8 @@ const DEFAULT := ["day:coast_day", "day:shallows", "day:beach", "day:river", "da
 
 
 func _ready() -> void:
+	if OS.has_environment("TERRAIN_DEBUG"):
+		RenderingServer.global_shader_parameter_set("terrain_debug", int(OS.get_environment("TERRAIN_DEBUG")))
 	if OS.has_environment("TONEMAP"):
 		Settings.values.tonemapper = OS.get_environment("TONEMAP")
 	var args := OS.get_cmdline_user_args()

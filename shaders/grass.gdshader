@@ -19,7 +19,7 @@ void vertex() {
 	vec3 origin = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	float h = COLOR.r;
 	float g = gust_at(origin.xz, world_time) * wind_strength;
-	vec2 wd = normalize(wind_dir);
+	vec2 wd = (length(wind_dir) > 1e-4 ? normalize(wind_dir) : vec2(0.8, 0.6));
 	float wob = sin(world_time * 2.3 + origin.x * 0.7 + origin.z * 0.5 + COLOR.g * 6.0);
 	vec2 off = (wd * (g * 0.8 + wob * 0.35 * g) + vec2(wob, -wob) * 0.05) * sway * h * h;
 	VERTEX += (inverse(MODEL_MATRIX) * vec4(off.x, -dot(off, off) * 0.5, off.y, 0.0)).xyz;

@@ -118,6 +118,11 @@ const STATIONS23 := [
 	["5 Missed flash recording", "p23_missed"], ["6 Storm calendar (30 days)", "p23_calendar"],
 	["7 Back to scheduled weather", "p23_schedule"],
 ]
+## Phase 24: HD-2D playtest pass (terrain diagnostics, skill, sawmill, ...).
+const STATIONS24 := [
+	["1 Terrain debug view (cycle)", "p24_terrain_debug"],
+]
+static var _terrain_debug := 0
 static var _p20_i := 0
 static var _feed_day := 0
 static var _clear_i := 0
@@ -503,6 +508,10 @@ static func go(hud: Node, which: String) -> String:
 			return "Preview interruption %s: %s. Watch the states: settling -> interrupted -> resolving -> sleep available. You cannot be hurt in the camper; nothing forces you out." % [pick, str(si20.by_id[pick].title)]
 		"p23_subtle", "p23_severe", "p23_walker", "p23_flash", "p23_missed", "p23_calendar", "p23_schedule":
 			return _p23(hud, w, which)
+		"p24_terrain_debug":
+			_terrain_debug = (_terrain_debug + 1) % 4
+			RenderingServer.global_shader_parameter_set("terrain_debug", _terrain_debug)
+			return ["Terrain debug view off.", "Terrain debug: MAGENTA marks invalid shader values (the white-patch suspect). Grey = normal ground. If a white patch you saw shows magenta, the GPU produced invalid values there; if it stays white, something else is drawn over the ground.", "Terrain debug: colours = dominant ground layer. Hard speckle at a patch means a layer edge.", "Terrain debug: texture detail (green = sharp, red = coarse). A sudden red blot near a tree means a bad detail-level choice."][_terrain_debug]
 		"p21_app", "p21_verge", "p21_request", "p21_night":
 			var cs21: CampaignService = Game.campaign
 			if cs21 == null or cs21.pay == null:
