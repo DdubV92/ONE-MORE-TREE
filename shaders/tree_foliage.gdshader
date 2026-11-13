@@ -46,8 +46,10 @@ void fragment() {
 	if (c.a < alpha_cut) discard;
 	vec3 col = c.rgb * tint * mix(tint_variation, vec3(1.0), v_tint);
 	ALBEDO = col * mix(0.55, 1.0, v_ao);
-	ROUGHNESS = 0.8;
-	SPECULAR = 0.25;
+	// Roughness 0.04 with no specular marks foliage for the drawn-world
+	// pass (anime_ink): crowns get a silhouette line, not ink on every leaf.
+	ROUGHNESS = 0.04;
+	SPECULAR = 0.0;
 	BACKLIGHT = translucency * (0.5 + 0.5 * v_ao);
 	AO = v_ao;
 	AO_LIGHT_AFFECT = 0.4;

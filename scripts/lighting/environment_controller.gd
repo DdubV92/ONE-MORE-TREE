@@ -327,6 +327,10 @@ func _apply() -> void:
 	sky_mat.set_shader_parameter("stars", p.stars * lerpf(1.0, 1.25 - 0.75 * illum, nf))
 	sky_mat.set_shader_parameter("moon_phase", moon_phase)
 	sky_mat.set_shader_parameter("cloud_cover", p.cloud_cover)
+	# Drawn world: shaped two-tone clouds and crisper cast shadows.
+	var drawn := AnimePass.enabled()
+	sky_mat.set_shader_parameter("drawn", 1.0 if drawn else 0.0)
+	sun.shadow_blur = 0.55 if drawn else 1.2
 	sky_mat.set_shader_parameter("sun_dir", sd)
 	sky_mat.set_shader_parameter("moon_dir", md)
 	sky_mat.set_shader_parameter("cloud_offset", _cloud_offset)

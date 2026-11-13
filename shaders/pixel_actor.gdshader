@@ -80,5 +80,7 @@ void fragment() {
 	// the viewer) - the same frame as this camera-facing quad.
 	vec3 n_view = normalize(nrm.x * normalize((VIEW_MATRIX * vec4(v_view_right, 0.0)).xyz) + nrm.y * normalize((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz) + nrm.z * normalize(NORMAL));
 	NORMAL = n_view;
-	ROUGHNESS = 0.9;
+	// Roughness 0 is the marker the drawn-world pass (anime_ink) reads to
+	// leave pixel art exactly as drawn (specular is disabled here anyway).
+	ROUGHNESS = 0.0;
 }

@@ -15,6 +15,7 @@ uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 uniform vec3 moon_dir = vec3(0.0, -1.0, 0.0);
 uniform float sky_energy = 1.0;
 uniform float moon_phase = 0.5;   // 0 new, 0.5 full
+uniform float drawn = 0.0;        // Phase 24 drawn world: crisp two-tone clouds
 
 float h31(vec3 p) {
 	p = fract(p * 0.1031);
@@ -63,9 +64,19 @@ void sky() {
 	if (h > 0.0 && cloud_cover > 0.01) {
 		vec2 cp = d.xz / (h + 0.18) * 1.6 + vec2(cloud_offset, cloud_offset * 0.4);
 		float c = clouds(cp);
-		float cov = smoothstep(1.0 - cloud_cover, 1.0 - cloud_cover + 0.35, c) * smoothstep(0.0, 0.25, h);
+		float cov = smoothstep(1.0 - cloud_cover, 1.0 - cloud_cover + mix(0.35, 0.07, drawn), c) * smoothstep(0.0, 0.25, h);
 		vec3 lit = mix(horizon_color * 1.05, vec3(1.0), 0.55 * sun_vis) + halo_color * pow(max(sd, 0.0), 6.0) * 0.4 * sun_vis;
 		vec3 cloud_col = mix(lit, zenith_color * 0.6 + horizon_color * 0.3, 0.35 * c);
+		if (drawn > 0.5) {
+			// Drawn sky: shaped clouds with a clean edge, a lit side facing
+			// the sun and a cooler shaded body (two tones, soft step).
+			vec2 sdir = length(sun_dir.xz) > 1e-3 ? normalize(sun_dir.xz) : vec2(0.0, 1.0);
+			float c_sun = clouds(cp + sdir * 0.14);
+			float lit_k = smoothstep(-0.015, 0.03, c - c_sun);
+			vec3 shade = mix(zenith_color, horizon_color, 0.55) * 0.82 + halo_color * 0.06 * sun_vis;
+			cloud_col = mix(shade, lit, lit_k * (0.55 + 0.45 * sun_vis));
+			cov = min(cov * 1.12, 1.0);
+		}
 		col = mix(col, cloud_col, cov * 0.85);
 		cloud_occ = cov;
 	}

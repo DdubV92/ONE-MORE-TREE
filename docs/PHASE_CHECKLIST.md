@@ -15,7 +15,8 @@ Reference-cove handoff: [art/REFERENCE_COVE.md](art/REFERENCE_COVE.md). The rest
 | Uncut first-person walk recorded with Movie Maker (`tools/reference/walk_clip`) | ✅ | Software renderer (lavapipe) |
 | Review build look (owner's choice): pixel-art crew, dog and first-person axe enforced over a rich, full-resolution world; F8 compares the previous smooth characters | ✅ | `Settings.REVIEW_ENFORCE_HD2D`; pixel-world filter stays optional (Settings → World art style) |
 | Richness pass on the cove: rounded trailer with framed curtained windows, hitch, propane, wheel and vents; fence lanterns; denser ferns and berry bushes; stones and caustics in clear turquoise shallows; warmer golden-hour sky; warm sun spill on the camp | ✅ | Compared against the painting in `docs/art/` |
-| Real-GPU look of the cove | ⛔ not run | No GPU in the build container |
+| Drawn world (owner direction: anime drawing in 3D, art direction from the reference painting): ink contour lines, brush-painted colour fills, soft tone steps with cool shadows, shaped two-tone clouds, crisper shadows; pixel sprites left crisp; F8 compares the plain 3D render | ✅ | `AnimePass`, `anime_ink.gdshader`; see [art/DRAWN_WORLD.md](art/DRAWN_WORLD.md) |
+| Real-GPU look and frame cost of the drawn world | ⛔ not run | No GPU in the build container |
 
 ## Phase 23: Dynamic weather, storms and storm terrors (pack-21 prompt 21)
 

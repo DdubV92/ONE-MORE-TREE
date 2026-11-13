@@ -7459,6 +7459,14 @@ func _t_phase24_settings_migration() -> String:
 			err = "%s from v%d gave %s, expected %s" % [c[0], c[1], Settings.values.character_style, c[2]]
 			break
 	Settings.values.character_style = keep
+	# The drawn world replaced "3d" as the stored default (version 25).
+	var keep_w: String = Settings.values.world_style
+	for c in [["3d", 24, "anime"], ["hd2d", 24, "hd2d"], ["3d", 25, "3d"], ["anime", 0, "anime"]]:
+		Settings.values.world_style = c[0]
+		Settings.apply_migrations(int(c[1]))
+		if err == "" and str(Settings.values.world_style) != str(c[2]):
+			err = "world %s from v%d gave %s, expected %s" % [c[0], c[1], Settings.values.world_style, c[2]]
+	Settings.values.world_style = keep_w
 	return err
 
 

@@ -18,7 +18,9 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = v_col;
-	ROUGHNESS = 0.9;
-	SPECULAR = 0.2;
+	// Roughness 0.04 with no specular marks foliage for the drawn-world
+	// pass (anime_ink): crowns get a silhouette line, not ink on every leaf.
+	ROUGHNESS = 0.04;
+	SPECULAR = 0.0;
 	BACKLIGHT = v_col * 0.3;
 }

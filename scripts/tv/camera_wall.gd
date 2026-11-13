@@ -239,7 +239,7 @@ func _make_vp(size: Vector2i, w: World3D) -> SubViewport:
 	vp.positional_shadow_atlas_size = 0
 	add_child(vp)
 	var cam := Camera3D.new()
-	cam.cull_mask = 0xFFFFF & ~(1 << (LAYER_TV - 1)) & ~(1 << (LAYER_VIEWMODEL - 1))
+	cam.cull_mask = 0xFFFFF & ~(1 << (LAYER_TV - 1)) & ~(1 << (LAYER_VIEWMODEL - 1)) & ~(1 << (AnimePass.LAYER - 1))
 	cam.far = 900.0 if size.x < 800 else 1800.0
 	vp.add_child(cam)
 	return vp

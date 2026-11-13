@@ -62,7 +62,7 @@ var values := {
 	# Phase 11 art treatment (characters only; world rendering unchanged)
 	"character_style": "hd2d",      # hd2d (Phase 24 directional pixel sprites) / clean / pixel (Phase 11)
 	"character_style_strength": 0.7,
-	"world_style": "3d",            # Phase 24: 3d = rich detailed world (the owner's choice: pixel characters, painted world); hd2d = optional pixel-art world filter
+	"world_style": "anime",         # Phase 24: anime = drawn world (ink lines + painted tones, see AnimePass); 3d = plain render; hd2d = optional pixel-art world filter
 	"world_pixel_rows": 270,        # art pixels per screen height in hd2d (240 chunky .. 480 fine)
 }
 
@@ -207,7 +207,7 @@ func set_v(key: String, v: Variant, save := true) -> void:
 ## Settings file format version. save_settings() writes every value, so an
 ## old default stays pinned in the file after the default changes; bumping
 ## this lets apply_migrations() move such values once.
-const SETTINGS_VERSION := 24
+const SETTINGS_VERSION := 25
 
 
 func load_settings() -> void:
@@ -234,6 +234,10 @@ func apply_migrations(from_version: int) -> void:
 	# pick and stays, and a "clean" chosen after Phase 24 is respected.
 	if from_version < 24 and str(values.get("character_style", "")) == "clean":
 		values.character_style = "hd2d"
+	# The drawn world replaced "3d" as the default: files that still hold
+	# the old default move once. The pixel-world filter was always a pick.
+	if from_version < 25 and str(values.get("world_style", "")) == "3d":
+		values.world_style = "anime"
 
 
 func sanitize() -> void:
@@ -266,14 +270,15 @@ func sanitize() -> void:
 	if not values.character_style in ["hd2d", "clean", "pixel"]:
 		values.character_style = "hd2d"
 	values.character_style_strength = clampf(float(values.character_style_strength), 0.0, 1.0)
-	if not values.get("world_style", "3d") in ["hd2d", "3d"]:
-		values.world_style = "3d"
+	if not values.get("world_style", "anime") in ["anime", "hd2d", "3d"]:
+		values.world_style = "anime"
 	values.world_pixel_rows = clampi(int(values.get("world_pixel_rows", 270)), 180, 720)
-	# Review build: pixel-art characters (crew, dog, first-person axe) are
-	# enforced over a rich, full-resolution world - the owner's chosen look.
-	# F8 flips to the previous smooth characters for comparison (not saved).
+	# Review build: pixel-art characters (crew, dog, first-person axe) in a
+	# drawn, illustrated world are enforced - the owner's chosen direction.
+	# F8 flips the world to the plain 3D render for comparison (not saved).
 	if REVIEW_ENFORCE_HD2D:
-		values.character_style = "clean" if compare_old else "hd2d"
+		values.character_style = "hd2d"
+		values.world_style = "3d" if compare_old else "anime"
 	if typeof(values.binds) != TYPE_DICTIONARY:
 		values.binds = {}
 
@@ -374,5 +379,5 @@ func _unhandled_input(event: InputEvent) -> void:
 		apply()
 		var hud := get_tree().get_first_node_in_group("hud")
 		if hud and hud.has_method("show_message"):
-			hud.show_message("Comparing: previous smooth characters (F8 returns to pixel characters)" if compare_old else "Pixel-art characters (F8 compares the previous look)", 3.0)
+			hud.show_message("Comparing: plain 3D world (F8 returns to the drawn look)" if compare_old else "Drawn world (F8 compares the plain 3D look)", 3.0)
 		get_viewport().set_input_as_handled()

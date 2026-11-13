@@ -74,6 +74,8 @@ func _ready() -> void:
 	Game.feed = fd
 	environment = _timed("environment", func() -> Node: var e := EnvironmentController.new(); e.name = "Environment"; add_child(e); e.build(); return e)
 	Game.environment = environment
+	# Phase 24 drawn-world pass (ink + paint), on with world_style "anime".
+	add_child(AnimePass.new())
 	weather = WeatherService.new()
 	weather.name = "Weather"
 	add_child(weather)
