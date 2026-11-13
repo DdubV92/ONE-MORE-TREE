@@ -173,13 +173,15 @@ func _show_credits() -> void:
 func _new_campaign() -> void:
 	var v := _open_page("New Campaign")
 	_scroll_text(v, "\n".join([
-		"• Thirty workdays to clear the island: fell every original tree, remove its stump and deliver its logs to camp.",
-		"• 10,000 original trees. You start with five employees (six of you in all), small axes and $4,500. $100 per tree, paid as its logs are accepted at camp. Felling alone pays nothing.",
+		"• Thirty workdays to clear three marked lots of forest: fell every painted tree, remove its stump and deliver its logs to camp. Lot 1 (orange paint) is due by day 10, lot 2 (blue) by day 20, lot 3 (yellow) by day 30.",
+		"• The company pays an advance when a lot opens, the rest when it is finished, and a bonus if that is by its due day. Wood itself is paid at the sawmill, whichever tree it came from. Felling alone pays nothing.",
+		"• You start with five employees (six of you in all), small axes and $4,500. The crew fells painted trees only. The rest of the island's 10,000 trees are yours to cut for wood if you choose.",
 		"• Each employee is paid at least $100 per workday, settled when you sleep. Set pay in the Payroll app on the camper computer: workers paid less than they feel is fair grow unhappy and may quit. Unpaid wages lead to departures.",
 		"• Get home by night. The camper is always safe during the contract, and night only ends when you sleep.",
-		"• Content: night-time horror with sudden sounds and unsettling figures, and a dangerous outcome if the contract fails. Settings → Comfort has horror intensity and flash reduction.",
+		"• When the contract ends, something hunts you. Finish the lots and the company ship comes after three days of it. Fail and no ship is coming.",
+		"• Content: night-time horror with sudden sounds and unsettling figures, and a hunt that can kill. Settings → Comfort has horror intensity and flash reduction.",
 		"• A short first-day guide teaches the basics with real trees. You can skip it at any time (Journal → Help).",
-		"Standard campaign only (the 10,000-tree contract). Older saves keep the rules they were started with (e.g. the legacy 12,000-tree contract).",
+		"Standard campaign only (the three-lot contract). Older saves keep the rules they were started with (the whole-island contracts).",
 	]), 200)
 	v.add_child(UITheme.label("Choose a slot:", 18, UITheme.ACCENT))
 	var first: Button = null

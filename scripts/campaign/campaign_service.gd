@@ -15,6 +15,7 @@ signal report_ready(report: Dictionary)
 signal outcome_ready(state: String, outcome_id: String)
 signal rules_choice_needed()
 signal request_pause()
+signal lots_changed()          # Phase 25: the lot plan or a lot's status changed
 
 const RULE_SET := "contract_v1"
 
@@ -96,6 +97,7 @@ func setup() -> void:
 	clock.warning.connect(_on_warning)
 	clock.night_started.connect(func(_d: int) -> void: notice.emit("Night. Camp lamps and the camper are safe; sleep in the camper bed to end the day.", 6.0))
 	contract.outcome.connect(func(s: String, oid: String) -> void: outcome_ready.emit(s, oid))
+	contract.lot_completed.connect(_on_lot_completed)
 	contract.progress_changed.connect(_check_final_tree)
 	wallet.transaction.connect(_on_tx)
 	payroll.quit_due_to_arrears.connect(func(eid: String) -> void: notice.emit("%s has quit over unpaid wages." % payroll.employee(eid).get("name", eid), 6.0))
@@ -117,6 +119,38 @@ func setup() -> void:
 ## Phase 12: set when a loaded save names a different frozen island.
 var island_mismatch := false
 
+## Phase 25: the contract's lots, re-planned from the frozen island and the
+## campaign's ruleset (never saved; campaigns without lots keep null).
+func _plan_lots() -> void:
+	var def: Dictionary = ruleset.get("lots", {})
+	contract.lots = ContractLots.plan(def) if not def.is_empty() and not legacy else null
+	lots_changed.emit()
+
+
+func _on_lot_completed(k: int, on_time: bool) -> void:
+	var lot: Dictionary = contract.lots.lots[k]
+	var cents := int(lot.milestone_cents) + (int(lot.bonus_cents) if on_time else 0)
+	if cents > 0:
+		wallet.grant(cents, "milestone", "LOT-%d" % (k + 1), "Lot %d finished%s" % [k + 1, " on time (bonus included)" if on_time else ""])
+	var nxt := contract.lots.current_lot()
+	var adv := _pay_lot_advance(nxt) if nxt >= 0 else 0
+	var more := "The contract is complete." if nxt < 0 else "Lot %d is next: due by the end of day %d%s." % [nxt + 1, int(contract.lots.lots[nxt].due_day), (" (advance paid: $%s)" % Money.format_cents(adv)) if adv > 0 else ""]
+	notice.emit("LOT %d FINISHED%s. The company paid $%s. %s" % [k + 1, " ON TIME" if on_time else " (after its due day: no bonus)", Money.format_cents(cents), more], 9.0)
+	lots_changed.emit()
+
+
+## The advance the company pays when a lot opens (once per lot).
+func _pay_lot_advance(k: int) -> int:
+	var lots := contract.lots
+	if lots == null or k < 0 or k >= lots.lots.size() or lots.advanced.has(k):
+		return 0
+	lots.advanced[k] = true
+	var cents := int(lots.lots[k].get("advance_cents", 0))
+	if cents > 0:
+		wallet.grant(cents, "advance", "LOT-%d-ADV" % (k + 1), "Advance on lot %d" % (k + 1))
+	return cents
+
+
 ## Fresh timed campaign (30 days of 20 + 5 minutes; Phase 22 added 5 min).
 func new_campaign() -> void:
 	if Game.timber:
@@ -128,6 +162,7 @@ func new_campaign() -> void:
 	ruleset = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant)) if World.manifest_variant != "full" else Ruleset.get_def(Ruleset.STANDARD if Game.mode == Game.Mode.CAMPAIGN else Ruleset.LEGACY)
 	rule_set = str(ruleset.id)
 	legacy = false
+	_plan_lots()
 	clock.restore({"day": 1, "t": 0.0, "running": true, "deadline_enabled": true})
 	wallet.restore({})
 	wallet.grant(int(ruleset.start_cash_cents), "start", "NEW-CAMPAIGN", "Starting cash (%s, provisional)" % str(ruleset.label))
@@ -140,6 +175,7 @@ func new_campaign() -> void:
 	pay.init_new()                 # Phase 21: everyone starts at the $100 minimum
 	supplier.restore({})
 	contract.restore({"state": ContractService.ACTIVE})
+	_pay_lot_advance(0)            # Phase 25: the first lot's advance, on signing
 	if onboarding:
 		onboarding.start_new()
 	post_contract = false
@@ -532,6 +568,7 @@ func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 	reports.clear()
 	for r in campaign.get("reports", []):
 		reports.append(r)
+	_plan_lots()
 	contract.restore(campaign.get("contract", {"state": ContractService.LEGACY if legacy else ContractService.ACTIVE}))
 	if pre_phase3:
 		clock.restore({"day": 1, "t": 0.0, "running": false})

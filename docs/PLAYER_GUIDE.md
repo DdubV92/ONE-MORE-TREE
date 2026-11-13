@@ -11,6 +11,14 @@
 
 A short guide in the top-right walks you through real work: walk, read the contract in the Journal, meet the crew and Biscuit, find the delivery rack, fell a tree, cut it into logs, carry one and deliver it (the money you see is the real payment), check wages, then get the night rules and sleep. Each step finishes when you actually do the thing, in any order and with any keys. **Journal → Help & log** lets you skip a step, skip the guide (you then get a one-page rules summary) or replay the hints. Replaying never changes your trees or money.
 
+## The contract: three lots
+
+- You sign for three marked lots of forest just outside the camp's forest entrance. Lot 1 has 30 trees (orange paint, due by day 10), lot 2 has 35 (blue, day 20) and lot 3 has 40 (yellow, day 30).
+- A lot is finished when every painted tree is down, its stump is out and its logs are delivered. Journal → Contract shows each lot's progress.
+- The company pays an advance when a lot opens ($3,000, $3,500, $4,000), the same again when it is finished, and a bonus ($1,500, $2,000, $2,500) if that is by its due day.
+- Your crew fells painted trees only. You can cut any tree: wood from outside the lots is still paid at the sawmill, but it does not count toward the contract.
+- Finish all three lots by nightfall on day 30 and the contract is won.
+
 ## Money and crew
 
 - $100 per original tree, paid in shares as each log is accepted at the camp yard (the receiving cradle by the fire, or a log deck outside the north-east fence). If there's no room, the delivery is refused and not paid until there is. Felling alone pays nothing.

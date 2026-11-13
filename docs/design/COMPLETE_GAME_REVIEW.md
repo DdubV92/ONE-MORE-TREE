@@ -174,6 +174,7 @@ Phase 25 comes first because nothing else can be balanced, or even seen by a pla
 - **Worker risk before the hunt:** yes.
 - **Mystery:** never explain origins, and give each Terror a learnable rule.
 - Still open: fishing and foraging as comfort only (decision 5).
+- **Built so far (Phase 25):** the hunt and beacon rework, and contract lots (three lots, 105 trees, advances, milestones and bonuses) sized from a fresh crew measurement. Hauling fixes, seasons and the rest follow.
 
 ## 7a. The questions as they were asked
 

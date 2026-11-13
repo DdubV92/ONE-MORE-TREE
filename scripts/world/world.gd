@@ -111,6 +111,8 @@ func _ready() -> void:
 	campaign.name = "Campaign"
 	add_child(campaign)
 	Game.campaign = campaign
+	# Phase 25: paint bands on the contract's lot trees.
+	add_child(LotMarks.new())
 	crew = CrewService.new()
 	crew.name = "Crew"
 	add_child(crew)

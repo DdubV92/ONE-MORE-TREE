@@ -16,7 +16,12 @@ Plan and owner decisions: [design/COMPLETE_GAME_REVIEW.md](design/COMPLETE_GAME_
 | Status line, Help, save labels, dock console and rules cards follow the new rules | ✅ | |
 | Leftovers cleared: camp notice board, "Phase 4" notices, dock beacon text, failure card, Journal cutting figure (now the Woodcutting level), fire warns that burned logs earn nothing | ✅ | |
 | Storm weather for hunts longer than the planned calendar | ✅ | The hunt week's weather repeats |
-| **Winnable contract** (lots as chapters, hauling fixes, re-measured balance) | ⬜ next | Until this lands the contract still cannot be met, so every campaign takes the stranded path |
+| **Contract lots** (`ContractLots`, ruleset `lots_v1`): three lots of 30, 35 and 40 trees planned nearest-first from the forest entrance, due days 10, 20 and 30; the contract counts lot trees only | ✅ | Older campaigns keep the whole island |
+| Lot pay: advance when a lot opens, milestone when finished, bonus if on time; paid once each, saved | ✅ | $3,000/$3,500/$4,000 advance and milestone; $1,500/$2,000/$2,500 bonus |
+| Crew fells lot trees only, one lot at a time, and heads for what is left of it; paint bands on lot trees (`LotMarks`); Journal lot lines; locator finds lot work; New Campaign brief | ✅ | Paint band checked in a render |
+| Measured pace against the lots | 🟡 | One simulated workday, five hatchet workers, no boss: 3.9 tree-eq accepted, 5 lot trees felled. A multi-day run and human play are not done |
+| Wood income lags delivery: the same simulated day paid $48 through the mill | ❌ open | The mill is barely fed on auto roles; lot pay keeps wages covered meanwhile |
+| Hauling fixes (forest landings, river drive), seasons | ⬜ | Later in this plan |
 | Nights that grow; people who matter; an island worth walking; reasons to keep going; ship it | ⬜ | Phases 26 to 30 |
 | Seen on a real graphics card, played by a person | ⛔ not run | No GPU in the build container |
 

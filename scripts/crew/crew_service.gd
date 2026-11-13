@@ -776,8 +776,19 @@ func work_focus(w: Worker) -> Vector3:
 	var f: Array = w.emp.get("focus", [])
 	if f.size() == 3:
 		return Vector3(f[0], f[1], f[2])
+	# Phase 25: with contract lots, the crew heads for what is still
+	# standing in the lot being felled.
+	var lots := _lots()
+	if lots:
+		var k := lots.felling_lot(trees)
+		if k >= 0:
+			return lots.standing_centre(k, trees)
 	var o := World.camp_origin()
 	return Vector3(o.x, 0, o.z - CampLayout.FENCE_HALF.y - 25.0)
+
+
+func _lots() -> ContractLots:
+	return campaign.contract.lots if campaign and campaign.contract and campaign.contract.scope_override < 0 else null
 
 
 func search_radius(w: Worker) -> float:
@@ -923,6 +934,12 @@ func _try_fell(w: Worker) -> bool:
 	var key0 := PlacementValidator._key(focus.x, focus.z, 8.0)
 	var rings := int(ceil(rad / 8.0))
 	var seen := {}
+	# Phase 25: employees fell contract trees only, one lot at a time. (The
+	# boss may cut anything; wood from outside the lots still pays.)
+	var lots := _lots()
+	var lot_now := lots.felling_lot(trees) if lots else -1
+	if lots and lot_now < 0:
+		return false
 	for ring in rings + 1:
 		for dz in range(-ring, ring + 1):
 			for dx in range(-ring, ring + 1):
@@ -934,6 +951,8 @@ func _try_fell(w: Worker) -> bool:
 					seen[i] = true
 					var tid: int = World.trees.id[i]
 					if World.removed_trees.has(tid) or claims.has("tree:%d" % tid):
+						continue
+					if lots and lots.lot_of(tid) != lot_now:
 						continue
 					var st := trees.state_of(tid)
 					if st != TreeService.State.STANDING and st != TreeService.State.NOTCHED:

@@ -9,7 +9,10 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 - **The hunt now follows every contract.** Finish the job and the company ship comes after three days of it.
 - **Fail and nobody comes.** The hunt has no end date. The only way off is to repair the dead emergency beacon in the dock building: check it to see which three parts are missing and where the spares are, fetch them, fit them, switch it on and reach the ship at the next dawn.
 - **Missing a ship** no longer ends the game; it leaves you stranded with the beacon as the way out.
-- **Not yet fixed:** the contract itself still cannot be met at the crew's real pace. That is the next piece of work, so for now every campaign ends on the stranded path.
+- **The contract can now be won.** New campaigns sign for three marked lots of forest by the camp entrance (30, 35 and 40 trees, due by days 10, 20 and 30) instead of the whole island. Lot trees wear a band of paint: orange, blue, yellow. The company pays an advance when a lot opens, the rest when it is finished and a bonus if it is on time. Journal → Contract shows each lot.
+- Your crew fells painted trees only. You can cut anything; other trees still pay as wood at the sawmill.
+- Older saves keep the whole-island contract they started with. Start a New Campaign to play the lots.
+- **Known weak spot:** money from wood arrives slowly unless someone keeps the sawmill fed.
 
 ## New in the Phase 24 trial build
 

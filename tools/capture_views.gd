@@ -133,6 +133,24 @@ func _ready() -> void:
 					vps[vp_name] = {"pos": CampLayout.world(Vector3(0, 0, 4)) + Vector3(0, 1.65, 0), "look": off.heli.global_position}
 			for k in 3:
 				await get_tree().process_frame
+		# Phase 25: "lots" = the camp's forest entrance with a new campaign's
+		# contract lots painted on the trees.
+		if vp_name == "lots":
+			if world.campaign.contract.lots == null:
+				world.campaign.spawn_crew = false
+				world.campaign.new_campaign()
+				for k in 4:
+					await get_tree().process_frame
+			var cl: ContractLots = world.campaign.contract.lots
+			var ti: int = world.vegetation.tree_index_by_id[int((cl.lots[0].trees as PackedInt32Array)[0])]
+			var tp := World.tree_position(ti)
+			var back := (cl.focus - tp)
+			back.y = 0.0
+			back = back.normalized() if back.length() > 0.5 else Vector3(0, 0, 1)
+			var eye := tp + back * 9.0 + Vector3(0, 1.7, 0)
+			eye.y = World.height_at(eye.x, eye.z) + 1.7
+			vps[vp_name] = {"pos": eye, "look": tp + Vector3(0, 1.4, 0) - back * 12.0}
+			print("LOTS marks: ", world.get_node("LotMarks").multimesh.visible_instance_count if world.get_node("LotMarks").multimesh else -1)
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue

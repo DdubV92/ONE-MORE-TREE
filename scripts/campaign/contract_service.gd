@@ -21,6 +21,9 @@ extends Node
 
 signal outcome(state: String, outcome_id: String)
 signal progress_changed()
+## Phase 25: a contract lot was finished (every tree down, stump out, logs
+## accepted). Emitted once per lot; the campaign pays the milestone.
+signal lot_completed(lot: int, on_time: bool)
 
 const ACTIVE := "CONTRACT_ACTIVE"
 const FULFILLED := "CONTRACT_FULFILLED"
@@ -37,6 +40,9 @@ var _closing := false
 ## Development fixture only (tests / Day & Economy Test): limits the
 ## contract to this many original trees. -1 = the whole manifest. Never saved.
 var scope_override := -1
+## Phase 25: the lots this contract covers (null = the whole island, as in
+## campaigns started before lots existed).
+var lots: ContractLots = null
 
 
 func setup(tr: TreeService, tm: TimberService, c: WorkdayClock) -> void:
@@ -63,12 +69,17 @@ func is_closed() -> bool:
 ## Progress counters (cheap: only modified trees and timber are walked).
 func counts() -> Dictionary:
 	var total := World.native_total() if scope_override < 0 else scope_override
+	var lot_scope := lots != null and scope_override < 0
+	if lot_scope:
+		total = lots.total()
 	var not_standing := 0
 	var trunks := 0
 	var stumps := 0
 	var unbucked_mte := 0
 	if trees:
 		for id in trees.records:
+			if lot_scope and not lots.has(int(id)):
+				continue          # wood from outside the lots pays, but is not the contract
 			var st := int(trees.records[id].state)
 			if st >= TreeService.State.FALLING:
 				not_standing += 1
@@ -83,6 +94,8 @@ func counts() -> Dictionary:
 	var backlog := 0
 	if timber:
 		for id in timber.records:
+			if lot_scope and not lots.has(int(id)):
+				continue
 			for s in timber.records[id].segments:
 				if int(s.state) < TimberService.Seg.ACCEPTED_QUEUED:
 					undelivered += int(s.mte)
@@ -108,8 +121,21 @@ func evaluate() -> void:
 	progress_changed.emit()
 	if not accepting():
 		return
+	_check_lots()
 	if complete(counts()):
 		_commit(FULFILLED)
+
+
+func _check_lots() -> void:
+	if lots == null or scope_override >= 0:
+		return
+	for k in lots.lots.size():
+		if lots.done.has(k) or not lots.lot_complete(k, trees, timber):
+			continue
+		var day := clock.day if clock else 0
+		var on_time := day <= int(lots.lots[k].due_day)
+		lots.done[k] = {"day": day, "on_time": on_time}
+		lot_completed.emit(k, on_time)
 
 
 func _close_deadline() -> void:
@@ -138,7 +164,10 @@ func required_per_day() -> float:
 
 
 func capture() -> Dictionary:
-	return {"state": state, "outcome_id": outcome_id, "outcome_at": outcome_at}
+	var d := {"state": state, "outcome_id": outcome_id, "outcome_at": outcome_at}
+	if lots:
+		d["lots"] = lots.capture()
+	return d
 
 
 func restore(d: Dictionary) -> void:
@@ -148,3 +177,5 @@ func restore(d: Dictionary) -> void:
 	outcome_id = str(d.get("outcome_id", ""))
 	outcome_at = d.get("outcome_at", {})
 	_closing = is_closed()
+	if lots:
+		lots.restore(d.get("lots", {}))

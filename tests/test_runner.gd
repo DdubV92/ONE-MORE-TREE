@@ -26,6 +26,11 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P25"):
+		await _run_async("phase 25 contract lots", _t_phase25_lots_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P24"):
 		_run("phase 24 woodcutting units", _t_phase24_wc_units)
 		_run("phase 24 mill ledger units", _t_phase24_mill_units)
@@ -212,6 +217,7 @@ func _ready() -> void:
 	_run("phase 24 woodcutting units: curve thresholds, carry-over, cap 33,125 XP / 6,625 hits, duplicate hit ignored, saw strikes, boss/worker parity, one formula (damage + action rate), Strongman capacity, save mid-progression", _t_phase24_wc_units)
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
+	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island", _t_phase25_lots_world)
 	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
 	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
@@ -7320,6 +7326,7 @@ func _p23_checks(world: IslandWorld) -> String:
 # ===================================================== Phase 24: Woodcutting
 
 var p24_report := {}
+var p25_report := {}
 
 
 func _t_phase24_wc_units() -> String:
@@ -7512,6 +7519,138 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 
 
 # ======================================================== Phase 24: sawmill
+
+func _t_phase25_lots_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for ch in get_children():
+		if ch is IslandWorld:
+			ch.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or not world.systems_ready) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := _p25_lot_checks()
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p25_lot_checks() -> String:
+	var cs: CampaignService = Game.campaign
+	cs.new_campaign()
+	var lots: ContractLots = cs.contract.lots
+	if str(cs.ruleset.id) != Ruleset.STANDARD or lots == null:
+		return "a new standard campaign has no contract lots (ruleset %s)" % str(cs.ruleset.id)
+	var sizes := [30, 35, 40]
+	if lots.lots.size() != 3 or lots.total() != 105:
+		return "expected three lots of 105 trees, got %d lots / %d trees" % [lots.lots.size(), lots.total()]
+	# Signing pays lot 1's advance on top of the starting cash, once.
+	if cs.wallet.cash != int(cs.ruleset.start_cash_cents) + 300000 or not lots.advanced.has(0) or cs._pay_lot_advance(0) != 0:
+		return "lot 1's advance was not paid once on signing (cash $%s)" % Money.format_cents(cs.wallet.cash)
+	var idx: Dictionary = Game.vegetation.get("tree_index_by_id")
+	var o := World.camp_origin()
+	var far0 := 0.0
+	var near2 := INF
+	for k in 3:
+		var ids: PackedInt32Array = lots.lots[k].trees
+		if ids.size() != sizes[k]:
+			return "lot %d has %d trees, expected %d" % [k + 1, ids.size(), sizes[k]]
+		for id in ids:
+			var i := int(idx[id])
+			var x: float = World.trees.x[i]
+			var z: float = World.trees.z[i]
+			if absf(x - o.x) < CampLayout.FENCE_HALF.x and absf(z - o.z) < CampLayout.FENCE_HALF.y:
+				return "lot tree %d is inside the camp fence" % id
+			var d := Vector2(x - lots.focus.x, z - lots.focus.z).length()
+			if k == 0:
+				far0 = maxf(far0, d)
+			if k == 2:
+				near2 = minf(near2, d)
+	if far0 > near2 + 0.01:
+		return "lots are not nearest-first (lot 1 reaches %.1f m, lot 3 starts at %.1f m)" % [far0, near2]
+	p25_report = {"lot1_reach_m": snappedf(far0, 0.1), "lot3_from_m": snappedf(near2, 0.1)}
+	var again := ContractLots.plan(cs.ruleset.lots)
+	for k in 3:
+		if (again.lots[k].trees as PackedInt32Array) != (lots.lots[k].trees as PackedInt32Array):
+			return "the lot plan is not deterministic"
+	# The contract is the lots, not the island.
+	var c := cs.contract.counts()
+	if int(c.total_trees) != 105 or int(c.standing) != 105:
+		return "contract counts %d of %d, expected 105 of 105" % [int(c.standing), int(c.total_trees)]
+	var outside := -1
+	for i in World.tree_count():
+		var id := int(World.trees.id[i])
+		if not lots.has(id) and not World.excluded_trees.has(id):
+			outside = id
+			break
+	Game.trees.record(outside).state = TreeService.State.SECTIONED
+	c = cs.contract.counts()
+	if int(c.standing) != 105 or int(c.stumps) != 0:
+		return "a tree outside the lots changed the contract (standing %d, stumps %d)" % [int(c.standing), int(c.stumps)]
+	Game.trees.records.erase(outside)
+	# The crew works the lot being felled.
+	if Game.crew._lots() != lots or lots.felling_lot(Game.trees) != 0:
+		return "the crew does not see lot 1 as the lot to fell"
+	var w: Worker = Game.crew.workers.values()[0] if not Game.crew.workers.is_empty() else null
+	if w != null:
+		w.emp.erase("focus")
+		if Game.crew.work_focus(w).distance_to(lots.standing_centre(0, Game.trees)) > 0.5:
+			return "the crew's default work focus is not the lot's standing trees"
+	# Lot 1 finished on day 1: milestone + bonus, once.
+	var got := []
+	cs.contract.lot_completed.connect(func(k: int, on_time: bool) -> void: got.append([k, on_time]))
+	var cash0: int = cs.wallet.cash
+	for id in (lots.lots[0].trees as PackedInt32Array):
+		Game.trees.record(id).state = TreeService.State.DISPOSED
+	cs.contract.evaluate()
+	cs.contract.evaluate()
+	if got.size() != 1 or got[0] != [0, true]:
+		return "lot 1 completion not reported exactly once, on time (%s)" % str(got)
+	# Milestone + on-time bonus, plus lot 2's advance as it opens.
+	if cs.wallet.cash - cash0 != 300000 + 150000 + 350000 or not lots.advanced.has(1):
+		return "lot 1 paid $%s, expected $8,000.00 (milestone, bonus, lot 2 advance)" % Money.format_cents(cs.wallet.cash - cash0)
+	if lots.felling_lot(Game.trees) != 1 or lots.current_lot() != 1:
+		return "lot 2 did not become the lot to work"
+	# Lot 2 finished after its due day: milestone only.
+	cs.clock.day = 25
+	cash0 = cs.wallet.cash
+	for id in (lots.lots[1].trees as PackedInt32Array):
+		Game.trees.record(id).state = TreeService.State.DISPOSED
+	cs.contract.evaluate()
+	if got.size() != 2 or got[1] != [1, false] or cs.wallet.cash - cash0 != 350000 + 400000:
+		return "a late lot should pay its milestone without the bonus (paid $%s)" % Money.format_cents(cs.wallet.cash - cash0)
+	# Saved and restored: what happened is kept, the plan is rebuilt.
+	var snap := cs.contract.capture()
+	cs._plan_lots()
+	cs.contract.restore(snap)
+	lots = cs.contract.lots
+	if lots.done.size() != 2 or not bool(lots.done[0].on_time) or bool(lots.done[1].on_time) or int(lots.done[1].day) != 25 or lots.advanced.size() != 3:
+		return "finished lots were not kept across a save (%s)" % str(lots.done)
+	if cs.contract.state != ContractService.ACTIVE:
+		return "the contract closed before the last lot"
+	# The last lot fulfils the contract.
+	for id in (lots.lots[2].trees as PackedInt32Array):
+		Game.trees.record(id).state = TreeService.State.DISPOSED
+	cs.contract.evaluate()
+	if cs.contract.state != ContractService.FULFILLED:
+		return "finishing every lot did not fulfil the contract (%s)" % cs.contract.state
+	# Campaigns started before lots keep the whole island.
+	cs.ruleset = Ruleset.get_def(Ruleset.PHASE13)
+	cs._plan_lots()
+	if cs.contract.lots != null or int(cs.contract.counts().total_trees) != World.native_total():
+		return "an older ruleset did not keep the whole-island contract"
+	Game.trees.clear_all()
+	return ""
+
 
 func _t_phase24_settings_migration() -> String:
 	var keep: String = Settings.values.character_style

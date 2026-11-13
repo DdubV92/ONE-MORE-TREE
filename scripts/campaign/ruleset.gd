@@ -31,7 +31,13 @@ extends RefCounted
 ##   (target section length x1.5, fewer and larger pieces per tree, same
 ##   $100 and tree-equivalent per tree), early handcart and dragging, the
 ##   receiving yard and log decks. expanded_v2 saves (Phase 12) keep plan v1.
-const STANDARD := "expanded_v3"
+## lots_v1 (Phase 25, new standard campaigns): expanded_v3's island and
+##   handling, but the contract is three marked LOTS growing out from the
+##   camp's forest entrance, sized to what a crew really delivers, each
+##   with a due day, a milestone payment and an on-time bonus. The rest of
+##   the island still pays as wood. Earlier campaigns keep their terms.
+const STANDARD := "lots_v1"
+const PHASE13 := "expanded_v3"
 const PHASE12 := "expanded_v2"
 const PHASE10 := "expanded_v1"
 const LEGACY := "contract_v1"
@@ -41,6 +47,18 @@ const DEFS := {
 		"id": "contract_v1", "label": "Legacy 12,000-tree contract", "native_total": 12000, "variant": "full",
 		"starting_employees": 2, "start_cash_cents": 200000, "section_length_mult": 1.0, "section_length_active": true,
 		"tool_model": "per_contact_v1", "chainsaw": false, "version": 1,
+	},
+	"lots_v1": {
+		"id": "lots_v1", "label": "Standard contract: three marked lots (island r2)", "native_total": 10000, "variant": "island_r2",
+		"starting_employees": 5, "start_cash_cents": 450000, "section_length_mult": 1.5, "section_length_active": true, "section_plan": "v2",
+		"tool_model": "per_contact_v1", "chainsaw": false, "version": 4,
+		# Sized from the measured crew pace (Phase 25 sim: five hatchet
+		# workers accept about 3.6 tree-equivalents a day): 105 trees in 30
+		# days is 3.5 a day. Each lot pays an advance when it opens, the
+		# rest when it is finished and a bonus when that is by its due day,
+		# so wages can be met even while wood waits for the mill.
+		"lots": {"sizes": [30, 35, 40], "due": [10, 20, 30], "advance_cents": [300000, 350000, 400000],
+			"milestone_cents": [300000, 350000, 400000], "bonus_cents": [150000, 200000, 250000]},
 	},
 	"expanded_v3": {
 		"id": "expanded_v3", "label": "Standard 10,000-tree contract (island r2, logging yard)", "native_total": 10000, "variant": "island_r2",

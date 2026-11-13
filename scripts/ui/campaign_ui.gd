@@ -201,6 +201,8 @@ func _journal_contract() -> Control:
 	_text(v, "Rules: %s." % str(svc.ruleset.get("label", "?")), 14, UITheme.MUTED)
 	_text(v, "Island clearance for the theme park. %s" % ("LEGACY continuation: no deadline." if svc.legacy else "Day %d of %d. The contract closes at the END of day 30's dusk (when night falls on day 30). Sleep is not required for it to close." % [clk.day, WorkdayClock.CONTRACT_DAYS]))
 	_text(v, "State: %s%s" % [svc.contract.state.replace("_", " ").to_lower(), ("  (" + svc.contract.outcome_id + ")") if svc.contract.outcome_id != "" else ""])
+	for line in lots_summary():
+		_text(v, line, 15, UITheme.ACCENT if line.begins_with("LOT") else UITheme.TEXT)
 	_text(v, "Original trees standing: %d of %d\nFelled trunks still to buck: %d\nStumps to remove: %d\nTimber not yet delivered: %.2f tree-equivalents\nDelivered and accepted: %.2f tree-equivalents (paid; stocked in the yard: %.2f, on the fire's loading pile: %.2f)\nFinal ash cleanup: %s (not required for the contract)" % [c.standing, c.total_trees, c.trunks_to_buck, c.stumps, c.undelivered_mte / 1000.0, c.accepted_mte / 1000.0, (Game.yard.stock_mte() / 1000.0) if Game.yard and is_instance_valid(Game.yard) else 0.0, c.backlog_mte / 1000.0, "clean" if c.ash_clean else "yard stock and fire still to burn"])
 	var where := _log_whereabouts()
 	_text(v, "Undelivered logs: %d on the ground · %d in hands (yours or crew) · %d loaded in trucks. Burning now in the pit: %d (already paid)." % [where.world, where.carried, where.truck, where.burning])
@@ -479,6 +481,26 @@ func show_rules_choice() -> void:
 		close_panel()
 		svc.choose_legacy(true), 560))
 	_open(p)
+
+
+## Phase 25: one line per contract lot (empty for whole-island contracts).
+func lots_summary() -> PackedStringArray:
+	var out := PackedStringArray()
+	var lots: ContractLots = svc.contract.lots
+	if lots == null:
+		return out
+	var paint := ["orange", "blue", "yellow", "pink"]
+	out.append("LOTS: the contract is the painted trees below. Everything else on the island is optional wood.")
+	for k in lots.lots.size():
+		var lot: Dictionary = lots.lots[k]
+		var c := lots.lot_counts(k, Game.trees, Game.timber)
+		var pay := "$%s on completion, +$%s if finished by day %d (advance $%s %s)" % [Money.format_cents(int(lot.milestone_cents)), Money.format_cents(int(lot.bonus_cents)), int(lot.due_day), Money.format_cents(int(lot.get("advance_cents", 0))), "paid" if lots.advanced.has(k) else "when it opens"]
+		if lots.done.has(k):
+			var d: Dictionary = lots.done[k]
+			out.append("Lot %d (%s paint): FINISHED on day %d%s." % [k + 1, paint[k % paint.size()], int(d.day), ", on time" if bool(d.on_time) else ", late (no bonus)"])
+		else:
+			out.append("Lot %d (%s paint, %d trees): %d standing, %d stumps, %.2f tree-eq of logs to deliver. Pays %s." % [k + 1, paint[k % paint.size()], int(c.trees), int(c.standing), int(c.stumps), int(c.undelivered_mte) / 1000.0, pay])
+	return out
 
 
 func show_outcome(state: String, outcome_id: String) -> void:

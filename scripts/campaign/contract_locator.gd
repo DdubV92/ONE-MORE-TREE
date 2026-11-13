@@ -10,9 +10,12 @@ static func nearest(from: Vector3) -> Dictionary:
 	var trees: TreeService = Game.trees
 	var best := INF
 	var best_p := Vector3.INF
+	var lots: ContractLots = Game.campaign.contract.lots if Game.campaign and Game.campaign.contract else null
 	for i in World.tree_count():
 		var id := int(World.trees.id[i])
 		if World.removed_trees.has(id):
+			continue
+		if lots and not lots.has(id):
 			continue
 		if trees and trees.records.has(id) and int(trees.records[id].state) >= TreeService.State.FALLING:
 			continue
@@ -28,6 +31,8 @@ static func nearest(from: Vector3) -> Dictionary:
 		best = INF
 		best_p = Vector3.INF
 		for id in trees.records:
+			if lots and not lots.has(int(id)):
+				continue
 			if int(trees.records[id].state) == TreeService.State.SECTIONED and idx.has(int(id)):
 				var p2 := World.tree_position(int(idx[int(id)]))
 				var d2 := p2.distance_squared_to(from)

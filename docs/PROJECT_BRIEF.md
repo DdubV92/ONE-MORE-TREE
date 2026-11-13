@@ -47,6 +47,15 @@
   - The night clock may reach its terminal time while an independent awake timer keeps pacing.
   - Menus pause both.
 
+## The contract (Phase 25)
+
+- New campaigns sign for **three marked lots** of forest growing out from the camp's forest entrance: 30, 35 and 40 trees (105 in all), due by days 10, 20 and 30. Lot trees wear a band of company paint (orange, blue, yellow).
+- The contract is fulfilled when every lot tree is down, its stump is out and its logs are accepted. The crew fells painted trees only, one lot at a time.
+- The company pays an advance when a lot opens, a milestone when it is finished and a bonus if that is by its due day. Wood from any tree is still paid at the sawmill.
+- The sizes come from measurement: five hatchet workers accept about 3.6 to 3.9 tree-equivalents a day, and 105 trees in 30 days is 3.5 a day.
+- The rest of the island's 10,000 trees are optional wood. Clearing more of it across later seasons is planned (Phase 29).
+- Campaigns started before this keep their whole-island contract.
+
 ## Leaving the island (owner decisions, 13 November 2026)
 
 - **The hunt follows every contract, won or lost.** It is how the player leaves the island.
