@@ -47,6 +47,11 @@ static func campaign_level() -> float:
 	return clampf(DAY_WEIGHT * day_part + CUT_WEIGHT * cut_share(), 0.0, 1.0)
 
 
+## The island-wide level, honouring the review override (no local share).
+static func island_level() -> float:
+	return clampf(override_level, 0.0, 1.0) if override_level >= 0.0 else campaign_level()
+
+
 ## Share of the contract's trees that are no longer standing (lots), or a
 ## capped count for campaigns that signed for the whole island.
 static func cut_share() -> float:

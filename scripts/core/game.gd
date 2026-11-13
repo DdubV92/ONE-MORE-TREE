@@ -51,6 +51,7 @@ var director: TerrorDirector
 var threat: NightThreat
 var dog_rescue: DogRescue
 var hunt: HuntService
+var night_kit: NightKit              # Phase 26 work lamps and the camp breaker
 var end_screen: EndScreen
 ## Current objective line shown by the HUD ("" = none).
 var objective := ""

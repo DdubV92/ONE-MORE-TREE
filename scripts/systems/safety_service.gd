@@ -7,10 +7,13 @@ extends Node
 ##     least one crew member (Phase 4): safe.
 ##  3. Outdoors: safe only inside the camp fence AND within the safe radius of
 ##     a designated, working camp lamp.
+##  4. Anywhere on land: within the safe radius of a designated, working
+##     battery work lamp the boss has set down (Phase 26). Its `working`
+##     flag is authoritative (battery left and switched on), not its glow.
 ## Nothing else grants safety: flashlights, the fire, moonlight, distant glow,
 ## screen brightness or arbitrary emissive objects are never consulted.
 
-enum Reason { UNSAFE, CAMPER_INTERIOR, CAMP_LAMP, CABIN_OCCUPIED }
+enum Reason { UNSAFE, CAMPER_INTERIOR, CAMP_LAMP, CABIN_OCCUPIED, WORK_LAMP }
 
 
 func query(p: Vector3) -> Dictionary:
@@ -27,6 +30,12 @@ func query(p: Vector3) -> Dictionary:
 				var d := Vector2(p.x - l.global_position.x, p.z - l.global_position.z).length()
 				if d <= l.safe_radius:
 					return {"safe": true, "reason": Reason.CAMP_LAMP, "lamp": l.name}
+	for lamp in get_tree().get_nodes_in_group("work_lamps"):
+		var wl := lamp as WorkLamp
+		if wl and wl.working:
+			var dw := Vector2(p.x - wl.global_position.x, p.z - wl.global_position.z).length()
+			if dw <= wl.safe_radius and absf(p.y - wl.global_position.y) < 6.0:
+				return {"safe": true, "reason": Reason.WORK_LAMP, "lamp": wl.name}
 	return {"safe": false, "reason": Reason.UNSAFE}
 
 

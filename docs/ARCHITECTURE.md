@@ -107,7 +107,10 @@ Meters. **+Y up, +X east, +Z south (toward the landing beach), −Z north (fores
 `SafetyService.query(point)`:
 1. Inside the camper interior zone (`always_safe`) → **safe** (`CAMPER_INTERIOR`), regardless of lamps.
 2. Otherwise, inside the camp fence **and** within `safe_radius` of a `CampLamp` whose `working == true` → **safe** (`CAMP_LAMP`).
-3. Everything else → **unsafe**.
+3. Otherwise, anywhere on land, within `safe_radius` of a `WorkLamp` whose `working == true` (set down by the boss, switched on by nightfall, battery left) → **safe** (`WORK_LAMP`, Phase 26).
+4. Everything else → **unsafe**.
+
+The camp breaker (Phase 26) acts only through rule 2: when it trips, every `CampLamp.working` is false until it is reset.
 
 The fire, flashlights, moonlight, emissive objects and screen brightness are never consulted. Phase 4: the worker cabin and its extension count as protected while a crew member is inside (occupied); otherwise a lamp covers the porch and most of the interior. Lamp positions and radii live in `CampLayout.LAMPS`. Tests cover the camper with every lamp broken, the yard with lamps broken and working, the forest and the beach.
 

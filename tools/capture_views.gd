@@ -151,6 +151,22 @@ func _ready() -> void:
 			eye.y = World.height_at(eye.x, eye.z) + 1.7
 			vps[vp_name] = {"pos": eye, "look": tp + Vector3(0, 1.4, 0) - back * 12.0}
 			print("LOTS marks: ", world.get_node("LotMarks").multimesh.visible_instance_count if world.get_node("LotMarks").multimesh else -1)
+		# Phase 26: "worklamp" = a battery work lamp set down outside the
+		# forest entrance; "lamplocker" = the lamp locker and the breaker.
+		if vp_name == "worklamp" and Game.night_kit:
+			var fo := CampLayout.world(Vector3(0.5, 0.0, -CampLayout.FENCE_HALF.y - 7.0))
+			fo.y = World.height_at(fo.x, fo.z)
+			if Game.night_kit.lamps.is_empty():
+				Game.night_kit._spawn(fo, NightKit.BATTERY_S)
+			var eye2 := CampLayout.world(Vector3(-1.5, 0.0, -CampLayout.FENCE_HALF.y + 2.5))
+			eye2.y = World.height_at(eye2.x, eye2.z) + 1.7
+			vps[vp_name] = {"pos": eye2, "look": fo + Vector3(0, 1.0, 0)}
+		if vp_name == "lamplocker" and Game.night_kit:
+			if Game.night_kit.stock == 0:
+				Game.night_kit.stock = 2
+				Game.night_kit.changed.emit()
+			var lk := CampLayout.world((NightKit.LOCKER_POS + NightKit.BREAKER_POS) * 0.5)
+			vps[vp_name] = {"pos": lk + Vector3(-1.2, 1.65, -4.6), "look": lk + Vector3(0.6, 1.1, 0)}
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue

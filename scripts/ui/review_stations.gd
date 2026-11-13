@@ -129,6 +129,8 @@ const STATIONS26 := [
 	["1 Night pressure (cycle)", "p26_pressure"],
 	["2 Meet something (rule shown)", "p26_meet"],
 	["3 Field notes (sample entries)", "p26_notes"],
+	["4 Work lamps at night", "p26_lamps"],
+	["5 The breaker goes", "p26_breaker"],
 ]
 static var _p26_level := -1
 static var _p26_family := 0
@@ -519,7 +521,7 @@ static func go(hud: Node, which: String) -> String:
 			return "Preview interruption %s: %s. Watch the states: settling -> interrupted -> resolving -> sleep available. You cannot be hurt in the camper; nothing forces you out." % [pick, str(si20.by_id[pick].title)]
 		"p23_subtle", "p23_severe", "p23_walker", "p23_flash", "p23_missed", "p23_calendar", "p23_schedule":
 			return _p23(hud, w, which)
-		"p26_pressure", "p26_meet", "p26_notes":
+		"p26_pressure", "p26_meet", "p26_notes", "p26_lamps", "p26_breaker":
 			return _p26(hud, w, which)
 		"p24_ref_match", "p24_ref_fp":
 			if w and w.has_method("teleport_to"):
@@ -988,6 +990,30 @@ static func _p26(hud: Node, w: IslandWorld, which: String) -> String:
 					Game.campaign_ui.close_panel()
 				Game.campaign_ui.toggle_journal(99)
 			return "Field notes with sample entries at each stage: met, a hint, and what works. The last Journal tab. (Preview: never saved.)"
+		"p26_lamps":
+			var kit: NightKit = Game.night_kit
+			if kit == null:
+				return ""
+			kit.sync_issue()
+			if kit.stock <= 0 and not kit.held:
+				kit.stock += 2
+				kit.issued += 2
+				kit.changed.emit()
+			cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+			var lk := CampLayout.world(NightKit.LOCKER_POS)
+			(Game.player as Player).teleport(lk + Vector3(0.0, 1.65, -2.2), lk + Vector3(0.0, 1.2, 0.0))
+			return "Night at the lamp locker (yellow, beside the parcel locker). Take a lamp (%s), walk out through the forest entrance and set it down (%s). Its pool is a real safe place for about seven minutes: watch the exposure warnings stop inside it and return outside it. It flickers for the last minute. (Preview: never saved.)" % [Keys.label("interact"), Keys.label("set_down")]
+		"p26_breaker":
+			var kit2: NightKit = Game.night_kit
+			if kit2 == null:
+				return ""
+			cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+			if kit2.breaker_tripped:
+				kit2.reset_breaker(null)
+			w.teleport_to("camp")
+			kit2.trip_day = cs.clock.day
+			kit2._trip_at = kit2._awake + 3.0
+			return "In a few seconds the camp's pole lamps flicker and go out: their pools stop being safe. Reset the breaker on the post beside the lockers (green/red light), or get inside the camper. In play this only happens on a disturbed island, at most once a night. (Preview: never saved.)"
 	return ""
 
 

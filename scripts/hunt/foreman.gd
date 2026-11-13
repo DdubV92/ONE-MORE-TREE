@@ -195,7 +195,7 @@ func _sight_range(who: Node3D) -> float:
 		"dusk": r = 28.0
 	if Game.safety:
 		var q: Dictionary = Game.safety.query(who.global_position + Vector3(0, 1.0, 0))
-		if int(q.get("reason", 0)) == SafetyService.Reason.CAMP_LAMP:
+		if int(q.get("reason", 0)) in [SafetyService.Reason.CAMP_LAMP, SafetyService.Reason.WORK_LAMP]:
 			r = maxf(r, 30.0)      # lamp pools make people easy to see
 	# Phase 23: rain and storm haze cut how far it can see (never below
 	# half; lamp pools still read). Concealment, not a hidden position.

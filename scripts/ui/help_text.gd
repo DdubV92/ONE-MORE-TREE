@@ -39,9 +39,12 @@ static func night() -> String:
 	return "\n".join([
 		"Each workday is 20 minutes of daylight and 5 minutes of dusk. Dusk is your return warning: you get messages at the start of dusk, halfway, and one minute before night.",
 		"Your crew and the dog head for shelter at dusk. Workers who think you are ignoring the time may leave in a truck without you.",
-		"At night during the contract, the camper is always safe, even with the door open. An occupied cabin is safe, and so are the pools of the working camp lamps. Moonlight, a flashlight or a screen's glow are NOT protection.",
+		"At night during the contract, the camper is always safe, even with the door open. An occupied cabin is safe, and so are the pools of the working camp lamps and of a battery work lamp you have set down. Moonlight, a flashlight or a screen's glow are NOT protection.",
 		"Staying awake makes the night more uneasy. Being outside a safe place at night can end the attempt (you can reload the morning checkpoint).",
 		"The nights grow. An untouched island is quiet; each day, and above all each tree cut, wakes more of what lives here, and cleared ground is where it is worst.",
+		"Work lamps: the company sends two with each lot (the yellow lamp locker beside the parcel locker). Take one, carry it out and set it down (%s). At night its light is a real safe place for about seven minutes; it flickers for the last minute, then goes dark. Lamps recharge in daylight. With a lamp set down you can work by it at night." % Keys.label("set_down"),
+		"Night shift: the red switch on the sawmill's board post runs the saw at night while you stay at the mill. What it cuts then pays 50% more. It is loud, so more of the night comes to look, and the mill is not a safe place: set a work lamp down first.",
+		"The breaker: on a disturbed night the camp's pole lamps can flicker and go out, and their pools stop being safe. Reset the breaker on the post beside the lockers, or get inside the camper. Battery work lamps keep working.",
 		"Everything you meet out there keeps to one rule. Journal -> Field notes fills in as you meet each thing and work out what makes it leave. The right answer buys you time outside; the wrong one costs you some. No rule makes you safe: only the camper, an occupied cabin and the working lamps do.",
 		"Night only ends when you sleep in your bed. Waiting does not bring morning. Whatever you think you see through a window does not make the camper unsafe.",
 	])

@@ -10,7 +10,10 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 - **Every Terror keeps to one rule.** Keep looking at one and it leaves; look at another and it comes closer. Some follow movement, some stay by the water, some only exist on the monitor. Work out what makes each one leave.
 - **Journal → Field notes** (last tab) fills in as you meet things: what it was, then a hint, then what works. It never says what they are.
 - **The right answer buys you time outside** at night and that thing leaves you alone until morning. The wrong one costs you time.
-- **To try it without playing 20 days:** Preview (title screen) → Tab → "Phase 26 nights that grow": cycle the night pressure, meet something with its rule shown, and open Field notes with sample entries.
+- **Work lamps.** The company sends two battery lamps with each lot (yellow locker beside the parcel locker). Carry one out and set it down: at night its light is a real safe place for about seven minutes, so you can work by it. They recharge in daylight.
+- **Night shift.** A red switch at the sawmill runs the saw at night while you stay there, for 50% more per pallet. It is loud, and the mill is not a safe place: bring a lamp.
+- **The breaker.** On a disturbed island the camp's pole lamps can flicker and fail during the night. Reset the breaker beside the lockers, or get inside.
+- **To try it without playing 20 days:** Preview (title screen) → Tab → "Phase 26 nights that grow": cycle the night pressure, meet something with its rule shown, open Field notes with sample entries, take a work lamp out at night, and watch the breaker go.
 
 ## New: leaving the island (Phase 25, first part)
 

@@ -33,6 +33,7 @@ const TRANSFER_S := 3.0             # rack -> infeed rollers between logs
 const RACK_CAP := 10                # pieces waiting on the feed rack
 const BOARD_L := 18                 # one 2.4 m x 150 x 50 board, litres
 const LEDGER_KEEP := 400
+const NIGHT_RATE_BP := 5000         # Phase 26: +50 % on litres cut during a night shift
 
 signal pallet_completed(rec: Dictionary)
 
@@ -57,6 +58,14 @@ var scrap_l := 0                    # offcuts + sawdust (fuel for the pit)
 var pieces_milled := 0
 var records: Array = []             # [{id, day, t, payable_l, prepaid_l, cents, tx}]
 var pay_fn := Callable()            # (pallet_id, cents, note) -> tx id
+## Phase 26 night shift. `bonus_bp` (basis points) is set by the Sawmill
+## while the boss runs the line at night; litres cut then are paid that much
+## more when their pallet is finished (pro rata, integer cents).
+var night_shift := false            # switched on for tonight (saved)
+var bonus_bp := 0                   # not saved: the Sawmill sets it each frame
+var fill_bonus_l := 0               # payable litres of the open pallet cut at the rush rate
+var night_pallets := 0
+var night_bonus_total := 0          # cents paid as rush premium
 
 
 func _init(input_l := PALLET_INPUT_L, cents := PALLET_PAY_CENTS) -> void:
@@ -156,6 +165,8 @@ func _commit(litres: int, prepaid: bool, ev: Array, t_now: float) -> void:
 			fill_prepaid += take
 		else:
 			fill_payable += take
+			if bonus_bp > 0:
+				fill_bonus_l += take
 		left -= take
 		if open_fill() >= pallet_l:
 			ev.append(_complete(t_now))
@@ -166,9 +177,19 @@ func _complete(t_now: float) -> Dictionary:
 	var num := fill_payable * pay_cents + cents_carry
 	var cents := num / pallet_l
 	cents_carry = num % pallet_l
+	# Phase 26: the rush premium on the litres cut during a night shift.
+	var bonus := 0
+	if fill_bonus_l > 0:
+		bonus = (fill_bonus_l * pay_cents * maxi(bonus_bp, NIGHT_RATE_BP)) / (pallet_l * 10000)
+		cents += bonus
+		night_pallets += 1
+		night_bonus_total += bonus
 	var rec := {"id": "PAL-%06d" % counter, "day": day, "t": snappedf(t_now, 0.01), "payable_l": fill_payable, "prepaid_l": fill_prepaid, "cents": cents, "tx": ""}
+	if bonus > 0:
+		rec["rush_cents"] = bonus
 	fill_payable = 0
 	fill_prepaid = 0
+	fill_bonus_l = 0
 	pallets_total += 1
 	pallets_today += 1
 	if pallets_today > CampLayout.MILL_DISPLAY_CAP:
@@ -176,7 +197,7 @@ func _complete(t_now: float) -> Dictionary:
 	earnings_today += cents
 	earnings_total += cents
 	if pay_fn.is_valid() and cents > 0:
-		rec.tx = str(pay_fn.call(str(rec.id), cents, "Lumber pallet %s (%d L of logs)" % [rec.id, pallet_l]))
+		rec.tx = str(pay_fn.call(str(rec.id), cents, "Lumber pallet %s (%d L of logs%s)" % [rec.id, pallet_l, ", night shift rush rate" if bonus > 0 else ""]))
 	records.append(rec)
 	if records.size() > LEDGER_KEEP:
 		records.pop_front()
@@ -223,7 +244,8 @@ func capture() -> Dictionary:
 	return {"version": 1, "pallet_l": pallet_l, "pay_cents": pay_cents, "rack": rack.duplicate(true), "job": j, "transfer_t": snappedf(transfer_t, 0.01),
 		"fill_payable": fill_payable, "fill_prepaid": fill_prepaid, "cents_carry": cents_carry, "counter": counter, "day": day,
 		"pallets_total": pallets_total, "pallets_today": pallets_today, "overflow_today": overflow_today, "earnings_today": earnings_today, "earnings_total": earnings_total,
-		"accepted_l": accepted_l, "processed_l": processed_l, "scrap_l": scrap_l, "pieces_milled": pieces_milled, "records": records.duplicate(true)}
+		"accepted_l": accepted_l, "processed_l": processed_l, "scrap_l": scrap_l, "pieces_milled": pieces_milled, "records": records.duplicate(true),
+		"night_shift": night_shift, "fill_bonus_l": fill_bonus_l, "night_pallets": night_pallets, "night_bonus_total": night_bonus_total}
 
 
 func restore(d: Dictionary) -> void:
@@ -247,3 +269,7 @@ func restore(d: Dictionary) -> void:
 	scrap_l = int(d.get("scrap_l", 0))
 	pieces_milled = int(d.get("pieces_milled", 0))
 	records = (d.get("records", []) as Array).duplicate(true)
+	night_shift = bool(d.get("night_shift", false))
+	fill_bonus_l = clampi(int(d.get("fill_bonus_l", 0)), 0, fill_payable)
+	night_pallets = int(d.get("night_pallets", 0))
+	night_bonus_total = int(d.get("night_bonus_total", 0))

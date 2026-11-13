@@ -159,6 +159,10 @@ func new_campaign() -> void:
 		Game.feed.restore({})      # Phase 17: a new contract starts with an unread internet
 	if Game.rest:
 		Game.rest.restore({})      # Phase 16: a new contract starts well rested
+	if Game.night_kit:
+		Game.night_kit.reset()     # Phase 26: lamps are issued again with the lots
+	if Game.director:
+		Game.director.notes.restore({})    # Phase 26: an empty notebook
 	ruleset = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant)) if World.manifest_variant != "full" else Ruleset.get_def(Ruleset.STANDARD if Game.mode == Game.Mode.CAMPAIGN else Ruleset.LEGACY)
 	rule_set = str(ruleset.id)
 	legacy = false

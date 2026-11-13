@@ -224,8 +224,8 @@ func _ready() -> void:
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
 	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
-	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded", _t_phase26_units)
-	await _run_async("phase 26 nights world: a new campaign's nights are quiet (sound and atmosphere only, no sharp beats), pressure grows with the day and the cutting and is worst on cleared ground, each rule kind ends an encounter quietly, a right answer fills the notes and eases the exposure, the not-your-dog never calls beside the real dog, notes survive a save", _t_phase26_world)
+	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded; night-shift rush rate is pro rata, in whole cents, saved mid-pallet", _t_phase26_units)
+	await _run_async("phase 26 nights world: a new campaign's nights are quiet (sound and atmosphere only, no sharp beats), pressure grows with the day and the cutting and is worst on cleared ground, each rule kind ends an encounter quietly, a right answer fills the notes and eases the exposure, the not-your-dog never calls beside the real dog, notes survive a save; work lamps: issued with the lots, carried and set down, a real safe pool at night only (SafetyService rule 4), battery drains and recharges, saved; the breaker: flicker warning, pole-lamp pools unsafe until reset, the camper unaffected, only on a disturbed island; the sawmill night shift runs only at night with the boss at the mill and ends at dawn", _t_phase26_world)
 	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
 	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
@@ -7622,6 +7622,34 @@ func _t_phase26_units() -> String:
 	if nt.exposure > 0.95:
 		return "provoking something could commit a catch by itself"
 	nt.free()
+	# Night-shift rush rate: +50 % on the litres cut at night, pro rata, in
+	# whole cents, kept across a save in the middle of a pallet.
+	var paid := []
+	var ml := MillLedger.new(1000, 4800)
+	ml.pay_fn = func(id: String, cents: int, _note: String) -> String:
+		paid.append(cents)
+		return "TX-" + id
+	ml.enqueue("A", 600, false)
+	ml.step(60.0, true)
+	if ml.open_fill() != 600 or ml.fill_bonus_l != 0:
+		return "day litres were counted at the rush rate"
+	ml.bonus_bp = MillLedger.NIGHT_RATE_BP
+	ml.enqueue("B", 200, false)
+	ml.step(60.0, true)
+	var ml2 := MillLedger.new(1000, 4800)
+	ml2.restore(JSON.parse_string(JSON.stringify(ml.capture())))
+	ml2.pay_fn = ml.pay_fn
+	if ml2.fill_bonus_l != 200 or ml2.open_fill() != 800:
+		return "rush litres in an open pallet were not saved (%d)" % ml2.fill_bonus_l
+	ml2.bonus_bp = 0                     # the pallet is finished after dawn
+	ml2.enqueue("C", 200, false)
+	ml2.step(60.0, true)
+	if paid != [4800 + 480] or ml2.night_pallets != 1 or ml2.night_bonus_total != 480 or ml2.fill_bonus_l != 0:
+		return "a pallet with 200 night litres should pay $48.00 + $4.80 (paid %s)" % str(paid)
+	ml2.enqueue("D", 1000, false)
+	ml2.step(120.0, true)
+	if paid != [5280, 4800]:
+		return "a daylight pallet was paid a rush premium (%s)" % str(paid)
 	return ""
 
 
@@ -7860,6 +7888,183 @@ func _p26_checks(world: IslandWorld) -> String:
 		return "answered families were not released in the morning"
 	Game.threat.exposure = 0.0
 	Game.trees.clear_all()
+	return await _p26_kit_checks(world)
+
+
+## Phase 26: work lamps (SafetyService rule 4) and the camp breaker.
+func _p26_kit_checks(world: IslandWorld) -> String:
+	var cs: CampaignService = Game.campaign
+	var kit: NightKit = Game.night_kit
+	var p := Game.player as Player
+	if kit == null or kit.locker == null or kit.breaker == null:
+		return "no night kit, lamp locker or breaker in the world"
+	cs.new_campaign()
+	if cs.onboarding:
+		cs.onboarding.night_rules_ack = true
+	kit.sync_issue()
+	if kit.issued != 2 or kit.stock != 2 or not kit.lamps.is_empty():
+		return "a new campaign should have two work lamps in the locker (%d issued, %d in stock)" % [kit.issued, kit.stock]
+	kit.sync_issue()
+	if kit.stock != 2:
+		return "lamps were issued twice"
+	# Take one, carry it out past the fence, set it down.
+	kit.use_locker(p)
+	if not kit.held or kit.stock != 1:
+		return "taking a lamp from the locker did not put it in hand"
+	if p.axe.input_allowed():
+		return "the axe can be used with a lamp in hand"
+	world.teleport_to("forest")
+	for k in 20:
+		await get_tree().physics_frame
+	if CampLayout.inside_fence(p.global_position):
+		return "the forest bookmark is inside the camp fence"
+	if not kit.set_down(p) or kit.held or kit.lamps.size() != 1:
+		return "the lamp could not be set down in the forest (%s)" % str(kit.place_spot(p))
+	var l: WorkLamp = kit.lamps[0]
+	var at := l.global_position + Vector3(0, 1.0, 0)
+	# By day it is only a lamp.
+	l.tick(0.1, false, false)
+	if l.working or Game.safety.query(at).safe:
+		return "a work lamp is a safe place in daylight"
+	# At night its pool is safe (rule 4), and only its pool.
+	cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+	if not kit.contract_night():
+		return "the fixture is not a contract night"
+	kit._process(0.1)
+	var q: Dictionary = Game.safety.query(at)
+	if not l.working or not bool(q.safe) or int(q.reason) != SafetyService.Reason.WORK_LAMP:
+		return "a lit work lamp's pool is not safe at night (%s)" % str(q)
+	if Game.safety.query(at + Vector3(NightKit.SAFE_RADIUS + 1.0, 0, 0)).safe:
+		return "the work lamp's safety reaches beyond its pool"
+	if TerrorPlacement.forbidden(l.global_position) == false:
+		return "something could be placed inside a work lamp's pool"
+	# The battery: drains at night, flickers low, then it is dark and unsafe.
+	var c0 := l.charge
+	kit._process(1.0)
+	if l.charge >= c0:
+		return "the battery does not drain at night"
+	l.charge = 0.4
+	kit._process(1.0)
+	if l.working or Game.safety.query(at).safe:
+		return "a flat work lamp is still safe"
+	# Saved where it stands, with its charge; the held one too.
+	l.charge = 123.0
+	kit.use_locker(p)
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(kit.capture()))
+	kit.restore(snap)
+	if kit.lamps.size() != 1 or absf(kit.lamps[0].charge - 123.0) > 0.2 or not kit.held or kit.stock != 0 or kit.issued != 2:
+		return "work lamps did not survive a save (%s)" % str(kit.capture())
+	if kit.lamps[0].global_position.distance_to(at - Vector3(0, 1.0, 0)) > 0.05:
+		return "a saved work lamp moved"
+	if kit.total() != 2:
+		return "lamps were lost or duplicated (%d)" % kit.total()
+	# Daylight recharges; picking one up takes its pool away.
+	kit.use_locker(p)            # put the held one back
+	cs.clock.restore({"day": cs.clock.day + 1, "t": 300.0, "running": true, "deadline_enabled": true})
+	for k in 30:
+		await get_tree().physics_frame
+	kit._process(0.1)
+	l = kit.lamps[0]
+	if kit.contract_night():
+		return "the fixture did not return to daylight"
+	if Game.environment and float(Game.environment.lamp_level) <= 0.05 and absf(l.charge - NightKit.BATTERY_S) > 0.01:
+		return "daylight did not recharge the lamp (%.0f s)" % l.charge
+	p.global_position = l.global_position + Vector3(0.8, 0.0, 0.0)
+	kit.pick_up(l, p)
+	await get_tree().process_frame
+	if not kit.held or not kit.lamps.is_empty() or not get_tree().get_nodes_in_group("work_lamps").is_empty():
+		return "picking a lamp up left it standing"
+	kit.use_locker(p)
+	if kit.stock != 2 or kit.held:
+		return "the lamp did not go back in the locker"
+	# The second lot brings two more.
+	var lots: ContractLots = cs.contract.lots
+	for id in (lots.lots[0].trees as PackedInt32Array):
+		Game.trees.record(id).state = TreeService.State.DISPOSED
+	cs.contract.evaluate()
+	kit.sync_issue()
+	if kit.issued != 4 or kit.stock != 4:
+		return "opening lot 2 did not send two more lamps (%d issued)" % kit.issued
+	Game.trees.clear_all()
+	# The breaker: pole lamps out means their pools are not safe.
+	var lamp_pt := CampLayout.world(CampLayout.LAMPS[6].pos + Vector3(2.0, 1.0, 0.0))
+	cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+	if not Game.safety.query(lamp_pt).safe:
+		return "the centre camp lamp's pool is not safe in this fixture"
+	kit.trip_breaker()
+	if not kit.breaker_tripped or Game.safety.query(lamp_pt).safe:
+		return "a tripped breaker left the camp lamp pools safe"
+	world.teleport_to("camper")
+	for k in 20:
+		await get_tree().physics_frame
+	if not Game.safety.is_player_safe():
+		return "the camper stopped being safe when the breaker tripped"
+	var snap2: Dictionary = JSON.parse_string(JSON.stringify(kit.capture()))
+	kit.restore(snap2)
+	if not kit.breaker_tripped or Game.safety.query(lamp_pt).safe:
+		return "a tripped breaker was not saved"
+	kit.reset_breaker(p)
+	if kit.breaker_tripped or not Game.safety.query(lamp_pt).safe:
+		return "resetting the breaker did not bring the pools back"
+	# It only goes on a disturbed island, with a flicker first.
+	NightPressure.override_level = 0.1
+	for d in 40:
+		kit.trip_day = -1
+		kit._breaker_step(0.1)
+		if kit._trip_at >= 0.0:
+			return "the breaker was scheduled to fail on a quiet island"
+	NightPressure.override_level = 0.8
+	var armed := false
+	for d in 40:
+		kit.trip_day = -1
+		kit._breaker_step(0.1)
+		if kit._trip_at >= 0.0:
+			armed = true
+			break
+	if not armed:
+		return "the breaker never fails on a hostile island"
+	kit._awake = kit._trip_at + 0.1
+	kit._breaker_step(0.1)
+	if kit.breaker_tripped or kit._flicker <= 0.0:
+		return "the breaker went without a flicker warning"
+	if not Game.safety.query(lamp_pt).safe:
+		return "the pools were unsafe during the warning flicker"
+	kit._breaker_step(NightKit.FLICKER_S + 0.1)
+	if not kit.breaker_tripped:
+		return "the breaker did not go after the flicker"
+	kit.reset_breaker(null)
+	NightPressure.override_level = -1.0
+	kit.reset()
+	# The sawmill night shift: only at night, only while the boss is there.
+	var mill: Sawmill = Game.mill
+	if mill == null:
+		return "no sawmill in the world"
+	cs.clock.restore({"day": cs.clock.day + 1, "t": 300.0, "running": true, "deadline_enabled": true})
+	if not mill.feeding():
+		return "the saw does not feed in daylight"
+	mill.toggle_night_shift()
+	if mill.ledger.night_shift:
+		return "the night shift could be started in daylight"
+	cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+	if mill.feeding():
+		return "the saw takes logs at night with no night shift"
+	var saw := CampLayout.world(CampLayout.MILL_SAW_POS)
+	p.global_position = Vector3(saw.x + 3.0, World.height_at(saw.x + 3.0, saw.z) + 0.1, saw.z)
+	mill.toggle_night_shift()
+	if not mill.ledger.night_shift or not mill.night_running() or not mill.feeding():
+		return "the night shift did not start with the boss at the mill"
+	mill._process(0.1)
+	if mill.ledger.bonus_bp != MillLedger.NIGHT_RATE_BP:
+		return "the night shift is not at the rush rate"
+	p.global_position = saw + Vector3(60.0, 0.0, 0.0)
+	mill._process(0.1)
+	if mill.night_running() or mill.feeding() or mill.ledger.bonus_bp != 0:
+		return "the night shift kept running with the boss gone"
+	cs.clock.restore({"day": cs.clock.day + 1, "t": 100.0, "running": true, "deadline_enabled": true})
+	mill._process(0.1)
+	if mill.ledger.night_shift:
+		return "the night shift did not end with the night"
+	world.teleport_to("camp")
 	return ""
 
 

@@ -14,7 +14,11 @@
 | The not-your-dog never starts with the real dog beside the player | ✅ | |
 | Review stations: cycle the pressure, meet something with its rule shown, sample Field notes | ✅ | Preview only, never saved |
 | Journal contract tab: pay line follows the sawmill; "trees a day" follows the lots | ✅ | |
-| Night verbs (placeable lamps, breaker, floodlight, gate, dog whistle); night work that pays; Terror pixel sprites; a worker missing overnight | ⬜ | Next |
+| Work lamps (`NightKit`, `WorkLamp`): two issued per opened lot (six at most), lamp locker beside the parcel locker, carried and set down, a safe 6 m pool at night through `SafetyService` rule 4, seven-minute battery with a one-minute flicker, daylight recharge, saved | ✅ | Nothing may be staged inside a pool; the Foreman sees people in one as in a camp lamp pool (tested) |
+| The camp breaker: on a disturbed island, at most once a night, a six-second flicker then the pole-lamp pools are unsafe until reset; the camper and work lamps are unaffected; saved | ✅ | Never before the night rules were shown |
+| Sawmill night shift: a switch on the yard board's post; the saw takes logs at night only while the boss stays within 14 m; litres cut then pay +50% (pro rata, whole cents, saved mid-pallet); ends at dawn; while it runs the night's visits come 1.8× as often | ✅ | The mill annex is not a safe place: a work lamp is what makes the shift survivable |
+| Review stations: work lamps at night, the breaker goes | ✅ | Preview only. Renders: `screenshots/phase26_work_lamp_night.jpg`, `screenshots/phase26_lamp_locker_breaker.jpg` (software renderer) |
+| Floodlight, camp gate, dog whistle; Terror pixel sprites; a worker missing overnight | ⬜ | Next |
 | Played by a person; seen and heard on real hardware | ⛔ not run | The rules were tested in code, not felt in play |
 
 ## Phase 25 (in progress): a complete game

@@ -79,6 +79,9 @@ func load_text() -> String:
 func try_pick_up(body: TimberBody) -> void:
 	if Game.timber == null or not is_instance_valid(body):
 		return
+	if Game.night_kit and Game.night_kit.held:
+		player.show_message("You are carrying a work lamp. Set it down first (%s)." % Keys.label("set_down"))
+		return
 	if not body.is_single_piece():
 		player.show_message("This trunk is too big to lift. Cut it at the orange marks.")
 		return

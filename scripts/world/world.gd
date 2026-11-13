@@ -26,6 +26,7 @@ var director: TerrorDirector
 var threat: NightThreat
 var dog_rescue: DogRescue
 var hunt: HuntService
+var night_kit: NightKit
 var end_screen: EndScreen
 var arcade: ArcadeService
 var dock_site: DockSite
@@ -152,6 +153,10 @@ func _ready() -> void:
 	hunt.name = "Hunt"
 	add_child(hunt)
 	Game.hunt = hunt
+	# Phase 26: work lamps and the camp breaker.
+	night_kit = NightKit.new()
+	add_child(night_kit)
+	Game.night_kit = night_kit
 	# Phase 19: the offshore survey visits (separate from the Day 36 rescue
 	# ship; ambient, contract days only).
 	var off := OffshoreSurvey.new()
@@ -220,6 +225,9 @@ func _ready() -> void:
 		add_child(locker)
 		var lp := CampLayout.world(CampLayout.PARCEL_LOCKER_POS)
 		locker.setup(Vector3(lp.x, World.height_at(lp.x, lp.z), lp.z))
+		# Phase 26: the lamp locker and the camp breaker.
+		if night_kit:
+			night_kit.setup()
 		# Phase 24: the sawmill behind the camper (its camera joins the wall).
 		var mill := Sawmill.new()
 		add_child(mill)

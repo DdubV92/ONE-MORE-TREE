@@ -135,6 +135,9 @@ func input_allowed() -> bool:
 	# Hands full: the axe is stowed while carrying timber.
 	if player.carry and player.carry.is_carrying():
 		return false
+	# Phase 26: a work lamp in hand is set down before any cutting.
+	if Game.night_kit and Game.night_kit.held:
+		return false
 	if player.vehicle != null or player.couch != null or player.hiding != null:
 		return false
 	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not player.get_tree().paused and not player.fly_mode

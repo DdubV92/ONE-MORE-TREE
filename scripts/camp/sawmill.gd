@@ -241,6 +241,23 @@ func _build_board() -> void:
 	panel.set_script(load("res://scripts/camp/mill_board.gd"))
 	_root.add_child(panel)
 	BuildKit.box(panel, Vector3(1.4, 1.0, 0.06), p + Vector3(0, 1.75, 0), "dark_wood", true, PI * 0.5, "BoardPanel")
+	# Phase 26: the night-shift switch, on the same post.
+	var sw := Node3D.new()
+	sw.name = "NightShiftSwitch"
+	sw.set_script(load("res://scripts/camp/mill_switch.gd"))
+	_root.add_child(sw)
+	var sw_mat := StandardMaterial3D.new()
+	sw_mat.albedo_color = Color(0.75, 0.16, 0.1)
+	sw_mat.roughness = 0.5
+	BuildKit.box(sw, Vector3(0.14, 0.3, 0.24), p + Vector3(0.1, 1.02, 0), sw_mat, true, 0.0, "SwitchBox")
+	var sw_label := Label3D.new()
+	sw_label.text = "NIGHT SHIFT"
+	sw_label.font_size = 22
+	sw_label.pixel_size = 0.0028
+	sw_label.modulate = Color(0.98, 0.95, 0.85)
+	sw_label.position = p + Vector3(0.18, 1.02, 0)
+	sw_label.rotation.y = PI * 0.5
+	_root.add_child(sw_label)
 	_board_label = Label3D.new()
 	_board_label.font_size = 36
 	_board_label.pixel_size = 0.0028
@@ -280,7 +297,54 @@ func feeding() -> bool:
 		return Game.is_preview()
 	if Game.hunt and Game.hunt.hunt_active():
 		return false
-	return cs.clock.phase() == WorkdayClock.Phase.DAYLIGHT
+	return cs.clock.phase() == WorkdayClock.Phase.DAYLIGHT or night_running()
+
+
+# ------------------------------------------------------ night shift (P26)
+
+const NIGHT_OPERATOR_RANGE := 14.0  # the boss must stay this close to the saw
+const NIGHT_DRAW := 0.8             # extra pace of night visits while it runs (it is loud)
+
+
+func _contract_night() -> bool:
+	var cs: CampaignService = Game.campaign
+	if cs == null or cs.clock == null or not (cs.active or cs.test_route):
+		return false
+	if cs.contract.is_closed() or (Game.hunt and Game.hunt.hunt_active()):
+		return false
+	return cs.clock.phase() == WorkdayClock.Phase.NIGHT
+
+
+func operator_present() -> bool:
+	var p := Game.player as Node3D
+	if p == null:
+		return false
+	var saw := CampLayout.world(CampLayout.MILL_SAW_POS)
+	return Vector2(p.global_position.x - saw.x, p.global_position.z - saw.z).length() <= NIGHT_OPERATOR_RANGE
+
+
+## The line is taking logs at night: switched on, and the boss is here.
+func night_running() -> bool:
+	return ledger != null and ledger.night_shift and _contract_night() and operator_present()
+
+
+func switch_prompt() -> String:
+	if not _contract_night():
+		return "Night-shift switch (in daylight the saw runs by itself)"
+	if ledger.night_shift:
+		return "Stop the night shift"
+	return "Start the night shift (rush rate: +%d%% on what is cut tonight)" % (MillLedger.NIGHT_RATE_BP / 100)
+
+
+func toggle_night_shift() -> String:
+	if not _contract_night():
+		return "The saw runs by itself in daylight. At night, this switch starts a night shift."
+	ledger.night_shift = not ledger.night_shift
+	_label_t = 0.0
+	if not ledger.night_shift:
+		return "Night shift off. The saw finishes the log it has and winds down."
+	var lit: bool = Game.safety != null and Game.safety.is_player_safe()
+	return "Night shift on. The saw takes logs from the rack while you stay within %d m, and what it cuts tonight pays %d%% more. It is loud: more of the night will come to look.%s" % [int(NIGHT_OPERATOR_RANGE), MillLedger.NIGHT_RATE_BP / 100, "" if lit else " You are not in a safe light here: set a work lamp down."]
 
 
 func _process(delta: float) -> void:
@@ -293,6 +357,14 @@ func _process(delta: float) -> void:
 		return
 	var dt := delta * Game.time_scale
 	var t_now: float = Game.campaign.clock.t if Game.campaign and Game.campaign.clock else 0.0
+	# Phase 26: the night shift ends with the night; while it runs, what is
+	# cut earns the rush rate and the noise brings the night closer.
+	if ledger.night_shift and not _contract_night():
+		ledger.night_shift = false
+	var night_on := night_running()
+	ledger.bonus_bp = MillLedger.NIGHT_RATE_BP if night_on else 0
+	if night_on and ledger.busy() and Game.director:
+		Game.director.next_in -= dt * NIGHT_DRAW
 	var ev: Array = Game.timber.mill_step(dt, feeding(), t_now) if Game.timber else ledger.step(dt, feeding(), t_now)
 	for e in ev:
 		_present(e)
@@ -461,6 +533,8 @@ func status_text() -> String:
 	lines.append("Next pallet: %d / %d L" % [l.open_fill(), l.pallet_l])
 	lines.append("Pallets today: %d%s" % [l.pallets_today, ("  (yard full, +%d overflow)" % l.overflow_today) if l.overflow_today > 0 else ""])
 	lines.append("Lumber today: $%s  ($%s / pallet)" % [Money.format_cents(l.earnings_today), Money.format_cents(l.pay_cents)])
+	if _contract_night():
+		lines.append("Night shift: %s" % (("RUNNING, rush rate +%d%%" % (MillLedger.NIGHT_RATE_BP / 100)) if night_running() else ("on, waiting for you at the mill" if l.night_shift else "off (switch on this post)")))
 	return "\n".join(lines)
 
 

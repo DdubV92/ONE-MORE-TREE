@@ -156,7 +156,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pitch = clampf(_pitch - event.relative.y * s * inv, deg_to_rad(-88.0), deg_to_rad(88.0))
 		_apply_look()
 	elif event.is_action_pressed("set_down") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		carry.set_down_one()
+		# Phase 26: a held work lamp is what gets set down.
+		if not (Game.night_kit and Game.night_kit.set_down(self)):
+			carry.set_down_one()
 	elif event.is_action_pressed("drop_load") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		carry.drop_all()
 	elif event.is_action_pressed("attack") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:

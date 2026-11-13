@@ -9,7 +9,9 @@ extends Node
 ##   env CREW=5 SHIFT_SECONDS=1500
 ## DAYS=n (Phase 25) sleeps through each night and runs n workdays in a
 ## row, printing one CREW_DAY line per day: lot progress, wood, lumber
-## pay, lot pay, wages and cash.
+## pay, lot pay, wages and cash. PAY=fair raises each worker to the wage
+## they think is fair every morning (a boss who keeps the crew; at the
+## $100 minimum people quit within a week, by design).
 
 var world: IslandWorld
 
@@ -52,9 +54,16 @@ func _ready() -> void:
 	var days := int(OS.get_environment("DAYS")) if OS.has_environment("DAYS") else 1
 	var quiet := days > 1
 	var prev := {"mte": 0, "felled": 0, "cash": cash0, "mill": 0}
+	var fair := OS.get_environment("PAY") == "fair"
 	for dn in days:
 		t = 0.0
 		next_report = 0.0
+		if fair and cs.pay:
+			for e in cs.payroll.employees:
+				var eid := str(e.id)
+				var gap := cs.pay.expected(eid) - cs.pay.rate(eid)
+				if gap > 0:
+					cs.pay.change_rate(eid, int(ceil(float(gap) / float(PayMorale.STEP))))
 		while t < shift:
 			await get_tree().physics_frame
 			t += 1.0 / 60.0
@@ -90,6 +99,11 @@ func _ready() -> void:
 			if g % 120 == 0:
 				sl = cs.sleep()
 		day["slept"] = bool(sl.ok)
+		var wages := 0
+		for e in cs.payroll.employees:
+			if cs.pay:
+				wages += cs.pay.rate(str(e.id))
+		day["rates"] = wages / 100.0
 		day["cash"] = cs.wallet.cash / 100.0
 		day["cash_change"] = (cs.wallet.cash - int(prev.cash)) / 100.0
 		if not bool(sl.ok):

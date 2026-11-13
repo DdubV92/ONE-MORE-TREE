@@ -38,7 +38,7 @@
 ## Night rules (authoritative)
 
 - The camper interior is always safe, regardless of lighting.
-- Outdoors, safety exists only inside the fence AND within a working designated camp lamp's radius. Flashlights, the fire, moonlight, distant glow and screen brightness never grant safety. The published rules equal the code: see `SafetyService` and ARCHITECTURE.md.
+- Outdoors, safety exists inside the fence AND within a working designated camp lamp's radius, or (Phase 26) anywhere on land within the pool of a working battery work lamp the boss has set down. Flashlights, the fire, moonlight, distant glow and screen brightness never grant safety. The published rules equal the code: see `SafetyService` and ARCHITECTURE.md.
 - Workers stop before dusk and the dog goes inside.
 - Staying awake escalates apparitions, sound and stalking impressions. A catch and jumpscare can only happen outside authoritative safety after sufficient escalation.
 - Night is a bounded state, and morning starts only after sleeping:
@@ -54,6 +54,9 @@
 - **Each family keeps to one rule** that is true in the simulation: keep looking, look away, stand still, walk toward it, walk away, get under cover, stand in a real camp light, switch the monitor off, keep the real dog beside you, or nothing at all. Doing what works ends the encounter quietly, makes that family leave you alone for the night and eases the exposure; provoking one into a peak outside safety tightens it.
 - **Field notes** (last Journal tab) fill in as the player meets a family and then sees its rule work twice. They record what a thing does, never what it is or where it came from.
 - No rule grants safety. `SafetyService.query()` stays the only authority; the lamp rule only asks it.
+- **Work lamps** (`NightKit`, `WorkLamp`): the company sends two with each lot, kept in the lamp locker beside the parcel locker. The boss carries one out and sets it down; at night its 6 m pool is safe for a seven-minute battery, flickering for the last minute, and it recharges in daylight. This is what makes working at night possible.
+- **Night work pays:** the sawmill has a night-shift switch. At night the saw only takes logs while the boss stays at the mill, and what it cuts then pays 50% more. It is loud, so the night's visits come faster while it runs.
+- **The breaker:** on a disturbed island (pressure tier 2 or more) the camp's pole lamps can fail at most once a night: a six-second flicker, then their pools are unsafe until the breaker beside the lockers is reset. The camper and the battery lamps are unaffected.
 
 ## The contract (Phase 25)
 
