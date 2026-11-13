@@ -5,7 +5,9 @@ extends Node
 ##   slot_2_terminal_day30.json   day 30, 50 s before the 1,200 s cutoff
 ##   slot_2_offshore_day3.json    day 3, just before the first offshore visit,
 ##                                standing on the shore by the dock
-##   slot_2_extraction_day35.json hunt night 35, about a minute before the
+##   slot_2_stranded_beacon.json  a failed contract, the beacon repaired and
+##                                calling, a minute before its ship's dawn
+##   slot_2_extraction_day35.json (contract won) hunt night 35, about a minute before the
 ##                                day 36 dawn rescue, near the dock
 ## Phase 23 (storms; each uses a visit from that campaign's own seeded
 ## schedule, so the weather is real scheduled weather, not an override):
@@ -24,7 +26,7 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
 	var bad := 0
 	var only := OS.get_environment("ONLY_FX")
-	for fx in ["terminal_day30", "offshore_day3", "extraction_day35", "storm_subtle_rain", "storm_severe", "storm_walker", "extraction_storm"]:
+	for fx in ["terminal_day30", "offshore_day3", "extraction_day35", "stranded_beacon", "storm_subtle_rain", "storm_severe", "storm_walker", "extraction_storm"]:
 		if only != "" and fx != only:
 			continue
 		var ok := true
@@ -87,6 +89,9 @@ func _verify(fx: String) -> String:
 			"extraction_day35":
 				if Game.hunt.mode == "rescue":
 					res = "ok: rescue ship %s at dawn of day %d" % [Game.hunt.ship_state, Game.hunt.hunt_day]
+			"stranded_beacon":
+				if Game.hunt.mode == "rescue" and Game.hunt.stranded:
+					res = "ok: the beacon's ship %s at dawn of day %d (boarding window %d s)" % [Game.hunt.ship_state, Game.hunt.hunt_day, int(Game.hunt.boarding_window())]
 			"extraction_storm":
 				min_vis = minf(min_vis, w.visibility)
 				if Game.hunt.mode == "rescue":
@@ -167,12 +172,14 @@ func _make(fx: String) -> bool:
 			var shore := Game.crew.dock_shore
 			p.teleport(shore + Vector3(0, 1.65, 0), shore + Vector3(0, 1.0, 40.0))
 		"extraction_day35":
-			cs.contract._close_deadline()
-			for k in 30:
-				await get_tree().physics_frame
+			# Phase 25: the company ship only comes for a finished contract.
+			# A contract won on day 32: three hunt days, ship at dawn on day 36.
+			cs.clock.day = 32
+			cs.contract.state = ContractService.FULFILLED
+			cs.clock.running = false
 			var h := Game.hunt
 			if h.mode == "none":
-				h.begin_abandonment()
+				h.begin_hunt(true)
 			# Acknowledge the transition card exactly as its button does.
 			if Game.end_screen and Game.end_screen.has_method("_resume"):
 				Game.end_screen._resume()
@@ -180,10 +187,36 @@ func _make(fx: String) -> bool:
 			for k in 30:
 				await get_tree().physics_frame
 			h.mode = "hunt"
-			h.hunt_day = 35
+			h.hunt_day = h.rescue_day() - 1
 			h.t = HuntService.CYCLE - 60.0
 			var dock := Game.crew.dock_shore
 			p.teleport(dock + Vector3(2, 1.65, -6), dock + Vector3(0, 1.0, 20.0))
+		"stranded_beacon":
+			# A failed contract: nobody is coming. The beacon is repaired and
+			# calling, a minute before the dawn its ship arrives.
+			cs.contract._close_deadline()
+			for k in 30:
+				await get_tree().physics_frame
+			var hs := Game.hunt
+			if hs.mode == "none":
+				hs.begin_abandonment()
+			if Game.end_screen and Game.end_screen.has_method("_resume"):
+				Game.end_screen._resume()
+			get_tree().paused = false
+			for k in 30:
+				await get_tree().physics_frame
+			for part in EscapeBeacon.PARTS:
+				hs.beacon.take(part)
+			hs.beacon.console_use(null)
+			hs.beacon.console_use(null)
+			if not hs.stranded or not hs.beacon.calling():
+				push_error("fixture stranded_beacon: beacon not calling (stranded %s, state %s)" % [hs.stranded, hs.beacon.state])
+				return false
+			hs.mode = "hunt"
+			hs.hunt_day = 33
+			hs.t = HuntService.CYCLE - 60.0
+			var dk := Game.crew.dock_shore
+			p.teleport(dk + Vector3(2, 1.65, -6), dk + Vector3(0, 1.0, 20.0))
 		"storm_subtle_rain", "storm_severe", "storm_walker":
 			var why := await _storm_point(fx, cs, p)
 			if why != "":
