@@ -124,6 +124,14 @@ const STATIONS24 := [
 	["2 Reference Match (target painting camera)", "p24_ref_match"],
 	["3 First-Person Shoreline (reference cove)", "p24_ref_fp"],
 ]
+## Phase 26: nights that grow, and a rule for each Terror.
+const STATIONS26 := [
+	["1 Night pressure (cycle)", "p26_pressure"],
+	["2 Meet something (rule shown)", "p26_meet"],
+	["3 Field notes (sample entries)", "p26_notes"],
+]
+static var _p26_level := -1
+static var _p26_family := 0
 static var _terrain_debug := 0
 static var _p20_i := 0
 static var _feed_day := 0
@@ -511,6 +519,8 @@ static func go(hud: Node, which: String) -> String:
 			return "Preview interruption %s: %s. Watch the states: settling -> interrupted -> resolving -> sleep available. You cannot be hurt in the camper; nothing forces you out." % [pick, str(si20.by_id[pick].title)]
 		"p23_subtle", "p23_severe", "p23_walker", "p23_flash", "p23_missed", "p23_calendar", "p23_schedule":
 			return _p23(hud, w, which)
+		"p26_pressure", "p26_meet", "p26_notes":
+			return _p26(hud, w, which)
 		"p24_ref_match", "p24_ref_fp":
 			if w and w.has_method("teleport_to"):
 				w.call("teleport_to", "ref_match" if which == "p24_ref_match" else "ref_fp")
@@ -930,6 +940,55 @@ static func shared_tree_fixture(w: IslandWorld) -> String:
 	Game.trees.apply_contact(tid, st, req * 0.4, b.id)
 	Game.trees.apply_contact(tid, st, req, a.id)
 	return "%s cut 60%% of the notch and %s 40%%: felling merit %+.0f / %+.0f (300 per tree, split by accepted work). A third contact on the felled tree earned 0. The tree stood %.0f m from camp." % [a.emp.name, b.emp.name, crew.merit.total(a.id) - ma, crew.merit.total(b.id) - mb, bd]
+
+
+## Phase 26 review stations (preview only: nothing here is saved).
+static func _p26(hud: Node, w: IslandWorld, which: String) -> String:
+	var cs: CampaignService = Game.campaign
+	var dir: TerrorDirector = Game.director
+	if cs == null or dir == null:
+		return ""
+	if not (cs.active or cs.test_route):
+		cs.start_test_route(false)
+	match which:
+		"p26_pressure":
+			_p26_level = (_p26_level + 1) % 5
+			NightPressure.override_level = [0.05, 0.25, 0.5, 0.85, -1.0][_p26_level]
+			var lvl := NightPressure.level()
+			var awake := PackedStringArray()
+			for f in FieldNotes.FAMILIES:
+				if NightPressure.family_open(int(f), lvl):
+					awake.append(FieldNotes.name_of(int(f)).trim_prefix("The "))
+			return "Night pressure %s: %s (%.2f). Quiet gaps x%.2f, sharpest beat %d of 3, exposure rate x%.2f. Awake (%d of 25): %s. (Preview: never saved.)" % ["pinned" if NightPressure.override_level >= 0.0 else "computed from the day and the cutting", NightPressure.name_of(lvl), lvl, NightPressure.gap_scale(lvl), NightPressure.max_intensity(lvl), NightThreat.pressure_rate(lvl), awake.size(), ", ".join(awake)]
+		"p26_meet":
+			cs.clock.advance(maxf(WorkdayClock.NIGHT_AT + 1.0 - cs.clock.t, 0.0))
+			var ctx := TerrorPlacement.context_of(Game.player)
+			if dir.active:
+				dir.active.cancel()
+				dir.active = null
+			var got := ""
+			var fam := 0
+			for k in 25:
+				_p26_family = _p26_family % 25 + 1
+				for e in dir.events_by_ctx.get(ctx, []):
+					if int(e.family) == _p26_family and bool(e.get("visual", false)) == (FieldNotes.rule_of(_p26_family) in ["watched", "look_away"]):
+						got = dir.offer(str(e.id))
+						break
+				if got != "":
+					fam = _p26_family
+					break
+			if got == "":
+				return "Nothing could be staged from here (no valid place). Try again from the forest edge or the yard."
+			return "%s. What works: %s  Do it and it leaves quietly, your Field notes fill in, and the dark eases off you; provoke it and it closes in. (Preview: never saved.)" % [FieldNotes.name_of(fam), str(FieldNotes.RULE_HELP[FieldNotes.rule_of(fam)])]
+		"p26_notes":
+			var fn := dir.notes
+			fn.restore({"notes": {"22": {"seen": 1, "answered": 0, "first_day": 1}, "18": {"seen": 3, "answered": 0, "first_day": 2}, "5": {"seen": 2, "answered": 1, "first_day": 4}, "1": {"seen": 4, "answered": 2, "first_day": 6}, "4": {"seen": 3, "answered": 2, "first_day": 9}}})
+			if Game.campaign_ui:
+				if Game.campaign_ui.is_open():
+					Game.campaign_ui.close_panel()
+				Game.campaign_ui.toggle_journal(99)
+			return "Field notes with sample entries at each stage: met, a hint, and what works. The last Journal tab. (Preview: never saved.)"
+	return ""
 
 
 ## Phase 23 review stations (preview only: nothing here is saved).

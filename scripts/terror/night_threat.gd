@@ -17,6 +17,11 @@ const FAR_RATE := 1.0 / 140.0    # faster far from camp
 const DECAY := 1.0 / 45.0
 const LEVELS := [[0.35, "You feel watched. Get to a lit part of camp or inside."], [0.65, "Something is close. Get inside now."], [0.88, "Run. Get to safety."]]
 const BOUNDARY_GRACE := 1.0      # seconds unsafe before exposure counts (flicker)
+## Phase 26: answering a Terror by its rule buys time outside; provoking
+## one costs some. On a disturbed island the dark closes in faster.
+const ANSWER_RELIEF := 0.22
+const PROVOKE_COST := 0.1
+const PRESSURE_RATE_MAX := 1.4   # exposure rate multiplier at full night pressure
 
 var exposure := 0.0
 var outside_t := 0.0
@@ -26,6 +31,8 @@ var _warned := 0
 var grace_until := -1.0          # night_awake_t until which catches are suppressed
 var catches := 0
 var disabled := false
+var _pressure_t := 0.0
+var _pressure_rate := 1.0
 
 
 func _process(delta: float) -> void:
@@ -58,7 +65,12 @@ func _process(delta: float) -> void:
 	if outside_t < BOUNDARY_GRACE:
 		return
 	var far := p.global_position.distance_to(World.camp_origin()) > 70.0
-	var gain := (FAR_RATE if far else RATE) * delta
+	# The level walks every tree record, so it is refreshed once a second.
+	_pressure_t -= delta
+	if _pressure_t <= 0.0:
+		_pressure_t = 1.0
+		_pressure_rate = pressure_rate(NightPressure.level(p.global_position))
+	var gain := (FAR_RATE if far else RATE) * delta * _pressure_rate
 	if night_awake_t < grace_until:
 		gain = 0.0                # protected dog-rescue window
 	exposure = minf(exposure + gain, 1.0)
@@ -97,6 +109,20 @@ func _commit_catch(p: Node3D) -> void:
 	exposure = 0.0
 	_warned = 0
 	caught.emit()
+
+
+## Unchanged while the island is quiet (below 0.3); up to x1.4 once it is
+## fully stirred up.
+static func pressure_rate(lvl: float) -> float:
+	return lerpf(1.0, PRESSURE_RATE_MAX, smoothstep(0.3, 1.0, lvl))
+
+
+## Eases (positive) or tightens (negative) the exposure. Never commits a
+## catch by itself and never below zero: only time outside safety does.
+func relief(amount: float) -> void:
+	exposure = clampf(exposure - amount, 0.0, 0.95)
+	if exposure < 0.3:
+		_warned = 0
 
 
 func grant_grace(seconds: float) -> void:

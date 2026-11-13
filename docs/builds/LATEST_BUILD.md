@@ -4,6 +4,14 @@ The download link is in the session message (a GitHub pre-release zip, or the Gi
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
 
+## New: nights that grow (Phase 26, first part)
+
+- **Quiet at first.** On a new island the first nights are only sounds. Every day, and every tree you cut, wakes more of what lives there. Cleared ground is the worst place to stand at night.
+- **Every Terror keeps to one rule.** Keep looking at one and it leaves; look at another and it comes closer. Some follow movement, some stay by the water, some only exist on the monitor. Work out what makes each one leave.
+- **Journal → Field notes** (last tab) fills in as you meet things: what it was, then a hint, then what works. It never says what they are.
+- **The right answer buys you time outside** at night and that thing leaves you alone until morning. The wrong one costs you time.
+- **To try it without playing 20 days:** Preview (title screen) → Tab → "Phase 26 nights that grow": cycle the night pressure, meet something with its rule shown, and open Field notes with sample entries.
+
 ## New: leaving the island (Phase 25, first part)
 
 - **The hunt now follows every contract.** Finish the job and the company ship comes after three days of it.

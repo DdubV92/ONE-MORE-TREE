@@ -47,12 +47,21 @@
   - The night clock may reach its terminal time while an independent awake timer keeps pacing.
   - Menus pause both.
 
+## Nights that grow (Phase 26)
+
+- **Night pressure** is a pure function of the campaign: the day (45%) and the share of the contract's trees that are down (55%), plus up to 0.3 for cleared ground within 45 m of the player. It is never saved (`NightPressure`).
+- It sets which Terror families are awake (four tiers: sound and atmosphere from the first night, then distant shapes, then things that come close or wear something familiar, then the feed that lies), how sharp an encounter may be, how long the quiet between them lasts, and how fast exposure builds outside safety late in a campaign (up to ×1.4).
+- **Each family keeps to one rule** that is true in the simulation: keep looking, look away, stand still, walk toward it, walk away, get under cover, stand in a real camp light, switch the monitor off, keep the real dog beside you, or nothing at all. Doing what works ends the encounter quietly, makes that family leave you alone for the night and eases the exposure; provoking one into a peak outside safety tightens it.
+- **Field notes** (last Journal tab) fill in as the player meets a family and then sees its rule work twice. They record what a thing does, never what it is or where it came from.
+- No rule grants safety. `SafetyService.query()` stays the only authority; the lamp rule only asks it.
+
 ## The contract (Phase 25)
 
 - New campaigns sign for **three marked lots** of forest growing out from the camp's forest entrance: 30, 35 and 40 trees (105 in all), due by days 10, 20 and 30. Lot trees wear a band of company paint (orange, blue, yellow).
 - The contract is fulfilled when every lot tree is down, its stump is out and its logs are accepted. The crew fells painted trees only, one lot at a time.
 - The company pays an advance when a lot opens, a milestone when it is finished and a bonus if that is by its due day. Wood from any tree is still paid at the sawmill.
-- The sizes come from measurement: five hatchet workers accept about 3.6 to 3.9 tree-equivalents a day, and 105 trees in 30 days is 3.5 a day.
+- The sizes come from measurement: five hatchet workers accepted about 3.6 to 3.9 tree-equivalents a day when the lots were sized, and 105 trees in 30 days is 3.5 a day. Since loads go straight to the sawmill, the same crew accepts about 4.5 to 6 a day.
+- Wood is paid at the sawmill per finished pallet, so the crew carries loads straight to its feed rack while it has room; the receiving cradle and the decks are the overflow.
 - The rest of the island's 10,000 trees are optional wood. Clearing more of it across later seasons is planned (Phase 29).
 - Campaigns started before this keep their whole-island contract.
 

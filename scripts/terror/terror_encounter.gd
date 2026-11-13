@@ -33,6 +33,17 @@ var _warm_restore := {}
 var _rng := RandomNumberGenerator.new()
 var _support_done := false
 var log := PackedStringArray()
+# Phase 26: the family's one learnable rule (FieldNotes). When the player
+# does the thing that works, the encounter ends quietly ("answered").
+var rule := ""
+var rule_answered := false
+var reacted := false                # the player provoked it (stare/approach)
+var _rule_t := 0.0
+var _seen_once := false
+var _moved := false
+var _was_open := false
+var _unsafe_at_start := false
+var _feed_at_start := false
 
 
 func setup(event: Dictionary, ctx: String, peak_ok: bool, seed_v: int) -> void:
@@ -45,6 +56,7 @@ func setup(event: Dictionary, ctx: String, peak_ok: bool, seed_v: int) -> void:
 	# (shorter withdrawal, breath instead of a stinger, quieter). It never
 	# changes which events run, their count, or any rule.
 	reduced = float(Settings.get_v("horror_intensity")) < 0.7
+	rule = FieldNotes.rule_of(family)
 
 
 func steps() -> Array:
@@ -117,6 +129,8 @@ func reserve(viewer: Node3D) -> bool:
 func begin(viewer: Node3D) -> void:
 	stage = "establish"
 	_t = 0.0
+	_unsafe_at_start = Game.safety != null and not Game.safety.is_player_safe()
+	_feed_at_start = Game.tv != null and Game.tv.powered and Game.tv._active
 	_hold = _rng.randf_range(6.0, 14.0)
 	var look_at := viewer.global_position + Vector3(0, 1.4, 0)
 	if cam:
@@ -181,6 +195,12 @@ func _process(delta: float) -> void:
 					_stare += delta
 				else:
 					_stare = maxf(_stare - delta * 0.5, 0.0)
+			# Phase 26: the family's rule comes first. The right answer ends
+			# it quietly; the wrong one is what provokes it.
+			if _rule_met(viewer, delta):
+				_answered(viewer)
+				return
+			if actor and actor.visible:
 				var d := viewer.global_position.distance_to(actor.global_position)
 				if _stare > 1.4 or d < _start_dist * 0.6:
 					_react(viewer)
@@ -204,7 +224,71 @@ func _process(delta: float) -> void:
 				finish("completed" if result == "" else result)
 
 
+## Phase 26: is the player doing what works on this family? Each rule is
+## about the player's body in the world (where it stands, moves and
+## looks), never about safety: SafetyService alone decides that.
+func _rule_met(viewer: Node3D, delta: float) -> bool:
+	if rule == "" or rule == "ignore":
+		return false
+	var body := viewer as CharacterBody3D
+	var speed := Vector2(body.velocity.x, body.velocity.z).length() if body != null else 0.0
+	var eye := viewer.global_position + Vector3(0, 1.6, 0)
+	var dist := spot.distance_to(eye)
+	match rule:
+		"watched":
+			return actor != null and actor.visible and _stare > 1.4
+		"look_away":
+			if actor == null or not actor.visible:
+				return false
+			if _in_view(viewer, actor.global_position + Vector3(0, 1.2, 0), 0.6):
+				_seen_once = true
+				_rule_t = 0.0
+			elif _seen_once:
+				_rule_t += delta
+			return _rule_t >= 3.0
+		"still":
+			# Stopping is the answer; someone who never moved has given none.
+			if speed > 1.0:
+				_moved = true
+			_rule_t = _rule_t + delta if (_moved and speed < 0.4) else 0.0
+			return _rule_t >= 3.5
+		"approach":
+			return dist <= _start_dist * 0.6
+		"leave":
+			return dist >= _start_dist + 20.0
+		"cover":
+			var covered := TerrorPlacement.under_cover(viewer.global_position)
+			if not covered:
+				_was_open = true
+			_rule_t = _rule_t + delta if (_was_open and covered) else 0.0
+			return _rule_t >= 1.5
+		"lamp":
+			# Walking out of the dark into a real safe light (SafetyService).
+			var safe: bool = Game.safety != null and Game.safety.is_player_safe()
+			_rule_t = _rule_t + delta if (_unsafe_at_start and safe) else 0.0
+			return _rule_t >= 1.0
+		"feed":
+			return _feed_at_start and Game.tv != null and not (Game.tv.powered and Game.tv._active)
+		"companion":
+			var dog := Game.dog as Node3D
+			_rule_t = _rule_t + delta if (dog != null and dog.global_position.distance_to(viewer.global_position) < 8.0) else 0.0
+			return _rule_t >= 1.0
+	return false
+
+
+## The rule worked: it goes without a peak, and its sounds stop.
+func _answered(viewer: Node3D) -> void:
+	rule_answered = true
+	log.append("answered (%s)" % rule)
+	for a in _audio:
+		if is_instance_valid(a):
+			var tw := a.create_tween()
+			tw.tween_property(a, "volume_db", -60.0, 1.2)
+	_withdraw(viewer, 1.3)
+
+
 func _react(viewer: Node3D) -> void:
+	reacted = true
 	log.append("reacted to attention")
 	if allow_peak and has_step("peak"):
 		_peak(viewer)
@@ -237,6 +321,10 @@ func finish(r: String) -> void:
 		return
 	stage = "done"
 	result = r
+	# The families that ask for nothing: left alone to the end, that was
+	# the answer.
+	if rule == "ignore" and r == "completed" and not reacted:
+		rule_answered = true
 	if _warm_restore.size() > 0:
 		_warmth(false)
 	for a in _audio:

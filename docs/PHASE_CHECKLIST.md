@@ -2,6 +2,21 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 26 (in progress): nights that grow
+
+| Item | Status | Notes |
+|---|---|---|
+| Night pressure from the day, the cutting and cleared ground nearby (`NightPressure`); never saved | ✅ | A new campaign starts at 0; day 21 with two lots down is "hostile" (tested) |
+| Families wake in four tiers; sharp beats and startles wait for a stirred-up night; quiet gaps shorten; exposure builds up to ×1.4 faster late on | ✅ | First nights: sound and atmosphere only, in every context (tested). Staged fixtures and previews keep the full range |
+| One learnable rule per Terror family (25), applied in `TerrorEncounter`: watched, look away, still, approach, leave, cover, lamp, feed, companion, ignore | ✅ | Each rule kind tested. The lamp rule only asks `SafetyService`; no rule grants safety |
+| A right answer ends it quietly, quiets that family for the night, lengthens the gap and eases exposure; provoking a peak outside safety tightens it | ✅ | Relief is bounded and can never commit a catch |
+| Field notes (last Journal tab): met → hint → what works; a notice when a note changes; saved with the director | ✅ | Names match the event bank; origins are never explained |
+| The not-your-dog never starts with the real dog beside the player | ✅ | |
+| Review stations: cycle the pressure, meet something with its rule shown, sample Field notes | ✅ | Preview only, never saved |
+| Journal contract tab: pay line follows the sawmill; "trees a day" follows the lots | ✅ | |
+| Night verbs (placeable lamps, breaker, floodlight, gate, dog whistle); night work that pays; Terror pixel sprites; a worker missing overnight | ⬜ | Next |
+| Played by a person; seen and heard on real hardware | ⛔ not run | The rules were tested in code, not felt in play |
+
 ## Phase 25 (in progress): a complete game
 
 Plan and owner decisions: [design/COMPLETE_GAME_REVIEW.md](design/COMPLETE_GAME_REVIEW.md) and the "Leaving the island" section of the brief.
@@ -21,7 +36,7 @@ Plan and owner decisions: [design/COMPLETE_GAME_REVIEW.md](design/COMPLETE_GAME_
 | Lot pay: advance when a lot opens, milestone when finished, bonus if on time; paid once each, saved | ✅ | $3,000/$3,500/$4,000 advance and milestone; $1,500/$2,000/$2,500 bonus |
 | Crew fells lot trees only, one lot at a time, and heads for what is left of it; paint bands on lot trees (`LotMarks`); Journal lot lines; locator finds lot work; New Campaign brief | ✅ | Paint band checked in a render |
 | Loads go straight to the sawmill's feed rack while it has room (`deliver_mill`); a full rack sends them to the cradle; yard hands move cradle and deck wood to the mill, and Auto workers feed it once the rack is half empty | ✅ | Was cradle → deck → mill, three carries per log |
-| Measured pace against the lots | 🟡 | One simulated workday, five hatchet workers, no boss: 5.7 tree-eq accepted (was 3.9), 8 lot trees felled (was 5), five pallets paid $240 (was $48), nothing left in the yard. A multi-day run and human play are not done |
+| Measured pace against the lots | 🟡 | One simulated workday, five hatchet workers, no boss: 5.7 tree-eq accepted (was 3.9), 8 lot trees felled (was 5), five pallets paid $240 (was $48), nothing left in the yard. Three days in a row (same crew): 8, 6 and 5 trees felled, 5.7, 6.1 and 4.6 tree-eq accepted, the mill paid $240, $720 and $384 against $500 a day in wages. Human play is not done |
 | Hauling fixes (forest landings, river drive), seasons | ⬜ | Later in this plan |
 | Nights that grow; people who matter; an island worth walking; reasons to keep going; ship it | ⬜ | Phases 26 to 30 |
 | Seen on a real graphics card, played by a person | ⛔ not run | No GPU in the build container |

@@ -163,6 +163,17 @@ static func shoreline(origin: Vector3, r: float, rng: RandomNumberGenerator) -> 
 
 
 ## Where an actor withdraws to: behind its cover, away from the viewer.
+## Phase 26: a roof or thick standing canopy overhead (cleared ground is
+## open sky). Used by the families that keep to the open sky.
+static func under_cover(p: Vector3) -> bool:
+	if Game.weather != null and Game.weather.has_method("shelter_at") and float(Game.weather.call("shelter_at", p)) > 0.0:
+		return true
+	var veg: Node = Game.world_root.get("vegetation") if Game.world_root else null
+	if veg != null and veg.has_method("standing_trees_near"):
+		return (veg.call("standing_trees_near", p, 9.0, 4) as PackedInt32Array).size() >= 2
+	return false
+
+
 static func withdrawal(from: Vector3, viewer: Vector3) -> Vector3:
 	var away := Vector3(from.x - viewer.x, 0, from.z - viewer.z).normalized()
 	var cov := cover_near(from + away * 4.0, 8.0)

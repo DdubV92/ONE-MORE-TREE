@@ -40,6 +40,9 @@ var fired_tonight := {}             # family -> count
 var observed := {}                  # id -> result (runtime observed coverage)
 var profile := {"pursuit": 0.0, "stare_windows": 0.0, "camera_dwell": 0.0, "retreats": 0.0}
 var quiet_outcomes := 0
+var notes := FieldNotes.new()       # Phase 26: what the boss has worked out
+var answered_tonight := 0
+var quieted_tonight := {}           # family -> true: answered by its rule, gone until morning
 var _rng := RandomNumberGenerator.new()
 var _caption_t := -10.0
 var _props: Node3D
@@ -52,6 +55,7 @@ func _ready() -> void:
 	_props.name = "TerrorProps"
 	add_child(_props)
 	load_bank()
+	notes.note_changed.connect(_on_note_changed)
 
 
 func _exit_tree() -> void:
@@ -122,7 +126,9 @@ func _process(delta: float) -> void:
 		# little more often (up to x1.25), never below the quiet minimum;
 		# peak/startle cooldowns are untouched.
 		var w: float = Game.rest.fear_weight() if Game.rest else 1.0
-		next_in = maxf(_rng.randf_range(QUIET_MIN, QUIET_MAX) / w, QUIET_MIN)
+		# Phase 26: the quiet between encounters is long on an untouched
+		# island and short on a cut one.
+		next_in = maxf(_rng.randf_range(QUIET_MIN, QUIET_MAX) * NightPressure.gap_scale(pressure()) / w, QUIET_MIN)
 		offer()
 
 
@@ -135,6 +141,14 @@ func _is_ordinary_night() -> bool:
 	if Game.hunt and Game.hunt.hunt_active():
 		return false
 	return c.clock.phase() == WorkdayClock.Phase.NIGHT
+
+
+## Phase 26: how stirred up the night is where the player stands. Staged
+## fixtures (forced) always get the full range.
+func pressure() -> float:
+	if forced:
+		return 1.0
+	return NightPressure.level((Game.player as Node3D).global_position if Game.player != null else Vector3.INF)
 
 
 func peak_available() -> bool:
@@ -184,8 +198,9 @@ func offer(force_id := "") -> String:
 		pick = find(force_id)
 		startle = force_id.contains("-J")
 	else:
-		var weight := 0.22 if float(profile.pursuit) > 0.6 else 0.04
-		if peak_available() and _rng.randf() < weight:
+		var lvl := pressure()
+		var weight := (0.22 if float(profile.pursuit) > 0.6 else 0.04) * NightPressure.startle_scale(lvl)
+		if NightPressure.max_intensity(lvl) >= 2 and peak_available() and _rng.randf() < weight:
 			pick = _pick_startle(ctx)
 			startle = not pick.is_empty()
 		if pick.is_empty():
@@ -208,7 +223,7 @@ func _start(ev: Dictionary, ctx: String, p: Node3D, peak_ok: bool) -> String:
 		quiet_outcomes += 1
 		return ""
 	active = e
-	e.ended.connect(_on_ended.bind(str(ev.id)))
+	e.ended.connect(_on_ended.bind(str(ev.id), e))
 	e.begin(p)
 	history.append(str(ev.id))
 	if history.size() > 400:
@@ -218,13 +233,45 @@ func _start(ev: Dictionary, ctx: String, p: Node3D, peak_ok: bool) -> String:
 	return str(ev.id)
 
 
-func _on_ended(result: String, id: String) -> void:
+func _on_ended(result: String, id: String, enc: TerrorEncounter = null) -> void:
 	if result == "peak":
 		last_peak_t = night_active_t
 		peak_refractory = _rng.randf_range(PEAK_REFRACTORY[0], PEAK_REFRACTORY[1])
 	observed[id] = result
 	active = null
+	if enc != null and result != "cancelled":
+		_note_encounter(enc, result)
 	encounter_ended.emit(id, result)
+
+
+## Phase 26: the notebook and what a right or wrong answer does to the
+## rest of the night. Right: that family leaves you alone tonight, the
+## quiet lasts longer and the feeling of being closed in on eases. Wrong
+## (it was provoked into a peak outside safety): it closes in a little.
+func _note_encounter(enc: TerrorEncounter, result: String) -> void:
+	var day: int = Game.campaign.clock.day if Game.campaign != null else 1
+	notes.witness(enc.family, day)
+	if enc.rule_answered:
+		notes.answered(enc.family, day)
+		answered_tonight += 1
+		quieted_tonight[enc.family] = true
+		next_in = maxf(next_in, QUIET_MIN) * 1.5
+		if Game.threat != null:
+			Game.threat.relief(NightThreat.ANSWER_RELIEF)
+	elif result == "peak" and enc.reacted and Game.threat != null and Game.safety != null and not Game.safety.is_player_safe():
+		Game.threat.relief(-NightThreat.PROVOKE_COST)
+
+
+func _on_note_changed(family: int, stage: int) -> void:
+	var c: CampaignService = Game.campaign
+	if c == null or not c.active:
+		return
+	var text := "Field notes: something new. (Journal)"
+	if stage == 2:
+		text = "Field notes: a thought about %s. (Journal)" % FieldNotes.name_of(family)
+	elif stage >= 3:
+		text = "Field notes: you know what works on %s. (Journal)" % FieldNotes.name_of(family)
+	c.notice.emit(text, 6.0)
 
 
 func _needs_ok(ev: Dictionary) -> bool:
@@ -241,6 +288,10 @@ func _needs_ok(ev: Dictionary) -> bool:
 					return false
 			"dog_rescue_active":
 				return false
+	# Phase 26: it never calls over the top of the real dog.
+	if int(ev.get("family", 0)) == 10 and Game.dog != null and Game.player != null:
+		if (Game.dog as Node3D).global_position.distance_to((Game.player as Node3D).global_position) < 8.0:
+			return false
 	return true
 
 
@@ -250,10 +301,18 @@ func _pick_event(ctx: String) -> Dictionary:
 		return {}
 	var best: Dictionary = {}
 	var best_s := -INF
+	var lvl := pressure()
+	var sharpest := NightPressure.max_intensity(lvl)
 	for k in 24:
 		var e: Dictionary = pool[_rng.randi() % pool.size()]
 		if not _needs_ok(e):
 			continue
+		# Phase 26: families wake as the island is disturbed, and sharp
+		# beats wait for a stirred-up night.
+		if not NightPressure.family_open(int(e.family), lvl) or int(e.intensity) > sharpest:
+			continue
+		if quieted_tonight.has(int(e.family)):
+			continue          # answered by its rule tonight
 		var s := 1.0 + _rng.randf()
 		if not history.has(str(e.id)):
 			s += 1.0                                   # novelty
@@ -269,6 +328,8 @@ func _pick_event(ctx: String) -> Dictionary:
 func _pick_startle(ctx: String) -> Dictionary:
 	var fams := fired_tonight.keys()
 	var fam: int = int(fams[_rng.randi() % fams.size()]) if not fams.is_empty() else 1 + _rng.randi() % 25
+	if not NightPressure.family_open(fam, pressure()) or quieted_tonight.has(fam):
+		return {}
 	var pool: Array = startles_by_family.get(fam, [])
 	var ok: Array = pool.filter(func(s: Dictionary) -> bool: return _needs_ok(s) and (str(s.context) == ctx or (str(s.context) == "interior" and ctx in ["cabin", "camper"]) or str(s.context) == "woods" and ctx in ["woods", "camp"]))
 	return ok[_rng.randi() % ok.size()] if not ok.is_empty() else {}
@@ -363,6 +424,8 @@ func morning_cleanup() -> void:
 	for n in get_tree().get_nodes_in_group("terror_prop"):
 		n.queue_free()
 	fired_tonight.clear()
+	quieted_tonight.clear()
+	answered_tonight = 0
 	night_active_t = 0.0
 	last_peak_t = -99999.0
 	next_in = _rng.randf_range(20.0, 60.0)
@@ -400,7 +463,7 @@ static func voice_memory_pick(rng: RandomNumberGenerator) -> Dictionary:
 
 
 func capture() -> Dictionary:
-	return {"reservation": reservation.duplicate(), "family_cooldown": family_cooldown.duplicate(), "next_in": next_in, "night_active_t": night_active_t, "last_peak_t": last_peak_t, "peak_refractory": peak_refractory, "history": history.slice(-120), "fired_tonight": fired_tonight.duplicate(), "profile": profile.duplicate(), "observed": observed.duplicate(), "voice_memory": voice_memory.slice(-20)}
+	return {"reservation": reservation.duplicate(), "family_cooldown": family_cooldown.duplicate(), "next_in": next_in, "night_active_t": night_active_t, "last_peak_t": last_peak_t, "peak_refractory": peak_refractory, "history": history.slice(-120), "fired_tonight": fired_tonight.duplicate(), "profile": profile.duplicate(), "observed": observed.duplicate(), "voice_memory": voice_memory.slice(-20), "field_notes": notes.capture(), "answered_tonight": answered_tonight, "quieted_tonight": quieted_tonight.keys()}
 
 
 ## Restores pacing state; never replays an encounter or a stored peak.
@@ -428,6 +491,11 @@ func restore(d: Dictionary) -> void:
 	for k in profile:
 		profile[k] = clampf(float(pr.get(k, 0.0)), 0.0, 1.0)
 	observed = d.get("observed", {})
+	notes.restore(d.get("field_notes", {}))
+	answered_tonight = int(d.get("answered_tonight", 0))
+	quieted_tonight = {}
+	for q in d.get("quieted_tonight", []):
+		quieted_tonight[int(q)] = true
 	voice_memory.clear()
 	for v in d.get("voice_memory", []):
 		voice_memory.append(v)

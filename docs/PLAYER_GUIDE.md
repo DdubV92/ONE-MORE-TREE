@@ -35,6 +35,10 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - A workday is 20 minutes of daylight and 5 minutes of dusk. Warnings come at the start of dusk, halfway and one minute before night.
 - **Safe at night:** the camper (always, even with the door open), an occupied cabin, and the pools of the working camp lamps. Moonlight, flashlights and screens don't count.
 - Night only ends when you sleep. Waiting doesn't bring morning. Staying out at night can end the attempt; you can reload that morning's checkpoint.
+- **The nights grow.** An untouched island is quiet: on the first nights you only hear things. Each day, and above all each tree cut, wakes more of what lives here, and cleared ground is where it is worst. Late in a campaign the dark also closes in faster.
+- **Everything out there keeps to one rule.** Some leave if you keep looking at them, some if you look away, some if you stand still, walk at them, walk away, get under a roof, or step into a real camp light. A few ask for nothing. Do what works and it goes quietly, leaves you alone for the rest of the night and buys you time outside. Do the wrong thing and it closes in.
+- **Journal → Field notes** (the last tab) writes each thing down when you meet it, adds a hint after a few meetings, and states what works once you have seen it work twice. It also says how the island feels tonight: quiet, uneasy, disturbed or hostile.
+- No rule makes you safe. Only the camper, an occupied cabin and the working lamps do.
 
 ## After the contract: the hunt
 

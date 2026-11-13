@@ -174,7 +174,8 @@ Phase 25 comes first because nothing else can be balanced, or even seen by a pla
 - **Worker risk before the hunt:** yes.
 - **Mystery:** never explain origins, and give each Terror a learnable rule.
 - Still open: fishing and foraging as comfort only (decision 5).
-- **Built so far (Phase 25):** the hunt and beacon rework, and contract lots (three lots, 105 trees, advances, milestones and bonuses) sized from a fresh crew measurement. Hauling fixes, seasons and the rest follow.
+- **Built so far (Phase 25):** the hunt and beacon rework, contract lots (three lots, 105 trees, advances, milestones and bonuses) sized from a fresh crew measurement, and loads carried straight to the sawmill so wood pays the day it is cut. Forest landings and the river drive are not built: with the lots beside the camp and the mill fed directly, the measured pace (about 4.5 to 6 trees a day against 3.5 needed) no longer depends on them. They stay on the list for the far lots of later seasons.
+- **Built so far (Phase 26):** night pressure (nights grow with the day, the cutting and cleared ground), one learnable rule per Terror family, and Field notes in the Journal. Night verbs, night work, Terror sprites and the missing-worker night follow.
 
 ## 7a. The questions as they were asked
 

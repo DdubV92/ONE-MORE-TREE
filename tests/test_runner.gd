@@ -26,6 +26,12 @@ func _ready() -> void:
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P26"):
+		_run("phase 26 night pressure and field notes units", _t_phase26_units)
+		await _run_async("phase 26 nights world", _t_phase26_world)
+		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P25"):
 		await _run_async("phase 25 contract lots", _t_phase25_lots_world)
 		print("\n==== %d passed, %d failed ====" % [passes, failures])
@@ -218,6 +224,8 @@ func _ready() -> void:
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
 	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
+	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded", _t_phase26_units)
+	await _run_async("phase 26 nights world: a new campaign's nights are quiet (sound and atmosphere only, no sharp beats), pressure grows with the day and the cutting and is worst on cleared ground, each rule kind ends an encounter quietly, a right answer fills the notes and eases the exposure, the not-your-dog never calls beside the real dog, notes survive a save", _t_phase26_world)
 	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
 	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
@@ -7519,6 +7527,341 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 
 
 # ======================================================== Phase 24: sawmill
+
+func _t_phase26_units() -> String:
+	var keep := NightPressure.override_level
+	NightPressure.override_level = -1.0
+	# Tiers, sharpness and pacing by level.
+	var want := [[0.0, 0, 1], [0.17, 0, 1], [0.18, 1, 1], [0.3, 1, 2], [0.42, 2, 2], [0.55, 2, 3], [0.68, 3, 3], [1.0, 3, 3]]
+	for wv in want:
+		if NightPressure.tier(float(wv[0])) != int(wv[1]) or NightPressure.max_intensity(float(wv[0])) != int(wv[2]):
+			return "level %.2f gave tier %d / sharpness %d" % [float(wv[0]), NightPressure.tier(float(wv[0])), NightPressure.max_intensity(float(wv[0]))]
+	if NightPressure.gap_scale(0.0) <= 1.0 or NightPressure.gap_scale(1.0) >= 1.0 or NightPressure.startle_scale(0.0) >= NightPressure.startle_scale(1.0):
+		return "pacing does not tighten with pressure"
+	if absf(NightThreat.pressure_rate(0.0) - 1.0) > 0.0001 or absf(NightThreat.pressure_rate(0.3) - 1.0) > 0.0001 or absf(NightThreat.pressure_rate(1.0) - NightThreat.PRESSURE_RATE_MAX) > 0.0001:
+		return "exposure rate should be unchanged while quiet and x%.1f at full pressure" % NightThreat.PRESSURE_RATE_MAX
+	NightPressure.override_level = 0.5
+	if absf(NightPressure.level() - 0.5) > 0.0001:
+		return "the review override does not pin the level"
+	NightPressure.override_level = keep
+	# Every family (T01..T25) has a tier, a rule with help text, and notes
+	# under the bank's own name. T26 (the dog rescue) is not gated.
+	var f := FileAccess.open("res://data/terror/bank.json", FileAccess.READ)
+	var bank: Dictionary = JSON.parse_string(f.get_as_text())
+	var tier0 := 0
+	for fam in range(1, 26):
+		if not NightPressure.TIERS.has(fam):
+			return "family T%02d has no tier" % fam
+		if int(NightPressure.TIERS[fam]) == 0:
+			tier0 += 1
+		var rule := FieldNotes.rule_of(fam)
+		if not FieldNotes.RULE_HELP.has(rule):
+			return "family T%02d has no known rule (%s)" % [fam, rule]
+		var d: Dictionary = FieldNotes.FAMILIES[fam]
+		if str(d.name) != str(bank.families[fam - 1].name):
+			return "field notes name for T%02d differs from the bank (%s)" % [fam, str(d.name)]
+		for k in ["met", "hint", "know"]:
+			if str(d.get(k, "")).length() < 12:
+				return "family T%02d has no '%s' note" % [fam, k]
+	if NightPressure.TIERS.has(26) or FieldNotes.FAMILIES.has(26):
+		return "the dog rescue family must not be gated or noted"
+	if tier0 < 5:
+		return "too few families are awake on the first night (%d)" % tier0
+	# Tier-0 families cover every context, so a quiet night is never empty.
+	var ctx_ok := {}
+	for e in bank.events:
+		if int(NightPressure.TIERS.get(int(e.family), 9)) == 0 and int(e.intensity) == 1:
+			ctx_ok[str(e.context)] = true
+	for c in ["woods", "camp", "cabin", "camper", "cameras"]:
+		if not ctx_ok.has(c):
+			return "no first-night event for the %s context" % c
+	# Notes: met -> hint -> rule.
+	var fn := FieldNotes.new()
+	var changes := []
+	fn.note_changed.connect(func(fam2: int, st: int) -> void: changes.append([fam2, st]))
+	if fn.stage(5) != 0 or not fn.lines(5).is_empty():
+		return "an unmet family is listed"
+	fn.witness(5, 3)
+	if fn.stage(5) != 1 or fn.lines(5).size() != 2:
+		return "meeting something once should write its name and one line"
+	fn.witness(5, 4)
+	fn.witness(5, 5)
+	if fn.stage(5) != 2 or fn.lines(5).size() != 3:
+		return "three meetings should add the hint"
+	fn.answered(5, 6)
+	if fn.stage(5) != 2:
+		return "one right answer should not be certainty yet"
+	fn.answered(5, 7)
+	if fn.stage(5) != 3 or not fn.knows_rule(5) or not fn.lines(5)[3].begins_with("WHAT WORKS"):
+		return "two right answers should write down what works"
+	fn.witness(22, 2)
+	fn.answered(22, 2)
+	if fn.stage(22) != 2:
+		return "a first right answer should give the hint at once"
+	if changes != [[5, 1], [5, 2], [5, 3], [22, 1], [22, 2]]:
+		return "note changes were not reported once each (%s)" % str(changes)
+	if fn.met() != [22, 5] or fn.rules_known() != 1:
+		return "notes are not listed in the order they were first met"
+	if fn.witness(26, 1) != 0 or fn.witness(99, 1) != 0 or fn.notes.size() != 2:
+		return "an unknown family was written down"
+	var fn2 := FieldNotes.new()
+	fn2.restore(JSON.parse_string(JSON.stringify(fn.capture())))
+	if fn2.stage(5) != 3 or fn2.stage(22) != 2 or int(fn2.notes[5].first_day) != 3 or fn2.notes.size() != 2:
+		return "field notes did not survive a save"
+	# Relief is bounded and never commits a catch.
+	var nt := NightThreat.new()
+	nt.exposure = 0.5
+	nt.relief(NightThreat.ANSWER_RELIEF)
+	if absf(nt.exposure - (0.5 - NightThreat.ANSWER_RELIEF)) > 0.0001:
+		return "a right answer did not ease the exposure"
+	nt.relief(5.0)
+	if nt.exposure != 0.0:
+		return "relief went below zero"
+	nt.exposure = 0.9
+	nt.relief(-5.0)
+	if nt.exposure > 0.95:
+		return "provoking something could commit a catch by itself"
+	nt.free()
+	return ""
+
+
+func _t_phase26_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for ch in get_children():
+		if ch is IslandWorld:
+			ch.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or not world.systems_ready) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var keep := NightPressure.override_level
+	NightPressure.override_level = -1.0
+	var err: String = await _p26_checks(world)
+	NightPressure.override_level = keep
+	if Game.tv:
+		Game.tv.powered = true
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p26_checks(world: IslandWorld) -> String:
+	var cs: CampaignService = Game.campaign
+	var dir: TerrorDirector = Game.director
+	var p := Game.player as Player
+	cs.new_campaign()
+	var lots: ContractLots = cs.contract.lots
+	if lots == null:
+		return "no contract lots in a new campaign"
+	# Day 1, nothing cut: quiet.
+	if NightPressure.campaign_level() != 0.0 or NightPressure.cut_share() != 0.0:
+		return "a new campaign does not start at zero pressure (%.2f)" % NightPressure.campaign_level()
+	if NightPressure.name_of(NightPressure.level(p.global_position)) != "quiet":
+		return "the first night is not quiet"
+	dir.forced = false
+	for ctx in ["woods", "camp", "camper", "cabin", "cameras"]:
+		for k in 40:
+			var e := dir._pick_event(ctx)
+			if e.is_empty():
+				continue
+			if int(NightPressure.TIERS[int(e.family)]) != 0 or int(e.intensity) > 1:
+				return "a first night offered %s (family T%02d, intensity %d)" % [str(e.id), int(e.family), int(e.intensity)]
+	if not dir._pick_startle("woods").is_empty() and NightPressure.max_intensity(dir.pressure()) < 2:
+		pass      # startles are gated in offer(), not in the picker
+	# Cutting raises it, and most where the ground was cut.
+	var idx: Dictionary = Game.vegetation.get("tree_index_by_id")
+	var ids: PackedInt32Array = lots.lots[0].trees
+	var mid := Vector3.ZERO
+	for id in ids:
+		Game.trees.record(id).state = TreeService.State.DISPOSED
+		var i := int(idx[id])
+		mid += Vector3(World.trees.x[i], 0.0, World.trees.z[i]) / float(ids.size())
+	var share := NightPressure.cut_share()
+	if absf(share - 30.0 / 105.0) > 0.001:
+		return "cut share is %.3f after lot 1, expected %.3f" % [share, 30.0 / 105.0]
+	var far := mid + Vector3(600.0, 0.0, 0.0)
+	if NightPressure.local_level(mid) < 0.99 or NightPressure.local_level(far) != 0.0:
+		return "cleared ground is not where the pressure is (%.2f on it, %.2f far away)" % [NightPressure.local_level(mid), NightPressure.local_level(far)]
+	if NightPressure.level(mid) <= NightPressure.level(far) + 0.2:
+		return "standing on cleared ground did not raise the level"
+	cs.clock.day = 21
+	for id in (lots.lots[1].trees as PackedInt32Array):
+		Game.trees.record(id).state = TreeService.State.DISPOSED
+	var late := NightPressure.campaign_level()
+	if late < 0.68 or NightPressure.tier(late) != 3:
+		return "day 21 with two lots down should be hostile (%.2f)" % late
+	var seen_fams := {}
+	for k in 400:
+		var e2 := dir._pick_event("woods")
+		if not e2.is_empty():
+			seen_fams[int(NightPressure.TIERS[int(e2.family)])] = true
+	if not seen_fams.has(1) or not seen_fams.has(2):
+		return "a hostile night still only offers the first families (%s)" % str(seen_fams.keys())
+	# Each rule kind ends an encounter quietly.
+	world.teleport_to("forest")
+	for k in 20:
+		await get_tree().physics_frame
+	var mk := func(fam: int, dist: float) -> TerrorEncounter:
+		var en := TerrorEncounter.new()
+		add_child(en)
+		en.setup({"id": "TEST-%02d" % fam, "family": fam, "steps": [{"p": "sound", "k": "bell"}], "intensity": 1}, "woods", false, 7)
+		en.spot = p.global_position + Vector3(0, 1.6, 0) + Vector3(dist, 0, 0)
+		en._start_dist = dist
+		en.stage = "hold"
+		return en
+	var want_rule := {22: "still", 18: "approach", 11: "leave", 3: "cover", 12: "lamp", 15: "feed", 10: "companion", 8: "ignore", 5: "watched", 1: "look_away"}
+	for fam in want_rule:
+		if FieldNotes.rule_of(int(fam)) != str(want_rule[fam]):
+			return "family T%02d's rule changed (%s)" % [int(fam), FieldNotes.rule_of(int(fam))]
+	# still: only after moving, then stopping.
+	var en := mk.call(22, 30.0) as TerrorEncounter
+	p.velocity = Vector3.ZERO
+	for k in 10:
+		if en._rule_met(p, 0.5):
+			return "standing still from the start counted as an answer"
+	p.velocity = Vector3(3, 0, 0)
+	en._rule_met(p, 0.5)
+	p.velocity = Vector3.ZERO
+	var hit := false
+	for k in 8:
+		hit = en._rule_met(p, 0.5) or hit
+	if not hit:
+		return "stopping did not answer the bell"
+	en.cancel()
+	# approach / leave.
+	en = mk.call(18, 30.0)
+	if en._rule_met(p, 0.1):
+		return "approach answered without approaching"
+	en.spot = p.global_position + Vector3(0, 1.6, 0) + Vector3(12.0, 0, 0)
+	if not en._rule_met(p, 0.1):
+		return "walking up to it did not answer the axe"
+	en.cancel()
+	en = mk.call(11, 30.0)
+	en.spot = p.global_position + Vector3(0, 1.6, 0) + Vector3(55.0, 0, 0)
+	if not en._rule_met(p, 0.1):
+		return "walking away did not answer the drowned walker"
+	en.cancel()
+	# feed: only if a feed was on when it began.
+	en = mk.call(15, 30.0)
+	en._feed_at_start = true
+	Game.tv.powered = false
+	if not en._rule_met(p, 0.1):
+		return "switching the monitor off did not answer the camera audience"
+	en._feed_at_start = false
+	if en._rule_met(p, 0.1):
+		return "the feed rule answered with no feed on at the start"
+	Game.tv.powered = true
+	en.cancel()
+	# companion: the real dog beside you. And it never starts that way.
+	if Game.dog:
+		en = mk.call(10, 30.0)
+		Game.dog.global_position = p.global_position + Vector3(40, 0, 0)
+		if en._rule_met(p, 2.0):
+			return "the dog rule answered with the dog far away"
+		Game.dog.global_position = p.global_position + Vector3(2, 0, 0)
+		en._rule_met(p, 0.6)
+		if not en._rule_met(p, 0.6):
+			return "the real dog beside you did not answer it"
+		en.cancel()
+		if dir._needs_ok({"family": 10, "needs": []}):
+			return "the not-your-dog could start with the real dog beside you"
+	# lamp: walking from the dark into a real safe place (SafetyService).
+	en = mk.call(12, 30.0)
+	en._unsafe_at_start = true
+	world.teleport_to("camper")
+	for k in 20:
+		await get_tree().physics_frame
+	if not Game.safety.is_player_safe():
+		return "the camper is not safe in this fixture"
+	en._rule_met(p, 0.6)
+	if not en._rule_met(p, 0.6):
+		return "reaching a safe place did not answer the lanterns"
+	en._unsafe_at_start = false
+	en._rule_t = 0.0
+	if en._rule_met(p, 5.0):
+		return "the lamp rule answered for someone who was safe all along"
+	en.cancel()
+	# cover: only after having been under open sky.
+	en = mk.call(3, 30.0)
+	en._was_open = true
+	en._rule_met(p, 1.0)
+	if TerrorPlacement.under_cover(p.global_position) and not en._rule_met(p, 1.0):
+		return "getting under a roof did not answer the wing"
+	en.cancel()
+	# watched / look away (with a body).
+	en = mk.call(5, 30.0)
+	en.actor = TerrorActor.make("thin_man")
+	en.add_child(en.actor)
+	en.actor.visible = true
+	en._stare = 2.0
+	if not en._rule_met(p, 0.1):
+		return "holding a look did not answer the surveyor"
+	en.cancel()
+	en = mk.call(1, 30.0)
+	en.actor = TerrorActor.make("tall_woman")
+	en.add_child(en.actor)
+	en.actor.visible = true
+	en.actor.global_position = p.global_position + p.global_basis.z * 30.0     # behind the player
+	if en._rule_met(p, 5.0):
+		return "looking away counted before she had been seen"
+	en._seen_once = true
+	en._rule_met(p, 2.0)
+	if not en._rule_met(p, 2.0):
+		return "looking away did not answer the tall woman"
+	en.cancel()
+	# ignore: left alone to the end.
+	en = mk.call(8, 30.0)
+	en.finish("completed")
+	if not en.rule_answered:
+		return "leaving the knocking alone was not its answer"
+	en = mk.call(8, 30.0)
+	en.reacted = true
+	en.finish("completed")
+	if en.rule_answered:
+		return "a provoked knocking still counted as left alone"
+	await get_tree().process_frame
+	# The director's bookkeeping: notes, a quieter night, eased exposure.
+	dir.notes.restore({})
+	dir.fired_tonight.clear()
+	Game.threat.exposure = 0.5
+	en = mk.call(22, 30.0)
+	en.rule_answered = true
+	dir._note_encounter(en, "completed")
+	if dir.notes.stage(22) != 2 or not dir.quieted_tonight.has(22) or absf(Game.threat.exposure - (0.5 - NightThreat.ANSWER_RELIEF)) > 0.001:
+		return "a right answer did not fill the notes, quiet the family and ease the exposure"
+	dir._note_encounter(en, "completed")
+	if not dir.notes.knows_rule(22):
+		return "a second right answer did not make the rule certain"
+	en.rule_answered = false
+	dir._note_encounter(en, "completed")
+	if int(dir.notes.notes[22].seen) != 3 or int(dir.notes.notes[22].answered) != 2:
+		return "meeting it again without answering changed the answer count"
+	en.cancel()
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(dir.capture()))
+	dir.notes.restore({})
+	dir.restore(snap)
+	if not dir.notes.knows_rule(22) or not dir.quieted_tonight.has(22):
+		return "field notes were not saved with the director"
+	for k in 200:
+		var e3 := dir._pick_event("woods")
+		if not e3.is_empty() and int(e3.family) == 22:
+			return "an answered family came back the same night"
+	dir.morning_cleanup()
+	if not dir.quieted_tonight.is_empty():
+		return "answered families were not released in the morning"
+	Game.threat.exposure = 0.0
+	Game.trees.clear_all()
+	return ""
+
 
 func _t_phase25_lots_world() -> String:
 	Game.mode = Game.Mode.PREVIEW

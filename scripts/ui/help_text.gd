@@ -41,6 +41,8 @@ static func night() -> String:
 		"Your crew and the dog head for shelter at dusk. Workers who think you are ignoring the time may leave in a truck without you.",
 		"At night during the contract, the camper is always safe, even with the door open. An occupied cabin is safe, and so are the pools of the working camp lamps. Moonlight, a flashlight or a screen's glow are NOT protection.",
 		"Staying awake makes the night more uneasy. Being outside a safe place at night can end the attempt (you can reload the morning checkpoint).",
+		"The nights grow. An untouched island is quiet; each day, and above all each tree cut, wakes more of what lives here, and cleared ground is where it is worst.",
+		"Everything you meet out there keeps to one rule. Journal -> Field notes fills in as you meet each thing and work out what makes it leave. The right answer buys you time outside; the wrong one costs you some. No rule makes you safe: only the camper, an occupied cabin and the working lamps do.",
 		"Night only ends when you sleep in your bed. Waiting does not bring morning. Whatever you think you see through a window does not make the camper unsafe.",
 	])
 

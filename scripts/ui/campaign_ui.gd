@@ -179,7 +179,9 @@ func toggle_journal(tab := 0) -> void:
 	if Game.rest and svc and svc.active:
 		tabs.add_child(_journal_rest())
 	tabs.add_child(_journal_help())
-	tabs.current_tab = tab
+	if Game.director:
+		tabs.add_child(_journal_field_notes())     # last: earlier tab numbers are used by callers
+	tabs.current_tab = clampi(tab, 0, tabs.get_tab_count() - 1)
 	v.add_child(UITheme.button("Close", close_panel, 200))
 	_open(p)
 
@@ -212,7 +214,10 @@ func _journal_contract() -> Control:
 			_text(v, line, 15)
 	if svc.onboarding and svc.onboarding.milestones.has("final_tree"):
 		_text(v, "Every original tree is down. What is left is cleanup: the stumps and logs above.", 15, UITheme.ACCENT)
-	_text(v, "Pay: exactly $100 per original tree, split across its logs and credited when each log is accepted at the camp yard (receiving cradle or a log deck; the yard must have room). Felling alone pays nothing.", 15, UITheme.MUTED)
+	if Game.timber and Game.timber.mill_economy:
+		_text(v, "Pay: wood is paid at the sawmill, $%s for each finished pallet (%d litres of log, about $100 for an average tree). A delivered log counts toward the contract at once. Felling alone pays nothing, and burned logs pay nothing." % [Money.format_cents(Game.timber.mill.pay_cents), Game.timber.mill.pallet_l], 15, UITheme.MUTED)
+	else:
+		_text(v, "Pay: exactly $100 per original tree, split across its logs and credited when each log is accepted at the camp yard (receiving cradle or a log deck; the yard must have room). Felling alone pays nothing.", 15, UITheme.MUTED)
 	v.add_child(UITheme.button("Locate the nearest remaining work", func() -> void:
 		var from: Vector3 = Game.player.global_position
 		var near := ContractLocator.nearest(from)
@@ -228,7 +233,10 @@ func _journal_contract() -> Control:
 			ContractLocator.mark(Game.world_root, best)
 		hud.show_message("\n".join(lines) if not lines.is_empty() else "Nothing left to do for the contract.", 8.0)
 		close_panel(), 320))
-	_text(v, "To finish on time you need about %.0f trees a day from here. The island has %d trees. If night falls on day 30 with the job unfinished, the company leaves you behind." % [svc.contract.required_per_day(), c.total_trees], 15, UITheme.MUTED)
+	if svc.contract.lots != null:
+		_text(v, "To finish on time you need about %.1f trees a day from here. The lots hold %d trees. If night falls on day 30 with the job unfinished, nobody comes for you." % [svc.contract.required_per_day(), c.total_trees], 15, UITheme.MUTED)
+	else:
+		_text(v, "To finish on time you need about %.0f trees a day from here. The island has %d trees. If night falls on day 30 with the job unfinished, nobody comes for you." % [svc.contract.required_per_day(), c.total_trees], 15, UITheme.MUTED)
 	return s[0]
 
 
@@ -289,6 +297,39 @@ func _journal_help() -> Control:
 		for e in rec:
 			_text(v, "%sDay %d, %s into the day: %s%s" % [Notifications.TAGS[int(e.p)], int(e.day), CampaignService.fmt_time(float(e.t)), str(e.text), (" (x%d)" % int(e.count)) if int(e.count) > 1 else ""], 13)
 	return s[0]
+
+
+## Phase 26: what the boss has worked out about the nights.
+func _journal_field_notes() -> Control:
+	var s := _scroll("Field notes")
+	var v: VBoxContainer = s[1]
+	for line in field_notes_lines():
+		var head := line.begins_with("# ")
+		_text(v, line.trim_prefix("# "), 17 if head else 14, UITheme.ACCENT if head or line.begins_with("WHAT WORKS") else (UITheme.MUTED if line.begins_with("(") else UITheme.TEXT))
+	return s[0]
+
+
+## The Field notes tab as plain lines ("# " marks a heading).
+func field_notes_lines() -> PackedStringArray:
+	var out := PackedStringArray()
+	var fn: FieldNotes = Game.director.notes if Game.director else null
+	out.append("# " + NightPressure.describe())
+	out.append("(An untouched island is quiet. Every day, and every tree cut, wakes more of it. Cleared ground is worst.)")
+	if fn == null or fn.notes.is_empty():
+		out.append("Nothing written down yet. Notes go in here when you have met something at night.")
+		return out
+	out.append("(Each thing keeps to one rule. Meeting it writes it down; seeing what makes it leave, twice, makes you sure. No rule makes you safe.)")
+	for f in fn.met():
+		var ls := fn.lines(int(f))
+		if ls.is_empty():
+			continue
+		out.append("# " + ls[0])
+		for i in range(1, ls.size()):
+			out.append(ls[i])
+		var n: Dictionary = fn.notes[f]
+		out.append("(Met %d time%s, first on day %d.)" % [int(n.seen), "" if int(n.seen) == 1 else "s", int(n.first_day)])
+	out.append("(%d of %d things met; sure of %d.)" % [fn.notes.size(), FieldNotes.FAMILIES.size(), fn.rules_known()])
+	return out
 
 
 ## Phase 16: restedness, the bedtime forecast and recent nights.
