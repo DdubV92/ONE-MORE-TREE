@@ -160,7 +160,7 @@ func _acts(w: Worker) -> Array:
 			return ["act:cut", "act:buck"]
 		"stump":
 			return ["act:cut", "act:stump"]
-		"pick", "deliver", "deliver_deck", "load_truck", "team_follow":
+		"pick", "deliver", "deliver_deck", "deliver_mill", "load_truck", "team_follow":
 			return ["act:carry"]
 		"yard_take", "yard_drop":
 			return ["act:yard"]

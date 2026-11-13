@@ -780,7 +780,7 @@ func open_talk(w: Worker) -> void:
 	var add := func(label: String, cb: Callable) -> void:
 		opts.add_child(UITheme.button(label, cb, 270))
 	add.call("What are you working on?", func() -> void:
-		var topic: String = {"fell": "work_felling", "buck": "work_processing", "pick": "work_hauling", "deliver": "work_hauling", "deliver_deck": "work_hauling", "yard_take": "work_hauling", "yard_drop": "work_hauling", "home": "work_home", "follow": "work_follow"}.get(w.activity, "work_idle")
+		var topic: String = {"fell": "work_felling", "buck": "work_processing", "pick": "work_hauling", "deliver": "work_hauling", "deliver_deck": "work_hauling", "deliver_mill": "work_hauling", "yard_take": "work_hauling", "yard_drop": "work_hauling", "home": "work_home", "follow": "work_follow"}.get(w.activity, "work_idle")
 		answer.call(authored.call("work", func() -> String: return w.say(topic, false, {"target": "this one"}))))
 	add.call("Anything holding you up?", func() -> void:
 		var cause := w.idle_reason if w.idle_reason not in ["", "pause"] else Game.crew.idle_cause(w)

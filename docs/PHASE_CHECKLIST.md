@@ -20,8 +20,8 @@ Plan and owner decisions: [design/COMPLETE_GAME_REVIEW.md](design/COMPLETE_GAME_
 | **Contract lots** (`ContractLots`, ruleset `lots_v1`): three lots of 30, 35 and 40 trees planned nearest-first from the forest entrance, due days 10, 20 and 30; the contract counts lot trees only | ✅ | Older campaigns keep the whole island |
 | Lot pay: advance when a lot opens, milestone when finished, bonus if on time; paid once each, saved | ✅ | $3,000/$3,500/$4,000 advance and milestone; $1,500/$2,000/$2,500 bonus |
 | Crew fells lot trees only, one lot at a time, and heads for what is left of it; paint bands on lot trees (`LotMarks`); Journal lot lines; locator finds lot work; New Campaign brief | ✅ | Paint band checked in a render |
-| Measured pace against the lots | 🟡 | One simulated workday, five hatchet workers, no boss: 3.9 tree-eq accepted, 5 lot trees felled. A multi-day run and human play are not done |
-| Wood income lags delivery: the same simulated day paid $48 through the mill | ❌ open | The mill is barely fed on auto roles; lot pay keeps wages covered meanwhile |
+| Loads go straight to the sawmill's feed rack while it has room (`deliver_mill`); a full rack sends them to the cradle; yard hands move cradle and deck wood to the mill, and Auto workers feed it once the rack is half empty | ✅ | Was cradle → deck → mill, three carries per log |
+| Measured pace against the lots | 🟡 | One simulated workday, five hatchet workers, no boss: 5.7 tree-eq accepted (was 3.9), 8 lot trees felled (was 5), five pallets paid $240 (was $48), nothing left in the yard. A multi-day run and human play are not done |
 | Hauling fixes (forest landings, river drive), seasons | ⬜ | Later in this plan |
 | Nights that grow; people who matter; an island worth walking; reasons to keep going; ship it | ⬜ | Phases 26 to 30 |
 | Seen on a real graphics card, played by a person | ⛔ not run | No GPU in the build container |

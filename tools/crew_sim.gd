@@ -7,6 +7,9 @@ extends Node
 ## before night.
 ##   godot --headless --fixed-fps 60 res://tools/crew_sim.tscn
 ##   env CREW=5 SHIFT_SECONDS=1500
+## DAYS=n (Phase 25) sleeps through each night and runs n workdays in a
+## row, printing one CREW_DAY line per day: lot progress, wood, lumber
+## pay, lot pay, wages and cash.
 
 var world: IslandWorld
 
@@ -46,15 +49,55 @@ func _ready() -> void:
 	var t := 0.0
 	var next_report := 0.0
 	var cash0 := cs.wallet.cash
-	while t < shift:
-		await get_tree().physics_frame
-		t += 1.0 / 60.0
-		if t >= next_report:
-			next_report += 60.0
-			var acts := []
-			for w in crew.workers.values():
-				acts.append("%s:%s" % [(w as Worker).id, (w as Worker).activity])
-			print("T+%4ds day %d t=%5.0f  %s" % [int(t), cs.clock.day, cs.clock.t, " ".join(acts)])
+	var days := int(OS.get_environment("DAYS")) if OS.has_environment("DAYS") else 1
+	var quiet := days > 1
+	var prev := {"mte": 0, "felled": 0, "cash": cash0, "mill": 0}
+	for dn in days:
+		t = 0.0
+		next_report = 0.0
+		while t < shift:
+			await get_tree().physics_frame
+			t += 1.0 / 60.0
+			if t >= next_report:
+				next_report += 60.0
+				if quiet:
+					continue
+				var acts := []
+				for w in crew.workers.values():
+					acts.append("%s:%s" % [(w as Worker).id, (w as Worker).activity])
+				print("T+%4ds day %d t=%5.0f  %s" % [int(t), cs.clock.day, cs.clock.t, " ".join(acts)])
+		if days <= 1:
+			break
+		# The day's line, then sleep into the next morning.
+		var cnt: Dictionary = cs.contract.counts()
+		var mte := int(world.timber.totals().accepted_mte)
+		var day := {"day": cs.clock.day, "workers": crew.workers.size(), "accepted_te": snappedf((mte - int(prev.mte)) / 1000.0, 0.01), "felled": int(cnt.felled) - int(prev.felled),
+			"standing": int(cnt.standing), "stumps": int(cnt.stumps), "mill_paid": (world.timber.mill.earnings_total - int(prev.mill)) / 100.0,
+			"yard_te": Game.yard.stock_mte() / 1000.0 if Game.yard else 0.0, "rack": world.timber.mill.rack.size(), "stuck": crew.stuck_log.size()}
+		if cs.contract.lots:
+			day["lots_done"] = cs.contract.lots.done.size()
+			day["lot"] = cs.contract.lots.current_lot() + 1
+		var in_bed_n := 0
+		for w in crew.workers.values():
+			if (w as Worker).activity == "sleep":
+				in_bed_n += 1
+		day["in_bed"] = in_bed_n
+		var g := 0
+		var sl := cs.sleep()
+		while not bool(sl.ok) and g < 1800:
+			await get_tree().physics_frame
+			g += 1
+			if g % 120 == 0:
+				sl = cs.sleep()
+		day["slept"] = bool(sl.ok)
+		day["cash"] = cs.wallet.cash / 100.0
+		day["cash_change"] = (cs.wallet.cash - int(prev.cash)) / 100.0
+		if not bool(sl.ok):
+			day["sleep_refused"] = str(sl.get("reason", ""))
+		print("CREW_DAY ", JSON.stringify(day))
+		prev = {"mte": mte, "felled": int(cnt.felled), "cash": cs.wallet.cash, "mill": world.timber.mill.earnings_total}
+		if not bool(sl.ok) or bool(sl.get("terminal", false)) or cs.contract.is_closed():
+			break
 	var res := {"workers": crew.workers.size(), "shift_s": int(shift)}
 	var travel := 0.0
 	var work := 0.0
@@ -79,6 +122,9 @@ func _ready() -> void:
 	res["coord"] = crew.coord.stats
 	if Game.yard:
 		res["yard_stock_te"] = Game.yard.stock_mte() / 1000.0
+		res["yard_cradle"] = Game.yard.cradle.size()
+	var ml: MillLedger = world.timber.mill
+	res["mill"] = {"pallets": ml.pallets_total, "accepted_l": ml.accepted_l, "processed_l": ml.processed_l, "rack": ml.rack.size(), "open_pallet_l": ml.open_fill(), "paid_dollars": ml.earnings_total / 100.0}
 	# Phase 16: merit per worker, levels, time split and conservation.
 	var mer := {}
 	for w in crew.workers.values():
@@ -116,9 +162,14 @@ func _owners_ok(t: TimberService) -> bool:
 		for sid in Game.yard.all_yard_sids():
 			if not Game.yard.is_yard_move(str(sid)):
 				held[sid] = int(held.get(sid, 0)) + 1
+	# Phase 24: the sawmill's feed rack and the log in the saw.
+	for r in t.mill.rack:
+		held[str(r.sid)] = int(held.get(str(r.sid), 0)) + 1
+	if not t.mill.job.is_empty():
+		held[str(t.mill.job.sid)] = int(held.get(str(t.mill.job.sid), 0)) + 1
 	for id in t.records:
 		for s in t.records[id].segments:
-			var want := 0 if int(s.state) == TimberService.Seg.CONSUMED else 1
+			var want := 0 if int(s.state) in [TimberService.Seg.CONSUMED, TimberService.Seg.MILLED] else 1
 			if int(held.get(str(s.sid), 0)) != want:
 				return false
 	return true

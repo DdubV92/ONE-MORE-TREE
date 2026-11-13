@@ -12,7 +12,7 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 - **The contract can now be won.** New campaigns sign for three marked lots of forest by the camp entrance (30, 35 and 40 trees, due by days 10, 20 and 30) instead of the whole island. Lot trees wear a band of paint: orange, blue, yellow. The company pays an advance when a lot opens, the rest when it is finished and a bonus if it is on time. Journal → Contract shows each lot.
 - Your crew fells painted trees only. You can cut anything; other trees still pay as wood at the sawmill.
 - Older saves keep the whole-island contract they started with. Start a New Campaign to play the lots.
-- **Known weak spot:** money from wood arrives slowly unless someone keeps the sawmill fed.
+- **Wood pays the day it is cut.** The crew now carries logs straight to the sawmill while its feed rack has room, instead of stacking them in the yard first. In a simulated first day, five workers with hatchets delivered about 5.7 trees' worth of wood (the lots need 3.5 a day) and the mill paid $240, up from $48.
 
 ## New in the Phase 24 trial build
 

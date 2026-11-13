@@ -21,10 +21,13 @@ A short guide in the top-right walks you through real work: walk, read the contr
 
 ## Money and crew
 
-- $100 per original tree, paid in shares as each log is accepted at the camp yard (the receiving cradle by the fire, or a log deck outside the north-east fence). If there's no room, the delivery is refused and not paid until there is. Felling alone pays nothing.
-- The fire burns only what's on its loading pile. Carry paid logs from the cradle or decks to the fire, or put a worker on **Yard** duty. The handcart by the fire moves 4 logs at once, and logs too heavy to lift can be dragged.
+- Wood is paid at the sawmill behind the camper: $48 for every pallet it finishes (1,000 litres of log, about $100 for an average tree). Felling alone pays nothing, and burned logs pay nothing.
+- A delivered log counts toward the contract at once, wherever the camp takes it: the sawmill's feed rack (10 logs), the receiving cradle by the fire, or a log deck outside the north-east fence. If there's no room, the delivery is refused and the log stays with you.
+- Your crew carries logs straight to the sawmill while its rack has room, and to the cradle when it is full. Workers on Auto, or anyone on **Yard** duty, move waiting logs from the cradle and decks to the mill. The saw stops taking new logs at dusk.
+- In campaigns started before the sawmill, each log is still paid when the yard accepts it, and the fire burns what is on its loading pile.
+- The handcart by the fire moves 4 logs at once, and logs too heavy to lift can be dragged.
 - Each worker has their own daily rate, at least $100, set in the Payroll app on the camper computer, plus any bonuses; it is settled when you sleep. Pay below what a worker feels is fair makes them unhappy, and they may quit (always with at least one day's "on the verge" warning). Unpaid wages stay owed from their day; one more unpaid workday and that worker leaves. Paying part doesn't reset that.
-- Example: two workers on $100 cost $200 a day. Two whole trees delivered that day earn that back ($100 a tree).
+- Example: two workers on $100 cost $200 a day. About two average trees through the sawmill earn that back.
 - Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate. Hard-working: ×1.25. Stronger: carries more by hand. Timid: frightens sooner and heads home earlier.
 
 ## Nights (during the contract)

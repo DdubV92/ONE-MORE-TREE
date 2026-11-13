@@ -277,6 +277,7 @@ func activity_words() -> String:
 		"pick", "deliver", "load_truck": return ("carrying a long log with a partner" if team != "" else "dragging a long log") if dragging_log() else "hauling"
 		"team_follow": return "helping carry a long log"
 		"deliver_deck": return "stacking logs on a yard deck"
+		"deliver_mill": return "carrying logs to the sawmill"
 		"yard_take", "yard_drop": return "yard work: moving paid logs"
 		"seated": return "riding in a truck"
 		"follow": return "following you"
@@ -522,7 +523,7 @@ func _physics_process(delta: float) -> void:
 	_time_check -= delta
 	if _time_check <= 0.0:
 		_time_check = 3.0
-		if activity in ["fell", "buck", "stump", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver", "hide_enter", "board"]):
+		if activity in ["fell", "buck", "stump", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver", "deliver_mill", "hide_enter", "board"]):
 			crew.check_time(self)
 	match activity:
 		"move":
@@ -539,6 +540,8 @@ func _physics_process(delta: float) -> void:
 			_do_pick()
 		"deliver":
 			_do_deliver()
+		"deliver_mill":
+			_do_deliver_mill()
 		"deliver_deck":
 			_do_deliver_deck()
 		"yard_take":
@@ -882,6 +885,24 @@ func _set_down_unpaid() -> void:
 		var p := CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(-1.2 + 1.2 * (k % 3), 0.0, 3.2 + 0.7 * (k / 3)))
 		crew.timber.put_down_for(id, str(sid), p + Vector3(0, 0.45, 0), Vector3.RIGHT, true)
 		k += 1
+
+
+## Phase 25: straight onto the sawmill's feed rack (accepted there). What
+## the rack cannot take goes to the receiving cradle instead.
+func _do_deliver_mill() -> void:
+	var held: Array = crew.timber.load_of(id).duplicate()
+	if not held.is_empty():
+		var rs := crew.timber.accept(held, "mill:" + id, CampLayout.world(CampLayout.MILL_RACK_POS))
+		crew.on_delivered(self, rs)
+		if not rs.is_empty():
+			body_char.play_action("setdown")
+	activity = "idle"
+	job_done("deliver_mill")
+	if is_carrying():
+		target["no_mill"] = crew.now()    # rack full: the cradle for a minute
+		crew.send_to_rack(self)
+		return
+	target.erase("drag")
 
 
 ## Phase 13: cradle full -> deliver onto a yard deck (accepted there).

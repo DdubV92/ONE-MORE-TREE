@@ -669,10 +669,10 @@ func _decide_inner(w: Worker) -> void:
 	var feed_low := false
 	if Game.yard:
 		if Game.yard.feed_destination() == "mill":
-			feed_low = Game.yard.mill_free() >= MillLedger.RACK_CAP - 2
+			feed_low = Game.yard.mill_free() >= MillLedger.RACK_CAP / 2
 		else:
 			feed_low = Game.yard.pit_free() >= CampLayout.PIT_QUEUE_CAP - 1
-	if job == "automatic" and Game.yard and (Game.yard.cradle_free() <= 3 or (feed_low and Game.yard.stock_count() > Game.yard.cradle.size())) and try_yard(w):
+	if job == "automatic" and Game.yard and (Game.yard.cradle_free() <= 3 or (feed_low and Game.yard.stock_count() > (0 if Game.yard.feed_destination() == "mill" else Game.yard.cradle.size()))) and try_yard(w):
 		return
 	match job:
 		"ride":
@@ -1235,7 +1235,8 @@ func try_yard(w: Worker) -> bool:
 			held_by_others += 1
 	if held_by_others >= 2 and str(w.emp.get("job", "")) != "yard":
 		return false
-	if not y.cradle.is_empty() and y.nearest_deck(CampLayout.world(CampLayout.DELIVERY_RACK_POS), y.cradle[0]) >= 0:
+	var to_mill := y.feed_destination() == "mill" and y.mill_free() > 0
+	if not y.cradle.is_empty() and (to_mill or y.nearest_deck(CampLayout.world(CampLayout.DELIVERY_RACK_POS), y.cradle[0]) >= 0):
 		if claim("yard:cradle", w):
 			if w.go_to(CampLayout.world(CampLayout.DELIVERY_STANDPOINTS[0]), "yard_take", "the receiving cradle"):
 				w.target["yard_from"] = "cradle"
@@ -1278,6 +1279,12 @@ func send_to_rack(w: Worker) -> bool:
 			return true
 		Game.yard.return_to_origin(sid0)
 		return false
+	# Phase 25: under the mill economy wood only pays once it is sawn, so a
+	# load goes straight to the sawmill's feed rack while it has room (no
+	# second and third carry through the cradle and the decks).
+	if Game.yard and w.is_carrying() and Game.yard.feed_destination() == "mill" and now() - float(w.target.get("no_mill", -999.0)) > 60.0 and not (Game.vehicles and Game.vehicles.haul_target(w)):
+		if Game.yard.mill_free() - _heading_to_mill(w) > 0 and w.go_to(CampLayout.world(CampLayout.MILL_RACK_STAND), "deliver_mill", "the sawmill"):
+			return true
 	# Phase 13: cradle full -> deliver straight onto a deck with room.
 	if Game.yard and Game.yard.cradle_free() <= 0 and w.is_carrying() and not (Game.vehicles and Game.vehicles.haul_target(w)):
 		var dk := Game.yard.nearest_deck(w.global_position, str(timber.load_of(w.id)[0]))
@@ -1300,6 +1307,16 @@ func send_to_rack(w: Worker) -> bool:
 	var q := CampLayout.world(CampLayout.DELIVERY_RACK_POS + Vector3(0, 0, 4.5))
 	w.go_to(q, "idle", "the rack queue")
 	return true
+
+
+## Unpaid pieces other workers are already carrying to the sawmill.
+func _heading_to_mill(w: Worker) -> int:
+	var n := 0
+	for o in workers.values():
+		var ow := o as Worker
+		if ow != w and ow.activity == "move" and ow._after_move == "deliver_mill":
+			n += maxi(timber.load_of(ow.id).size(), 1)
+	return n
 
 
 func release_rack_slot(w: Worker) -> void:
@@ -1753,7 +1770,7 @@ func time_category(w: Worker) -> String:
 	match w.activity:
 		"fell", "buck", "stump":
 			return "useful"
-		"retreat_wait", "pick", "deliver", "deliver_deck", "yard_take", "yard_drop", "load_truck":
+		"retreat_wait", "pick", "deliver", "deliver_deck", "deliver_mill", "yard_take", "yard_drop", "load_truck":
 			return "travel"
 		"team_follow":
 			return "useful" if w.is_carrying() or not coord.team_of(w).is_empty() and str((coord.teams.get(coord.team_of(w), {}) as Dictionary).get("state", "")) == "carry" else "waiting"

@@ -316,7 +316,9 @@ func receive(sid: String, dest: String) -> void:
 
 
 ## Takes one accepted piece from the cradle (oldest) into `carrier`'s hands
-## with a reserved deck destination. Returns the sid or "" (+last_reason).
+## with a reserved destination: the sawmill's feed rack while it has room
+## (Phase 25, mill economy), else a deck. Returns the sid or ""
+## (+last_reason).
 func take_from_cradle(carrier: String, budget: int, from_pos := Vector3.INF) -> String:
 	last_reason = ""
 	if cradle.is_empty():
@@ -326,14 +328,19 @@ func take_from_cradle(carrier: String, budget: int, from_pos := Vector3.INF) -> 
 		var m := int(Game.timber.segment(sid).mte)
 		if m > budget * 2:
 			continue
-		var dk := nearest_deck(from_pos if from_pos != Vector3.INF else CampLayout.world(CampLayout.DELIVERY_RACK_POS), sid)
-		if dk < 0:
-			last_reason = "Every deck is full. Feed the fire to make room."
-			return ""
+		var dest := ""
+		if feed_destination() == "mill" and mill_free() > 0:
+			dest = "mill"
+		else:
+			var dk := nearest_deck(from_pos if from_pos != Vector3.INF else CampLayout.world(CampLayout.DELIVERY_RACK_POS), sid)
+			if dk < 0:
+				last_reason = "Every deck is full. Feed the %s to make room." % ("sawmill" if feed_destination() == "mill" else "fire")
+				return ""
+			dest = "deck:%d" % dk
 		if not _hand(carrier, sid, budget):
 			return ""
 		cradle.erase(sid)
-		moving[sid] = {"carrier": carrier, "from": "cradle", "dest": "deck:%d" % dk}
+		moving[sid] = {"carrier": carrier, "from": "cradle", "dest": dest}
 		_dirty = true
 		changed.emit()
 		return sid

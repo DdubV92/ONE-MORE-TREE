@@ -217,7 +217,7 @@ func _ready() -> void:
 	_run("phase 24 woodcutting units: curve thresholds, carry-over, cap 33,125 XP / 6,625 hits, duplicate hit ignored, saw strikes, boss/worker parity, one formula (damage + action rate), Strongman capacity, save mid-progression", _t_phase24_wc_units)
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
-	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island", _t_phase25_lots_world)
+	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
 	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
 	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
@@ -7535,13 +7535,89 @@ func _t_phase25_lots_world() -> String:
 	while (Game.crew == null or not world.systems_ready) and guard < 3000:
 		await get_tree().physics_frame
 		guard += 1
-	var err := _p25_lot_checks()
+	var err: String = await _p25_mill_checks()
+	if err == "":
+		err = _p25_lot_checks()
 	world.queue_free()
 	await get_tree().process_frame
 	Game.preview_variant = ""
 	World.removed_trees.clear()
 	World.apply_variant("full")
 	return err
+
+
+## Phase 25: wood pays at the sawmill, so loads go straight to its feed
+## rack while it has room; the cradle and the decks are the overflow.
+func _p25_mill_checks() -> String:
+	var cs: CampaignService = Game.campaign
+	cs.start_test_route(true, true)
+	var crew: CrewService = Game.crew
+	var t: TimberService = Game.timber
+	var y: YardService = Game.yard
+	var g := 0
+	while crew.workers.is_empty() and g < 600:
+		await get_tree().physics_frame
+		g += 1
+	if crew.workers.is_empty():
+		return "no worker for the sawmill delivery check"
+	var w: Worker = crew.workers.values()[0]
+	if not t.mill_economy or y.feed_destination() != "mill":
+		return "a new campaign is not on the mill economy"
+	var sids := []
+	for n in 4:
+		var ti := 1500 + n * 37
+		var tid: int = World.trees.id[ti]
+		t.records[tid] = t._build_record(tid, ti, {})
+		sids.append(str(t.records[tid].segments[0].sid))
+	var give := func(sid: String) -> void:
+		t.load_of(w.id).append(sid)
+		t.claims[sid] = w.id
+		t.segment(sid).state = TimberService.Seg.CARRIED
+	# Room on the rack: the load heads for the sawmill and is accepted there.
+	give.call(sids[0])
+	w.target.erase("no_mill")
+	if not crew.send_to_rack(w) or w._after_move != "deliver_mill":
+		return "a load did not head for the sawmill while its rack had room (%s)" % w._after_move
+	var rack0 := t.mill.rack.size()
+	w._do_deliver_mill()
+	if w.is_carrying() or t.mill.rack.size() != rack0 + 1 or int(t.segment(sids[0]).state) != TimberService.Seg.MILL_RACK or str(t.segment(sids[0]).receipt) == "":
+		return "a delivery at the sawmill did not land on the feed rack with a receipt"
+	# Rack full: refused at the mill, carried on to the receiving cradle.
+	var keep: Array = t.mill.rack.duplicate(true)
+	while t.mill.rack.size() < MillLedger.RACK_CAP:
+		t.mill.rack.append({"sid": "FAKE%d" % t.mill.rack.size(), "litres": 1, "prepaid": false})
+	give.call(sids[1])
+	if not crew.send_to_rack(w) or w._after_move == "deliver_mill":
+		return "a load headed for a full sawmill rack"
+	w._after_move = ""
+	w.activity = "idle"
+	crew.release_claims(w)
+	t.mill.rack = keep.duplicate(true)
+	if not crew.send_to_rack(w) or w._after_move != "deliver_mill":
+		return "a load did not return to the sawmill once the rack had room"
+	while t.mill.rack.size() < MillLedger.RACK_CAP:
+		t.mill.rack.append({"sid": "FAKE%d" % t.mill.rack.size(), "litres": 1, "prepaid": false})
+	w._do_deliver_mill()
+	if not w.is_carrying() or str(t.segment(sids[1]).receipt) != "" or w._after_move == "deliver_mill":
+		return "a full rack took the load, or the worker did not carry on to the cradle (%s)" % w._after_move
+	w._do_deliver()
+	if w.is_carrying() or not sids[1] in y.cradle:
+		return "the refused load was not accepted at the receiving cradle"
+	# Yard hands move cradle wood straight to the mill when it has room,
+	# and onto a deck when it has none.
+	var sid_d := y.take_from_cradle(w.id, 99999)
+	if sid_d != sids[1] or str(y.moving[sid_d].dest).begins_with("deck:") == false:
+		return "with a full rack, cradle wood was not sent to a deck"
+	y.return_to_origin(sid_d)
+	t.mill.rack = keep.duplicate(true)
+	var sid_m := y.take_from_cradle(w.id, 99999)
+	if sid_m != sids[1] or str(y.moving[sid_m].dest) != "mill":
+		return "with room on the rack, cradle wood was not sent to the sawmill"
+	if not y.load_mill(w.id, sid_m) or int(t.segment(sid_m).state) != TimberService.Seg.MILL_RACK:
+		return "cradle wood could not be loaded onto the feed rack"
+	if w.is_carrying() or not y.moving.is_empty():
+		return "the yard move left something in hand"
+	return ""
 
 
 func _p25_lot_checks() -> String:
