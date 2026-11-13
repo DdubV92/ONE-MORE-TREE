@@ -1,8 +1,24 @@
-# ONE MORE TREE LATEST BUILD PHASE 23 (dynamic weather, storms and storm terrors)
+# ONE MORE TREE LATEST BUILD PHASE 24 trial (drawn world, pixel characters, sawmill)
 
-The download link is in the session message (GitHub Actions artifact "ONE MORE TREE LATEST BUILD PHASE 23 - build N (Windows)").
+The download link is in the session message (a GitHub pre-release zip, or the GitHub Actions artifact for the build).
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
+
+## New in the Phase 24 trial build
+
+This is a trial of the new art direction, not a finished phase. Tell us what to keep.
+
+- **Drawn world:** the island is redrawn every frame as an illustration, with ink outlines, brush-painted colour, soft shading steps and shaped clouds. It is still a full 3D world you walk through.
+- **Pixel-art characters:** the crew, the dog and your first-person axe and hands are pixel art inside that drawn world.
+- **F8 compares:** press F8 in game to flip between the drawn world and the plain 3D look. It is never saved.
+- **The reference cove:** on the title screen, **Reference Match** and **First-Person Shoreline** open the small cove built to the owner's painting. Both are previews and never touch your saves.
+- **Richer island:** clearer turquoise shallows with moving light on the sand, soft surf foam, dark stones along the shores, fuller ferns and red-berry bushes, warmer daylight and deeper sunsets.
+- **Sawmill:** logs can go through the mill at the back of camp and leave as lumber pallets.
+- **Sound and voices:** quieter sea wash, new footsteps and plant rustle, a short musical motif by day, dusk and night, and less robotic crew voices.
+- **Woodcutting skill:** a shared level (0 to 50) that speeds up chopping as the camp works.
+- **If it runs slowly:** the drawn look costs extra graphics work. Try Settings → Quality preset → low, or lower the render scale, and tell us what you see.
+
+Not seen on a real graphics card yet: everything was checked on a software renderer, so colours and speed on your machine are the thing to report.
 
 ## New in Phase 23
 
