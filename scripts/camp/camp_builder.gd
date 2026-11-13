@@ -901,7 +901,7 @@ func _build_yard() -> void:
 	it.add_child(cs)
 	it.set_script(load("res://scripts/interaction/interactable.gd"))
 	it.set("prompt", "Read notice board")
-	it.set("message", "HIRING SOON: four bunks, fair wages. (Payroll arrives in a later prompt.)")
+	it.set("message", "CREW NOTICES: wages are settled each night. Rates, bonuses and raise requests are in the Payroll app on the camper computer. Curfew is dusk.")
 	board.add_child(it)
 	BuildKit.marker(board, "PayrollUIAnchor", Vector3(0, 1.35, 0.6), 0.0, "payroll_anchor")
 

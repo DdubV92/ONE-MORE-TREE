@@ -226,7 +226,7 @@ func _build_utility(ub: Vector3, crew: CrewService) -> void:
 	led.light_color = Color(1.0, 0.25, 0.15)
 	desk.add_child(led)
 	BuildKit.cylinder(desk, 0.02, 0.012, Vector3(0.38, 1.1, -0.05), "lamp_bulb", false, 8)
-	Hotspot.make(desk, "BeaconSpot", Vector3(0.6, 0.45, 0.45), Vector3(0.3, 0.98, 0.05), func() -> String: return "Check the emergency beacon", func(by: Node) -> void: _beacon_use(by))
+	Hotspot.make(desk, "BeaconSpot", Vector3(0.6, 0.45, 0.45), Vector3(0.3, 0.98, 0.05), func() -> String: return _beacon_prompt(), func(by: Node) -> void: _beacon_use(by))
 	BuildKit.box(desk, Vector3(0.45, 0.45, 0.45), Vector3(0.0, 0.25, -0.55), "dark_wood", true, 0.0, "Stool")
 	var li := OmniLight3D.new()
 	li.position = Vector3(0, BH - 0.25, 0)
@@ -355,7 +355,23 @@ func _shore_path(crew: CrewService) -> void:
 
 # ---------------------------------------------------------------- beacon
 
+## Phase 25: when nobody is coming, this console is the way off the island
+## (EscapeBeacon owns the parts and the call).
+func _escape() -> EscapeBeacon:
+	var h: HuntService = Game.hunt
+	return h.beacon if h and h.stranded and h.beacon and h.beacon.active else null
+
+
+func _beacon_prompt() -> String:
+	var eb := _escape()
+	return eb.console_prompt() if eb else "Check the emergency beacon"
+
+
 func _beacon_use(by: Node) -> void:
+	var eb := _escape()
+	if eb:
+		eb.console_use(by)
+		return
 	if by and by.has_method("show_message"):
 		by.show_message(beacon_status_text())
 
@@ -370,10 +386,10 @@ func beacon_status_text() -> String:
 			return "BEACON: rescue requested on day %d. Waiting for the ship." % rescue_requested_day
 		"ship_inbound":
 			return "BEACON: ship inbound. Head for the dock."
-	return "BEACON: standby, battery good. Contract %s. Rescue requests open only in an emergency (not yet in this build)." % day
+	return "BEACON: standby, battery good. Contract %s. The company monitors this channel while the contract runs." % day
 
 
-## Phase 6/9 hooks (state only; the ship rescue is not implemented yet).
+## The beacon's request state (the hunt owns the ship itself).
 func request_rescue(day: int) -> bool:
 	if beacon_state != "standby":
 		return false

@@ -9,7 +9,8 @@ func get_interact_text() -> String:
 	var t: TimberService = Game.timber
 	if t and not t.carried.is_empty():
 		if Game.yard and Game.yard.is_yard_move(str(t.carried[0])):
-			return "Put %d log%s on the fire's loading pile (%d/%d)" % [t.carried.size(), "" if t.carried.size() == 1 else "s", t.queue.size(), CampLayout.PIT_QUEUE_CAP]
+			var warn := "  -  BURNED LOGS EARN NOTHING; the mill pays for them" if t.mill_economy else ""
+			return "Put %d log%s on the fire's loading pile (%d/%d)%s" % [t.carried.size(), "" if t.carried.size() == 1 else "s", t.queue.size(), CampLayout.PIT_QUEUE_CAP, warn]
 		return "Deliver these logs at the receiving cradle first"
 	if t and t.fire_out:
 		var why := t.relight_blocker(Game.weather.rain if Game.weather else 0.0)

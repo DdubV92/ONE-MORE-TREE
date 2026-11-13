@@ -1809,6 +1809,13 @@ func skill_effect_text(eid: String, sk: String) -> String:
 			pct = (progression.drive_factor(eid) - 1.0) * 100.0
 		"teamwork":
 			pct = (1.0 - progression.team_wait(eid)) * 100.0
+	if sk == "cutting":
+		# Cutting speed comes from the Woodcutting level now (Phase 24), not
+		# from this career skill: show the figure that is actually applied.
+		var wc := Woodcutting.active()
+		if wc:
+			var wl := wc.level_of(eid)
+			return "Cutting: Woodcutting level %d, work per hit +%d%%" % [wl, int(round((Woodcutting.damage_factor(wl) - 1.0) * 100.0))]
 	var nxt := CrewProgression.skill_threshold(l + 1) if l < CrewProgression.SKILL_MAX else -1
 	return "%s %d%s%s" % [sk.capitalize(), l, (": " + (SKILL_EFFECT[sk] % int(round(pct)))) if l > 0 else "", ("  (next at %d)" % nxt) if nxt > 0 else "  (max)"]
 

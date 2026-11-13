@@ -166,7 +166,10 @@ func _clock_now() -> Array:
 	var hunt: Node = Game.hunt
 	if hunt and hunt.call("hunt_active"):
 		var ht: float = float(hunt.get("t"))
-		return [int(hunt.get("hunt_day")) + int(ht / HuntService.CYCLE), fmod(ht, HuntService.CYCLE)]
+		var hd := int(hunt.get("hunt_day")) + int(ht / HuntService.CYCLE)
+		if hd > StormSchedule.LAST_DAY:
+			hd = 31 + (hd - 31) % 6      # a stranded hunt outlasts the plan: its week repeats
+		return [hd, fmod(ht, HuntService.CYCLE)]
 	var cs: CampaignService = Game.campaign
 	if cs and (cs.active or cs.test_route) and cs.clock:
 		var t := cs.clock.t

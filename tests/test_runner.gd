@@ -215,7 +215,7 @@ func _ready() -> void:
 	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
 	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
-	await _run_async("phase 6: exposure/catch arbitration, director pacing/cleanup, success never hunts, abandonment, hunt clock, Foreman rules, save v7", _t_phase6_world)
+	await _run_async("phase 6 + 25: exposure/catch arbitration, director pacing/cleanup, a failed contract strands the player (no ship), beacon repair calls one, hunt clock, Foreman rules, save", _t_phase6_world)
 	print("\n==== %d passed, %d failed ====" % [passes, failures])
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
@@ -2305,12 +2305,8 @@ func _t_phase6_world() -> String:
 	dir._on_ended("peak", "TEST")
 	if err == "" and dir.peak_available():
 		err = "peak refractory not applied"
-	# --- success never hunts.
+	# --- Phase 25: the hunt follows every contract; a lost one strands you.
 	var h: HuntService = world.hunt
-	cs.contract.state = ContractService.FULFILLED
-	h.begin_abandonment()
-	if err == "" and (h.mode != "none" or h.foreman != null):
-		err = "a fulfilled contract started the hunt"
 	# --- abandonment -> hunt.
 	cs.contract.state = ContractService.ABANDONMENT
 	world.teleport_to("camp")
@@ -2325,6 +2321,10 @@ func _t_phase6_world() -> String:
 		err = "Foreman revealed too close (%.0f m)" % h.foreman.global_position.distance_to(p.global_position)
 	if err == "" and world.dog.routine != "refuge":
 		err = "dog not sent to the dock refuge"
+	if err == "" and (not h.stranded or h.contract_won or not h.beacon.active or h.beacon.sites.size() != 3):
+		err = "a failed contract did not strand the player with three beacon spares out (stranded %s, sites %d)" % [h.stranded, h.beacon.sites.size()]
+	if err == "" and not h.survival_objective().begins_with("No ship is coming"):
+		err = "stranded objective unclear: %s" % h.survival_objective()
 	if err == "" and bool(world.crew.can_hire().ok):
 		err = "hiring still open after abandonment"
 	for x in h.foreman._humans():
@@ -2348,7 +2348,7 @@ func _t_phase6_world() -> String:
 		if h.player_dead:
 			err = "killed while hidden and not found"
 		p.leave_hide()
-	# --- continuous clock: five cycles before rescue.
+	# --- continuous clock; stranded: no ship however many dawns pass.
 	if err == "":
 		h.foreman.grace = 9999.0
 		var day0 := h.hunt_day
@@ -2356,15 +2356,41 @@ func _t_phase6_world() -> String:
 		h._process(0.2)
 		if h.hunt_day != day0 + 1:
 			err = "dawn did not advance the hunt day"
-		h.hunt_day = 34
+		for k in 8:
+			h.t = HuntService.CYCLE - 0.1
+			h._process(0.2)
+		if err == "" and (h.mode != "hunt" or h.ship_state != "none"):
+			err = "a ship came for a failed contract (mode %s)" % h.mode
+		if err == "" and h.strand_pressure() < 0.99:
+			err = "the Foreman does not close in over a long stranding (%.2f)" % h.strand_pressure()
+	# --- the hard way off: three parts, fit them, switch on, ship at dawn.
+	if err == "":
+		var eb: EscapeBeacon = h.beacon
+		eb.console_use(p)
+		if eb.fitted() != 0 or eb.switch_on():
+			err = "the dead beacon worked without its parts"
+		for part in EscapeBeacon.PARTS:
+			if err == "" and (not eb.take(part, p) or eb.take(part, p)):
+				err = "beacon part %s could not be taken exactly once" % part
+		eb.console_use(p)             # fits everything carried
+		if err == "" and (eb.fitted() != 3 or eb.state != "ready"):
+			err = "three carried parts did not repair the beacon (%d fitted, %s)" % [eb.fitted(), eb.state]
+		eb.console_use(p)             # switches it on
+		if err == "" and not eb.calling():
+			err = "the repaired beacon did not start calling"
+		if err == "" and h.day_bias().distance_to(world.crew.dock_shore) > 0.5:
+			err = "a calling beacon does not draw the Foreman to the dock"
+		# Capture/restore mid-call keeps the parts and the call.
+		var snap := eb.capture()
+		eb.restore(snap)
+		if err == "" and (not eb.calling() or eb.fitted() != 3):
+			err = "the beacon call did not survive a save"
 		h.t = HuntService.CYCLE - 0.1
 		h._process(0.2)
-		if err == "" and h.mode != "hunt":
-			err = "rescue arrived before five cycles"
-		h.t = HuntService.CYCLE - 0.1
-		h._process(0.2)
-		if err == "" and (h.mode != "rescue" or h.hunt_day != 36):
-			err = "rescue not available at dawn of day 36 (mode %s day %d)" % [h.mode, h.hunt_day]
+		if err == "" and (h.mode != "rescue" or h.ship_state != "approaching"):
+			err = "the beacon's ship did not come at the next dawn (mode %s)" % h.mode
+		if err == "" and absf(h.boarding_window() - HuntService.HARD_BOARDING_WINDOW) > 0.01:
+			err = "the hard escape should have the short boarding window"
 	# --- save v7 carries the hunt.
 	var data := SaveService.capture_state(world)
 	if err == "" and str(((data.get("phase6", {}) as Dictionary).get("hunt", {}) as Dictionary).get("mode", "")) != "rescue":
@@ -5845,17 +5871,56 @@ func _p19_cover() -> String:
 	# Dock dog immunity; unchanged five-day/night extraction; objective.
 	if Game.dog and fm._humans().has(Game.dog):
 		return "the dog is a hunt target"
-	if HuntService.FIRST_DAY != 31 or HuntService.LAST_DAY != 35 or HuntService.CYCLE != 1500.0:
-		return "five-day hunt timing changed"
+	if HuntService.HUNT_DAYS != 3 or HuntService.LEGACY_HUNT_DAYS != 5 or HuntService.CYCLE != 1500.0:
+		return "hunt timing changed"
+	# A won contract on day 12: three days, company ship at dawn on day 16.
 	hunt.mode = "hunt"
-	hunt.hunt_day = 33
+	hunt.contract_won = true
+	hunt.stranded = false
+	hunt.start_day = 12
+	hunt.hunt_days = HuntService.HUNT_DAYS
+	hunt.hunt_day = 14
 	Game.objective = ""
 	hunt._update_objective()
 	rep["objective"] = Game.objective
+	if hunt.rescue_day() != 16 or not str(rep["objective"]).contains("dawn on day 16"):
+		hunt.mode = "none"
+		return "won-contract survival objective unclear: %s" % rep["objective"]
+	# A hunt saved before Phase 25 keeps five days and day 36.
+	hunt.restore({"mode": "none", "hunt_day": 33})
+	if hunt.rescue_day() != 36 or hunt.stranded:
+		return "an older hunt save lost its day-36 ship"
+	# The rules card reads right for both outcomes.
+	hunt.start_day = 12
+	hunt.hunt_days = HuntService.HUNT_DAYS
+	hunt.contract_won = true
+	var won_card := hunt.transition_text()
+	hunt.contract_won = false
+	var lost_card := hunt.transition_text()
+	if not str(won_card[1]).contains("dawn on day 16") or not str(won_card[1]).contains("Three days") or str(won_card[1]).contains("no ship is coming"):
+		return "won-contract rules card wrong"
+	if not str(lost_card[1]).contains("no ship is coming") or not str(lost_card[1]).contains("emergency beacon") or str(lost_card[1]).contains("dawn on day"):
+		return "failed-contract rules card wrong"
+	# Missing the company ship strands you: the hunt goes on, the beacon wakes.
+	hunt.contract_won = true
+	hunt.stranded = false
+	hunt.mode = "rescue"
+	hunt.ship_state = "docked"
+	hunt._ship_left_without_you()
+	var missed_ok := hunt.mode == "hunt" and hunt.stranded and hunt.beacon.active and hunt.beacon.sites.size() == 3 and hunt.ship_state == "none"
+	for n in hunt.beacon._props.values():
+		if is_instance_valid(n):
+			(n as Node).queue_free()
+	hunt.beacon._props.clear()
+	hunt.beacon.restore({})
+	hunt.stranded = false
+	hunt.start_day = 30
+	hunt.hunt_days = HuntService.HUNT_DAYS
+	hunt.contract_won = false
 	hunt.mode = "none"
 	Game.objective = ""
-	if not str(rep["objective"]).contains("dawn on day 36"):
-		return "survival objective unclear"
+	if not missed_ok:
+		return "missing the ship did not turn into a stranded hunt with the beacon as the way out"
 	fm.queue_free()
 	hunt.foreman = null
 	hunt.hunt_preview = false

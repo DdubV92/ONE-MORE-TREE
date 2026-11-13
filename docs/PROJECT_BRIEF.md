@@ -47,6 +47,15 @@
   - The night clock may reach its terminal time while an independent awake timer keeps pacing.
   - Menus pause both.
 
+## Leaving the island (owner decisions, 13 November 2026)
+
+- **The hunt follows every contract, won or lost.** It is how the player leaves the island.
+- **Won:** the company ship reaches the dock at dawn after three hunt days. Missing it strands the player.
+- **Lost:** nobody is coming and the hunt has no end date, so it is a matter of time. The one other way off is much harder: repair the dead emergency beacon in the dock building (three parts, spread across the island), switch it on and hold out until the ship it calls arrives at the next dawn.
+- **Worker risk before the hunt is allowed:** a worker may go missing overnight and return at dawn.
+- **Mystery:** never explain where the Terrors come from. Give each one a rule the player can learn.
+- The full plan these decisions belong to is in [design/COMPLETE_GAME_REVIEW.md](design/COMPLETE_GAME_REVIEW.md).
+
 ## Explicitly out of scope (unless separately requested)
 
 Combat, hunger meters, weapon shops, fuel/durability grinds for tools, vehicles beyond the two pickups, crafting trees, multiplayer, supernatural lore explanations, a second web/Three.js version.

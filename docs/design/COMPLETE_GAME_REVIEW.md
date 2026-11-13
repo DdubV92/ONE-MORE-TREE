@@ -167,7 +167,15 @@ Tiers: **Must** (needed for a complete game), **Should** (makes it feel right), 
 
 Phase 25 comes first because nothing else can be balanced, or even seen by a player, until a campaign can be won.
 
-## 7. Decisions needed from the owner
+## 7. Decisions (owner, 13 November 2026)
+
+- All six phases go ahead, in the order above.
+- **The hunt** follows every contract. Won: the company ship comes. Lost: nobody comes, and a much harder second way off exists (the dock beacon). Built in Phase 25, first part.
+- **Worker risk before the hunt:** yes.
+- **Mystery:** never explain origins, and give each Terror a learnable rule.
+- Still open: fishing and foraging as comfort only (decision 5).
+
+## 7a. The questions as they were asked
 
 1. **Contract shape.** Recommended: lots as chapters, with seasons for the long goal. Alternatives: a lower tree total, or keep it unwinnable as the horror premise.
 2. **The hunt.** Is it only the failure path, or should every playthrough be able to reach it (for example by choosing to stay behind)?

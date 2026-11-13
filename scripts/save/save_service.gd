@@ -68,10 +68,10 @@ static func summarize(raw: Dictionary, path := "") -> Dictionary:
 	var status := "%s, day %d" % [str(rdef.label), int(c.get("day", 1))]
 	if str(c.get("rule_set", "")).begins_with("legacy") or bool(c.get("legacy", false)):
 		status = "Legacy island (no deadline), day %d" % int(c.get("day", 1))
-	if state == "FULFILLED":
+	if state == "FULFILLED" and not mode in ["hunt", "rescue", "transition", "escaped", "dead", "stranded"]:
 		status = "Contract completed on day %d%s" % [int((c.get("contract", {}) as Dictionary).get("outcome_at", {}).get("day", c.get("day", 30))), " (exploring afterwards)" if bool(c.get("post_contract", false)) else ""]
 	elif mode in ["hunt", "rescue", "transition"]:
-		status = "Survival: day %d of the hunt" % int(hunt.get("hunt_day", 31))
+		status = ("Stranded: day %d, no ship coming" if bool(hunt.get("stranded", false)) else "Survival: day %d of the hunt") % int(hunt.get("hunt_day", 31))
 	elif mode == "escaped":
 		status = "Escaped on the rescue ship (finished)"
 	elif mode in ["dead", "stranded"]:

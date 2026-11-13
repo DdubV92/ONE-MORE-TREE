@@ -2,6 +2,24 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 25 (in progress): a complete game
+
+Plan and owner decisions: [design/COMPLETE_GAME_REVIEW.md](design/COMPLETE_GAME_REVIEW.md) and the "Leaving the island" section of the brief.
+
+| Item | Status | Notes |
+|---|---|---|
+| The hunt follows every contract, won or lost (`HuntService.begin_hunt`) | ✅ | A fulfilled contract no longer ends the game on a summary card |
+| Won contract: three hunt days, company ship at dawn (`rescue_day`) | ✅ | Hunts saved earlier keep five days and day 36 |
+| Lost contract: stranded, no ship, no end date; the Foreman's guesses sharpen over about five days (`strand_pressure`) | ✅ | |
+| The hard way off: `EscapeBeacon` (three spares at the two field sheds and the sawmill control box; fit, switch on, ship at the next dawn, 4-minute boarding); taking parts and the calling beacon are heard | ✅ | Saved with the hunt; legacy island uses survey caches when there are no sheds |
+| Missing a ship strands the player instead of ending the game | ✅ | The "Stranded" end screen is no longer reached |
+| Status line, Help, save labels, dock console and rules cards follow the new rules | ✅ | |
+| Leftovers cleared: camp notice board, "Phase 4" notices, dock beacon text, failure card, Journal cutting figure (now the Woodcutting level), fire warns that burned logs earn nothing | ✅ | |
+| Storm weather for hunts longer than the planned calendar | ✅ | The hunt week's weather repeats |
+| **Winnable contract** (lots as chapters, hauling fixes, re-measured balance) | ⬜ next | Until this lands the contract still cannot be met, so every campaign takes the stranded path |
+| Nights that grow; people who matter; an island worth walking; reasons to keep going; ship it | ⬜ | Phases 26 to 30 |
+| Seen on a real graphics card, played by a person | ⛔ not run | No GPU in the build container |
+
 ## Phase 24 (in progress): sawmill, soundscape, voices, HD-2D art and the reference cove
 
 Reference-cove handoff: [art/REFERENCE_COVE.md](art/REFERENCE_COVE.md). The rest of Phase 24 is summarised when it closes (P24h).

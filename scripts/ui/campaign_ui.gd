@@ -64,11 +64,15 @@ func _process(_delta: float) -> void:
 	var hunt: HuntService = Game.hunt
 	if hunt and hunt.hunt_active():
 		var ph := hunt.phase_name()
-		txt = "Survival day %d of 35  ·  %s  ·  rescue ship at dawn on day 36  ·  Biscuit: safe in the dock alcove" % [hunt.hunt_day if hunt.hunt_day > 30 else 31, ph.capitalize()]
+		if hunt.stranded:
+			var bs := "beacon calling: ship at dawn" if hunt.beacon.calling() else "no ship is coming  ·  beacon parts %d/3" % hunt.beacon.carried_or_fitted()
+			txt = "Stranded, day %d  ·  %s  ·  %s  ·  Biscuit: safe in the dock alcove" % [hunt.hunt_day, ph.capitalize(), bs]
+		else:
+			txt = "Survival day %d of %d  ·  %s  ·  rescue ship at dawn on day %d  ·  Biscuit: safe in the dock alcove" % [maxi(hunt.hunt_day - hunt.start_day, 1), hunt.hunt_days, ph.capitalize(), hunt.rescue_day()]
 		if hunt.ship_state == "approaching":
-			txt = "Day 36 dawn  ·  the rescue ship is coming in to the dock"
+			txt = "Dawn  ·  the rescue ship is coming in to the dock"
 		elif hunt.ship_state == "docked":
-			txt = "RESCUE SHIP AT THE DOCK  ·  boarding closes in %s  ·  Biscuit boards automatically" % CampaignService.fmt_time(maxf(HuntService.BOARDING_WINDOW - hunt.ship_t, 0.0))
+			txt = "RESCUE SHIP AT THE DOCK  ·  boarding closes in %s  ·  Biscuit boards automatically" % CampaignService.fmt_time(maxf(hunt.boarding_window() - hunt.ship_t, 0.0))
 		if Game.rest:
 			txt += "  ·  rest %d%s" % [int(round(Game.rest.rest)), "  (resting)" if Game.rest.resting else ""]
 		clock_label.text = txt
@@ -435,7 +439,7 @@ func show_report(r: Dictionary) -> void:
 	var lines: PackedStringArray = []
 	for a in r.arrears:
 		if str(a.status) == Payroll.PENDING:
-			lines.append("%s: arrives in Phase 4 (no wages)" % a.name)
+			lines.append("%s: not yet arrived (no wages)" % a.name)
 		elif int(a.owed) > 0:
 			lines.append("%s: owed $%s, due by the end of day %d" % [a.name, Money.format_cents(int(a.owed)), int(a.due_day)])
 		else:
@@ -483,6 +487,12 @@ func show_outcome(state: String, outcome_id: String) -> void:
 		if Game.hunt.mode == "none":
 			Game.hunt.begin_abandonment()
 		return
+	if state == ContractService.FULFILLED and Game.hunt and Game.mode == Game.Mode.CAMPAIGN and not svc.legacy and not svc.post_contract:
+		# Phase 25: finishing the job does not end the game. The hunt follows
+		# every contract; a won one brings the company ship at its end.
+		if Game.hunt.mode == "none":
+			Game.hunt.begin_hunt(true)
+		return
 	if state == ContractService.FULFILLED and svc.post_contract:
 		hud.show_message("Contract complete. You are exploring the cleared island (Journal → Contract shows the summary).", 6.0)
 		return
@@ -494,7 +504,7 @@ func show_outcome(state: String, outcome_id: String) -> void:
 		for line in success_summary():
 			_text(v, line, 15)
 	else:
-		_text(v, "Night fell on day 30 with the island not cleared. (%s)\nIn the finished game the boats leave you behind: days 31-35 become a survival hunt and rescue comes at dawn on day 36, while the dog waits safely at the dock refuge.\n\nDevelopment build: that survival mode arrives in Phase 6. Your save is kept at this outcome; nothing has been lost or changed." % outcome_id)
+		_text(v, "Night fell on the last day with the contract not met. (%s)\nThis save has no survival mode (legacy or preview). In a campaign the company leaves and the hunt begins." % outcome_id)
 	v.add_child(UITheme.button("Back to the title screen (the completed save is kept)", func() -> void:
 		close_panel()
 		Game.return_to_menu(), 460))

@@ -98,7 +98,7 @@ func setup() -> void:
 	contract.outcome.connect(func(s: String, oid: String) -> void: outcome_ready.emit(s, oid))
 	contract.progress_changed.connect(_check_final_tree)
 	wallet.transaction.connect(_on_tx)
-	payroll.quit_due_to_arrears.connect(func(eid: String) -> void: notice.emit("%s has quit over unpaid wages (leaves when crew arrive in Phase 4)." % payroll.employee(eid).get("name", eid), 6.0))
+	payroll.quit_due_to_arrears.connect(func(eid: String) -> void: notice.emit("%s has quit over unpaid wages." % payroll.employee(eid).get("name", eid), 6.0))
 	if Game.trees:
 		Game.trees.tree_felled.connect(func(_id: int) -> void: _stat_add("felled", 1))
 		Game.trees.stump_removed.connect(func(_id: int) -> void: _stat_add("stumps_removed", 1))
@@ -478,7 +478,7 @@ func _restore_crew(data: Dictionary) -> void:
 			crew.enabled = true
 			var n := crew.migrate_pending()
 			if n > 0:
-				notice.emit("Your two starting crew members have arrived at camp (Phase 4 crew).", 6.0)
+				notice.emit("Your starting crew members have arrived at camp.", 6.0)
 			crew.refresh_candidates()
 			crew.roster_changed.emit())
 

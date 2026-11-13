@@ -18,9 +18,17 @@ const DAYLIGHT := 900.0
 const DUSK := 300.0
 const NIGHT := 300.0
 const CYCLE := DAYLIGHT + DUSK + NIGHT
-const FIRST_DAY := 31
+const FIRST_DAY := 31            # legacy numbering (a failed 30-day contract)
 const LAST_DAY := 35
 const BOARDING_WINDOW := 480.0
+## Phase 25 (owner decision): the hunt follows EVERY contract, won or lost;
+## it is how you leave the island. A won contract brings the company ship
+## after HUNT_DAYS days. A failed one brings nobody: the hunt has no end
+## date ("stranded") until the player repairs the dock beacon (EscapeBeacon)
+## or dies. Hunts saved before this change keep their five days.
+const HUNT_DAYS := 3
+const LEGACY_HUNT_DAYS := 5
+const HARD_BOARDING_WINDOW := 240.0
 
 var mode := "none"           # none / transition / hunt / rescue / escaped / dead / stranded
 var hunt_day := 30
@@ -43,10 +51,27 @@ var spots_built := false
 var _rng := RandomNumberGenerator.new()
 var _info_shown := false
 var pending_restore := false     # a saved hunt is about to be restored
+var start_day := 30              # contract day the hunt began on
+var hunt_days := HUNT_DAYS       # days until the company ship (won contracts)
+var contract_won := false
+var stranded := false            # nobody is coming unless the beacon calls them
+var beacon: EscapeBeacon
 
 
 func _ready() -> void:
 	_rng.seed = 3535
+	beacon = EscapeBeacon.new()
+	beacon.name = "EscapeBeacon"
+	add_child(beacon)
+
+
+## Dawn on which the company ship arrives (won contracts only).
+func rescue_day() -> int:
+	return start_day + hunt_days + 1
+
+
+func boarding_window() -> float:
+	return HARD_BOARDING_WINDOW if stranded else BOARDING_WINDOW
 
 
 func hunt_active() -> bool:
@@ -58,7 +83,7 @@ func hiding_enabled() -> bool:
 
 
 func hunt_clock() -> float:
-	return (hunt_day - 30) * CYCLE + t
+	return (hunt_day - start_day) * CYCLE + t
 
 
 func phase_name() -> String:
@@ -82,11 +107,19 @@ func lighting_hour() -> float:
 
 ## Called once when the deadline commits ABANDONMENT (never on success).
 func begin_abandonment() -> void:
+	begin_hunt(false)
+
+
+## Starts the hunt. `won`: the contract was fulfilled, so the company ship
+## comes after `hunt_days`; otherwise nobody is coming (stranded).
+func begin_hunt(won: bool) -> void:
 	if mode != "none" or pending_restore:
 		return
 	var c: CampaignService = Game.campaign
-	if c and c.contract.state == ContractService.FULFILLED:
-		return
+	contract_won = won
+	stranded = not won
+	hunt_days = HUNT_DAYS
+	start_day = c.clock.day if c and c.clock and won else 30
 	mode = "transition"
 	mode_changed.emit(mode)
 	build_hide_spots()
@@ -111,8 +144,12 @@ func begin_abandonment() -> void:
 			Game.dog.global_position = (a[0] as Node3D).global_position
 			Game.dog.routine = "refuge"
 			Game.dog.state = CampDog.State.REFUGE
-	hunt_day = 30
-	t = DAYLIGHT + DUSK
+	hunt_day = start_day
+	# A failed contract ends at nightfall on its last day; a finished one
+	# can end at any hour, so the hunt opens as that evening draws in.
+	t = DAYLIGHT + DUSK if not won else DAYLIGHT
+	if stranded:
+		beacon.activate()
 	_spawn_foreman()
 	_show_transition_card()
 	mode = "hunt"
@@ -123,7 +160,25 @@ func _show_transition_card() -> void:
 	if _info_shown or Game.end_screen == null:
 		return
 	_info_shown = true
-	Game.end_screen.show_info("The company has left", "Night fell on day 30 with the island not cleared. The last company boat is gone.\n\nThe emergency radio in the utility building answered: a rescue ship will reach the dock at dawn on day 36. Five days.\n\nSomething tall is out there now, and it is not like the others. It is physical, and it can kill.\n- Lamps, closed doors and the camper NO LONGER keep you safe from it. They only hide or slow you.\n- Hide (" + Keys.label("interact") + ") under beds, in closets, behind the utility shelves, under the dock, in rock recesses, dense thickets, the far field sheds or the dock gear chest. If it saw you go in, it may look; brush will not hide you up close.\n- Break its line of sight and move quietly. It can outrun you for a few seconds, not forever.\n- The five days are continuous: lying in a bed does not skip time. Company hiring and boats are closed.\n- At dawn on day 36 get yourself and your surviving crew to the dock; boarding stays open for %d minutes.\n\nBiscuit is safe at the dock alcove the whole time and boards the ship automatically. Do not go back for the dog.\n\nThe game is paused until you continue." % int(BOARDING_WINDOW / 60.0), "I understand")
+	var c := transition_text()
+	Game.end_screen.show_info(c[0], c[1], "I understand")
+
+
+## [title, body] of the rules card that opens the hunt.
+func transition_text() -> Array:
+	var rules := "Something tall is out there now, and it is not like the others. It is physical, and it can kill.\n- Lamps, closed doors and the camper NO LONGER keep you safe from it. They only hide or slow you.\n- Hide (" + Keys.label("interact") + ") under beds, in closets, behind the utility shelves, under the dock, in rock recesses, dense thickets, the far field sheds or the dock gear chest. If it saw you go in, it may look; brush will not hide you up close.\n- Break its line of sight and move quietly. It can outrun you for a few seconds, not forever.\n- The days are continuous: lying in a bed does not skip time. Company hiring and boats are closed."
+	var dog := "Biscuit is safe at the dock alcove the whole time and boards any ship automatically. Do not go back for the dog.\n\nThe game is paused until you continue."
+	if contract_won:
+		var head := "The contract is complete. The company radio answered: the ship that takes everyone home reaches the dock at dawn on day %d. %s.\n\nBut the island is not finished with you." % [rescue_day(), _days_word(hunt_days)]
+		var board := "- At dawn on day %d get yourself and your crew to the dock; boarding stays open for %d minutes." % [rescue_day(), int(BOARDING_WINDOW / 60.0)]
+		return ["The job is done", "\n\n".join([head, rules + "\n" + board, dog])]
+	var lost := "Night fell on the last day with the contract not met. The last company boat is gone, and no ship is coming for you."
+	var way := "There is one thing on this island that can still reach anyone: the emergency beacon in the dock building. It is dead. Check it to see what it needs."
+	return ["The company has left", "\n\n".join([lost, rules, way, dog])]
+
+
+static func _days_word(n: int) -> String:
+	return ["No days", "One day", "Two days", "Three days", "Four days", "Five days", "Six days"][clampi(n, 0, 6)]
 
 
 func _spawn_foreman() -> void:
@@ -182,9 +237,13 @@ func _process(delta: float) -> void:
 ## Phase 19: an intelligible survival objective while the hunt runs (never
 ## overrides another objective such as finding the dog).
 func survival_objective() -> String:
+	if mode == "hunt" and stranded and not beacon.calling():
+		return beacon.objective()
+	if mode == "hunt" and stranded:
+		return beacon.objective()
 	if mode == "hunt":
-		var left := maxi(36 - hunt_day, 0)
-		return "Survive until the rescue ship at dawn on day 36 (%d %s to go). Hide where you aren't seen going in; if you're found, use the other way out." % [left, "dawn" if left == 1 else "dawns"]
+		var left := maxi(rescue_day() - hunt_day, 0)
+		return "Survive until the rescue ship at dawn on day %d (%d %s to go). Hide where you aren't seen going in; if you're found, use the other way out." % [rescue_day(), left, "dawn" if left == 1 else "dawns"]
 	if mode == "rescue":
 		return "The rescue ship is at the dock. Get there - everyone who reaches the gangway gets aboard."
 	return ""
@@ -193,16 +252,20 @@ func survival_objective() -> String:
 func _update_objective() -> void:
 	var o := survival_objective()
 	var cur := str(Game.objective)
-	if cur == "" or cur.begins_with("Survive until the rescue ship") or cur.begins_with("The rescue ship is at the dock"):
+	if cur == "" or cur.begins_with("Survive until the rescue ship") or cur.begins_with("The rescue ship is at the dock") or cur.begins_with("No ship is coming") or cur.begins_with("The beacon") or cur.begins_with("You have every part") or cur.begins_with("The ship is at the dock"):
 		Game.objective = o
 
 
 func _on_dawn() -> void:
-	if hunt_day > LAST_DAY:
+	# The company ship (won contract), or the ship the beacon called.
+	if (not stranded and hunt_day >= rescue_day()) or (stranded and beacon.calling()):
 		_rescue_arrives()
 		return
 	if Game.player:
-		Game.player.show_message("Day %d. %d day%s until the ship." % [hunt_day, 36 - hunt_day, "" if 36 - hunt_day == 1 else "s"])
+		if stranded:
+			Game.player.show_message("Day %d. No ship is coming." % hunt_day)
+		else:
+			Game.player.show_message("Day %d. %d day%s until the ship." % [hunt_day, rescue_day() - hunt_day, "" if rescue_day() - hunt_day == 1 else "s"])
 	if Game.world_root and not player_dead:
 		Game.world_root.save_campaign()
 		Game.world_root.save_checkpoint("survival")
@@ -211,18 +274,33 @@ func _on_dawn() -> void:
 ## Day tendencies (not cutscenes): later days lean toward observed routes,
 ## the trucks' road and finally the dock.
 func day_bias() -> Vector3:
-	match hunt_day:
-		33:
-			if foreman and not foreman.searched.is_empty():
-				return foreman.searched[0]
-		34:
-			if truck_use > 0 and Game.vehicles and not Game.vehicles.trucks.is_empty():
-				foreman.mark("F-H32")
-				return (Game.vehicles.trucks.values()[0] as Truck).global_position
-		35, 36:
-			if Game.crew:
-				return Game.crew.dock_shore
+	# A calling beacon draws it to the dock, whatever the day.
+	if beacon and beacon.calling() and Game.crew:
+		return Game.crew.dock_shore
+	# Stages count back from the ship's dawn (legacy five-day hunts: days
+	# 33, 34, 35). A stranded hunt has no last day: it cycles the first two.
+	var left := rescue_day() - hunt_day
+	if stranded:
+		left = 3 if (hunt_day - start_day) % 2 == 1 else 2
+	if left == 3:
+		if foreman and not foreman.searched.is_empty():
+			return foreman.searched[0]
+	elif left == 2:
+		if truck_use > 0 and Game.vehicles and not Game.vehicles.trucks.is_empty():
+			foreman.mark("F-H32")
+			return (Game.vehicles.trucks.values()[0] as Truck).global_position
+	elif left <= 1:
+		if Game.crew:
+			return Game.crew.dock_shore
 	return Vector3.INF
+
+
+## How much sharper the Foreman's guesses get the longer you are stranded
+## ("a matter of time"): 0 at first, 1 after about five stranded days.
+func strand_pressure() -> float:
+	if not stranded:
+		return 0.0
+	return clampf(float(hunt_day - start_day - 1) / 5.0, 0.0, 1.0)
 
 
 func roam_points() -> Array[Vector3]:
@@ -251,7 +329,7 @@ func sector_hint(rng: RandomNumberGenerator) -> Dictionary:
 	var o := World.camp_origin()
 	var p := Game.player as Node3D
 	var right := p.global_position if p else o
-	var wrong := rng.randf() < 0.4
+	var wrong := rng.randf() < lerpf(0.4, 0.1, strand_pressure())
 	var c := right
 	if wrong:
 		c = o + (o - right).normalized() * 30.0
@@ -528,8 +606,11 @@ func _rescue_arrives() -> void:
 	mode = "rescue"
 	ship_state = "approaching"
 	ship_t = 0.0
-	hunt_day = 36
+	if not stranded:
+		hunt_day = rescue_day()
 	t = 0.0
+	if beacon.calling():
+		beacon.state = "answered"
 	mode_changed.emit(mode)
 	_build_ship()
 	if Game.player:
@@ -596,7 +677,7 @@ func _ship_step(delta: float) -> void:
 						on_exit_hide(wk, hidden[wk])
 						wk.leave_hide((hidden.get(wk, null) as HideSpot).exit_point if hidden.has(wk) else wk.global_position)
 				if Game.player:
-					Game.player.show_message("The ship is at the dock. Boarding closes in %d minutes. Everyone who reaches the gangway gets aboard." % int(BOARDING_WINDOW / 60.0))
+					Game.player.show_message("The ship is at the dock. Boarding closes in %d minutes. Everyone who reaches the gangway gets aboard." % int(boarding_window() / 60.0))
 		"docked":
 			for w in Game.crew.workers.values():
 				var wk := w as Worker
@@ -604,9 +685,9 @@ func _ship_step(delta: float) -> void:
 					escaped.append(wk.id)
 					wk.visible = false
 					wk.emp["escaped"] = true
-			if ship_t > BOARDING_WINDOW and not boarded_player:
+			if ship_t > boarding_window() and not boarded_player:
 				ship_state = "departed"
-				_finish("stranded")
+				_ship_left_without_you()
 
 
 ## The boss boards; confirms if living workers are still ashore.
@@ -619,7 +700,7 @@ func request_board(_by: Node) -> void:
 		if worker_alive(wk) and not escaped.has(wk.id):
 			ashore.append(str(wk.emp.name))
 	if not ashore.is_empty() and Game.end_screen:
-		Game.end_screen.confirm("Leave them behind?", "%s %s still on the island. If you board now, the ship leaves and they stay behind.\nBoarding is open for another %s. The game is paused while you decide." % [", ".join(ashore), "is" if ashore.size() == 1 else "are", CampaignService.fmt_time(maxf(BOARDING_WINDOW - ship_t, 0.0))], "Board and leave without %s" % ", ".join(ashore), func() -> void: _board_player(), "Wait for them", func() -> void: pass)
+		Game.end_screen.confirm("Leave them behind?", "%s %s still on the island. If you board now, the ship leaves and they stay behind.\nBoarding is open for another %s. The game is paused while you decide." % [", ".join(ashore), "is" if ashore.size() == 1 else "are", CampaignService.fmt_time(maxf(boarding_window() - ship_t, 0.0))], "Board and leave without %s" % ", ".join(ashore), func() -> void: _board_player(), "Wait for them", func() -> void: pass)
 	else:
 		_board_player()
 
@@ -631,14 +712,45 @@ func _board_player() -> void:
 	_finish("escaped")
 
 
+## The ship waited and left. Nobody else is coming: the hunt goes on with
+## no end date, and the dock beacon becomes the only way out.
+func _ship_left_without_you() -> void:
+	if ship and is_instance_valid(ship):
+		ship.queue_free()
+	ship = null
+	if _gang_spot and is_instance_valid(_gang_spot):
+		_gang_spot.queue_free()
+	_gang_spot = null
+	ship_state = "none"
+	var was_hard := stranded
+	stranded = true
+	mode = "hunt"
+	mode_changed.emit(mode)
+	if was_hard:
+		# The beacon's ship came and went: it has to be called again.
+		beacon.state = "ready"
+		if Game.dock_site:
+			Game.dock_site.beacon_state = "standby"
+	else:
+		beacon.activate()
+	if Game.player:
+		Game.player.show_message("The ship has gone without you. No one else is coming, unless you call them. The beacon in the dock building is the only way left.")
+	if Game.world_root and not player_dead:
+		Game.world_root.save_campaign()
+		Game.world_root.save_checkpoint("survival")
+
+
 func _finish(kind: String) -> void:
 	var lines := PackedStringArray()
 	var c: CampaignService = Game.campaign
-	if kind == "escaped":
-		lines.append("You reached the rescue ship at dawn on day 36.")
+	if contract_won and not stranded:
+		lines.append("You reached the company ship at dawn on day %d." % rescue_day())
+		lines.append("The contract was finished, and you lived through what came after it.")
+	elif contract_won:
+		lines.append("You finished the contract, missed the ship, and called another with the beacon.")
 	else:
-		lines.append("The ship waited, then left without you.")
-	lines.append("The contract failed on day 30; these five days were survival, not a finished job.")
+		lines.append("Nobody was coming. You repaired the beacon, called a ship and reached it on day %d." % hunt_day)
+		lines.append("The contract failed; getting off the island was your own work.")
 	lines.append("")
 	if Game.dog and Game.dog.boarded_once:
 		lines.append("Biscuit: aboard, safe.")
@@ -655,13 +767,18 @@ func _finish(kind: String) -> void:
 			elif st == Payroll.ACTIVE:
 				lines.append("%s: left behind on the island." % e.name)
 	if Game.end_screen:
+		# The finished job's own figures (trees, money, crew) under the outcome.
+		if contract_won and Game.campaign_ui:
+			lines.append("")
+			for line in Game.campaign_ui.success_summary():
+				lines.append(str(line))
 		Game.end_screen.show_outcome("Survived" if kind == "escaped" else "Stranded", lines)
 
 
 # ------------------------------------------------------------ saving
 
 func capture() -> Dictionary:
-	return {"mode": mode, "hunt_day": hunt_day, "t": t, "dead_workers": dead_workers.duplicate(), "escaped": escaped.duplicate(), "ship_state": ship_state, "ship_t": ship_t, "truck_use": truck_use, "info_shown": _info_shown, "foreman": foreman.capture() if foreman and is_instance_valid(foreman) else {}}
+	return {"mode": mode, "hunt_day": hunt_day, "t": t, "dead_workers": dead_workers.duplicate(), "escaped": escaped.duplicate(), "ship_state": ship_state, "ship_t": ship_t, "truck_use": truck_use, "info_shown": _info_shown, "start_day": start_day, "hunt_days": hunt_days, "contract_won": contract_won, "stranded": stranded, "beacon": beacon.capture(), "foreman": foreman.capture() if foreman and is_instance_valid(foreman) else {}}
 
 
 func restore(d: Dictionary) -> void:
@@ -679,6 +796,12 @@ func restore(d: Dictionary) -> void:
 		escaped.append(str(x))
 	truck_use = int(d.get("truck_use", 0))
 	_info_shown = bool(d.get("info_shown", true))
+	# Hunts saved before Phase 25: five days, company ship on day 36.
+	start_day = int(d.get("start_day", 30))
+	hunt_days = int(d.get("hunt_days", LEGACY_HUNT_DAYS))
+	contract_won = bool(d.get("contract_won", false))
+	stranded = bool(d.get("stranded", false))
+	beacon.restore(d.get("beacon", {}))
 	if not hunt_active():
 		return
 	build_hide_spots()

@@ -25,13 +25,17 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - **Safe at night:** the camper (always, even with the door open), an occupied cabin, and the pools of the working camp lamps. Moonlight, flashlights and screens don't count.
 - Night only ends when you sleep. Waiting doesn't bring morning. Staying out at night can end the attempt; you can reload that morning's checkpoint.
 
-## If the contract fails
+## After the contract: the hunt
 
-The company leaves. You get a rules card (the game is paused until you continue). For five continuous days, something physical hunts you. Lamps and the camper no longer guarantee safety. Hide, break line of sight and move quietly. A rescue ship comes to the dock at dawn on day 36. Biscuit waits safely in the dock building and boards automatically.
+The hunt follows every contract. You get a rules card first (the game is paused until you continue). Something physical hunts you; lamps and the camper no longer guarantee safety. Hide, break line of sight and move quietly. Biscuit waits safely in the dock building and boards any ship on her own.
 
-## If you finish
-
-The moment the last tree, stump and log are done, the contract completes. You don't need to wait for day 30, and logs still burning don't matter. You get a summary from your real ledger, and then you can return to the menu (the completed save is kept) or keep exploring the cleared island with no clock, wages or night.
+- **If you finished the contract:** survive three days. The company ship reaches the dock at dawn, and boarding stays open for 8 minutes. Your end summary includes the finished job's figures.
+- **If you did not:** no ship is coming, and the thing hunting you guesses better the longer you last. The only way off is the emergency beacon in the dock building, which is dead.
+  1. Check the beacon. It lists the three missing parts and where the spares are kept: two far field sheds and the sawmill control box.
+  2. Fetch them. Taking each one makes noise.
+  3. Fit them at the beacon and switch it on. It is loud, and it draws the hunter to the dock until the ship arrives at the next dawn.
+  4. Board within 4 minutes.
+- **If you miss a ship:** it leaves, and you are in the second case. The beacon has to be used (or used again).
 
 ## What pauses
 

@@ -736,17 +736,21 @@ func _phase6_stop(which: String) -> void:
 				cs.clock.day = 30
 				cs.contract.state = ContractService.ABANDONMENT
 				Game.hunt.begin_abandonment()
-			Game.hunt.hunt_day = 35
+			Game.hunt.stranded = false
+			Game.hunt.contract_won = true
+			Game.hunt.hunt_day = Game.hunt.rescue_day() - 1
 			Game.hunt.t = HuntService.DAYLIGHT - 20.0
-			show_message("Hunt day 35, just before dusk.")
+			show_message("Last hunt day (contract won), just before dusk.")
 		"__p6_ship":
 			if not Game.hunt.hunt_active():
 				cs.clock.day = 30
 				cs.contract.state = ContractService.ABANDONMENT
 				Game.hunt.begin_abandonment()
-			Game.hunt.hunt_day = 35
+			Game.hunt.stranded = false
+			Game.hunt.contract_won = true
+			Game.hunt.hunt_day = Game.hunt.rescue_day() - 1
 			Game.hunt.t = HuntService.CYCLE - 2.0
-			show_message("Dawn of day 36 in two seconds: the rescue ship comes to the dock.")
+			show_message("Dawn in two seconds: the rescue ship comes to the dock.")
 	tour_panel.visible = false
 	_capture_mouse()
 

@@ -4,6 +4,13 @@ The download link is in the session message (a GitHub pre-release zip, or the Gi
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
 
+## New: leaving the island (Phase 25, first part)
+
+- **The hunt now follows every contract.** Finish the job and the company ship comes after three days of it.
+- **Fail and nobody comes.** The hunt has no end date. The only way off is to repair the dead emergency beacon in the dock building: check it to see which three parts are missing and where the spares are, fetch them, fit them, switch it on and reach the ship at the next dawn.
+- **Missing a ship** no longer ends the game; it leaves you stranded with the beacon as the way out.
+- **Not yet fixed:** the contract itself still cannot be met at the crew's real pace. That is the next piece of work, so for now every campaign ends on the stranded path.
+
 ## New in the Phase 24 trial build
 
 This is a trial of the new art direction, not a finished phase. Tell us what to keep.
