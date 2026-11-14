@@ -395,6 +395,7 @@ func field_notes_lines() -> PackedStringArray:
 	out.append("(An untouched island is quiet. Every day, and every tree cut, wakes more of it. Cleared ground is worst.)")
 	if fn == null or fn.notes.is_empty():
 		out.append("Nothing written down yet. Notes go in here when you have met something at night.")
+		_found_lines(out)
 		return out
 	out.append("(Each thing keeps to one rule. Meeting it writes it down; seeing what makes it leave, twice, makes you sure. No rule makes you safe.)")
 	for f in fn.met():
@@ -407,7 +408,19 @@ func field_notes_lines() -> PackedStringArray:
 		var n: Dictionary = fn.notes[f]
 		out.append("(Met %d time%s, first on day %d.)" % [int(n.seen), "" if int(n.seen) == 1 else "s", int(n.first_day)])
 	out.append("(%d of %d things met; sure of %d.)" % [fn.notes.size(), FieldNotes.FAMILIES.size(), fn.rules_known()])
+	_found_lines(out)
 	return out
+
+
+## Phase 28: what the boss has found out on the island (by day).
+func _found_lines(out: PackedStringArray) -> void:
+	if Game.finds == null:
+		return
+	out.append("# Found on the island: %d of %d" % [Game.finds.found.size(), IslandFinds.FINDS.size()])
+	if Game.finds.found.is_empty():
+		out.append("(Nothing yet. The far forest and the shore keep a few things. Look closer when you come across one.)")
+	for line in Game.finds.lines():
+		out.append(line)
 
 
 ## Phase 16: restedness, the bedtime forecast and recent nights.

@@ -73,6 +73,11 @@ func marks() -> Array:
 		if oidx.has(int(lots.one_more.tree)):
 			var oi := int(oidx[int(lots.one_more.tree)])
 			out.append({"kind": "one_more", "x": World.trees.x[oi], "z": World.trees.z[oi], "label": "One more tree"})
+	if Game.finds:
+		for fid in Game.finds.found:
+			if Game.finds.sites.has(fid):
+				var fs: Vector3 = Game.finds.sites[fid]
+				out.append({"kind": "find", "x": fs.x, "z": fs.z, "label": str(IslandFinds.def(str(fid)).get("name", ""))})
 	if Game.night_kit:
 		for l in Game.night_kit.lamps:
 			out.append({"kind": "lamp", "x": l.global_position.x, "z": l.global_position.z, "label": "Work lamp"})
@@ -126,6 +131,10 @@ func _draw() -> void:
 				draw_circle(at, 5.0, Color(0.97, 0.97, 0.95))
 				draw_arc(at, 5.0, 0.0, TAU, 16, Color(0.1, 0.1, 0.1), 1.5)
 				draw_string(font, at + Vector2(8, 4), str(m.label), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.08, 0.08, 0.08))
+			"find":
+				draw_colored_polygon(PackedVector2Array([at + Vector2(0, -5), at + Vector2(5, 0), at + Vector2(0, 5), at + Vector2(-5, 0)]), Color(0.2, 0.16, 0.12))
+				if zoom > 1.0:
+					draw_string(font, at + Vector2(8, 4), str(m.label), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.08, 0.08, 0.08))
 			"lamp":
 				draw_circle(at, 4.0, Color(1.0, 0.95, 0.5))
 				draw_arc(at, 6.0, 0.0, TAU, 16, Color(0.2, 0.18, 0.1), 1.0)

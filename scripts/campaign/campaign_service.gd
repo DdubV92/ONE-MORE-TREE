@@ -164,6 +164,8 @@ func new_campaign() -> void:
 		Game.night_kit.reset()     # Phase 26: lamps are issued again with the lots
 	if Game.island_map:
 		Game.island_map.reset()    # Phase 28: only the camp's surroundings are known
+	if Game.finds:
+		Game.finds.restore({})     # Phase 28: nothing found yet
 	if Game.director:
 		Game.director.notes.restore({})    # Phase 26: an empty notebook
 	ruleset = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant)) if World.manifest_variant != "full" else Ruleset.get_def(Ruleset.STANDARD if Game.mode == Game.Mode.CAMPAIGN else Ruleset.LEGACY)

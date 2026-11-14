@@ -53,6 +53,7 @@ var dog_rescue: DogRescue
 var hunt: HuntService
 var night_kit: NightKit              # Phase 26 work lamps and the camp breaker
 var island_map: IslandMap            # Phase 28 the boss's map (explored ground)
+var finds: IslandFinds               # Phase 28 things to find on the island
 var end_screen: EndScreen
 ## Current objective line shown by the HUD ("" = none).
 var objective := ""

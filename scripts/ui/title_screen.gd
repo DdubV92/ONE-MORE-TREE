@@ -209,6 +209,11 @@ func _new_campaign() -> void:
 		var occupied := not s.is_empty()
 		var desc := "Slot %d: empty" % n if not occupied else "Slot %d: %s" % [n, _summary_text(s)]
 		var b := UITheme.button(desc, func() -> void: _confirm_new(n, occupied), 760)
+		# A long save summary is cut with an ellipsis instead of widening
+		# the page past the screen edge.
+		b.clip_text = true
+		b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		b.tooltip_text = desc
 		v.add_child(b)
 		if first == null:
 			first = b

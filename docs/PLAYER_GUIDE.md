@@ -49,6 +49,12 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - If a worker has not come home it marks where they were last working. In the hunt it marks the beacon parts once you have checked the beacon.
 - It never shows anything that moves at night.
 
+## Things to find
+
+- Eight small things stand out in the far forest and along the shore: a stake, a fire ring, a sign. Walk up to one and choose "Look closer".
+- Each gets one line in Journal → Field notes and a mark on the map. They are always in the same places on the same island.
+- Nothing is explained. The ending counts how many you found.
+
 ## Your crew: belief and trust
 
 - **Journal → Crew** says what each worker believes and how far they trust you, and what that means.

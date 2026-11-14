@@ -28,6 +28,7 @@ var dog_rescue: DogRescue
 var hunt: HuntService
 var night_kit: NightKit
 var island_map: IslandMap
+var island_finds: IslandFinds
 var end_screen: EndScreen
 var arcade: ArcadeService
 var dock_site: DockSite
@@ -163,6 +164,11 @@ func _ready() -> void:
 	add_child(island_map)
 	Game.island_map = island_map
 	island_map.reset()
+	# Phase 28: eight things the island kept.
+	island_finds = IslandFinds.new()
+	add_child(island_finds)
+	Game.finds = island_finds
+	island_finds.setup()
 	# Phase 19: the offshore survey visits (separate from the Day 36 rescue
 	# ship; ambient, contract days only).
 	var off := OffshoreSurvey.new()

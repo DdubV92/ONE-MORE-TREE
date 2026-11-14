@@ -241,7 +241,7 @@ func _ready() -> void:
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
 	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
 	await _run_async("phase 29 world: with the last lot done the company offers one more tree before the hunt; refusing starts the three-day hunt; accepting bands the tallest tree past the entrance, pays once when it falls and adds a day, or lapses when the time runs out; saved; the epilogue reads the real records (trees left, extra cut, crew, wages, notes, the offer); difficulty: Standard unchanged, Cozy cannot catch, Long Night stirs sooner and hunts a day longer, saved", _t_phase29_world)
-	await _run_async("phase 28 map world: only the camp's surroundings are known on day 1, walking reveals ground, saved and restored, the picture is cropped to the island with the unexplored coast inked, marks for camp, sawmill, dock, every lot tree (standing or felled), work lamps and the boss, nothing that hunts", _t_phase28_world)
+	await _run_async("phase 28 map world: only the camp's surroundings are known on day 1, walking reveals ground, saved and restored, the picture is cropped to the island with the unexplored coast inked, marks for camp, sawmill, dock, every lot tree (standing or felled), work lamps and the boss, nothing that hunts; eight things to find placed the same way every time, far from camp and apart, written down once, on the map only once found, saved", _t_phase28_world)
 	_run("phase 27 units: belief sets the curfew margin and how hard a sighting hits; trust moves the risk line, waits a day for late wages and grows with fair pay; a shown recording convinces once per clip; arrears patience", _t_phase27_units)
 	await _run_async("phase 27 people world: fair pay nights build trust once, a recording can be shown to a worker once, a trusted worker follows in the hunt and an untrusting one refuses, a sceptic does not come home at dusk (one at a time, never the timid, never before the island stirs), brought home by the boss or back at first light shaken, saved; an evening at the fire: dusk only, fire burning, once a day, builds trust and calm; calling the dog: she comes inside the fence by day, never past it, never out after dark", _t_phase27_world)
 	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded; night-shift rush rate is pro rata, in whole cents, saved mid-pallet", _t_phase26_units)
@@ -7912,7 +7912,7 @@ func _p28_checks(world: IslandWorld) -> String:
 		mv.queue_free()
 		return "a felled tree or a work lamp is not on the map (%d standing, %s)" % [standing, str(kinds)]
 	for k in kinds:
-		if not str(k) in ["camp", "mill", "dock", "lot_tree", "lamp", "you", "last_seen", "part", "one_more"]:
+		if not str(k) in ["camp", "mill", "dock", "lot_tree", "lamp", "you", "last_seen", "part", "one_more", "find"]:
 			mv.queue_free()
 			return "the map marks something it should not: %s" % str(k)
 	mv.toggle_zoom()
@@ -7922,6 +7922,84 @@ func _p28_checks(world: IslandWorld) -> String:
 	mv.queue_free()
 	Game.night_kit.reset()
 	Game.trees.clear_all()
+	# Things to find: placed from the island, far from camp and apart, on
+	# dry land; found once; on the map and in the notes only once found.
+	var fd: IslandFinds = Game.finds
+	if fd == null:
+		return "no island finds in the world"
+	var plan := IslandFinds.plan()
+	if plan.size() != IslandFinds.FINDS.size():
+		return "only %d of %d finds could be placed" % [plan.size(), IslandFinds.FINDS.size()]
+	var plan2 := IslandFinds.plan()
+	var pts: Array = []
+	for id in plan:
+		var s: Vector3 = plan[id]
+		if (plan2[id] as Vector3).distance_to(s) > 0.001 or (fd.sites[id] as Vector3).distance_to(s) > 0.001:
+			return "the finds are not placed the same way every time"
+		if World.water_depth_at(s.x, s.z) > 0.02 or not b.has_point(Vector2(s.x, s.z)):
+			return "the %s is in the water or off the map" % str(id)
+		if Vector2(s.x - o.x, s.z - o.z).length() < IslandFinds.MIN_FROM_CAMP:
+			return "the %s is too close to camp" % str(id)
+		for q in pts:
+			if Vector2(s.x - (q as Vector3).x, s.z - (q as Vector3).z).length() < IslandFinds.SPACING - 0.01:
+				return "two finds are too close together"
+		pts.append(s)
+	if fd.get_child_count() != IslandFinds.FINDS.size():
+		return "the finds have no props in the world (%d)" % fd.get_child_count()
+	# Felling the trees around a find does not move it.
+	var s0: Vector3 = plan[str(IslandFinds.FINDS[0].id)]
+	var cut: Array = []
+	for i in World.tree_count():
+		if Vector2(float(World.trees.x[i]) - s0.x, float(World.trees.z[i]) - s0.z).length() < 30.0:
+			var cid := int(World.trees.id[i])
+			Game.trees.record(cid).state = TreeService.State.DISPOSED
+			cut.append(cid)
+	var plan3 := IslandFinds.plan()
+	for cid in cut:
+		Game.trees.records.erase(cid)
+	for id in plan:
+		if (plan3[id] as Vector3).distance_to(plan[id]) > 0.001:
+			return "felling trees moved a find"
+	for id in plan:
+		for i in World.tree_count():
+			if absf(float(World.trees.x[i]) - (plan[id] as Vector3).x) < 4.0 and Vector2(float(World.trees.x[i]) - (plan[id] as Vector3).x, float(World.trees.z[i]) - (plan[id] as Vector3).z).length() < IslandFinds.CLEAR_OF_TREES - 0.01:
+				return "the %s stands inside a tree" % str(id)
+	var mv2 := MapView.new()
+	add_child(mv2)
+	mv2.setup(map)
+	for m in mv2.marks():
+		if str(m.kind) == "find":
+			mv2.queue_free()
+			return "an unfound thing is marked on the map"
+	cs.clock.day = 6
+	var prop: FindProp = fd.get_child(0)
+	if prop.get_interact_text() != "Look closer":
+		mv2.queue_free()
+		return "an unfound thing has the wrong prompt"
+	var text := fd.discover(prop.id)
+	fd.discover(prop.id)
+	if text.length() < 20 or fd.found.size() != 1 or int(fd.found[prop.id]) != 6 or prop.get_interact_text() != "Look again":
+		mv2.queue_free()
+		return "looking closely did not write the find down once"
+	var marked := 0
+	for m in mv2.marks():
+		if str(m.kind) == "find":
+			marked += 1
+	mv2.queue_free()
+	if marked != 1 or fd.lines().size() != 3 or not str(fd.lines()[0]).begins_with("# "):
+		return "a found thing is not on the map and in the notes (%d marks)" % marked
+	if int(Epilogue.facts().finds) != 1:
+		return "the epilogue does not count what was found"
+	var fsnap: Dictionary = JSON.parse_string(JSON.stringify(fd.capture()))
+	fd.restore({})
+	if not fd.found.is_empty():
+		return "finds were not cleared"
+	fd.restore(fsnap)
+	if not fd.is_found(prop.id) or int(fd.found[prop.id]) != 6:
+		return "finds were not saved"
+	fd.restore({"found": {"not_a_find": 3}})
+	if not fd.found.is_empty():
+		return "an unknown find was restored"
 	return ""
 
 

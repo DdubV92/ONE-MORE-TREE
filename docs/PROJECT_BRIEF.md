@@ -55,6 +55,7 @@
 
 ## An island worth walking (Phase 28)
 
+- **Things to find:** eight small finds in fixed places far from camp (a survey stake numbered far past three, an older fire ring, a sign for the park). Each is one line of what the boss saw. None explains anything.
 - **The map** is the company's survey sheet: the coast is inked, the inside is blank until the boss has walked it. It marks real places and the boss's own work (lot trees, work lamps, beacon parts once known) and never anything that moves at night.
 
 ## People who matter (Phase 27)

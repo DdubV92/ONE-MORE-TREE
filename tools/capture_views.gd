@@ -167,6 +167,14 @@ func _ready() -> void:
 				Game.night_kit.changed.emit()
 			var lk := CampLayout.world((NightKit.LOCKER_POS + NightKit.BREAKER_POS) * 0.5)
 			vps[vp_name] = {"pos": lk + Vector3(-1.2, 1.65, -4.6), "look": lk + Vector3(0.6, 1.1, 0)}
+		# Phase 28: "find_<id>" = one of the things to find, from a few steps away.
+		if vp_name.begins_with("find_") and Game.finds:
+			var fid := vp_name.trim_prefix("find_")
+			if Game.finds.sites.has(fid):
+				var fs: Vector3 = Game.finds.sites[fid]
+				var eye3 := fs + Vector3(3.2, 0.0, 4.6)
+				eye3.y = World.height_at(eye3.x, eye3.z) + 1.65
+				vps[vp_name] = {"pos": eye3, "look": fs + Vector3(0, 0.9, 0)}
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue

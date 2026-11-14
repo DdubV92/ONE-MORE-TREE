@@ -19,7 +19,8 @@
 | The boss's map (`IslandMap`): the survey sheet shows the coast, the inside fills in as it is walked (32 m cells, 70 m around the boss, 150 m around camp on day 1); saved | ✅ | Picture cropped to the island, built once and cached |
 | Journal → Map (`MapView`): camp, sawmill, dock, every lot tree in its paint colour (dark once felled), work lamps, the boss's arrow, where a missing worker was last working, beacon parts once the beacon has been checked; "Around you" zoom | ✅ | Renders: `screenshots/phase28_journal_map.jpg`, `phase28_journal_map_near.jpg` (software renderer). Never shows anything that moves at night |
 | Journal layout: panels are centred at their real height and kept on screen; the Journal is wider so all nine tabs show | ✅ | At 720p the Journal's title used to sit above the top edge |
-| Wildlife sprites, named landmarks and signposts, things to find, windthrow | ⬜ | Next |
+| Things to find (`IslandFinds`): eight small finds placed from the island's seed, far from camp, apart and clear of trees (felling never moves them); "Look closer" writes one line in Field notes, marks the map and is counted in the ending; saved | ✅ | They explain nothing. Render: `screenshots/phase28_find_sign.jpg` |
+| Wildlife sprites, named landmarks and signposts, windthrow | ⬜ | Next |
 
 ## Phase 27 (in progress): people who matter
 

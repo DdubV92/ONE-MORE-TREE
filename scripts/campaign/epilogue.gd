@@ -11,7 +11,7 @@ static func facts() -> Dictionary:
 	var f := {"island_trees": World.native_total(), "cut": 0, "lot_trees": 0, "lot_cut": 0, "extra_cut": 0,
 		"crew_total": 0, "crew_kept": 0, "crew_left": 0, "crew_dead": 0, "crew_escaped": 0, "crew_behind": 0,
 		"wages_paid": 0, "wages_owed": 0, "things_met": 0, "rules_known": 0, "caught": 0, "breaker_trips": 0,
-		"missing_nights": 0, "brought_home": 0, "map_share": 0.0, "one_more": "", "won": false, "stranded": false, "day": 0}
+		"missing_nights": 0, "brought_home": 0, "map_share": 0.0, "finds": 0, "one_more": "", "won": false, "stranded": false, "day": 0}
 	var cs: CampaignService = Game.campaign
 	var lots: ContractLots = cs.contract.lots if cs and cs.contract else null
 	if Game.trees:
@@ -60,6 +60,8 @@ static func facts() -> Dictionary:
 		f.brought_home = Game.crew.missing.found_count
 	if Game.island_map:
 		f.map_share = Game.island_map.explored_share()
+	if Game.finds:
+		f.finds = Game.finds.found.size()
 	return f
 
 
@@ -116,7 +118,7 @@ static func lines(f: Dictionary) -> PackedStringArray:
 		out.append("You never wrote down a single thing you met at night.")
 	if int(f.caught) > 0:
 		out.append("The dark caught you %d time%s." % [int(f.caught), "" if int(f.caught) == 1 else "s"])
-	out.append("You walked %d%% of the island." % int(round(float(f.map_share) * 100.0)))
+	out.append("You walked %d%% of the island and found %d of the %d things it kept." % [int(round(float(f.map_share) * 100.0)), int(f.finds), IslandFinds.FINDS.size()])
 	return out
 
 
