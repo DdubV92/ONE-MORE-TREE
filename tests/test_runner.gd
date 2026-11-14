@@ -9410,6 +9410,18 @@ func _t_phase24_settings_migration() -> String:
 		err = "the drawn world is not set up sharp (brush %s, boil %s)" % [str(AnimePass.DRAWN.brush_radius), str(AnimePass.DRAWN.boil)]
 	if err == "" and float(ProjectSettings.get_setting("shader_globals/leaf_motion", {}).get("value", -1.0)) != 1.0:
 		err = "leaf_motion must default to 1 (only the drawn world calms the leaves)"
+	# Smooth edges are the default (owner request: hand painted, but not
+	# hard to see); the art-pixel blocks are a choice.
+	if err == "" and str(Settings.defaults.get("drawn_edges", "")) != "smooth":
+		err = "the drawn world's edges are not smooth by default"
+	if err == "" and (float(AnimePass.DRAWN_SMOOTH.pixel_mode) != 0.0 or float(AnimePass.DRAWN_SMOOTH.boil) != 0.0 or float(AnimePass.DRAWN_SMOOTH.tone_steps) != float(AnimePass.DRAWN.tone_steps) or int(AnimePass.DRAWN_SMOOTH.brush_radius) > 2):
+		err = "the smooth drawn world is not the same cel look with smooth edges"
+	var keep_edges: String = str(Settings.values.get("drawn_edges", "smooth"))
+	Settings.values.drawn_edges = "wobbly"
+	Settings.sanitize()
+	if err == "" and str(Settings.values.drawn_edges) != "smooth":
+		err = "an unknown drawn_edges value was kept"
+	Settings.values.drawn_edges = keep_edges
 	if err == "" and Settings.world_pixel_px() != 0:
 		err = "a headless run must not scale the 3D render"
 	var keep_rows: int = int(Settings.values.get("drawn_rows", 450))

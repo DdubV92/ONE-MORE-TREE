@@ -6,7 +6,7 @@
 - **New Campaign** gives a short brief and asks for a slot. A slot that already has a save always asks before replacing it (the old save is kept once as a `.bak`).
 - **Load** lists every slot with its state (contract day, survival day, completed, finished), logs delivered, cash, save time and any checkpoints.
 - Before playing, open **Settings** to set text size, captions, horror intensity, flash reduction, head-bob, camera shake and key bindings.
-- **World art style** (Settings): `drawn` is the hand-drawn pixel world (default). If distant detail shimmers on your screen, raise **Drawn world pixel rows**, or pick `anime` for the earlier smooth painted look.
+- **World art style** (Settings): `drawn` is the hand-drawn world (default): flat painted colours and ink outlines. **Drawn world edges** is `smooth` by default; `pixel` shows the world as chunky art pixels like the characters. `anime` is the earlier soft painted look.
 
 ## Your first day
 

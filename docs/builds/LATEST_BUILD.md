@@ -13,7 +13,7 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 ## New: the map (Phase 28, first part)
 
 - **Journal → Map.** The coast is inked in; the inside fills in as you walk. It shows your lots tree by tree, your work lamps, the camp, sawmill and dock, and you. "Around you" zooms in.
-- **A hand-drawn pixel world.** The whole island is now drawn on the same pixel grid as the characters: flat cel colours, firm ink outlines, anime skies. It is tuned to stay sharp: bloom haze off, the soft paint brush cut right back, nothing flickering. Settings → World art style switches back to the earlier smooth look (`anime`).
+- **A hand-drawn world.** The island is drawn in flat cel colours with ink outlines and anime skies, with smooth edges so it is easy to read. It is tuned to stay sharp and calm: no bloom haze, the soft paint brush cut right back, leaves nearly still. Settings → Drawn world edges → `pixel` shows it as chunky art pixels like the characters; World art style → `anime` is the earlier soft look.
 - **Animals.** Gulls on the shore, crabs on the sand, deer in the far woods. They leave at dusk (a warning you can see) and there are fewer of them as the island stirs.
 - **Eight things to find** out in the far forest and on the shore. "Look closer" writes them into Field notes and onto the map.
 - The Journal is wider and no longer loses its title off the top of a 720p screen.

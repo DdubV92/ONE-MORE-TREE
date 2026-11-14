@@ -16,6 +16,8 @@ func _ready() -> void:
 	world.build_player = false
 	world.build_ui = false
 	add_child(world)
+	if OS.has_environment("DRAWN_EDGES"):
+		Settings.values.drawn_edges = OS.get_environment("DRAWN_EDGES")
 	Settings.compare_old = OS.has_environment("COMPARE_OLD")
 	Settings.apply()
 	add_child(PostFX.new())

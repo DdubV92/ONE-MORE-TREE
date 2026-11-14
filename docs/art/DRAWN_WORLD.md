@@ -2,7 +2,23 @@
 
 Art direction: the owner's painting, `reference_target.png`. The world should read as a hand-drawn, painted illustration that the player walks through in 3D, with the pixel-art characters living inside it.
 
-## The hand-drawn pixel world (current default, 14 Nov 2026)
+## Smooth edges (current default, 14 Nov 2026, later the same day)
+
+Owner feedback on the pixel-block version below: make the edges smoother, so it still looks hand painted but is not so hard to see.
+
+`drawn_edges: "smooth"` is now the default for the drawn world (Settings → Drawn world edges). It keeps the same flat four-tone cel colours and ink outlines, but they are worked out per screen pixel at full resolution instead of per art-pixel block:
+
+- Colour fills meet along smooth edges (a small edge-preserving brush, 40% of surface detail kept).
+- The ink line is a soft-edged pen stroke about a pixel wide at 720p, scaling with resolution, instead of a staircase of hard blocks.
+- Geometry edges are smoothed by FXAA only. No temporal anti-aliasing, no bloom haze, calm leaves: the sharpness and comfort rules below still hold.
+- Painted signs in the world are readable again.
+- Standing-still flicker in the forest: **0.38%** of pixels per frame (pixel blocks 0.55%).
+
+`drawn_edges: "pixel"` gives the art-pixel blocks described below. Comparison: `drawn_world/edges_forest_compare.jpg`, `edges_camp_compare.jpg` (earlier smooth paint / pixel blocks / smooth edges).
+
+The trade: the world no longer shares the characters' pixel grid, so the pixel sprites stand a little more apart from it than in the block version. Flat colour and ink keep them much closer than the old soft painting did.
+
+## The hand-drawn pixel world (`drawn_edges: "pixel"`, 14 Nov 2026)
 
 Owner request: the world should look more anime and pixel-drawn so it matches the pixel-art characters, as if hand-drawn in a 3D space, and it must stay **sharp and easy on the eyes**. Effects that blur the picture were dialled back.
 

@@ -33,6 +33,7 @@ func setup(at: Vector3) -> void:
 	cs.position = Vector3(0, 0.97, 0)
 	add_child(cs)
 	_sign = Label3D.new()
+	_sign.double_sided = false       # from behind it read mirrored
 	_sign.text = "PARCELS"
 	_sign.font_size = 40
 	_sign.pixel_size = 0.004

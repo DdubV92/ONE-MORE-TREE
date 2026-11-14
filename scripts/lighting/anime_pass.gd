@@ -12,6 +12,13 @@ const LAYER := 17                  # own layer: security-camera feeds skip it
 const SMOOTH := {"pixel_mode": 0.0, "brush_radius": 3, "brush_px": 1.0, "detail": 0.3, "tone_steps": 5.0, "tone_strength": 0.55, "tone_soft": 0.16,
 	"ink_strength": 0.85, "ink_px": 1.25, "ink_far": 170.0, "hatch": 0.0, "boil": 0.0, "saturation": 1.12}
 ## The hand-drawn pixel world ("drawn").
+## The hand-drawn world with smooth edges (default; owner request: still
+## hand painted, but not so hard to see). Same flat cel colours and ink
+## outlines, worked out per screen pixel instead of per art-pixel block:
+## fills meet along smooth edges and the line is a soft-edged pen stroke.
+const DRAWN_SMOOTH := {"pixel_mode": 0.0, "brush_radius": 2, "brush_px": 1.0, "detail": 0.4, "tone_steps": 4.0, "tone_strength": 0.85, "tone_soft": 0.1,
+	"ink_strength": 0.9, "ink_px": 1.1, "ink_far": 200.0, "hatch": 0.0, "boil": 0.0, "saturation": 1.08}
+## The same world on hard art-pixel blocks (drawn_edges "pixel").
 ## Sharp first (owner request): the smallest brush, most of the surface
 ## detail kept under it, no moving lines unless asked for (ANIME_BOIL), and
 ## hatching only in the very darkest tones.
@@ -51,10 +58,11 @@ func _apply() -> void:
 	# "drawn": the frame is rendered on the art-pixel grid, so the pass
 	# works in whole art pixels: flat cel tones, firm one-pixel ink lines
 	# that boil a little, pencil hatching in the shadows.
-	var set := DRAWN if drawn else SMOOTH
+	var blocks := drawn and Settings.world_pixel_px() > 0
+	var set := (DRAWN if blocks else DRAWN_SMOOTH) if drawn else SMOOTH
 	for key in set:
 		mat.set_shader_parameter(key, set[key])
-	mat.set_shader_parameter("block_px", float(maxi(Settings.world_pixel_px(), 1)) if drawn else 1.0)
+	mat.set_shader_parameter("block_px", float(maxi(Settings.world_pixel_px(), 1)) if blocks else 1.0)
 	if not drawn:
 		mat.set_shader_parameter("brush_radius", 2 if q == "low" else 3)
 	if drawn and float(Settings.get_v("shake_strength")) <= 0.001:

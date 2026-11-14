@@ -23,6 +23,8 @@ func _ready() -> void:
 	add_child(world)
 	# Phase 24: the final-frame pass (HD-2D world style lives there) is part
 	# of the game image; WORLD_STYLE=3d captures the old look.
+	if OS.has_environment("DRAWN_EDGES"):
+		Settings.values.drawn_edges = OS.get_environment("DRAWN_EDGES")
 	if OS.has_environment("WORLD_STYLE"):
 		Settings.values.world_style = OS.get_environment("WORLD_STYLE")
 	# COMPARE_OLD=1: the previous look (what F8 shows in the review build).

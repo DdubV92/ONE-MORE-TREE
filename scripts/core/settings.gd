@@ -63,6 +63,7 @@ var values := {
 	"character_style": "hd2d",      # hd2d (Phase 24 directional pixel sprites) / clean / pixel (Phase 11)
 	"character_style_strength": 0.7,
 	"world_style": "drawn",         # drawn = hand-drawn pixel world (cel tones, firm ink, hatching, on the characters' pixel grid); anime = the earlier smooth painted look; 3d = plain render; hd2d = pixel filter only
+	"drawn_edges": "smooth",        # smooth = painted fills and ink with smooth edges at full resolution (default, easier to read); pixel = hard art-pixel blocks
 	"drawn_rows": 450,              # art pixels per screen height in the drawn world (300 chunky .. 540 fine); 2 screen pixels per art pixel at 720p and 1080p
 	"world_pixel_rows": 270,        # art pixels per screen height in hd2d (240 chunky .. 480 fine)
 }
@@ -278,6 +279,8 @@ func sanitize() -> void:
 	if not values.get("world_style", "drawn") in ["drawn", "anime", "hd2d", "3d"]:
 		values.world_style = "drawn"
 	values.drawn_rows = clampi(int(values.get("drawn_rows", 450)), 240, 540)
+	if not str(values.get("drawn_edges", "smooth")) in ["smooth", "pixel"]:
+		values.drawn_edges = "smooth"
 	values.world_pixel_rows = clampi(int(values.get("world_pixel_rows", 270)), 180, 720)
 	# Review build: pixel-art characters (crew, dog, first-person axe) in a
 	# drawn, illustrated world are enforced - the owner's chosen direction.
@@ -354,6 +357,8 @@ func world_pixel_px() -> int:
 	var style := str(values.get("world_style", "3d"))
 	if not style in ["hd2d", "drawn"] or DisplayServer.get_name() == "headless":
 		return 0
+	if style == "drawn" and str(values.get("drawn_edges", "smooth")) == "smooth":
+		return 0                    # no blocks: edges are drawn smooth at full resolution
 	var h := float(get_tree().root.size.y) if get_tree() and get_tree().root else 1080.0
 	var rows := float(values.world_pixel_rows) if style == "hd2d" else float(values.get("drawn_rows", 450))
 	return maxi(int(round(h / rows)), 2)
@@ -364,7 +369,14 @@ func _apply_world_style() -> void:
 	if not root.size_changed.is_connected(_on_root_resized):
 		root.size_changed.connect(_on_root_resized)
 	var px := world_pixel_px()
-	if px > 0 and str(values.get("world_style", "")) == "drawn":
+	if px == 0 and str(values.get("world_style", "")) == "drawn" and DisplayServer.get_name() != "headless":
+		# Smooth-edged drawn world: full resolution, edges smoothed by FXAA
+		# only. No temporal anti-aliasing (it blurs and ghosts the paint).
+		root.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+		root.scaling_3d_scale = 1.0
+		root.use_taa = false
+		root.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
+	elif px > 0 and str(values.get("world_style", "")) == "drawn":
 		# The drawn world renders at FULL resolution and averages each art
 		# pixel from the screen pixels under it (steady in motion). No
 		# temporal or FXAA smoothing: both would smear the art pixels.
