@@ -175,6 +175,32 @@ func _ready() -> void:
 				var eye3 := fs + Vector3(3.2, 0.0, 4.6)
 				eye3.y = World.height_at(eye3.x, eye3.z) + 1.65
 				vps[vp_name] = {"pos": eye3, "look": fs + Vector3(0, 0.9, 0)}
+		# Phase 28: wildlife. "gulls", "crabs", "deer" = the first of each from
+		# a few steps away; "gulls_leave" = the dusk flight.
+		if vp_name in ["gulls", "crabs", "deer", "gulls_leave"] and Game.wildlife:
+			var wl: Wildlife = Game.wildlife
+			wl.force_out = 1
+			wl.refresh()
+			var kind := "gull" if vp_name.begins_with("gull") else vp_name.trim_suffix("s")
+			var first: Dictionary = {}
+			for an in wl.animals:
+				if str(an.kind) == kind and str(an.st) != "gone":
+					first = an
+					break
+			if not first.is_empty():
+				var ap: Vector3 = first.home
+				var dist := {"gull": 7.0, "crab": 2.6, "deer": 9.0}[kind] as float
+				var b0 := IslandMap.bounds()
+				var inland := Vector3(b0.position.x + b0.size.x * 0.5 - ap.x, 0.0, b0.position.y + b0.size.y * 0.5 - ap.z).normalized()
+				var eye4 := ap + inland * dist + inland.cross(Vector3.UP) * dist * 0.35
+				eye4.y = World.height_at(eye4.x, eye4.z) + (0.9 if kind == "crab" else 1.65)
+				var look4 := ap + Vector3(0, 0.3 if kind != "deer" else 0.7, 0)
+				if vp_name == "gulls_leave":
+					wl.force_out = 0
+					for k in 40:
+						wl.step(0.1)
+					look4 = (first.pos as Vector3) + Vector3(0.0, float(first.h), 0.0)
+				vps[vp_name] = {"pos": eye4, "look": look4}
 		if not vps.has(vp_name):
 			push_warning("unknown viewpoint " + vp_name)
 			continue

@@ -241,7 +241,7 @@ func _ready() -> void:
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
 	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
 	await _run_async("phase 29 world: with the last lot done the company offers one more tree before the hunt; refusing starts the three-day hunt; accepting bands the tallest tree past the entrance, pays once when it falls and adds a day, or lapses when the time runs out; saved; the epilogue reads the real records (trees left, extra cut, crew, wages, notes, the offer); difficulty: Standard unchanged, Cozy cannot catch, Long Night stirs sooner and hunts a day longer, saved", _t_phase29_world)
-	await _run_async("phase 28 map world: only the camp's surroundings are known on day 1, walking reveals ground, saved and restored, the picture is cropped to the island with the unexplored coast inked, marks for camp, sawmill, dock, every lot tree (standing or felled), work lamps and the boss, nothing that hunts; eight things to find placed the same way every time, far from camp and apart, written down once, on the map only once found, saved", _t_phase28_world)
+	await _run_async("phase 28 map world: only the camp's surroundings are known on day 1, walking reveals ground, saved and restored, the picture is cropped to the island with the unexplored coast inked, marks for camp, sawmill, dock, every lot tree (standing or felled), work lamps and the boss, nothing that hunts; eight things to find placed the same way every time, far from camp and apart, written down once, on the map only once found, saved; wildlife: sites from the island seed on valid ground, everything out on a quiet day, fewer deer then none as the island stirs, a deer looks then bolts to dry ground, gulls lift and land, crabs hide and return, everything leaves at dusk, nothing out in the hunt, not saved", _t_phase28_world)
 	_run("phase 27 units: belief sets the curfew margin and how hard a sighting hits; trust moves the risk line, waits a day for late wages and grows with fair pay; a shown recording convinces once per clip; arrears patience", _t_phase27_units)
 	await _run_async("phase 27 people world: fair pay nights build trust once, a recording can be shown to a worker once, a trusted worker follows in the hunt and an untrusting one refuses, a sceptic does not come home at dusk (one at a time, never the timid, never before the island stirs), brought home by the boss or back at first light shaken, saved; an evening at the fire: dusk only, fire burning, once a day, builds trust and calm; calling the dog: she comes inside the fence by day, never past it, never out after dark", _t_phase27_world)
 	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded; night-shift rush rate is pro rata, in whole cents, saved mid-pallet", _t_phase26_units)
@@ -8000,6 +8000,145 @@ func _p28_checks(world: IslandWorld) -> String:
 	fd.restore({"found": {"not_a_find": 3}})
 	if not fd.found.is_empty():
 		return "an unknown find was restored"
+	return _p28_wildlife()
+
+
+## Phase 28: gulls, crabs and deer. Scenery that reads the island.
+func _p28_wildlife() -> String:
+	var wl: Wildlife = Game.wildlife
+	if wl == null:
+		return "no wildlife in the world"
+	var keep_override := NightPressure.override_level
+	var o := World.camp_origin()
+	# Where they live is a pure function of the island, on valid ground.
+	var p1 := Wildlife.plan()
+	var p2 := Wildlife.plan()
+	if JSON.stringify([p1.gulls, p1.crabs, p1.deer]) != JSON.stringify([p2.gulls, p2.crabs, p2.deer]):
+		return "the wildlife plan is not deterministic"
+	if (p1.gulls as Array).size() < 4 or (p1.crabs as Array).size() < 4 or (p1.deer as Array).size() != Wildlife.DEER_SITES:
+		return "too few wildlife sites (%d gull, %d crab, %d deer)" % [(p1.gulls as Array).size(), (p1.crabs as Array).size(), (p1.deer as Array).size()]
+	for q in (p1.gulls as Array) + (p1.crabs as Array):
+		var sp: Vector3 = q
+		if World.water_depth_at(sp.x, sp.z) > 0.02 or not World.surface_at(sp.x, sp.z) in Wildlife.SHORE_SURFACES:
+			return "a shore animal's site is not dry open shore"
+	for q in p1.deer:
+		var dp: Vector3 = q
+		if not Wildlife.dry_ground(dp.x, dp.z) or Vector2(dp.x - o.x, dp.z - o.z).length() < Wildlife.DEER_FROM_CAMP:
+			return "a deer site is in a tree, in water or too near camp"
+	for key in Wildlife.ART:
+		var tex := Wildlife.sheet(str(key))
+		if tex == null or tex.get_width() % (Wildlife.ART[key] as Array).size() != 0 or tex.get_height() < 5:
+			return "the %s sprite sheet is malformed" % str(key)
+	# A quiet island by day: everything is out.
+	NightPressure.override_level = 0.0
+	wl.force_out = 1
+	wl.refresh()
+	var all_deer := Wildlife.DEER_SITES * Wildlife.DEER_PER
+	if wl.count_out("deer") != all_deer or wl.count_out("gull") < 12 or wl.count_out("crab") < 8:
+		return "a quiet island is missing animals (%d deer, %d gulls, %d crabs)" % [wl.count_out("deer"), wl.count_out("gull"), wl.count_out("crab")]
+	for an in wl.animals:
+		if not (an.s as Sprite3D).visible or (an.s as Sprite3D).shaded:
+			return "an animal that is out is not shown (or is lit like a wall)"
+	# The island stirs: fewer deer, then none; some gulls always remain.
+	NightPressure.override_level = 0.4
+	wl.refresh()
+	var some := wl.count_out("deer")
+	NightPressure.override_level = 0.9
+	wl.refresh()
+	if some <= 0 or some >= all_deer or wl.count_out("deer") != 0 or wl.count_out("gull") < Wildlife.GULLS_PER:
+		return "the animals do not thin out as the island stirs (%d then %d deer, %d gulls)" % [some, wl.count_out("deer"), wl.count_out("gull")]
+	if not wl.describe().contains("not seen a deer"):
+		return "the Journal does not say the deer are gone"
+	NightPressure.override_level = 0.0
+	wl.refresh()
+	# A deer watches, then bolts to dry ground away from the boss.
+	var pl := Game.player as Node3D
+	var deer: Dictionary = {}
+	for an in wl.animals:
+		if str(an.kind) == "deer":
+			deer = an
+			break
+	var dh: Vector3 = deer.home
+	pl.global_position = dh + Vector3(22.0, 0.0, 0.0)
+	wl.step(0.1)
+	if str(deer.st) != "look":
+		return "a deer did not look up at the boss 22 m away (%s)" % str(deer.st)
+	pl.global_position = dh + Vector3(8.0, 0.0, 0.0)
+	wl.step(0.1)
+	if str(deer.st) != "bolt":
+		return "a deer did not bolt from the boss 8 m away (%s)" % str(deer.st)
+	for k in 200:
+		wl.step(0.05)
+	var dn: Vector3 = deer.pos
+	if str(deer.st) == "bolt" or dn.distance_to(dh) < 25.0 or not Wildlife.dry_ground(dn.x, dn.z):
+		return "the deer did not get away to dry ground (%s, %.0f m)" % [str(deer.st), dn.distance_to(dh)]
+	# Gulls lift when the boss walks up and come down when they have gone.
+	var gull: Dictionary = {}
+	for an in wl.animals:
+		if str(an.kind) == "gull":
+			gull = an
+			break
+	var gh: Vector3 = gull.home
+	pl.global_position = gh + Vector3(5.0, 0.0, 0.0)
+	for k in 40:
+		wl.step(0.05)
+	if str(gull.st) != "circle" or float(gull.h) < 2.0:
+		return "a gull did not take off (%s, %.1f m up)" % [str(gull.st), float(gull.h)]
+	pl.global_position = gh + Vector3(120.0, 0.0, 0.0)
+	for k in 700:
+		wl.step(0.05)
+	if str(gull.st) != "stand" or (gull.pos as Vector3).distance_to(gh) > 0.5:
+		return "the gull did not come back down (%s)" % str(gull.st)
+	# A crab runs for it and comes back out later.
+	var crab: Dictionary = {}
+	for an in wl.animals:
+		if str(an.kind) == "crab":
+			crab = an
+			break
+	pl.global_position = (crab.home as Vector3) + Vector3(2.0, 0.0, 0.0)
+	for k in 60:
+		wl.step(0.05)
+	if str(crab.st) != "hide" or (crab.s as Sprite3D).visible:
+		return "a crab did not hide from the boss (%s)" % str(crab.st)
+	pl.global_position = (crab.home as Vector3) + Vector3(90.0, 0.0, 0.0)
+	for k in 600:
+		wl.step(0.05)
+	if str(crab.st) in ["hide", "run"]:
+		return "the crab never came back out"
+	# Dusk: the gulls lift together and go; then nothing is out.
+	wl.force_out = 0
+	wl.step(0.05)
+	var leaving := 0
+	for an in wl.animals:
+		if str(an.kind) == "gull" and str(an.st) == "leave":
+			leaving += 1
+	if leaving < 12 or wl.count_out("deer") != 0 or wl.count_out("crab") != 0:
+		return "the animals did not leave at dusk (%d gulls leaving)" % leaving
+	for k in 600:
+		wl.step(0.05)
+	for an in wl.animals:
+		if str(an.st) != "gone" and str(an.st) != "hide" or (an.s as Sprite3D).visible:
+			return "an animal is still out after dusk (%s %s)" % [str(an.kind), str(an.st)]
+	# By the clock: out in daylight, gone at dusk and at night, gone in the hunt.
+	wl.force_out = -1
+	var cs: CampaignService = Game.campaign
+	cs.clock.restore({"day": 4, "t": 300.0, "running": true, "deadline_enabled": true})
+	if not wl.out_now():
+		return "no animals in daylight"
+	cs.clock.restore({"day": 4, "t": WorkdayClock.NIGHT_AT - 100.0, "running": true, "deadline_enabled": true})
+	if wl.out_now():
+		return "animals stayed out at dusk"
+	cs.clock.restore({"day": 4, "t": 300.0, "running": true, "deadline_enabled": true})
+	var hmode: String = Game.hunt.mode
+	Game.hunt.mode = "hunt"
+	var in_hunt := wl.out_now()
+	Game.hunt.mode = hmode
+	if in_hunt:
+		return "animals are out during the hunt"
+	if wl.has_method("capture"):
+		return "wildlife must not be saved"
+	NightPressure.override_level = keep_override
+	wl.refresh()
 	return ""
 
 

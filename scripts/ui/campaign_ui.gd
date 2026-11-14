@@ -412,6 +412,8 @@ func field_notes_lines() -> PackedStringArray:
 	var fn: FieldNotes = Game.director.notes if Game.director else null
 	out.append("# " + NightPressure.describe())
 	out.append("(An untouched island is quiet. Every day, and every tree cut, wakes more of it. Cleared ground is worst.)")
+	if Game.wildlife:
+		out.append(Game.wildlife.describe())
 	if fn == null or fn.notes.is_empty():
 		out.append("Nothing written down yet. Notes go in here when you have met something at night.")
 		_found_lines(out)

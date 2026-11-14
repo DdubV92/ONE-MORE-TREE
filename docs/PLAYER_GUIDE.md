@@ -49,6 +49,12 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - If a worker has not come home it marks where they were last working. In the hunt it marks the beacon parts once you have checked the beacon.
 - It never shows anything that moves at night.
 
+## Animals
+
+- Gulls stand on the shore, crabs on the sand, and a few deer graze in the far woods. Walk up and the gulls lift, the crabs run and the deer bolt. None of them can be harmed.
+- They are out in daylight only. **When the gulls all lift and go out to sea, dusk has started: go home.**
+- As the nights get worse there are fewer of them each morning. Journal → Field notes says what you are still seeing.
+
 ## Things to find
 
 - Eight small things stand out in the far forest and along the shore: a stake, a fire ring, a sign. Walk up to one and choose "Look closer".

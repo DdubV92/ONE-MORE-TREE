@@ -29,6 +29,7 @@ var hunt: HuntService
 var night_kit: NightKit
 var island_map: IslandMap
 var island_finds: IslandFinds
+var wildlife: Wildlife
 var end_screen: EndScreen
 var arcade: ArcadeService
 var dock_site: DockSite
@@ -169,6 +170,10 @@ func _ready() -> void:
 	add_child(island_finds)
 	Game.finds = island_finds
 	island_finds.setup()
+	# Phase 28: gulls, crabs and deer (scenery that reads the island).
+	wildlife = Wildlife.new()
+	add_child(wildlife)
+	Game.wildlife = wildlife
 	# Phase 19: the offshore survey visits (separate from the Day 36 rescue
 	# ship; ambient, contract days only).
 	var off := OffshoreSurvey.new()

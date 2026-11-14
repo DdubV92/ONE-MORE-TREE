@@ -20,7 +20,8 @@
 | Journal → Map (`MapView`): camp, sawmill, dock, every lot tree in its paint colour (dark once felled), work lamps, the boss's arrow, where a missing worker was last working, beacon parts once the beacon has been checked; "Around you" zoom | ✅ | Renders: `screenshots/phase28_journal_map.jpg`, `phase28_journal_map_near.jpg` (software renderer). Never shows anything that moves at night |
 | Journal layout: panels are centred at their real height and kept on screen; the Journal is wider so all nine tabs show | ✅ | At 720p the Journal's title used to sit above the top edge |
 | Things to find (`IslandFinds`): eight small finds placed from the island's seed, far from camp, apart and clear of trees (felling never moves them); "Look closer" writes one line in Field notes, marks the map and is counted in the ending; saved | ✅ | They explain nothing. Render: `screenshots/phase28_find_sign.jpg` |
-| Wildlife sprites, named landmarks and signposts, windthrow | ⬜ | Next |
+| Wildlife (`Wildlife`): gulls (18, six shore sites), crabs (12) and deer (6, three places in the far woods) as small pixel sprites placed from the island's seed. Gulls lift and circle when the boss walks up; crabs run for the water; deer look up at 30 m and bolt at 15 m to other dry ground. Out in daylight only: at the start of dusk the gulls leave together and the deer slip away. Fewer each morning as the island stirs (no deer once the night pressure passes 0.68), none in the hunt. Field notes says which | ✅ | Scenery: not saved, never safe or unsafe, cannot be harmed. Sprites are unshaded and tinted by the hour (lit billboards turned the gulls blue). Silent; no fish, owls or small birds yet |
+| Named landmarks and signposts, windthrow | ⬜ | Next |
 
 ## Phase 27 (in progress): people who matter
 
