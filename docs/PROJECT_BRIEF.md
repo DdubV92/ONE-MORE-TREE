@@ -63,6 +63,7 @@
 - **Belief** sets a worker's curfew and how a sighting lands: the convinced head in early and take it steadier; a sceptic works later and is hit harder when they finally see something.
 - **Trust** moves the line for risky orders, buys one more day on late wages, and decides who will follow the boss in the hunt. It grows slowly with fair pay and praise and wears with underpay and dismissal.
 - **Evidence:** a camera recording can be shown to a worker once. It moves belief much more than a report does, more still for someone who trusts the boss.
+- **The first five have something to say** (Phase 27): three short text beats each, opened by day and trust through the talk menu. They build trust; the third settles the worker (a slightly lower fair wage); Priya's hand the boss a step of Field notes about something already met, never an explanation of origins.
 - **A worker can fail to come home** one evening before the hunt (owner decision). Only a calm sceptic, only once the island has started to stir, one at a time and rarely. The boss can walk out and bring them in, or sleep and have them return shaken at first light. Nobody is harmed.
 
 ## Nights that grow (Phase 26)

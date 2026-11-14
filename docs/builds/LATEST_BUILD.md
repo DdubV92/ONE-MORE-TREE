@@ -20,6 +20,7 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 
 - **Belief and trust now change what your crew does**: when they head in, how they take a fright, whether they take a risky order, how long they wait for late wages, and who follows you in the hunt. Journal → Crew spells it out per worker.
 - **Call Biscuit** with B (inside the fence, by day). She never leaves the fence and never comes out after dark.
+- **The first five have stories.** Talk to Marta, Dale, Priya, Tomas and Joan as the days pass and their trust grows: three short conversations each, a letter from home, and a settled worker at the end. Priya shares what she has worked out about the nights.
 - **Evenings at the fire.** At dusk, with the fire burning, sit on the stump by the burn pit with whoever is back: a story, calmer nerves, a little more trust.
 - **The first-day guide was out of date** (it still said logs are paid at the rack). It now teaches the painted lots, the sawmill, fair pay, the map and the work lamps.
 - **Show them the recording.** If a camera caught something, talk to a worker and pick "Look at this recording."

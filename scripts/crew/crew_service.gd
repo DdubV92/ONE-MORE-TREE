@@ -59,6 +59,7 @@ var _pending: Array[Callable] = []
 ## Phase 14 coordination (felling lanes, claim reaper, team carry).
 var coord: CrewCoordinator
 var missing := MissingNight.new()   # Phase 27: a worker who does not come home one evening
+var arcs := CrewArcs.new()          # Phase 27: what the first five have to say
 ## Phase 16: conserved merit ledger + persistent profiles/levels/skills.
 var merit := MeritLedger.new()
 var progression := CrewProgression.new(merit)
@@ -99,6 +100,7 @@ func setup(c: CampaignService) -> void:
 	c.clock.day_started.connect(_on_morning)
 	c.clock.night_started.connect(_on_night)
 	missing.crew = self
+	arcs.crew = self
 	c.clock.phase_changed.connect(func(ph: int) -> void:
 		if ph == WorkdayClock.Phase.DUSK and enabled:
 			missing.on_dusk())
@@ -1467,6 +1469,7 @@ func _on_night(_d: int) -> void:
 
 func _on_morning(_d: int) -> void:
 	missing.on_morning()
+	arcs.on_morning(campaign.clock.day)
 	if routine:
 		routine.plan_day(campaign.clock.day)
 	for w in workers.values():
@@ -1729,7 +1732,7 @@ func capture() -> Dictionary:
 	var ms := {}
 	for id in minds:
 		ms[id] = (minds[id] as WorkerMind).capture()
-	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture(), "woodcutting": woodcutting.capture(), "last_pay_night": last_pay_night, "missing": missing.capture(), "evening_day": evening_day}
+	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture(), "woodcutting": woodcutting.capture(), "last_pay_night": last_pay_night, "missing": missing.capture(), "evening_day": evening_day, "arcs": arcs.capture()}
 
 
 ## Restores the crew without duplicating anyone: one Worker per active or
@@ -1750,6 +1753,7 @@ func restore(d: Dictionary) -> void:
 	last_pay_night = int(d.get("last_pay_night", 0))
 	missing.restore(d.get("missing", {}))
 	evening_day = int(d.get("evening_day", 0))
+	arcs.restore(d.get("arcs", {}))
 	contributions.restore(d.get("contributions", {}))
 	# Phase 16: saved merit/progression restore exactly; a save without them
 	# starts every employee at level 1 with no merit (older work had no

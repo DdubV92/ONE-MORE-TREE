@@ -38,7 +38,8 @@
 | Evenings at the fire (`EveningSeat`, a stump by the burn pit): at dusk, with the fire burning and someone back in camp, the boss sits with the crew once a day; a story chosen by the teller's belief, trust +0.02 and fear −0.06 for everyone there; saved | ✅ | Text only. Gives the fire a purpose again; a dead fire refuses |
 | First-day guide and the first-night card follow the current rules (painted lots, sawmill pay, fair wages, desk cameras, map, work lamps, field notes); the card is short and long cards scroll | ✅ | The guide said logs were "paid at the rack" and pointed at the couch for cameras |
 | Calling the dog (`call_dog`, B): Biscuit comes to the boss inside the camp fence by day; never past the fence, never out of the camper after dark; remappable | ✅ | Makes the "keep the real dog beside you" rule something the player can act on |
-| Arcs for the five named workers, hunt radio, lines that name who left, perks | ⬜ | Next |
+| The first five have something to say (`CrewArcs`): three beats each (Marta, Dale, Priya, Tomas, Joan), opened by day (3, 9, 15) and trust (0.55, 0.65, 0.75), asked through the talk menu. Each builds trust (+0.05); the third leaves them settled (fair wage in their own eyes −$25, never below the minimum); two of Priya's move one already-met Terror a step toward its rule; a letter arrives on the next boat and is shown in Journal → Crew; saved | ✅ | Text only (not voiced). Replacement hires have no arc |
+| Hunt radio, lines that name who left, perks | ⬜ | Next |
 | Played by a person | ⛔ not run | |
 
 ## Phase 26 (in progress): nights that grow

@@ -729,6 +729,15 @@ func _journal_crew() -> Control:
 		if m:
 			lines += "\nMood: %s  ·  %s  ·  %s" % [m.state_word(), m.belief_word(), m.trust_word()]
 			lines += "\nBelief: %s.  Trust: %s." % [m.belief_effect(), m.trust_effect()]
+			if w:
+				var more := crew.arcs.waiting_for(w)
+				if crew.arcs.settled(eid):
+					lines += "\nHas told you their story. Settled: content with a little less pay."
+				elif more != "":
+					lines += "\n%s %s." % [str(e.name).get_slice(" ", 0), more]
+				var letter := crew.arcs.letter_for(eid)
+				if letter != "":
+					lines += "\nA letter: \"%s\"" % letter
 			if crew.missing.id == eid and crew.missing.active():
 				lines += "\nNOT IN CAMP TONIGHT. Last seen working out past the forest entrance."
 		if st == Payroll.ACTIVE:
@@ -968,6 +977,13 @@ func open_talk(w: Worker) -> void:
 			answer.call(w.say("report_skeptic_rumor"))
 		else:
 			answer.call(w.say("report_rumor")))
+	# Phase 27: what this person has to say, when they are ready to say it.
+	var beat: Dictionary = Game.crew.arcs.available(w)
+	if not beat.is_empty():
+		add.call(str(beat.ask), func() -> void:
+			var said: String = Game.crew.arcs.ask(w)
+			answer.call(said if said != "" else w.say("greet"))
+			hud.show_message("%s %s." % [w.emp.name, m.trust_word()], 4.0))
 	# Phase 27: evidence, not a rumour. Shown once per recording.
 	if not Game.crew.unseen_recording(w).is_empty():
 		add.call("Look at this recording.", func() -> void:

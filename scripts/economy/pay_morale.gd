@@ -175,7 +175,12 @@ func expected(eid: String) -> int:
 	var r := rec(eid)
 	if r.is_empty():
 		return MIN_WAGE
-	return _round5(MIN_WAGE + int(round(float(r.demand) * 12000.0)) + (maxi(_career(eid), 1) - 1) * 600 + gear_points(eid) * 500)
+	var want := MIN_WAGE + int(round(float(r.demand) * 12000.0)) + (maxi(_career(eid), 1) - 1) * 600 + gear_points(eid) * 500
+	# Phase 27: someone who has said their piece to the boss is content
+	# with a little less (never below the minimum).
+	if bool(payroll.employee(eid).get("settled", false)):
+		want = maxi(want - CrewArcs.SETTLED_DISCOUNT, MIN_WAGE)
+	return _round5(want)
 
 
 ## What the worker would say if asked: a $25-wide band around it.

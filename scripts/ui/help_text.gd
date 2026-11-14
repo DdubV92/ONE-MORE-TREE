@@ -94,6 +94,7 @@ static func growth_and_rest() -> String:
 		"Things to find: eight small things stand in the far forest and on the shore. \"Look closer\" writes one into Field notes and onto the map. Nothing is explained.",
 		"The map: Journal -> Map is your survey sheet. The coast is inked; the inside fills in as you walk. It marks your lot trees, your work lamps, the camp, sawmill and dock, and you, never what moves at night.",
 		"Belief and trust: Journal -> Crew says what each worker believes and how far they trust you. The convinced head in early and stay steadier; a sceptic works later and takes a real sighting hard. Someone who trusts you takes a risky order when shaken, waits a day for late wages and will follow you in the hunt. Fair pay and honest thanks build trust; underpay and waving away what they saw wear it down. A camera recording shown to a worker moves them far more than a report.",
+		"The first five (Marta, Dale, Priya, Tomas, Joan) each have three things to tell you. A new question appears in their talk menu when enough days have passed and they trust you enough.",
 		"Evenings: at dusk, with the fire burning and someone back in camp, the stump by the burn pit lets you sit with the crew once a day. It calms them and builds a little trust.",
 		"Once the island has started to stir, a sceptic may not come home one evening. Take a work lamp, find them past the fence and bring them in, or sleep: they are back at first light, shaken, and sit the morning out. Nobody is harmed.",
 	])

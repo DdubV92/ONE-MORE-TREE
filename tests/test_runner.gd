@@ -8303,6 +8303,67 @@ func _p27_checks(world: IslandWorld) -> String:
 		Game.environment.hour = 12.0
 	elif not InputMap.has_action("call_dog"):
 		return "there is no key for calling the dog"
+	# What the first five have to say: three beats, by day and trust.
+	var arcs: CrewArcs = crew.arcs
+	for eid in CrewArcs.ARCS:
+		var arc: Array = CrewArcs.ARCS[eid]
+		if arc.size() != 3:
+			return "%s does not have three things to say" % eid
+		for k in 3:
+			if str(arc[k].ask) == "" or str(arc[k].say) == "" or (k > 0 and (int(arc[k].day) <= int(arc[k - 1].day) or float(arc[k].trust) < float(arc[k - 1].trust))):
+				return "%s beat %d is empty or out of order" % [eid, k + 1]
+	if not CrewArcs.ARCS.has(a.id):
+		return "the first worker (%s) is not one of the five" % a.id
+	arcs.done.clear()
+	arcs.letters.clear()
+	a.emp.erase("settled")
+	var first: Dictionary = CrewArcs.ARCS[a.id][0]
+	cs.clock.restore({"day": 1, "t": 300.0, "running": true, "deadline_enabled": true})
+	a.mind.trust = 0.9
+	if not arcs.available(a).is_empty() or arcs.ask(a) != "" or arcs.waiting_for(a) == "":
+		return "a worker told their story on day 1"
+	cs.clock.restore({"day": int(first.day), "t": 300.0, "running": true, "deadline_enabled": true})
+	a.mind.trust = 0.2
+	if not arcs.available(a).is_empty() or not arcs.waiting_for(a).contains("trust"):
+		return "a worker who does not trust the boss told their story"
+	a.mind.trust = float(first.trust)
+	var want0: int = cs.pay.expected(a.id)
+	var said1 := arcs.ask(a)
+	if said1 != str(first.say) or arcs.heard(a.id) != 1 or absf(a.mind.trust - (float(first.trust) + CrewArcs.TRUST_PER_BEAT)) > 0.0001:
+		return "the first beat did not land (heard %d, trust %.3f)" % [arcs.heard(a.id), a.mind.trust]
+	if not arcs.available(a).is_empty():
+		return "the second beat came straight after the first"
+	cs.clock.restore({"day": 20, "t": 300.0, "running": true, "deadline_enabled": true})
+	a.mind.trust = 0.9
+	if arcs.ask(a) == "" or arcs.settled(a.id) or cs.pay.expected(a.id) != want0:
+		return "the second beat settled the worker early"
+	if arcs.ask(a) == "" or not arcs.settled(a.id) or not bool(a.emp.get("settled", false)):
+		return "three beats did not settle the worker"
+	if cs.pay.expected(a.id) >= want0 or cs.pay.expected(a.id) < PayMorale.MIN_WAGE:
+		return "a settled worker does not ask for a little less (%d -> %d)" % [want0, cs.pay.expected(a.id)]
+	if arcs.ask(a) != "" or not arcs.available(a).is_empty() or arcs.waiting_for(a) != "":
+		return "a worker had a fourth thing to say"
+	var arc_snap: Dictionary = JSON.parse_string(JSON.stringify(crew.capture()))
+	var arcs2 := CrewArcs.new()
+	arcs2.crew = crew
+	arcs2.restore(arc_snap.get("arcs", {}))
+	if arcs2.heard(a.id) != 3 or arcs2.letters.size() != arcs.letters.size():
+		return "the worker's story was not saved"
+	if (CrewArcs.ARCS[a.id][2] as Dictionary).has("letter"):
+		if arcs.letter_for(a.id) != "":
+			return "the letter arrived before the boat"
+		arcs.on_morning(21)
+		if arcs.letter_for(a.id) == "":
+			return "the letter did not come on the next boat"
+	# Priya's notes move one met Terror a step toward its rule, never an unmet one.
+	var fnotes: FieldNotes = Game.director.notes
+	var met0: int = fnotes.met().size()
+	arcs._share_notes()
+	if fnotes.met().size() != met0:
+		return "Priya's notes revealed something the boss has not met"
+	a.emp.erase("settled")
+	arcs.done.clear()
+	arcs.letters.clear()
 	# In the hunt, trust decides who comes along.
 	Game.hunt.begin_hunt(false)
 	if Game.end_screen and Game.end_screen.has_method("_resume"):
