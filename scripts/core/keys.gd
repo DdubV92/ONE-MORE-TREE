@@ -11,7 +11,7 @@ const REMAPPABLE := [
 	["jump", "Jump"], ["sprint", "Sprint (hold)"], ["crouch", "Crouch"], ["interact", "Interact / use"],
 	["attack", "Swing axe / chainsaw throttle (hold)"], ["set_down", "Set load down"], ["drop_load", "Drop load"],
 	["tool_small", "Small axe"], ["tool_medium", "Medium axe"], ["tool_large", "Large axe"], ["tool_saw", "Chainsaw"], ["saw_engine", "Chainsaw: start / stop engine"],
-	["toggle_journal", "Journal"], ["toggle_help", "Controls / help"], ["headlights", "Truck headlights"],
+	["toggle_journal", "Journal"], ["toggle_help", "Controls / help"], ["headlights", "Truck headlights"], ["call_dog", "Call Biscuit"],
 	["quick_save", "Quick save"], ["pause", "Pause / back"],
 ]
 ## Actions that must always keep a binding (the only way out of a menu).

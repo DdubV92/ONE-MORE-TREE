@@ -180,6 +180,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if _interact_target and _interact_target.has_method("interact"):
 			_interact_target.interact(self)
+	elif event.is_action_pressed("call_dog") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		# Phase 27: whistle for the dog (she never leaves the fence, and
+		# never comes out after dark).
+		if Game.dog:
+			var said: String = Game.dog.call_owner(self)
+			if said != "":
+				show_message(said)
 	elif event.is_action_pressed("reset_safe"):
 		reset_to_safe()
 	elif event.is_action_pressed("toggle_fly") and Game.is_preview():

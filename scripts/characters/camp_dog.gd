@@ -277,6 +277,51 @@ func _leave_camper() -> void:
 		state = State.IDLE
 
 
+## Phase 27: the boss whistles. Biscuit comes if she can: inside the camp
+## fence only, and never out of the camper after dark (her bedtime routine
+## and her safety are unchanged). Returns what the boss sees.
+const CALL_COOLDOWN := 4.0
+var _called_at := -99.0
+
+func call_owner(p: Node3D) -> String:
+	if p == null or routine != "camp":
+		return "Biscuit is not in camp."
+	if state in [State.RESCUE_RUN, State.RESCUE_WAIT, State.FOLLOW, State.BOARDING, State.BOARDED, State.TO_REFUGE, State.REFUGE]:
+		return ""
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _called_at < CALL_COOLDOWN:
+		return ""
+	_called_at = now
+	if p.global_position.distance_to(global_position) < 3.0:
+		return "Biscuit is right here."
+	var n := _nav()
+	if n == null or not n.in_camp(p.global_position):
+		return "You whistle. Biscuit stays inside the fence; she will not follow you out."
+	var hour: float = Game.environment.hour if Game.environment else 12.0
+	var night := hour >= DUSK_HOUR or hour < WAKE_HOUR
+	if inside_camper():
+		if night:
+			return "Biscuit whines from inside the camper. She will not come out after dark."
+		_leave_camper()
+		return "You whistle. Biscuit is coming out of the camper."
+	if night:
+		return "You whistle. Biscuit is heading in for the night and does not turn round."
+	# A spot beside the boss: toward her first, then round the other sides
+	# (a route past the fire is never taken).
+	var toward := (global_position - p.global_position)
+	toward.y = 0.0
+	toward = toward.normalized() if toward.length() > 0.1 else Vector3.FORWARD
+	for k in 6:
+		var to := p.global_position + toward.rotated(Vector3.UP, TAU * k / 6.0) * 1.4
+		to.y = _surface(to)
+		if _good_spot(to) and _plan(to, State.SIT, 2.6):
+			state = State.APPROACH
+			_face = p.global_position
+			_approach_cd = 20.0
+			return "You whistle. Biscuit comes."
+	return "Biscuit looks up, but cannot get to you from there."
+
+
 # --------------------------------------------------------------- update
 
 func _process(delta: float) -> void:

@@ -36,6 +36,7 @@
 | Test harness: a test that aborts on a script error now fails (it used to read as a pass); the stale Phase 8 lightning test was rewritten for the Phase 23 strike records | ✅ | Script errors in game code during tests are counted and printed |
 | Evenings at the fire (`EveningSeat`, a stump by the burn pit): at dusk, with the fire burning and someone back in camp, the boss sits with the crew once a day; a story chosen by the teller's belief, trust +0.02 and fear −0.06 for everyone there; saved | ✅ | Text only. Gives the fire a purpose again; a dead fire refuses |
 | First-day guide and the first-night card follow the current rules (painted lots, sawmill pay, fair wages, desk cameras, map, work lamps, field notes); the card is short and long cards scroll | ✅ | The guide said logs were "paid at the rack" and pointed at the couch for cameras |
+| Calling the dog (`call_dog`, B): Biscuit comes to the boss inside the camp fence by day; never past the fence, never out of the camper after dark; remappable | ✅ | Makes the "keep the real dog beside you" rule something the player can act on |
 | Arcs for the five named workers, hunt radio, lines that name who left, perks | ⬜ | Next |
 | Played by a person | ⛔ not run | |
 

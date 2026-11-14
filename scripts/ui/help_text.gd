@@ -9,6 +9,7 @@ static func controls() -> String:
 	return "\n".join([
 		"Move: %s %s %s %s · Sprint: %s (hold) · Crouch: %s · Jump: %s" % [k.call("move_forward"), k.call("move_left"), k.call("move_back"), k.call("move_right"), k.call("sprint"), k.call("crouch"), k.call("jump")],
 		"Interact / use / pick up / talk: %s (tap)" % k.call("interact"),
+		"Call Biscuit: %s (she comes to you inside the camp fence; never out of the camper after dark). Set a work lamp down: %s." % [k.call("call_dog"), k.call("set_down")],
 		"Swing the axe: %s (tap per swing, or hold if \"Hold to keep chopping\" is on: same swing speed and work)" % k.call("attack"),
 		"Axes: %s small · %s medium · %s large · %s chainsaw (only tools you own)" % [k.call("tool_small"), k.call("tool_medium"), k.call("tool_large"), k.call("tool_saw")],
 		"Chainsaw: %s starts/stops the engine (or squeeze %s to start), hold %s for throttle - it cuts only while the running chain is in the wood" % [k.call("saw_engine"), k.call("attack"), k.call("attack")],
