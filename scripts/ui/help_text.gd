@@ -76,6 +76,7 @@ static func hunt() -> String:
 	return "\n".join([
 		"The hunt follows every contract. If you finished the job, survive three days and the company ship comes to the dock at dawn. If you did not, no ship is coming: repair the emergency beacon in the dock building (three parts, spread across the island) and switch it on to call one.",
 		"Lights and the camper no longer guarantee safety. Something physical is hunting by what it hears and sees.",
+		"Crew radio (%s): call the roll, tell everyone to get out of sight, or ask them to come to you. Your voice carries about 16 m and every spoken answer about 10 m, and the hunter hears both. Someone already hidden answers with two clicks and no sound. Silence means what it means. Wait 25 seconds between calls." % Keys.label("radio"),
 		"Hide (under beds, desks or the dock, in closets, behind shelves, rock recesses, dense thickets, the far field sheds, the dock gear chest), break line of sight and move quietly. Being seen going into a hiding place gives it away; brush does not hide you up close; places can be searched. Places with more than one way out let you leave on the far side.",
 		"Biscuit is safe in the dock building's dry alcove the whole time and boards the ship automatically. Do not go back for the dog.",
 		"When the ship docks, get yourself and your surviving crew aboard within the boarding window.",

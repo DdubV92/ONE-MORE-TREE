@@ -340,6 +340,25 @@ func _open_one_more() -> void:
 	_open(p)
 
 
+## Phase 27: the crew radio in the hunt. Every call makes noise.
+func open_radio() -> void:
+	var radio: HuntRadio = Game.hunt.radio if Game.hunt else null
+	if radio == null or not Game.hunt.hunt_active():
+		hud.show_message("Nobody is on the radio.", 3.0)
+		return
+	var f := _frame("Radio", 600)
+	var p: PanelContainer = f[0]
+	var v: VBoxContainer = f[1]
+	_text(v, "Your voice carries about %d metres, and so does every spoken answer. Anyone already hidden answers with two clicks and makes no sound." % int(HuntRadio.BOSS_RADIUS), 14, UITheme.MUTED)
+	var out := _text(v, radio.blocker(), 16)
+	for order in HuntRadio.ORDERS:
+		v.add_child(UITheme.button(str(HuntRadio.ORDERS[order]), func() -> void:
+			var r: Dictionary = radio.call_out(str(order))
+			out.text = "\n".join(r.lines as PackedStringArray) if bool(r.ok) else str(r.why), 460))
+	v.add_child(UITheme.button("Put it away", close_panel, 460))
+	_open(p)
+
+
 ## Phase 28: the map of what the boss has walked.
 func _journal_map() -> Control:
 	var s := _scroll("Map")
@@ -919,7 +938,9 @@ func open_talk(w: Worker) -> void:
 	var authored := func(ask: String, fallback: Callable) -> String:
 		var t := talk.boss_reply(w, ask) if talk else ""
 		return t if t != "" else str(fallback.call())
-	var reply := _text(v, "\"%s\"" % authored.call("greet", func() -> String: return w.say("greet")), 17)
+	# Phase 27: the first thing they say after someone has left is about that.
+	var gone_line := CrewAbsence.line(Game.crew, w)
+	var reply := _text(v, "\"%s\"" % (gone_line if gone_line != "" else authored.call("greet", func() -> String: return w.say("greet"))), 17)
 	var m := w.mind
 	_text(v, "%s · %s · %s" % [w.activity_words(), m.state_word(), WorkerMind.traits_text(m.traits)], 14, UITheme.MUTED)
 	var opts := GridContainer.new()

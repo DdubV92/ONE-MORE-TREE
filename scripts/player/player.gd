@@ -187,6 +187,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			var said: String = Game.dog.call_owner(self)
 			if said != "":
 				show_message(said)
+	elif event.is_action_pressed("radio") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		# Phase 27: the crew radio (only anyone to talk to in the hunt).
+		if Game.campaign_ui and Game.hunt and Game.hunt.hunt_active():
+			Game.campaign_ui.open_radio()
+		else:
+			show_message("Nobody is on the radio.")
 	elif event.is_action_pressed("reset_safe"):
 		reset_to_safe()
 	elif event.is_action_pressed("toggle_fly") and Game.is_preview():

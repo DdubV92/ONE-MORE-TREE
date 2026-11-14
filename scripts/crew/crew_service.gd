@@ -1470,6 +1470,7 @@ func _on_night(_d: int) -> void:
 func _on_morning(_d: int) -> void:
 	missing.on_morning()
 	arcs.on_morning(campaign.clock.day)
+	CrewAbsence.on_morning(self)
 	if routine:
 		routine.plan_day(campaign.clock.day)
 	for w in workers.values():

@@ -8364,7 +8364,36 @@ func _p27_checks(world: IslandWorld) -> String:
 	a.emp.erase("settled")
 	arcs.done.clear()
 	arcs.letters.clear()
+	# The crew name who left, once each, for a few days.
+	cs.clock.restore({"day": 12, "t": 300.0, "running": true, "deadline_enabled": true})
+	for w in ws:
+		(w as Worker).emp.erase("spoke_of")
+	if CrewAbsence.line(crew, a, false) != "" or not CrewAbsence.recent(crew).is_empty():
+		return "the crew talked about a departure nobody made"
+	var ghost := {"id": "EMP-99", "name": "Rhea Voss", "status": Payroll.DEPARTED, "departed_day": 11, "departure_reason": "low pay", "traits": []}
+	cs.payroll.employees.append(ghost)
+	var gl := CrewAbsence.line(crew, a)
+	if not gl.contains("Rhea") or gl.contains("{") or not gl.contains("money") and not gl.contains("sums"):
+		return "the crew did not name who left over pay (%s)" % gl
+	if CrewAbsence.line(crew, a) != "":
+		return "a worker brought up the same departure twice"
+	ghost["departure_reason"] = "fired by the boss"
+	if not CrewAbsence.line(crew, b, false).contains("Rhea") or CrewAbsence.kind_of("fired by the boss") != "fired" or CrewAbsence.kind_of("too afraid to stay") != "fear":
+		return "the reason for a departure is not reflected"
+	cs.clock.restore({"day": 11 + CrewAbsence.DAYS + 1, "t": 300.0, "running": true, "deadline_enabled": true})
+	if CrewAbsence.line(crew, b) != "":
+		return "the crew still talk about a departure after %d days" % CrewAbsence.DAYS
+	cs.payroll.employees.erase(ghost)
+	for kk in CrewAbsence.LINES:
+		for ln in CrewAbsence.LINES[kk]:
+			if not str(ln).contains("{name}"):
+				return "a departure line does not name anyone (%s)" % kk
 	# In the hunt, trust decides who comes along.
+	var radio: HuntRadio = Game.hunt.radio
+	if radio.blocker() == "" or bool(radio.call_out("report").ok):
+		return "the radio worked before the hunt"
+	if not InputMap.has_action("radio"):
+		return "there is no key for the radio"
 	Game.hunt.begin_hunt(false)
 	if Game.end_screen and Game.end_screen.has_method("_resume"):
 		Game.end_screen._resume()          # the rules card pauses the game
@@ -8384,6 +8413,85 @@ func _p27_checks(world: IslandWorld) -> String:
 	Game.hunt.worker_decide(a)
 	if bool(a.emp.get("hunt_follow", false)):
 		return "a terrified follower kept following"
+	# The radio: roll call and orders, paid for in noise.
+	var hs: HuntService = Game.hunt
+	if hs.mode == "transition":
+		hs.mode = "hunt"
+	if not hs.hunt_active():
+		return "the hunt fixture is not running (%s)" % hs.mode
+	hs.build_hide_spots()
+	for w in ws:
+		var wk := w as Worker
+		wk.mind.state = WorkerMind.Fear.COMFORTABLE
+		wk.mind.fear = 0.0
+		wk.emp.erase("hunt_follow")
+		if hs.hidden.has(wk):
+			hs.on_exit_hide(wk, hs.hidden[wk])
+	radio.restore({})
+	var heard := [0]
+	var fm: Foreman = hs.foreman
+	var ev0: int = fm.evidence.size() if fm else 0
+	if fm:
+		fm.state = "ROAM"
+		fm.grace = 999.0
+		fm.global_position = (Game.player as Node3D).global_position + Vector3(6.0, 0.0, 0.0)
+		fm.evidence.clear()
+		ev0 = 0
+	b.mind.state = WorkerMind.Fear.DEPARTURE_WARNING
+	var rr: Dictionary = radio.call_out("report")
+	var rl := "\n".join(rr.lines as PackedStringArray)
+	if not bool(rr.ok) or (rr.lines as PackedStringArray).size() < ws.size():
+		return "the roll call missed someone (%s)" % rl
+	if not rl.contains("%s: breathing" % str(b.emp.name).get_slice(" ", 0)):
+		return "a terrified worker answered the roll call (%s)" % rl
+	if int(rr.spoke) != ws.size() - 1:
+		return "the roll call counted the wrong number of voices (%d)" % int(rr.spoke)
+	if fm and fm.evidence.size() <= ev0:
+		return "the hunter did not hear the boss on the radio"
+	if radio.blocker() == "" or bool(radio.call_out("report").ok):
+		return "the radio can be used again straight away"
+	heard[0] = radio.calls
+	radio.last_at = -999.0
+	b.mind.state = WorkerMind.Fear.COMFORTABLE
+	a.mind.trust = 0.9
+	b.mind.trust = 0.1
+	rr = radio.call_out("come")
+	rl = "\n".join(rr.lines as PackedStringArray)
+	if not bool(a.emp.get("hunt_follow", false)) or bool(b.emp.get("hunt_follow", false)) or not rl.contains("coming.") or not rl.contains("Not out there"):
+		return "\"Come to me\" ignored trust (%s)" % rl
+	radio.last_at = -999.0
+	rr = radio.call_out("hide")
+	if bool(a.emp.get("hunt_follow", false)) or a._hide_spot == null and not "\n".join(rr.lines as PackedStringArray).contains("nowhere"):
+		return "\"Everyone out of sight\" sent nobody to ground (%s)" % "\n".join(rr.lines as PackedStringArray)
+	# Someone already hidden answers with two clicks and no voice.
+	var hsp: HideSpot = hs._nearest_free_spot(b.global_position)
+	if hsp:
+		b.abandon("test")
+		hs.on_enter_hide(b, hsp)
+		if fm:
+			fm.evidence.clear()
+			fm.global_position = hsp.global_position + Vector3(3.0, 0.0, 0.0)
+		radio.last_at = -999.0
+		rr = radio.call_out("report")
+		rl = "\n".join(rr.lines as PackedStringArray)
+		if not rl.contains("%s: two clicks" % str(b.emp.name).get_slice(" ", 0)):
+			return "a hidden worker spoke on the radio (%s)" % rl
+		if fm:
+			for evd in fm.evidence:
+				if (evd.pos as Vector3).distance_to(hsp.global_position) < 2.0 and str(evd.kind) == "voice":
+					return "a hidden worker's answer made noise"
+		hs.on_exit_hide(b, hsp)
+	# The dead are silence; the radio never says why.
+	hs.dead_workers.append(b.id)
+	radio.last_at = -999.0
+	rr = radio.call_out("report")
+	rl = "\n".join(rr.lines as PackedStringArray)
+	hs.dead_workers.erase(b.id)
+	if not rl.contains("%s: nothing. Static." % str(b.emp.name).get_slice(" ", 0)) or rl.to_lower().contains("dead"):
+		return "the roll call explained a silence (%s)" % rl
+	var rsnap: Dictionary = JSON.parse_string(JSON.stringify(hs.capture()))
+	if int((rsnap.get("radio", {}) as Dictionary).get("calls", 0)) != radio.calls or radio.calls <= int(heard[0]):
+		return "the radio was not saved"
 	return ""
 
 

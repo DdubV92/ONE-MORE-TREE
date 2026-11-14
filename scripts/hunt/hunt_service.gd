@@ -56,6 +56,7 @@ var hunt_days := HUNT_DAYS       # days until the company ship (won contracts)
 var contract_won := false
 var stranded := false            # nobody is coming unless the beacon calls them
 var beacon: EscapeBeacon
+var radio := HuntRadio.new()     # Phase 27: roll call and orders, at the price of noise
 
 
 func _ready() -> void:
@@ -63,6 +64,7 @@ func _ready() -> void:
 	beacon = EscapeBeacon.new()
 	beacon.name = "EscapeBeacon"
 	add_child(beacon)
+	radio.hunt = self
 
 
 ## Dawn on which the company ship arrives (won contracts only).
@@ -118,6 +120,7 @@ func begin_hunt(won: bool) -> void:
 	var c: CampaignService = Game.campaign
 	contract_won = won
 	stranded = not won
+	radio.restore({})
 	hunt_days = HUNT_DAYS + (Difficulty.hunt_extra_days() if won else 0)   # Phase 29: Long Night
 	start_day = c.clock.day if c and c.clock and won else 30
 	mode = "transition"
@@ -166,7 +169,7 @@ func _show_transition_card() -> void:
 
 ## [title, body] of the rules card that opens the hunt.
 func transition_text() -> Array:
-	var rules := "Something tall is out there now, and it is not like the others. It is physical, and it can kill.\n- Lamps, closed doors and the camper NO LONGER keep you safe from it. They only hide or slow you.\n- Hide (" + Keys.label("interact") + ") under beds, in closets, behind the utility shelves, under the dock, in rock recesses, dense thickets, the far field sheds or the dock gear chest. If it saw you go in, it may look; brush will not hide you up close.\n- Break its line of sight and move quietly. It can outrun you for a few seconds, not forever.\n- The days are continuous: lying in a bed does not skip time. Company hiring and boats are closed."
+	var rules := "Something tall is out there now, and it is not like the others. It is physical, and it can kill.\n- Lamps, closed doors and the camper NO LONGER keep you safe from it. They only hide or slow you.\n- Hide (" + Keys.label("interact") + ") under beds, in closets, behind the utility shelves, under the dock, in rock recesses, dense thickets, the far field sheds or the dock gear chest. If it saw you go in, it may look; brush will not hide you up close.\n- Break its line of sight and move quietly. It can outrun you for a few seconds, not forever.\n- The crew radio (" + Keys.label("radio") + ") calls the roll or tells everyone to hide or come to you. It hears your voice, and theirs.\n- The days are continuous: lying in a bed does not skip time. Company hiring and boats are closed."
 	var dog := "Biscuit is safe at the dock alcove the whole time and boards any ship automatically. Do not go back for the dog.\n\nThe game is paused until you continue."
 	if contract_won:
 		var head := "The contract is complete. The company radio answered: the ship that takes everyone home reaches the dock at dawn on day %d. %s.\n\nBut the island is not finished with you." % [rescue_day(), _days_word(hunt_days)]
@@ -810,7 +813,7 @@ func _finish(kind: String) -> void:
 # ------------------------------------------------------------ saving
 
 func capture() -> Dictionary:
-	return {"mode": mode, "hunt_day": hunt_day, "t": t, "dead_workers": dead_workers.duplicate(), "escaped": escaped.duplicate(), "ship_state": ship_state, "ship_t": ship_t, "truck_use": truck_use, "info_shown": _info_shown, "start_day": start_day, "hunt_days": hunt_days, "contract_won": contract_won, "stranded": stranded, "beacon": beacon.capture(), "foreman": foreman.capture() if foreman and is_instance_valid(foreman) else {}}
+	return {"mode": mode, "hunt_day": hunt_day, "t": t, "dead_workers": dead_workers.duplicate(), "escaped": escaped.duplicate(), "ship_state": ship_state, "ship_t": ship_t, "truck_use": truck_use, "info_shown": _info_shown, "start_day": start_day, "hunt_days": hunt_days, "contract_won": contract_won, "stranded": stranded, "beacon": beacon.capture(), "radio": radio.capture(), "foreman": foreman.capture() if foreman and is_instance_valid(foreman) else {}}
 
 
 func restore(d: Dictionary) -> void:
@@ -834,6 +837,7 @@ func restore(d: Dictionary) -> void:
 	contract_won = bool(d.get("contract_won", false))
 	stranded = bool(d.get("stranded", false))
 	beacon.restore(d.get("beacon", {}))
+	radio.restore(d.get("radio", {}))
 	if not hunt_active():
 		return
 	build_hide_spots()

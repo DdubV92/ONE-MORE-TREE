@@ -62,6 +62,7 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - **Trust:** someone who trusts you takes a risky order even when shaken, waits a day for late wages and will come with you in the hunt ("Stay close to me"). Trust grows with fair pay and honest thanks; it wears when you underpay or wave away what they saw.
 - **Calling Biscuit:** press the call key (B by default) and she comes to you, inside the camp fence. She will not follow you out of the fence and never comes out of the camper after dark. One of the things that walks at night never calls while she is beside you.
 - **Get to know the first five.** Marta, Dale, Priya, Tomas and Joan each have three things to tell you over the contract. When someone is ready (enough days, enough trust) a new question appears when you talk to them. Each answer builds trust; after the third they are settled and content with a little less pay. Priya's notes help your Field notes along. A letter may come for them on the next boat (Journal → Crew).
+- **When someone leaves,** the others notice. For a few days each of them has something to say about it, by name, the next time you talk.
 - **Evenings at the fire:** at dusk, once the crew is back and if the fire is burning, use the stump by the burn pit to sit with them. Somebody tells a story; everyone there calms down a little and trusts you a little more. Once an evening.
 - **Recordings:** when a camera caught something, talk to a worker and choose "Look at this recording." Seeing it moves them far more than being told.
 - **Someone may not come home.** Once the island has started to stir, a sceptic can stay out past the fence one evening, listening to something. Take a work lamp, find them and say "Come back with me", or sleep: they walk back in at first light, shaken, and sit the morning out. Nobody is harmed.
@@ -84,6 +85,7 @@ A short guide in the top-right walks you through real work: walk, read the contr
 The hunt follows every contract. You get a rules card first (the game is paused until you continue). Something physical hunts you; lamps and the camper no longer guarantee safety. Hide, break line of sight and move quietly. Biscuit waits safely in the dock building and boards any ship on her own.
 
 - **If you finished the contract:** survive three days. The company ship reaches the dock at dawn, and boarding stays open for 8 minutes. Your end summary includes the finished job's figures.
+- **The crew radio (T):** call the roll, tell everyone to get out of sight, or ask them to come to you (only those who trust you will). Every call makes noise: your voice carries about 16 m and each spoken answer about 10 m. Anyone already hidden answers with two clicks and no sound. The radio never tells you why someone does not answer.
 - **If you did not:** no ship is coming, and the thing hunting you guesses better the longer you last. The only way off is the emergency beacon in the dock building, which is dead.
   1. Check the beacon. It lists the three missing parts and where the spares are kept: two far field sheds and the sawmill control box.
   2. Fetch them. Taking each one makes noise.
