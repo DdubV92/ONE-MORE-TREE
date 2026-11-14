@@ -21,7 +21,10 @@ var _last_cash := -1
 func setup(h: Node, s: CampaignService) -> void:
 	hud = h
 	svc = s
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Anchors AND offsets: anchors alone keep the current (possibly empty)
+	# rect, which put every centred panel at the screen's top-left corner
+	# whenever the HUD already had its size when this ran.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clock_label = UITheme.label("", 19)
 	clock_label.anchor_left = 0.5
@@ -111,8 +114,22 @@ func _open(p: PanelContainer) -> void:
 	close_panel()
 	panel = p
 	add_child(p)
+	_place(p)
+	p.minimum_size_changed.connect(_place.bind(p))
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## Centres a panel on the screen at its real height and keeps its top on
+## screen (a tall Journal used to lose its title above the top edge at 720p).
+func _place(p: PanelContainer) -> void:
+	if not is_instance_valid(p):
+		return
+	var h := p.get_combined_minimum_size().y
+	var half := size.y * 0.5
+	var top := maxf(half - h * 0.5, 8.0)
+	p.offset_top = top - half
+	p.offset_bottom = p.offset_top + h
 
 
 func close_panel() -> void:
@@ -164,11 +181,11 @@ func toggle_journal(tab := 0) -> void:
 	if is_open():
 		close_panel()
 		return
-	var f := _frame("Journal  (%s)" % Keys.label("toggle_journal"), 700)
+	var f := _frame("Journal  (%s)" % Keys.label("toggle_journal"), 880)
 	var p: PanelContainer = f[0]
 	var v: VBoxContainer = f[1]
 	var tabs := TabContainer.new()
-	tabs.custom_minimum_size = Vector2(660, 430)
+	tabs.custom_minimum_size = Vector2(840, 430)
 	v.add_child(tabs)
 	if Game.crew and Game.crew.enabled:
 		tabs.add_child(_journal_crew())
@@ -180,7 +197,9 @@ func toggle_journal(tab := 0) -> void:
 		tabs.add_child(_journal_rest())
 	tabs.add_child(_journal_help())
 	if Game.director:
-		tabs.add_child(_journal_field_notes())     # last: earlier tab numbers are used by callers
+		tabs.add_child(_journal_field_notes())     # after Help: earlier tab numbers are used by callers
+	if Game.island_map:
+		tabs.add_child(_journal_map())
 	tabs.current_tab = clampi(tab, 0, tabs.get_tab_count() - 1)
 	v.add_child(UITheme.button("Close", close_panel, 200))
 	_open(p)
@@ -296,6 +315,26 @@ func _journal_help() -> Control:
 		rec.reverse()
 		for e in rec:
 			_text(v, "%sDay %d, %s into the day: %s%s" % [Notifications.TAGS[int(e.p)], int(e.day), CampaignService.fmt_time(float(e.t)), str(e.text), (" (x%d)" % int(e.count)) if int(e.count) > 1 else ""], 13)
+	return s[0]
+
+
+## Phase 28: the map of what the boss has walked.
+func _journal_map() -> Control:
+	var s := _scroll("Map")
+	var v: VBoxContainer = s[1]
+	var mv := MapView.new()
+	var row := HBoxContainer.new()
+	v.add_child(row)
+	var zb := UITheme.button("Around you", func() -> void: pass, 150)
+	zb.pressed.connect(func() -> void:
+		mv.toggle_zoom()
+		zb.text = "Whole island" if mv.zoom > 1.0 else "Around you")
+	row.add_child(zb)
+	var cap := UITheme.label("%d%% of the land walked. Red arrow: you. Dots: lot trees in their paint (dark once felled). Yellow: work lamps." % int(round(Game.island_map.explored_share() * 100.0)), 13, UITheme.MUTED)
+	row.add_child(cap)
+	v.add_child(mv)
+	mv.setup(Game.island_map)
+	_text(v, "The survey sheet shows the coast; the inside fills in as you walk it. The map shows the ground and your own work, never what moves at night.", 13, UITheme.MUTED)
 	return s[0]
 
 

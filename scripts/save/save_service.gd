@@ -144,7 +144,7 @@ static func _phase5_record(world: Node) -> Dictionary:
 
 static func _phase6_record(world: Node) -> Dictionary:
 	var out := {}
-	for k in ["director", "threat", "dog_rescue", "hunt", "night_kit"]:
+	for k in ["director", "threat", "dog_rescue", "hunt", "night_kit", "island_map"]:
 		var n: Object = world.get(k)
 		if n and n.has_method("capture"):
 			out[k] = n.call("capture")
@@ -502,7 +502,7 @@ static func apply_state(world: Node, data: Dictionary) -> void:
 				var n: Object = world.get(k)
 				if n and n.has_method("restore") and p5.has(k):
 					n.call("restore", p5[k])
-			for k in ["director", "threat", "hunt", "dog_rescue", "night_kit"]:
+			for k in ["director", "threat", "hunt", "dog_rescue", "night_kit", "island_map"]:
 				var n6: Object = world.get(k)
 				if n6 and n6.has_method("restore") and p6.has(k):
 					n6.call("restore", p6[k])

@@ -26,6 +26,11 @@ func _ready() -> void:
 		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P28"):
+		await _run_async("phase 28 map world", _t_phase28_world)
+		_summary()
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P27"):
 		_run("phase 27 belief and trust units", _t_phase27_units)
 		await _run_async("phase 27 people world", _t_phase27_world)
@@ -230,6 +235,7 @@ func _ready() -> void:
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
 	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
+	await _run_async("phase 28 map world: only the camp's surroundings are known on day 1, walking reveals ground, saved and restored, the picture is cropped to the island with the unexplored coast inked, marks for camp, sawmill, dock, every lot tree (standing or felled), work lamps and the boss, nothing that hunts", _t_phase28_world)
 	_run("phase 27 units: belief sets the curfew margin and how hard a sighting hits; trust moves the risk line, waits a day for late wages and grows with fair pay; a shown recording convinces once per clip; arrears patience", _t_phase27_units)
 	await _run_async("phase 27 people world: fair pay nights build trust once, a recording can be shown to a worker once, a trusted worker follows in the hunt and an untrusting one refuses, a sceptic does not come home at dusk (one at a time, never the timid, never before the island stirs), brought home by the boss or back at first light shaken, saved", _t_phase27_world)
 	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded; night-shift rush rate is pro rata, in whole cents, saved mid-pallet", _t_phase26_units)
@@ -7591,6 +7597,138 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 
 
 # ======================================================== Phase 24: sawmill
+
+func _t_phase28_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for ch in get_children():
+		if ch is IslandWorld:
+			ch.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or not world.systems_ready) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := _p28_checks(world)
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p28_checks(world: IslandWorld) -> String:
+	var cs: CampaignService = Game.campaign
+	var map: IslandMap = Game.island_map
+	if map == null:
+		return "no island map in the world"
+	cs.new_campaign()
+	var o := World.camp_origin()
+	var b := IslandMap.bounds()
+	if b.size.x < 200.0 or b.size.y < 200.0 or not b.has_point(Vector2(o.x, o.z)):
+		return "the map's bounds do not hold the island (%s)" % str(b)
+	var ws := World.world_size()
+	if b.size.x >= ws.x and b.size.y >= ws.y:
+		return "the map is not cropped to the island"
+	# Day 1: the camp's surroundings, nothing far away.
+	if not map.is_explored(o.x, o.z):
+		return "the camp is not on the map on day 1"
+	var far := Vector3(b.position.x + b.size.x * 0.5, 0.0, b.position.y + b.size.y * 0.15)
+	if far.distance_to(o) < 300.0:
+		far = Vector3(b.position.x + b.size.x * 0.5, 0.0, b.position.y + b.size.y * 0.85)
+	if map.is_explored(far.x, far.z):
+		return "ground far from camp is already explored on day 1"
+	var share0 := map.explored_share()
+	if share0 <= 0.0 or share0 > 0.35:
+		return "day-1 explored share is %.2f" % share0
+	# Walking reveals; saved and restored; a mismatched save falls back.
+	if map.reveal(far, IslandMap.REVEAL_RADIUS) <= 0 or not map.is_explored(far.x, far.z):
+		return "walking did not reveal ground"
+	if map.reveal(far, IslandMap.REVEAL_RADIUS) != 0:
+		return "the same ground was revealed twice"
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(map.capture()))
+	map.reset()
+	if map.is_explored(far.x, far.z):
+		return "a new campaign kept the old map"
+	map.restore(snap)
+	if not map.is_explored(far.x, far.z) or not map.is_explored(o.x, o.z):
+		return "the map was not saved"
+	map.restore({"cols": 3, "rows": 3, "cells": "AAAA"})
+	if not map.is_explored(o.x, o.z) or map.is_explored(far.x, far.z):
+		return "a mismatched map save should fall back to the camp's surroundings"
+	# The picture: explored ground in colour, the unexplored coast inked.
+	var img := map.compose()
+	if img.get_width() != IslandMap.IMG_W or img.get_height() < 8:
+		return "the map picture has the wrong size"
+	var camp_px := IslandMap.to_px(o.x, o.z, Vector2(img.get_size()))
+	var paper := IslandMap.C_PAPER
+	var cc := img.get_pixel(int(camp_px.x), int(camp_px.y))
+	if absf(cc.r - paper.r) < 0.02 and absf(cc.g - paper.g) < 0.02 and absf(cc.b - paper.b) < 0.02:
+		return "the camp is drawn as unexplored paper"
+	var far_px := IslandMap.to_px(far.x, far.z, Vector2(img.get_size()))
+	var fc := img.get_pixel(int(far_px.x), int(far_px.y))
+	var is_paper := absf(fc.r - paper.r) < 0.02 and absf(fc.g - paper.g) < 0.02
+	var is_sea_paper := absf(fc.r - IslandMap.C_PAPER_SEA.r) < 0.02 and absf(fc.g - IslandMap.C_PAPER_SEA.g) < 0.02
+	var is_coast := absf(fc.r - IslandMap.C_COAST.r) < 0.02
+	if not (is_paper or is_sea_paper or is_coast):
+		return "unexplored ground is drawn in colour"
+	var coast := 0
+	for py in img.get_height():
+		for px in img.get_width():
+			if absf(img.get_pixel(px, py).r - IslandMap.C_COAST.r) < 0.02 and absf(img.get_pixel(px, py).g - IslandMap.C_COAST.g) < 0.02:
+				coast += 1
+	if coast < 200:
+		return "the unexplored coast is not inked (%d pixels)" % coast
+	if map.compose() != img:
+		return "the picture is rebuilt although nothing changed"
+	# Marks: real places and the boss's own work.
+	var mv := MapView.new()
+	add_child(mv)
+	mv.size = Vector2(640, 330)
+	mv.setup(map)
+	var kinds := {}
+	var standing := 0
+	for m in mv.marks():
+		kinds[str(m.kind)] = int(kinds.get(str(m.kind), 0)) + 1
+		if str(m.kind) == "lot_tree" and bool(m.standing):
+			standing += 1
+		var at := IslandMap.to_px(float(m.x), float(m.z), Vector2(100, 100))
+		if at.x < 0.0 or at.y < 0.0 or at.x > 100.0 or at.y > 100.0:
+			mv.queue_free()
+			return "a %s mark is off the map" % str(m.kind)
+	if int(kinds.get("camp", 0)) != 1 or int(kinds.get("you", 0)) != 1 or int(kinds.get("lot_tree", 0)) != 105 or standing != 105:
+		mv.queue_free()
+		return "the marks are wrong (%s, %d standing)" % [str(kinds), standing]
+	var lots: ContractLots = cs.contract.lots
+	Game.trees.record(int((lots.lots[0].trees as PackedInt32Array)[0])).state = TreeService.State.DISPOSED
+	Game.night_kit._spawn(o + Vector3(0, 0, -60.0), NightKit.BATTERY_S)
+	kinds = {}
+	standing = 0
+	for m in mv.marks():
+		kinds[str(m.kind)] = int(kinds.get(str(m.kind), 0)) + 1
+		if str(m.kind) == "lot_tree" and bool(m.standing):
+			standing += 1
+	if standing != 104 or int(kinds.get("lamp", 0)) != 1:
+		mv.queue_free()
+		return "a felled tree or a work lamp is not on the map (%d standing, %s)" % [standing, str(kinds)]
+	for k in kinds:
+		if not str(k) in ["camp", "mill", "dock", "lot_tree", "lamp", "you", "last_seen", "part"]:
+			mv.queue_free()
+			return "the map marks something it should not: %s" % str(k)
+	mv.toggle_zoom()
+	if mv.zoom <= 1.0 or mv._rect().size.x <= mv.size.x:
+		mv.queue_free()
+		return "zooming in did not enlarge the map"
+	mv.queue_free()
+	Game.night_kit.reset()
+	Game.trees.clear_all()
+	return ""
+
 
 func _t_phase27_units() -> String:
 	# Belief sets the curfew.

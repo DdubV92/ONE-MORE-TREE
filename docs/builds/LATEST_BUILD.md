@@ -4,6 +4,11 @@ The download link is in the session message (a GitHub pre-release zip, or the Gi
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
 
+## New: the map (Phase 28, first part)
+
+- **Journal → Map.** The coast is inked in; the inside fills in as you walk. It shows your lots tree by tree, your work lamps, the camp, sawmill and dock, and you. "Around you" zooms in.
+- The Journal is wider and no longer loses its title off the top of a 720p screen.
+
 ## New: people who matter (Phase 27, first part)
 
 - **Belief and trust now change what your crew does**: when they head in, how they take a fright, whether they take a risky order, how long they wait for late wages, and who follows you in the hunt. Journal → Crew spells it out per worker.

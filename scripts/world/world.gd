@@ -27,6 +27,7 @@ var threat: NightThreat
 var dog_rescue: DogRescue
 var hunt: HuntService
 var night_kit: NightKit
+var island_map: IslandMap
 var end_screen: EndScreen
 var arcade: ArcadeService
 var dock_site: DockSite
@@ -157,6 +158,11 @@ func _ready() -> void:
 	night_kit = NightKit.new()
 	add_child(night_kit)
 	Game.night_kit = night_kit
+	# Phase 28: the map of what has been walked.
+	island_map = IslandMap.new()
+	add_child(island_map)
+	Game.island_map = island_map
+	island_map.reset()
 	# Phase 19: the offshore survey visits (separate from the Day 36 rescue
 	# ship; ambient, contract days only).
 	var off := OffshoreSurvey.new()

@@ -30,6 +30,13 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - Example: two workers on $100 cost $200 a day. About two average trees through the sawmill earn that back.
 - Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate. Hard-working: ×1.25. Stronger: carries more by hand. Timid: frightens sooner and heads home earlier.
 
+## The map
+
+- **Journal → Map** (the last tab) is your survey sheet. The coast is drawn in; the inside fills in as you walk it.
+- It shows the camp, the sawmill and the dock, every lot tree in its paint colour (dark once it is down), the work lamps you have set down and your own arrow. "Around you" zooms in.
+- If a worker has not come home it marks where they were last working. In the hunt it marks the beacon parts once you have checked the beacon.
+- It never shows anything that moves at night.
+
 ## Your crew: belief and trust
 
 - **Journal → Crew** says what each worker believes and how far they trust you, and what that means.

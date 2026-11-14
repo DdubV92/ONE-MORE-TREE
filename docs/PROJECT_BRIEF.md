@@ -47,6 +47,10 @@
   - The night clock may reach its terminal time while an independent awake timer keeps pacing.
   - Menus pause both.
 
+## An island worth walking (Phase 28)
+
+- **The map** is the company's survey sheet: the coast is inked, the inside is blank until the boss has walked it. It marks real places and the boss's own work (lot trees, work lamps, beacon parts once known) and never anything that moves at night.
+
 ## People who matter (Phase 27)
 
 - **Belief** sets a worker's curfew and how a sighting lands: the convinced head in early and take it steadier; a sceptic works later and is hit harder when they finally see something.
