@@ -32,6 +32,32 @@ func _ready() -> void:
 	for i in 3:
 		await get_tree().physics_frame
 	var crew := world.crew
+	# LOT_AUDIT=1: can the crew fell every lot tree? (Phase 25)
+	if OS.has_environment("LOT_AUDIT") and cs.contract.lots:
+		for i in 30:
+			await get_tree().physics_frame
+		var bad := []
+		var o := World.camp_origin()
+		for k in cs.contract.lots.lots.size():
+			for tid in (cs.contract.lots.lots[k].trees as PackedInt32Array):
+				var ti: int = world.trees.index_of(tid)
+				var tp := Vector3(World.trees.x[ti], 0, World.trees.z[ti])
+				var ok_stands := 0
+				for st in PlacementValidator.cut_stands(ti, crew.nav._tree_hash, crew._rock_hash):
+					if crew.nav.walkable(st, true):
+						ok_stands += 1
+				if crew.nav.in_camp(tp) or ok_stands == 0:
+					bad.append({"lot": k + 1, "tree": tid, "in_camp": crew.nav.in_camp(tp), "stands": ok_stands, "local": [snappedf(tp.x - o.x, 0.1), snappedf(tp.z - o.z, 0.1)]})
+		print("LOT_AUDIT ", JSON.stringify({"trees": cs.contract.lots.total(), "not_fellable": bad}))
+		get_tree().quit()
+		return
+	# LOT_KEEP=n: start with only the n farthest trees of lot 1 standing
+	# (the rest already cleared), to watch the crew finish a lot.
+	if OS.has_environment("LOT_KEEP") and cs.contract.lots:
+		var keep_n := int(OS.get_environment("LOT_KEEP"))
+		var ids: PackedInt32Array = cs.contract.lots.lots[0].trees
+		for j in maxi(ids.size() - keep_n, 0):
+			world.trees.record(ids[j]).state = TreeService.State.DISPOSED
 	var target := int(OS.get_environment("CREW")) if OS.has_environment("CREW") else 2
 	cs.wallet.grant(1000000, "test", "SIM", "sim cash")
 	crew.refresh_candidates()
@@ -75,6 +101,8 @@ func _ready() -> void:
 				for w in crew.workers.values():
 					acts.append("%s:%s" % [(w as Worker).id, (w as Worker).activity])
 				print("T+%4ds day %d t=%5.0f  %s" % [int(t), cs.clock.day, cs.clock.t, " ".join(acts)])
+				if OS.has_environment("LOT_WHY"):
+					_why_not_felled(cs, crew)
 		if days <= 1:
 			break
 		# The day's line, then sleep into the next morning.
@@ -182,6 +210,37 @@ func _ready() -> void:
 	res["merit_rejected_repeats"] = crew.merit.rejected
 	print("CREW_SIM ", JSON.stringify(res))
 	get_tree().quit()
+
+
+## For each tree still standing in the felling lot: what stops each worker
+## from choosing it (the same checks as CrewService._try_fell).
+func _why_not_felled(cs: CampaignService, crew: CrewService) -> void:
+	var lots: ContractLots = cs.contract.lots
+	var k := lots.felling_lot(world.trees)
+	if k < 0:
+		print("   no lot tree left standing")
+		return
+	for tid in (lots.lots[k].trees as PackedInt32Array):
+		var st := world.trees.state_of(tid)
+		if st != TreeService.State.STANDING and st != TreeService.State.NOTCHED:
+			continue
+		var ti: int = world.trees.index_of(tid)
+		var tp := Vector3(World.trees.x[ti], 0, World.trees.z[ti])
+		var why := []
+		for w in crew.workers.values():
+			var wk := w as Worker
+			var r := "ok"
+			var focus := crew.work_focus(wk)
+			if crew.claims.has("tree:%d" % tid):
+				r = "claimed by %s" % str(crew.claims["tree:%d" % tid])
+			elif Vector2(tp.x - focus.x, tp.z - focus.z).length() > crew.search_radius(wk):
+				r = "outside search radius (%.0f m from focus)" % Vector2(tp.x - focus.x, tp.z - focus.z).length()
+			elif crew._someone_felling_near(tp, wk):
+				r = "someone felling near"
+			elif crew.coord.fell_conflict(ti, wk.global_position, wk):
+				r = "fall-lane conflict"
+			why.append("%s[%s/%s]=%s" % [wk.id, str(wk.emp.get("job", "")), wk.activity, r])
+		print("   tree %d state %d: %s" % [tid, st, "  ".join(why)])
 
 
 func _owners_ok(t: TimberService) -> bool:

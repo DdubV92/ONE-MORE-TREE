@@ -70,7 +70,8 @@
 - New campaigns sign for **three marked lots** of forest growing out from the camp's forest entrance: 30, 35 and 40 trees (105 in all), due by days 10, 20 and 30. Lot trees wear a band of company paint (orange, blue, yellow).
 - The contract is fulfilled when every lot tree is down, its stump is out and its logs are accepted. The crew fells painted trees only, one lot at a time.
 - The company pays an advance when a lot opens, a milestone when it is finished and a bonus if that is by its due day. Wood from any tree is still paid at the sawmill.
-- The sizes come from measurement: five hatchet workers accepted about 3.6 to 3.9 tree-equivalents a day when the lots were sized, and 105 trees in 30 days is 3.5 a day. Since loads go straight to the sawmill, the same crew accepts about 4.5 to 6 a day.
+- The sizes come from measurement: five hatchet workers accepted about 3.6 to 3.9 tree-equivalents a day when the lots were sized, and 105 trees in 30 days is 3.5 a day. Since loads go straight to the sawmill, the same crew accepts about 4.7 to 8 a day, and in a seven-day simulated run closed lot 1 on day 5.
+- Wood through the sawmill does not cover a fairly paid crew by itself; the lot advance, milestone and on-time bonus are where the profit is.
 - Wood is paid at the sawmill per finished pallet, so the crew carries loads straight to its feed rack while it has room; the receiving cradle and the decks are the overflow.
 - The rest of the island's 10,000 trees are optional wood. Clearing more of it across later seasons is planned (Phase 29).
 - Campaigns started before this keep their whole-island contract.

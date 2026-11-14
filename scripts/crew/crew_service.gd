@@ -46,6 +46,12 @@ var _shared := {}            # "listener|memory" -> true
 var _share_t := 0.0
 var _last_day_marked := -1
 var _unreachable_sids: Array = []
+## Phase 25: "unreachable" is usually debris in the way, and debris gets
+## hauled. Skipped targets are tried again after a few minutes, not only the
+## next morning (one stuck tree used to hold a whole lot open for a day).
+const UNREACHABLE_RETRY_S := 240.0
+var _unreachable_since := {}        # claim key or "sid:<id>" -> crew.now()
+var _unreach_t := 0.0
 var world_ready := false
 var _pending: Array[Callable] = []
 
@@ -534,6 +540,10 @@ func _physics_process(delta: float) -> void:
 	_close_doors()
 	coord.tick(delta)
 	missing.tick()
+	_unreach_t -= delta
+	if _unreach_t <= 0.0:
+		_unreach_t = 5.0
+		_retry_unreachable(false)
 	var c := campaign.clock
 	# Wages accrue for each day a person is employed during daylight.
 	if c.phase() == WorkdayClock.Phase.DAYLIGHT and _last_day_marked != c.day:
@@ -776,11 +786,37 @@ func check_time(w: Worker) -> void:
 ## A target that defeated repeated path attempts is skipped until morning.
 func mark_unreachable(w: Worker) -> void:
 	if w.target.has("tree"):
-		claims["tree:%d" % int(w.target.tree)] = "unreachable"
-		claims["trunk:%d" % int(w.target.tree)] = "unreachable"
+		_skip("tree:%d" % int(w.target.tree))
+		_skip("trunk:%d" % int(w.target.tree))
 	for sid in w.target.get("pick", []):
 		timber.claims[sid] = "unreachable"
 		_unreachable_sids.append(sid)
+		_unreachable_since["sid:" + str(sid)] = now()
+
+
+func _skip(key: String) -> void:
+	claims[key] = "unreachable"
+	_unreachable_since[key] = now()
+
+
+## Gives skipped targets another chance: all of them (morning), or those
+## that have waited long enough.
+func _retry_unreachable(all: bool) -> void:
+	var t := now()
+	for k in claims.keys():
+		if claims[k] == "unreachable" and (all or t - float(_unreachable_since.get(k, -1e9)) >= UNREACHABLE_RETRY_S):
+			claims.erase(k)
+			_unreachable_since.erase(k)
+	var keep: Array = []
+	for sid in _unreachable_sids:
+		var key := "sid:" + str(sid)
+		if all or t - float(_unreachable_since.get(key, -1e9)) >= UNREACHABLE_RETRY_S:
+			if timber.claims.get(sid, "") == "unreachable":
+				timber.claims.erase(sid)
+			_unreachable_since.erase(key)
+		else:
+			keep.append(sid)
+	_unreachable_sids = keep
 
 
 func axe_ok(w: Worker) -> bool:
@@ -1001,7 +1037,7 @@ func _try_fell(w: Worker) -> bool:
 			sd = d
 			stand = s
 	if stand == Vector3.INF:
-		claims["tree:%d" % tid] = "unreachable"
+		_skip("tree:%d" % tid)
 		return false
 	var away := Vector3(stand.x - base.x, 0, stand.z - base.z).normalized()
 	var side := Vector3(-away.z, 0, away.x)
@@ -1018,7 +1054,7 @@ func _try_fell(w: Worker) -> bool:
 		return false
 	if not w.start_fell(tid, stand, retreat):
 		claims.erase("tree:%d" % tid)
-		claims["tree:%d" % tid] = "unreachable"
+		_skip("tree:%d" % tid)
 		return false
 	coord.register_lane(tid, w, stand)
 	return true
@@ -1443,13 +1479,7 @@ func _on_morning(_d: int) -> void:
 		var m: WorkerMind = minds[id]
 		if m.end_of_day(campaign.clock.day - 1) and workers.has(id):
 			start_departure(id, m.quit_reason)
-	for k in claims.keys():
-		if claims[k] == "unreachable":
-			claims.erase(k)
-	for sid in _unreachable_sids:
-		if timber.claims.get(sid, "") == "unreachable":
-			timber.claims.erase(sid)
-	_unreachable_sids.clear()
+	_retry_unreachable(true)
 
 
 # ------------------------------------------------------------------- doors
