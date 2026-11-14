@@ -118,7 +118,7 @@ func begin_hunt(won: bool) -> void:
 	var c: CampaignService = Game.campaign
 	contract_won = won
 	stranded = not won
-	hunt_days = HUNT_DAYS
+	hunt_days = HUNT_DAYS + (Difficulty.hunt_extra_days() if won else 0)   # Phase 29: Long Night
 	start_day = c.clock.day if c and c.clock and won else 30
 	mode = "transition"
 	mode_changed.emit(mode)
@@ -800,6 +800,10 @@ func _finish(kind: String) -> void:
 			lines.append("")
 			for line in Game.campaign_ui.success_summary():
 				lines.append(str(line))
+		# Phase 29: how it was played, read back from the records.
+		lines.append("")
+		for line in Epilogue.lines(Epilogue.facts()):
+			lines.append(str(line))
 		Game.end_screen.show_outcome("Survived" if kind == "escaped" else "Stranded", lines)
 
 

@@ -179,10 +179,29 @@ func _new_campaign() -> void:
 		"• Each employee is paid at least $100 per workday, settled when you sleep. Set pay in the Payroll app on the camper computer: workers paid less than they feel is fair grow unhappy and may quit. Unpaid wages lead to departures.",
 		"• Get home by night. The camper is always safe during the contract, and night only ends when you sleep.",
 		"• When the contract ends, something hunts you. Finish the lots and the company ship comes after three days of it. Fail and no ship is coming.",
+		"• The nights start quiet and grow with every day and every tree cut. Everything out there keeps to one rule you can work out (Journal → Field notes). Before the hunt begins the company will ask you for one more tree.",
 		"• Content: night-time horror with sudden sounds and unsettling figures, and a hunt that can kill. Settings → Comfort has horror intensity and flash reduction.",
 		"• A short first-day guide teaches the basics with real trees. You can skip it at any time (Journal → Help).",
 		"Standard campaign only (the three-lot contract). Older saves keep the rules they were started with (the whole-island contracts).",
-	]), 200)
+	]), 96)
+	# Phase 29: how hard the nights are (saved with the campaign).
+	v.add_child(UITheme.label("Nights:", 18, UITheme.ACCENT))
+	var drow := HBoxContainer.new()
+	v.add_child(drow)
+	var dnote := _note(str(Difficulty.BLURB[Difficulty.valid(Difficulty.pending)]))
+	var dbtns := {}
+	for m in Difficulty.MODES:
+		var mb := UITheme.button(str(Difficulty.LABEL[m]), func() -> void: pass, 240)
+		mb.toggle_mode = true
+		mb.button_pressed = m == Difficulty.valid(Difficulty.pending)
+		mb.pressed.connect(func() -> void:
+			Difficulty.pending = m
+			for k in dbtns:
+				(dbtns[k] as Button).button_pressed = k == m
+			dnote.text = str(Difficulty.BLURB[m]))
+		dbtns[m] = mb
+		drow.add_child(mb)
+	v.add_child(dnote)
 	v.add_child(UITheme.label("Choose a slot:", 18, UITheme.ACCENT))
 	var first: Button = null
 	for n in range(1, SaveService.SLOTS + 1):

@@ -49,7 +49,7 @@ static func campaign_level() -> float:
 
 ## The island-wide level, honouring the review override (no local share).
 static func island_level() -> float:
-	return clampf(override_level, 0.0, 1.0) if override_level >= 0.0 else campaign_level()
+	return clampf(override_level, 0.0, 1.0) if override_level >= 0.0 else Difficulty.adjust_pressure(campaign_level())
 
 
 ## Share of the contract's trees that are no longer standing (lots), or a
@@ -96,7 +96,7 @@ static func level(at := Vector3.INF) -> float:
 	var base := campaign_level()
 	if at == Vector3.INF and Game.player != null:
 		at = (Game.player as Node3D).global_position
-	return clampf(base + LOCAL_WEIGHT * local_level(at), 0.0, 1.0)
+	return Difficulty.adjust_pressure(clampf(base + LOCAL_WEIGHT * local_level(at), 0.0, 1.0))
 
 
 static func tier(lvl: float) -> int:

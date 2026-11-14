@@ -68,6 +68,11 @@ func marks() -> Array:
 					continue
 				var i := int(idx[id])
 				out.append({"kind": "lot_tree", "lot": k, "x": World.trees.x[i], "z": World.trees.z[i], "standing": Game.trees.state_of(id) < TreeService.State.FALLING})
+	if lots and str(lots.one_more.state) == "accepted" and Game.vegetation:
+		var oidx: Dictionary = Game.vegetation.get("tree_index_by_id")
+		if oidx.has(int(lots.one_more.tree)):
+			var oi := int(oidx[int(lots.one_more.tree)])
+			out.append({"kind": "one_more", "x": World.trees.x[oi], "z": World.trees.z[oi], "label": "One more tree"})
 	if Game.night_kit:
 		for l in Game.night_kit.lamps:
 			out.append({"kind": "lamp", "x": l.global_position.x, "z": l.global_position.z, "label": "Work lamp"})
@@ -117,6 +122,10 @@ func _draw() -> void:
 			"dock":
 				draw_rect(Rect2(at - Vector2(3, 3), Vector2(6, 6)), Color(0.1, 0.1, 0.1))
 				draw_string(font, at + Vector2(6, 12), str(m.label), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.08, 0.08, 0.08))
+			"one_more":
+				draw_circle(at, 5.0, Color(0.97, 0.97, 0.95))
+				draw_arc(at, 5.0, 0.0, TAU, 16, Color(0.1, 0.1, 0.1), 1.5)
+				draw_string(font, at + Vector2(8, 4), str(m.label), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.08, 0.08, 0.08))
 			"lamp":
 				draw_circle(at, 4.0, Color(1.0, 0.95, 0.5))
 				draw_arc(at, 6.0, 0.0, TAU, 16, Color(0.2, 0.18, 0.1), 1.0)

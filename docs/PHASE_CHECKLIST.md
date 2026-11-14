@@ -2,6 +2,16 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 29 (in progress): reasons to keep going
+
+| Item | Status | Notes |
+|---|---|---|
+| **One more tree:** with the last lot finished, the company offers $5,000 for the tallest tree past the forest entrance, felled by the boss alone within seven minutes. Accept (white band, timer in the status line, on the map): paid once when it falls and the ship waits a day longer; or it lapses. Refuse: the ordinary three-day hunt. Saved | ✅ | `ContractLots.one_more`, `CampaignService.answer_one_more`. The hunt comes either way |
+| **The epilogue** (`Epilogue`): the ending names how it went and reads back real records: trees left standing, trees cut beyond the contract, the last offer, who left, stayed or died, wages paid and owed, nights someone did not come home, things met and understood, times caught, ground walked | ✅ | Shown on the escape card, which now scrolls |
+| **Difficulty** (`Difficulty`), chosen on New Campaign and saved: Cozy (contract nights cannot catch, the island stirs less), Standard (unchanged), Long Night (stirs sooner, exposure ×1.25, a won hunt lasts a day longer) | ✅ | The hunt can kill in every mode; safety rules never change; older saves are Standard |
+| Camp upgrades, mill orders, seasons, a company rating | ⬜ | Next |
+| Played by a person | ⛔ not run | |
+
 ## Phase 28 (in progress): an island worth walking
 
 | Item | Status | Notes |

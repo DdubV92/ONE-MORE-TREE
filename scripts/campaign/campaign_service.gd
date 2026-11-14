@@ -39,6 +39,7 @@ var test_route := false
 var phase2_migrated := false
 var _sleeping := false
 var crew: CrewService          # Phase 4 (set by the world)
+var difficulty := "standard"   # Phase 29: cozy / standard / long_night (saved)
 var vehicles: VehicleService   # Phase 5 (set by the world)
 var spawn_crew := true         # tests of the bare economy turn this off
 
@@ -168,6 +169,7 @@ func new_campaign() -> void:
 	ruleset = Ruleset.get_def(Ruleset.for_variant(World.manifest_variant)) if World.manifest_variant != "full" else Ruleset.get_def(Ruleset.STANDARD if Game.mode == Game.Mode.CAMPAIGN else Ruleset.LEGACY)
 	rule_set = str(ruleset.id)
 	legacy = false
+	difficulty = Difficulty.valid(Difficulty.pending)
 	_plan_lots()
 	clock.restore({"day": 1, "t": 0.0, "running": true, "deadline_enabled": true})
 	wallet.restore({})
@@ -192,6 +194,66 @@ func new_campaign() -> void:
 	_sync_axe()
 	if crew and spawn_crew:
 		crew.when_ready(crew.start_new_campaign)
+
+
+# ------------------------------------------------- one more tree (P29)
+
+## The last lot is done and the company has not made its offer yet.
+func one_more_pending() -> bool:
+	return contract.lots != null and contract.state == ContractService.FULFILLED and str(contract.lots.one_more.state) == ""
+
+
+func one_more_active() -> bool:
+	return contract.lots != null and str(contract.lots.one_more.state) == "accepted"
+
+
+## The boss answers the company. Yes: the tree is marked and the offer
+## runs for ONE_MORE_SECONDS. No (or no tree to offer): the hunt begins.
+func answer_one_more(yes: bool) -> void:
+	if not one_more_pending():
+		return
+	var lots := contract.lots
+	var tid := lots.pick_one_more(Game.trees) if yes else -1
+	if not yes or tid < 0:
+		lots.one_more = {"state": "refused", "tree": -1, "left": 0.0}
+		lots_changed.emit()
+		_hunt_after_contract(0)
+		return
+	lots.one_more = {"state": "accepted", "tree": tid, "left": ContractLots.ONE_MORE_SECONDS}
+	lots_changed.emit()
+	notice.emit("One more tree: the tallest one past the forest entrance, banded in white. $%s if it is down before the offer lapses. The crew has packed up; it is you and the axe." % Money.format_cents(ContractLots.ONE_MORE_CENTS), 10.0)
+
+
+## Called every frame the world runs (LotMarks): the offer runs out.
+func one_more_tick(delta: float) -> void:
+	if not one_more_active():
+		return
+	var lots := contract.lots
+	lots.one_more.left = float(lots.one_more.left) - delta
+	if float(lots.one_more.left) <= 0.0:
+		lots.one_more.state = "lapsed"
+		lots_changed.emit()
+		notice.emit("The tree is still standing and the company has stopped asking. The offer is gone.", 8.0)
+		_hunt_after_contract(0)
+
+
+## The marked tree came down in time: paid once, and the ship waits a day
+## longer for the timber.
+func one_more_felled(tree_id: int) -> void:
+	if not one_more_active() or int(contract.lots.one_more.tree) != tree_id:
+		return
+	contract.lots.one_more.state = "felled"
+	wallet.grant(ContractLots.ONE_MORE_CENTS, "one_more", "ONE-MORE-TREE", "One more tree (company cash offer)")
+	lots_changed.emit()
+	notice.emit("One more tree. $%s, cash. The ship will wait an extra day for the timber." % Money.format_cents(ContractLots.ONE_MORE_CENTS), 9.0)
+	_hunt_after_contract(1)
+
+
+func _hunt_after_contract(extra_days: int) -> void:
+	if Game.hunt == null or Game.hunt.mode != "none" or Game.mode != Game.Mode.CAMPAIGN or legacy:
+		return
+	Game.hunt.begin_hunt(true)
+	Game.hunt.hunt_days += extra_days
 
 
 ## Development: isolated in-memory Day & Economy Test session (Preview).
@@ -529,7 +591,7 @@ func _restore_crew(data: Dictionary) -> void:
 
 
 func capture_campaign() -> Dictionary:
-	return {"rule_set": rule_set, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}, "onboarding": onboarding.capture() if onboarding else {}, "post_contract": post_contract, "ruleset": ruleset.duplicate(true), "island": World.island_signature()}
+	return {"rule_set": rule_set, "difficulty": difficulty, "phase3": true, "legacy": legacy, "clock": clock.capture(), "contract": contract.capture(), "day_stats": day_stats.duplicate(), "reports": reports.slice(-35), "state": contract.state, "day": clock.day, "crew": crew.capture() if crew and crew.enabled else {}, "vehicles": vehicles.capture() if vehicles and vehicles.built else {}, "onboarding": onboarding.capture() if onboarding else {}, "post_contract": post_contract, "ruleset": ruleset.duplicate(true), "island": World.island_signature()}
 
 
 func capture_economy() -> Dictionary:
@@ -540,6 +602,7 @@ func capture_economy() -> Dictionary:
 ## (save from before the timed contract).
 func restore(campaign: Dictionary, economy: Dictionary) -> bool:
 	var pre_phase3 := not bool(campaign.get("phase3", false))
+	difficulty = Difficulty.valid(str(campaign.get("difficulty", "standard")))
 	wallet.restore(economy.get("wallet", {}))
 	payroll.restore(economy.get("payroll", {}))
 	equipment.restore(economy.get("equipment", {}))

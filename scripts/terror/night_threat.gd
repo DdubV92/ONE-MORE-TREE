@@ -31,6 +31,7 @@ var _warned := 0
 var grace_until := -1.0          # night_awake_t until which catches are suppressed
 var catches := 0
 var disabled := false
+var _cozy_said := false
 var _pressure_t := 0.0
 var _pressure_rate := 1.0
 
@@ -70,7 +71,7 @@ func _process(delta: float) -> void:
 	if _pressure_t <= 0.0:
 		_pressure_t = 1.0
 		_pressure_rate = pressure_rate(NightPressure.level(p.global_position))
-	var gain := (FAR_RATE if far else RATE) * delta * _pressure_rate
+	var gain := (FAR_RATE if far else RATE) * delta * _pressure_rate * Difficulty.exposure_scale()
 	if night_awake_t < grace_until:
 		gain = 0.0                # protected dog-rescue window
 	exposure = minf(exposure + gain, 1.0)
@@ -105,6 +106,13 @@ func _commit_catch(p: Node3D) -> void:
 	if _player_safe(p) or night_awake_t < grace_until:
 		exposure = 0.9
 		return
+	# Phase 29, Cozy: the dark closes in and never takes you.
+	if not Difficulty.catch_allowed():
+		exposure = 0.9
+		if not _cozy_said:
+			_cozy_said = true
+			p.show_message("It is right behind you. (Cozy: the dark cannot take you. Get inside when you are ready.)")
+		return
 	catches += 1
 	exposure = 0.0
 	_warned = 0
@@ -136,6 +144,7 @@ func on_morning() -> void:
 	night_awake_t = 0.0
 	grace_until = -1.0
 	_warned = 0
+	_cozy_said = false
 
 
 func capture() -> Dictionary:

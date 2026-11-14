@@ -18,6 +18,15 @@ var member := {}                 # tree id -> lot index
 var done := {}                   # lot index -> {"day": int, "on_time": bool}
 var advanced := {}               # lot index -> true (its advance was paid)
 var focus := Vector3.ZERO        # the forest entrance the lots grow out from
+## Phase 29: "one more tree". With the last lot finished the company offers
+## cash for one more: the tallest tree near the entrance, to be felled by
+## the boss alone before the offer lapses. Taking it or refusing it is the
+## game's last choice, and the ending remembers it.
+##   state: "" (not offered yet) / accepted / felled / refused / lapsed
+const ONE_MORE_CENTS := 500000
+const ONE_MORE_SECONDS := 420.0
+const ONE_MORE_RADIUS := 150.0
+var one_more := {"state": "", "tree": -1, "left": 0.0}
 
 
 ## Builds the plan from a ruleset's "lots" block:
@@ -136,6 +145,31 @@ func standing_centre(k: int, trees: TreeService) -> Vector3:
 	return sum / float(n) if n > 0 else focus
 
 
+## The tree the company means: the tallest one still standing outside the
+## lots and the fence, within reach of the forest entrance (-1 = none).
+func pick_one_more(trees: TreeService) -> int:
+	var best := -1
+	var best_h := 0.0
+	var o := World.camp_origin()
+	for i in World.tree_count():
+		var id := int(World.trees.id[i])
+		if member.has(id) or World.removed_trees.has(id) or World.excluded_trees.has(id):
+			continue
+		var x: float = World.trees.x[i]
+		var z: float = World.trees.z[i]
+		if Vector2(x - focus.x, z - focus.z).length() > ONE_MORE_RADIUS:
+			continue
+		if absf(x - o.x) < CampLayout.FENCE_HALF.x + 6.0 and absf(z - o.z) < CampLayout.FENCE_HALF.y + 6.0:
+			continue
+		if trees != null and trees.state_of(id) >= TreeService.State.FALLING:
+			continue
+		var h := float(World.trees.height[i])
+		if h > best_h:
+			best_h = h
+			best = id
+	return best
+
+
 func capture() -> Dictionary:
 	var d := {}
 	for k in done:
@@ -143,12 +177,14 @@ func capture() -> Dictionary:
 	var adv: Array = []
 	for k in advanced:
 		adv.append(int(k))
-	return {"version": VERSION, "done": d, "advanced": adv}
+	return {"version": VERSION, "done": d, "advanced": adv, "one_more": {"state": str(one_more.state), "tree": int(one_more.tree), "left": snappedf(float(one_more.left), 0.1)}}
 
 
 func restore(data: Dictionary) -> void:
 	done.clear()
 	advanced.clear()
+	var om: Dictionary = data.get("one_more", {})
+	one_more = {"state": str(om.get("state", "")), "tree": int(om.get("tree", -1)), "left": float(om.get("left", 0.0))}
 	for k in data.get("advanced", []):
 		advanced[int(k)] = true
 	var d: Dictionary = data.get("done", {})

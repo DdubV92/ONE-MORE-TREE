@@ -116,7 +116,19 @@ func _resume() -> void:
 ## Survival outcome after the rescue ship (or the contract success summary).
 func show_outcome(title: String, lines: PackedStringArray) -> void:
 	showing = "outcome"
-	_build(title, "\n".join(lines), Color(0.02, 0.03, 0.05, 0.94))
+	# Phase 29: the ending is long (crew, figures, epilogue): it scrolls
+	# inside a card that always fits the screen.
+	_build(title, "", Color(0.02, 0.03, 0.05, 0.94))
+	_panel.offset_top = -330
+	_panel.offset_bottom = 330
+	var sc := ScrollContainer.new()
+	sc.custom_minimum_size = Vector2(600, 470)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var body := UITheme.label("\n".join(lines), 16)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD
+	body.custom_minimum_size = Vector2(580, 0)
+	sc.add_child(body)
+	_box.add_child(sc)
 	_button("Back to the title screen", func() -> void:
 		Game.block_saves = false
 		Game.return_to_menu())

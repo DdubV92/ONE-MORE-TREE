@@ -81,6 +81,10 @@ func _process(_delta: float) -> void:
 		clock_label.text = txt
 		cash_label.text = "Company services closed: no hiring, boats or wages until rescue."
 		return
+	if svc.one_more_active():
+		clock_label.text = "One more tree: the tall one past the forest entrance, banded white  ·  the offer lapses in %s" % CampaignService.fmt_time(float(svc.contract.lots.one_more.left))
+		cash_label.text = "$%s" % Money.format_cents(svc.wallet.cash)
+		return
 	if svc.contract.state == ContractService.FULFILLED:
 		clock_label.text = "Contract complete (day %d)  ·  exploring: no clock, no wages, no night" % int(svc.contract.outcome_at.get("day", c.day))
 		cash_label.text = "$%s" % Money.format_cents(svc.wallet.cash)
@@ -219,7 +223,7 @@ func _journal_contract() -> Control:
 	var v: VBoxContainer = s[1]
 	var c := svc.contract.counts()
 	var clk := svc.clock
-	_text(v, "Rules: %s." % str(svc.ruleset.get("label", "?")), 14, UITheme.MUTED)
+	_text(v, "Rules: %s.  Nights: %s." % [str(svc.ruleset.get("label", "?")), Difficulty.label()], 14, UITheme.MUTED)
 	_text(v, "Island clearance for the theme park. %s" % ("LEGACY continuation: no deadline." if svc.legacy else "Day %d of %d. The contract closes at the END of day 30's dusk (when night falls on day 30). Sleep is not required for it to close." % [clk.day, WorkdayClock.CONTRACT_DAYS]))
 	_text(v, "State: %s%s" % [svc.contract.state.replace("_", " ").to_lower(), ("  (" + svc.contract.outcome_id + ")") if svc.contract.outcome_id != "" else ""])
 	for line in lots_summary():
@@ -316,6 +320,24 @@ func _journal_help() -> Control:
 		for e in rec:
 			_text(v, "%sDay %d, %s into the day: %s%s" % [Notifications.TAGS[int(e.p)], int(e.day), CampaignService.fmt_time(float(e.t)), str(e.text), (" (x%d)" % int(e.count)) if int(e.count) > 1 else ""], 13)
 	return s[0]
+
+
+## Phase 29: the company's last offer.
+func _open_one_more() -> void:
+	var f := _frame("The contract is finished", 680)
+	var p: PanelContainer = f[0]
+	var v: VBoxContainer = f[1]
+	var day := int(svc.contract.outcome_at.get("day", svc.clock.day))
+	_text(v, "All three lots are down, on day %d. The company's man is pleased. The ship is on its way and will be at the dock in three days." % day, 17)
+	_text(v, "Then, over the radio: there is one more tree. The tall one past the forest entrance, the one the crew kept walking around. $%s, cash, if it is down within %d minutes. The crew has already packed up. It would be you and the axe, and the ship would wait one more day for the timber." % [Money.format_cents(ContractLots.ONE_MORE_CENTS), int(ContractLots.ONE_MORE_SECONDS / 60.0)], 17)
+	_text(v, "Whatever you answer, what comes after the contract comes either way.", 14, UITheme.MUTED)
+	v.add_child(UITheme.button("One more tree.", func() -> void:
+		close_panel()
+		svc.answer_one_more(true), 460))
+	v.add_child(UITheme.button("No. We are done here.", func() -> void:
+		close_panel()
+		svc.answer_one_more(false), 460))
+	_open(p)
 
 
 ## Phase 28: the map of what the boss has walked.
@@ -609,7 +631,10 @@ func show_outcome(state: String, outcome_id: String) -> void:
 	if state == ContractService.FULFILLED and Game.hunt and Game.mode == Game.Mode.CAMPAIGN and not svc.legacy and not svc.post_contract:
 		# Phase 25: finishing the job does not end the game. The hunt follows
 		# every contract; a won one brings the company ship at its end.
-		if Game.hunt.mode == "none":
+		# Phase 29: first, the company asks for one more tree.
+		if svc.one_more_pending():
+			_open_one_more()
+		elif Game.hunt.mode == "none" and not svc.one_more_active():
 			Game.hunt.begin_hunt(true)
 		return
 	if state == ContractService.FULFILLED and svc.post_contract:

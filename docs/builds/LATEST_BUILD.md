@@ -4,6 +4,12 @@ The download link is in the session message (a GitHub pre-release zip, or the Gi
 
 Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.exe` is the same game with a console window, useful for logs. If SmartScreen warns, choose More info, then Run anyway. `NOTICES.txt` lists the attributions and the synthetic-voice notice.
 
+## New: an ending with a shape (Phase 29, first part)
+
+- **One more tree.** Finish the three lots and the company asks for one more before the hunt: the tallest tree past the entrance, $5,000, you alone, seven minutes. Take it or refuse it.
+- **The ending reads back how you played**: trees left standing, what you cut beyond the contract, who left with you, wages, what you met at night and worked out.
+- **Nights: Cozy, Standard or Long Night**, chosen when you start a New Campaign.
+
 ## New: the map (Phase 28, first part)
 
 - **Journal → Map.** The coast is inked in; the inside fills in as you walk. It shows your lots tree by tree, your work lamps, the camp, sawmill and dock, and you. "Around you" zooms in.

@@ -47,6 +47,12 @@
   - The night clock may reach its terminal time while an independent awake timer keeps pacing.
   - Menus pause both.
 
+## Reasons to keep going (Phase 29)
+
+- **One more tree.** When the last lot is finished, before the hunt, the company asks for one more: the tallest tree past the forest entrance, $5,000, the boss alone, seven minutes. Yes or no is the game's last choice; the hunt follows either way (a day longer if the tree came down).
+- **The ending reads back the play** from real records and names it. It never scores and never explains the island.
+- **Difficulty:** Cozy, Standard or Long Night, chosen at the start and saved. It changes how fast the island stirs and whether a contract night can catch the boss, never the safety rules.
+
 ## An island worth walking (Phase 28)
 
 - **The map** is the company's survey sheet: the coast is inked, the inside is blank until the boss has walked it. It marks real places and the boss's own work (lot trees, work lamps, beacon parts once known) and never anything that moves at night.

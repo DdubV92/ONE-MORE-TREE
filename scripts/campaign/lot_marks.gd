@@ -42,8 +42,17 @@ func rebuild() -> void:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
 	mm.mesh = band
-	mm.instance_count = _lots.total()
+	mm.instance_count = _lots.total() + 1
 	var n := 0
+	# Phase 29: the one more tree wears a white band while the offer runs.
+	var om_id := int(_lots.one_more.tree) if str(_lots.one_more.state) == "accepted" else -1
+	if om_id >= 0 and idx.has(om_id):
+		var oi := int(idx[om_id])
+		var orr := float(World.trees.radius[oi]) * 1.08 + 0.05
+		mm.set_instance_transform(n, Transform3D(Basis().scaled(Vector3(orr, 1.6, orr)), World.tree_position(oi) + Vector3(0, 1.3, 0)))
+		mm.set_instance_color(n, Color(0.96, 0.96, 0.94))
+		_slot[om_id] = n
+		n += 1
 	for k in _lots.lots.size():
 		for id in (_lots.lots[k].trees as PackedInt32Array):
 			if not idx.has(id):
@@ -61,7 +70,14 @@ func rebuild() -> void:
 	custom_aabb = AABB(Vector3(-4000, -100, -4000), Vector3(8000, 400, 8000))
 
 
+func _process(delta: float) -> void:
+	if Game.campaign and not get_tree().paused:
+		Game.campaign.one_more_tick(delta)
+
+
 func _on_tree(tree_id: int, state: int) -> void:
+	if state >= TreeService.State.FALLING and Game.campaign and Game.campaign.one_more_active():
+		Game.campaign.one_more_felled(tree_id)
 	if multimesh == null or not _slot.has(tree_id) or state < TreeService.State.FALLING:
 		return
 	var n := int(_slot[tree_id])

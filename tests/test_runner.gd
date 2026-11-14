@@ -26,6 +26,11 @@ func _ready() -> void:
 		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
+	if OS.has_environment("ONLY_P29"):
+		await _run_async("phase 29 one more tree and epilogue world", _t_phase29_world)
+		_summary()
+		get_tree().quit(1 if failures > 0 else 0)
+		return
 	if OS.has_environment("ONLY_P28"):
 		await _run_async("phase 28 map world", _t_phase28_world)
 		_summary()
@@ -235,6 +240,7 @@ func _ready() -> void:
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
 	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
+	await _run_async("phase 29 world: with the last lot done the company offers one more tree before the hunt; refusing starts the three-day hunt; accepting bands the tallest tree past the entrance, pays once when it falls and adds a day, or lapses when the time runs out; saved; the epilogue reads the real records (trees left, extra cut, crew, wages, notes, the offer); difficulty: Standard unchanged, Cozy cannot catch, Long Night stirs sooner and hunts a day longer, saved", _t_phase29_world)
 	await _run_async("phase 28 map world: only the camp's surroundings are known on day 1, walking reveals ground, saved and restored, the picture is cropped to the island with the unexplored coast inked, marks for camp, sawmill, dock, every lot tree (standing or felled), work lamps and the boss, nothing that hunts", _t_phase28_world)
 	_run("phase 27 units: belief sets the curfew margin and how hard a sighting hits; trust moves the risk line, waits a day for late wages and grows with fair pay; a shown recording convinces once per clip; arrears patience", _t_phase27_units)
 	await _run_async("phase 27 people world: fair pay nights build trust once, a recording can be shown to a worker once, a trusted worker follows in the hunt and an untrusting one refuses, a sceptic does not come home at dusk (one at a time, never the timid, never before the island stirs), brought home by the boss or back at first light shaken, saved", _t_phase27_world)
@@ -7598,6 +7604,195 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 
 # ======================================================== Phase 24: sawmill
 
+func _t_phase29_world() -> String:
+	var keep_mode: int = Game.mode
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for ch in get_children():
+		if ch is IslandWorld:
+			ch.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or not world.systems_ready) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var err := _p29_checks()
+	# The hunt's rules card pauses the game: resume before the next test.
+	if Game.end_screen and Game.end_screen.visible:
+		Game.end_screen._resume()
+	get_tree().paused = false
+	Game.block_saves = false
+	Game.mode = keep_mode
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p29_finish_lots(cs: CampaignService) -> void:
+	var lots: ContractLots = cs.contract.lots
+	for k in lots.lots.size():
+		for id in (lots.lots[k].trees as PackedInt32Array):
+			Game.trees.record(id).state = TreeService.State.DISPOSED
+	cs.contract.evaluate()
+
+
+func _p29_checks() -> String:
+	var cs: CampaignService = Game.campaign
+	var hunt: HuntService = Game.hunt
+	cs.new_campaign()
+	var lots: ContractLots = cs.contract.lots
+	if cs.one_more_pending() or cs.one_more_active():
+		return "the offer exists before the contract is finished"
+	# The tree the company means: tall, near the entrance, not a lot tree.
+	var tid := lots.pick_one_more(Game.trees)
+	if tid < 0 or lots.has(tid):
+		return "no tree to offer (%d)" % tid
+	var ti: int = Game.trees.index_of(tid)
+	var tp := Vector3(World.trees.x[ti], 0, World.trees.z[ti])
+	if CampLayout.inside_fence(tp) or Vector2(tp.x - lots.focus.x, tp.z - lots.focus.z).length() > ContractLots.ONE_MORE_RADIUS:
+		return "the offered tree is not just past the forest entrance"
+	for i in World.tree_count():
+		var oid := int(World.trees.id[i])
+		if oid == tid or lots.has(oid):
+			continue
+		if Vector2(World.trees.x[i] - lots.focus.x, World.trees.z[i] - lots.focus.z).length() <= ContractLots.ONE_MORE_RADIUS and float(World.trees.height[i]) > float(World.trees.height[ti]) + 0.001:
+			var o := World.camp_origin()
+			if not (absf(World.trees.x[i] - o.x) < CampLayout.FENCE_HALF.x + 6.0 and absf(World.trees.z[i] - o.z) < CampLayout.FENCE_HALF.y + 6.0):
+				return "a taller tree stands near the entrance than the one offered"
+	# Finished: the offer is pending and the hunt has not begun.
+	Game.mode = Game.Mode.CAMPAIGN
+	Game.block_saves = true          # nothing in this test may reach a save file
+	_p29_finish_lots(cs)
+	if cs.contract.state != ContractService.FULFILLED or not cs.one_more_pending() or hunt.mode != "none":
+		return "finishing the lots did not leave the company's offer pending (%s, hunt %s)" % [cs.contract.state, hunt.mode]
+	# Accept: banded, timed, paid once when it falls, one more hunt day.
+	var cash0: int = cs.wallet.cash
+	cs.answer_one_more(true)
+	if not cs.one_more_active() or int(lots.one_more.tree) != tid or hunt.mode != "none":
+		return "accepting did not mark the tree and hold the hunt"
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(lots.capture()))
+	var l2 := ContractLots.plan(cs.ruleset.lots)
+	l2.restore(snap)
+	if str(l2.one_more.state) != "accepted" or int(l2.one_more.tree) != tid or float(l2.one_more.left) <= 0.0:
+		return "the running offer was not saved"
+	cs.one_more_tick(10.0)
+	if absf(float(lots.one_more.left) - (ContractLots.ONE_MORE_SECONDS - 10.0)) > 0.01:
+		return "the offer's clock does not run"
+	cs.one_more_felled(tid + 1)
+	if not cs.one_more_active():
+		return "felling another tree answered the offer"
+	Game.trees.record(tid).state = TreeService.State.FALLING
+	Game.trees.tree_state_changed.emit(tid, TreeService.State.FALLING)
+	if str(lots.one_more.state) != "felled" or cs.wallet.cash - cash0 != ContractLots.ONE_MORE_CENTS:
+		return "the one more tree was not paid when it fell (%s, +%d)" % [str(lots.one_more.state), cs.wallet.cash - cash0]
+	cs.one_more_felled(tid)
+	if cs.wallet.cash - cash0 != ContractLots.ONE_MORE_CENTS:
+		return "the one more tree was paid twice"
+	if hunt.mode == "none" or not hunt.contract_won or hunt.hunt_days != HuntService.HUNT_DAYS + 1:
+		return "the hunt after one more tree should be a won hunt with one more day (%s, %d days)" % [hunt.mode, hunt.hunt_days]
+	if Game.end_screen and Game.end_screen.visible:
+		Game.end_screen._resume()
+	get_tree().paused = false
+	# The epilogue reads the records.
+	var f := Epilogue.facts()
+	if int(f.lot_trees) != 105 or int(f.lot_cut) != 105 or int(f.extra_cut) != 1 or str(f.one_more) != "felled" or not bool(f.won):
+		return "the epilogue's figures are wrong (%s)" % str(f)
+	if int(f.island_trees) - int(f.cut) != World.native_total() - 106:
+		return "the trees left standing are miscounted"
+	if Epilogue.title(f) != "One More Tree":
+		return "the ending is not named for the last tree (%s)" % Epilogue.title(f)
+	var ls := Epilogue.lines(f)
+	var joined := "\n".join(ls)
+	if not joined.contains("9,894 are still standing") or not joined.contains("1 that nobody asked for") or not joined.contains("you gave it to them"):
+		return "the epilogue does not say what happened:\n" + joined
+	# Refusing: the ordinary three days. Lapsing: the hunt, no pay.
+	hunt.mode = "none"
+	hunt.stranded = false
+	lots.one_more = {"state": "", "tree": -1, "left": 0.0}
+	if not cs.one_more_pending():
+		return "the offer could not be reset for the refusal check"
+	cs.answer_one_more(false)
+	if str(lots.one_more.state) != "refused" or hunt.mode == "none" or hunt.hunt_days != HuntService.HUNT_DAYS:
+		return "refusing should start the ordinary hunt (%s, %d days)" % [str(lots.one_more.state), hunt.hunt_days]
+	if Game.end_screen and Game.end_screen.visible:
+		Game.end_screen._resume()
+	get_tree().paused = false
+	if Epilogue.title(Epilogue.facts()) == "One More Tree" or not "\n".join(Epilogue.lines(Epilogue.facts())).contains("You said no."):
+		return "the epilogue does not record the refusal"
+	hunt.mode = "none"
+	lots.one_more = {"state": "", "tree": -1, "left": 0.0}
+	Game.trees.records.erase(tid)
+	cash0 = cs.wallet.cash
+	cs.answer_one_more(true)
+	cs.one_more_tick(ContractLots.ONE_MORE_SECONDS + 1.0)
+	if str(lots.one_more.state) != "lapsed" or cs.wallet.cash != cash0 or hunt.mode == "none" or hunt.hunt_days != HuntService.HUNT_DAYS:
+		return "a lapsed offer should start the ordinary hunt and pay nothing"
+	# Difficulty: saved with the campaign; Cozy cannot catch, Long Night
+	# stirs sooner, closes in faster and hunts a day longer.
+	var keep_d := Difficulty.pending
+	cs.difficulty = "standard"
+	NightPressure.override_level = -1.0
+	var base_p := NightPressure.island_level()
+	if Difficulty.exposure_scale() != 1.0 or Difficulty.hunt_extra_days() != 0 or not Difficulty.catch_allowed():
+		return "Standard is not the unchanged game"
+	cs.difficulty = "long_night"
+	if NightPressure.island_level() < minf(base_p + 0.19, 1.0) or Difficulty.exposure_scale() <= 1.0 or Difficulty.hunt_extra_days() != 1:
+		return "Long Night does not stir the island sooner"
+	hunt.mode = "none"
+	hunt.begin_hunt(true)
+	if hunt.hunt_days != HuntService.HUNT_DAYS + 1:
+		return "Long Night's hunt is not a day longer"
+	if Game.end_screen and Game.end_screen.visible:
+		Game.end_screen._resume()
+	get_tree().paused = false
+	hunt.mode = "none"
+	hunt.begin_hunt(false)
+	if hunt.hunt_days != HuntService.HUNT_DAYS:
+		return "Long Night lengthened a stranded hunt (it has no end date)"
+	if Game.end_screen and Game.end_screen.visible:
+		Game.end_screen._resume()
+	get_tree().paused = false
+	cs.difficulty = "cozy"
+	if Difficulty.catch_allowed() or NightPressure.island_level() > 0.6 or Difficulty.exposure_scale() >= 1.0:
+		return "Cozy is not gentler"
+	var caught := [0]
+	var on_caught := func() -> void: caught[0] += 1
+	Game.threat.caught.connect(on_caught)
+	Game.threat.exposure = 1.0
+	Game.threat._commit_catch(Game.player)
+	Game.threat.caught.disconnect(on_caught)
+	if caught[0] != 0 or Game.threat.catches != 0 or Game.threat.exposure > 0.9:
+		return "Cozy still let the dark take the boss"
+	var snapc := cs.capture_campaign()
+	cs.difficulty = "standard"
+	if Difficulty.valid(str(snapc.get("difficulty", ""))) != "cozy":
+		return "the difficulty is not saved with the campaign"
+	if Difficulty.valid("nonsense") != "standard":
+		return "an unknown difficulty should read as Standard"
+	Difficulty.pending = "long_night"
+	hunt.mode = "none"
+	cs.new_campaign()
+	if cs.difficulty != "long_night":
+		return "a new campaign did not take the chosen difficulty"
+	Difficulty.pending = keep_d
+	cs.difficulty = "standard"
+	Game.threat.exposure = 0.0
+	# A failed contract never gets the offer.
+	var f2 := Epilogue.facts()
+	f2.won = false
+	if Epilogue.title(f2) != "The One Who Got Off Anyway":
+		return "a lost contract's ending has the wrong name"
+	Game.trees.clear_all()
+	return ""
+
+
 func _t_phase28_world() -> String:
 	Game.mode = Game.Mode.PREVIEW
 	Game.pending_teleport = "camp"
@@ -7717,7 +7912,7 @@ func _p28_checks(world: IslandWorld) -> String:
 		mv.queue_free()
 		return "a felled tree or a work lamp is not on the map (%d standing, %s)" % [standing, str(kinds)]
 	for k in kinds:
-		if not str(k) in ["camp", "mill", "dock", "lot_tree", "lamp", "you", "last_seen", "part"]:
+		if not str(k) in ["camp", "mill", "dock", "lot_tree", "lamp", "you", "last_seen", "part", "one_more"]:
 			mv.queue_free()
 			return "the map marks something it should not: %s" % str(k)
 	mv.toggle_zoom()

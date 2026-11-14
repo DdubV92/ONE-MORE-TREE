@@ -30,6 +30,18 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - Example: two workers on $100 cost $200 a day. About two average trees through the sawmill earn that back.
 - Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate. Hard-working: ×1.25. Stronger: carries more by hand. Timid: frightens sooner and heads home earlier.
 
+## Starting a campaign: Nights
+
+- **Cozy:** contract nights cannot catch you (the warnings still come) and the island stirs less. The hunt after the contract is unchanged.
+- **Standard:** the game as designed.
+- **Long Night:** the island stirs sooner, the dark closes in a quarter faster, and the hunt after a finished contract lasts a day longer.
+
+## One more tree
+
+- When all three lots are finished the company makes one last offer over the radio: $5,000 for the tallest tree past the forest entrance, if you fell it yourself within seven minutes (the crew has packed up). It gets a white band and shows on the map; the top of the screen counts the time down.
+- Say yes and bring it down: you are paid, and the ship waits one more day for the timber, so the hunt lasts a day longer. Say yes and fail: nothing. Say no: the ordinary three days.
+- The ending remembers what you answered.
+
 ## The map
 
 - **Journal → Map** (the last tab) is your survey sheet. The coast is drawn in; the inside fills in as you walk it.

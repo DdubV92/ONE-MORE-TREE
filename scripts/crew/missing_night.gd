@@ -31,6 +31,7 @@ var decided_day := -1
 var last_day := -99
 var late_start := {}                # employee id -> day they sit out the morning
 var count := 0
+var found_count := 0                # nights the boss went out and brought them in
 var _rng := RandomNumberGenerator.new()
 
 
@@ -189,6 +190,7 @@ func bring_home(w: Worker) -> bool:
 	if not is_missing(w):
 		return false
 	state = "found"
+	found_count += 1
 	_apply(w.mind, FOUND)
 	w.activity = "follow"
 	return true
@@ -223,7 +225,7 @@ func _apply(m: WorkerMind, d: Dictionary) -> void:
 
 func capture() -> Dictionary:
 	return {"id": id, "day": day, "state": state, "spot": [snappedf(spot.x, 0.01), snappedf(spot.y, 0.01), snappedf(spot.z, 0.01)],
-		"decided_day": decided_day, "last_day": last_day, "late_start": late_start.duplicate(), "count": count}
+		"decided_day": decided_day, "last_day": last_day, "late_start": late_start.duplicate(), "count": count, "found_count": found_count}
 
 
 func restore(d: Dictionary) -> void:
@@ -239,3 +241,4 @@ func restore(d: Dictionary) -> void:
 	for k in ls:
 		late_start[str(k)] = int(ls[k])
 	count = int(d.get("count", 0))
+	found_count = int(d.get("found_count", 0))
