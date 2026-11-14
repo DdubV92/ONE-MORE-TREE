@@ -335,6 +335,9 @@ func _apply() -> void:
 	var pixel_world := str(Settings.get_v("world_style")) == "drawn"
 	sun.shadow_blur = 0.35 if pixel_world else (0.55 if drawn else 1.2)
 	env.glow_bloom = 0.0 if pixel_world else 0.05
+	# Leaves hold nearly still in the drawn world (flutter sparkles on the
+	# pixel grid); whole trees still sway slowly, at half strength.
+	RenderingServer.global_shader_parameter_set("leaf_motion", 0.12 if pixel_world else 1.0)
 	sky_mat.set_shader_parameter("sun_dir", sd)
 	sky_mat.set_shader_parameter("moon_dir", md)
 	sky_mat.set_shader_parameter("cloud_offset", _cloud_offset)

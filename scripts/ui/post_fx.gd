@@ -48,6 +48,7 @@ func _apply() -> void:
 		# Flat colour reads murky under a strong vignette: half of it here.
 		mat.set_shader_parameter("vignette", float(Settings.get_v("vignette")) * 0.5)
 	mat.set_shader_parameter("outline_strength", 0.0 if drawn else 0.45)
+	mat.set_shader_parameter("block_avg", 1.0 if drawn else 0.0)
 	mat.set_shader_parameter("palette_levels", 28.0 if drawn else 32.0)
 	mat.set_shader_parameter("saturation", 1.0 if drawn else 1.08)
 	var neutral: bool = not hd2d and Settings.get_v("chromatic_aberration") < 0.001 and Settings.get_v("vignette") < 0.001 and Settings.get_v("film_grain") < 0.001 and (absf(_warmth) < 0.001 or Settings.get_v("color_grading") < 0.001)

@@ -15,7 +15,7 @@ const SMOOTH := {"pixel_mode": 0.0, "brush_radius": 3, "brush_px": 1.0, "detail"
 ## Sharp first (owner request): the smallest brush, most of the surface
 ## detail kept under it, no moving lines unless asked for (ANIME_BOIL), and
 ## hatching only in the very darkest tones.
-const DRAWN := {"pixel_mode": 1.0, "brush_radius": 1, "brush_px": 1.0, "detail": 0.45, "tone_steps": 4.0, "tone_strength": 0.9, "tone_soft": 0.035,
+const DRAWN := {"pixel_mode": 1.0, "brush_radius": 1, "brush_px": 1.0, "detail": 0.45, "tone_steps": 4.0, "tone_strength": 0.9, "tone_soft": 0.08,
 	"ink_strength": 1.0, "ink_px": 1.0, "ink_far": 230.0, "hatch": 0.5, "boil": 0.0, "saturation": 1.08}
 var mat: ShaderMaterial
 
@@ -54,6 +54,7 @@ func _apply() -> void:
 	var set := DRAWN if drawn else SMOOTH
 	for key in set:
 		mat.set_shader_parameter(key, set[key])
+	mat.set_shader_parameter("block_px", float(maxi(Settings.world_pixel_px(), 1)) if drawn else 1.0)
 	if not drawn:
 		mat.set_shader_parameter("brush_radius", 2 if q == "low" else 3)
 	if drawn and float(Settings.get_v("shake_strength")) <= 0.001:

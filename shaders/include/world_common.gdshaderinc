@@ -5,6 +5,9 @@
 global uniform vec2 wind_dir;
 global uniform float wind_strength;
 global uniform float world_time;
+// 1 = leaves flutter freely; near 0 in the hand-drawn pixel world, where a
+// fluttering leaf edge turns into sparkle on the art-pixel grid.
+global uniform float leaf_motion;
 global uniform float sea_level;
 global uniform vec3 sun_dir_world;
 global uniform float daylight;

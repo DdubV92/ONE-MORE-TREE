@@ -17,6 +17,7 @@ uniform float grain = 0.0;
 // on the block grid, given a 1-pixel contour where neighbouring art pixels
 // differ strongly, and a small saturation lift. UI sits above and stays crisp.
 uniform float pixel_px = 0.0;
+uniform float block_avg = 0.0;       // 1 = the frame is full resolution: an art pixel is the average of its block
 uniform float palette_levels = 32.0;
 uniform float dither = 0.0;          // clean flat palette steps (no noise)
 uniform float outline_strength = 0.45;
@@ -24,10 +25,15 @@ uniform float saturation = 1.08;
 global uniform float world_time;
 
 vec3 block_col(vec2 cell, vec2 res) {
-	vec2 uv = (cell + 0.5) * pixel_px / res;
+	vec2 uv = clamp((cell + 0.5) * pixel_px / res, vec2(0.0), vec2(1.0));
+	if (block_avg > 0.5) {
+		vec2 o = pixel_px * 0.25 / res;
+		return 0.25 * (textureLod(screen_tex, uv + vec2(-o.x, -o.y), 0.0).rgb + textureLod(screen_tex, uv + vec2(o.x, -o.y), 0.0).rgb
+			+ textureLod(screen_tex, uv + vec2(-o.x, o.y), 0.0).rgb + textureLod(screen_tex, uv + vec2(o.x, o.y), 0.0).rgb);
+	}
 	// The 3D frame is rendered at exactly 1/pixel_px resolution, so a block
 	// centre lands on a rendered texel centre: point-exact, crisp.
-	return textureLod(screen_tex, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).rgb;
+	return textureLod(screen_tex, uv, 0.0).rgb;
 }
 
 float luma(vec3 c) {

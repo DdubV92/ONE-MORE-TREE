@@ -32,9 +32,9 @@ void vertex() {
 	bool actor = actor_height > 0.0;
 	float h = (actor ? actor_height : max(INSTANCE_CUSTOM.b, 1.0)) / sy;
 	float phase = (actor ? actor_phase : INSTANCE_CUSTOM.g) * 6.28;
-	vec3 sway = (tree_sway(VERTEX, h, origin, phase, world_time) + impact_sway(VERTEX, h, origin, world_time)) * sway_scale;
+	vec3 sway = (tree_sway(VERTEX, h, origin, phase, world_time) * (0.45 + 0.55 * leaf_motion) + impact_sway(VERTEX, h, origin, world_time)) * sway_scale;
 	// Small per-card flutter (COLOR.g = card seed).
-	float f = sin(world_time * 4.0 + COLOR.g * 40.0 + phase) * flutter * wind_strength * COLOR.r;
+	float f = sin(world_time * 4.0 + COLOR.g * 40.0 + phase) * flutter * wind_strength * COLOR.r * leaf_motion;
 	VERTEX += (inverse(MODEL_MATRIX) * vec4(sway, 0.0)).xyz + NORMAL * f;
 	v_tint = actor ? actor_tint : INSTANCE_CUSTOM.r;
 	v_ao = COLOR.b;

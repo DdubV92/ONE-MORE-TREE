@@ -8,7 +8,8 @@
 |---|---|---|
 | World art style `drawn` (new default; owner request: more anime and pixel-drawn to match the pixel characters, hand-drawn in 3D): the 3D world renders on an art-pixel grid (about 450 rows; 2 screen pixels per art pixel at 720p and 1080p) with flat four-step cel tones, firm one-pixel ink lines and anime skies; sprites share the grid | ✅ | `AnimePass.DRAWN`, `anime_ink.gdshader` `pixel_mode`, `Settings.drawn_rows`. The earlier smooth look stays as `anime`; stored `anime` settings move to `drawn` once (settings version 26) |
 | Sharp and easy on the eyes (owner request): smallest paint brush with 45% of surface detail kept, bloom haze off and glow at 35%, hard-edged sun shadows, half vignette, no moving line wobble by default, hatching only in the darkest tones and scaled down at dusk | ✅ | See docs/art/DRAWN_WORLD.md and the before/after sheets in docs/art/drawn_world/ |
-| Seen in motion on a real GPU (shimmer on thin distant things, frame cost) | ⛔ not run | Stills only, software renderer. If it shimmers: raise "Drawn world pixel rows" or pick `anime` in Settings |
+| Steady in motion: full-resolution render averaged into art pixels, leaves nearly still (`leaf_motion`), half tree sway. Standing-still flicker in the forest 1.65% → 0.55% of pixels per frame (plain 3D with TAA: 0.04%) | ✅ | `tools/art/motion_check`, clip in docs/art/drawn_world/pixel_world_motion.mp4 |
+| Seen in motion on a real GPU (shimmer on thin distant things, frame cost) | ⛔ not run | Software renderer only. If it shimmers: raise "Drawn world pixel rows" or pick `anime` in Settings |
 
 ## Phase 29 (in progress): reasons to keep going
 

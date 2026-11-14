@@ -87,6 +87,7 @@ shader_compiler/shader_cache/enabled=true
 wind_dir={"type": "vec2", "value": Vector2(0.8, 0.6)}
 wind_strength={"type": "float", "value": 0.5}
 world_time={"type": "float", "value": 0.0}
+leaf_motion={"type": "float", "value": 1.0}
 sea_level={"type": "float", "value": 0.0}
 sun_dir_world={"type": "vec3", "value": Vector3(0.3, 0.8, 0.3)}
 daylight={"type": "float", "value": 1.0}

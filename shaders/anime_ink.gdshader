@@ -28,6 +28,11 @@ uniform float amount = 1.0;            // 0 = untouched frame
 // take pencil hatching. The hatch is anchored to the view direction, so it
 // turns with the world instead of sticking to the glass.
 uniform float pixel_mode = 0.0;
+// Screen pixels per art pixel. The world is rendered at full resolution
+// and every art pixel is the AVERAGE of the screen pixels under it, so a
+// leaf edge moving in the wind fades across art pixels instead of popping
+// on and off them (a low-resolution render flickered 30 times more).
+uniform float block_px = 1.0;
 uniform float hatch = 0.0;             // 0..1 strength of shadow hatching
 uniform float boil = 0.0;              // 0..1 hand-drawn wobble of the lines
 uniform float hatch_shade = 0.1;       // tone below which shade is hatched one way
@@ -80,6 +85,16 @@ float hash21(vec2 p) {
 	return fract(p.x * p.y);
 }
 
+// One colour sample: a single texel, or the average of an art pixel.
+vec3 tap(vec2 uv) {
+	if (pixel_mode > 0.5 && block_px > 1.5) {
+		vec2 o = block_px * 0.25 / vec2(textureSize(screen_tex, 0));
+		return 0.25 * (textureLod(screen_tex, uv + vec2(-o.x, -o.y), 0.0).rgb + textureLod(screen_tex, uv + vec2(o.x, -o.y), 0.0).rgb
+			+ textureLod(screen_tex, uv + vec2(-o.x, o.y), 0.0).rgb + textureLod(screen_tex, uv + vec2(o.x, o.y), 0.0).rgb);
+	}
+	return textureLod(screen_tex, uv, 0.0).rgb;
+}
+
 // Edge-preserving brush: of the four quadrants around the pixel, keep the
 // mean of the calmest one. Works in a compressed range so bright sky or
 // lamps do not dominate.
@@ -89,7 +104,7 @@ vec3 brush(vec2 uv, vec2 px) {
 	int r = clamp(brush_radius, 1, 4);
 	for (int j = -r; j <= r; j++) {
 		for (int i = -r; i <= r; i++) {
-			vec3 c = squash(textureLod(screen_tex, uv + vec2(float(i), float(j)) * px, 0.0).rgb);
+			vec3 c = squash(tap(uv + vec2(float(i), float(j)) * px));
 			vec3 cc = c * c;
 			if (i <= 0 && j <= 0) { m0 += c; s0 += cc; }
 			if (i >= 0 && j <= 0) { m1 += c; s1 += cc; }
@@ -113,22 +128,31 @@ vec3 brush(vec2 uv, vec2 px) {
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
-	vec3 src = textureLod(screen_tex, uv, 0.0).rgb;
+	bool pix = pixel_mode > 0.5;
+	vec2 rsize = vec2(textureSize(depth_tex, 0));
+	float bpx = pix ? max(block_px, 1.0) : 1.0;
+	vec2 grid = floor(uv * rsize / bpx);
+	if (pix) {
+		// Everything is worked out once per art pixel, at its centre
+		// (nudged off the texel corner so depth and normals read one
+		// steady texel).
+		uv = (grid + 0.5) * bpx / rsize - 0.25 / rsize;
+	}
+	vec3 raw = textureLod(screen_tex, SCREEN_UV, 0.0).rgb;
+	vec3 src = pix ? tap(uv) : raw;
 	vec4 nr = texture(nr_tex, uv);
 	float d_here = lin_depth(uv, INV_PROJECTION_MATRIX);
 	// Pixel-art actors (ROUGHNESS 0 marker): leave exactly as drawn.
 	bool sprite = nr.a < 0.012 && d_here < 5900.0;
 	if (amount < 0.001 || sprite) {
-		ALBEDO = src;
+		ALBEDO = raw;
 	} else {
-		bool pix = pixel_mode > 0.5;
-		vec2 rsize = vec2(textureSize(depth_tex, 0));
 		float k = VIEWPORT_SIZE.y / 720.0;
-		vec2 px = pix ? 1.0 / rsize : k / VIEWPORT_SIZE;
+		vec2 px = pix ? bpx / rsize : k / VIEWPORT_SIZE;
 		// Pattern grid that turns with the camera (whole art pixels).
 		vec3 fwd = -INV_VIEW_MATRIX[2].xyz;
-		float focal = PROJECTION_MATRIX[1][1] * 0.5 * rsize.y;
-		vec2 cell = floor(uv * rsize) + floor(vec2(atan(fwd.x, -fwd.z), -asin(clamp(fwd.y, -1.0, 1.0))) * focal);
+		float focal = PROJECTION_MATRIX[1][1] * 0.5 * rsize.y / bpx;
+		vec2 cell = grid + floor(vec2(atan(fwd.x, -fwd.z), -asin(clamp(fwd.y, -1.0, 1.0))) * focal);
 		// 1. Paint.
 		vec3 p = mix(brush(uv, px * brush_px), squash(src), detail);
 		// 2. Tones (on the compressed 0..1 range).

@@ -364,7 +364,15 @@ func _apply_world_style() -> void:
 	if not root.size_changed.is_connected(_on_root_resized):
 		root.size_changed.connect(_on_root_resized)
 	var px := world_pixel_px()
-	if px > 0:
+	if px > 0 and str(values.get("world_style", "")) == "drawn":
+		# The drawn world renders at FULL resolution and averages each art
+		# pixel from the screen pixels under it (steady in motion). No
+		# temporal or FXAA smoothing: both would smear the art pixels.
+		root.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+		root.scaling_3d_scale = 1.0
+		root.use_taa = false
+		root.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+	elif px > 0:
 		# True low-resolution render: aliased, crisp pixel-art edges (no
 		# temporal or FXAA smoothing, which would smear the art pixels).
 		root.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR

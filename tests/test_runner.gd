@@ -9408,6 +9408,8 @@ func _t_phase24_settings_migration() -> String:
 	# lines by default, and works on whole art pixels.
 	if err == "" and (int(AnimePass.DRAWN.brush_radius) != 1 or float(AnimePass.DRAWN.boil) != 0.0 or float(AnimePass.DRAWN.pixel_mode) != 1.0 or float(AnimePass.DRAWN.detail) < 0.4):
 		err = "the drawn world is not set up sharp (brush %s, boil %s)" % [str(AnimePass.DRAWN.brush_radius), str(AnimePass.DRAWN.boil)]
+	if err == "" and float(ProjectSettings.get_setting("shader_globals/leaf_motion", {}).get("value", -1.0)) != 1.0:
+		err = "leaf_motion must default to 1 (only the drawn world calms the leaves)"
 	if err == "" and Settings.world_pixel_px() != 0:
 		err = "a headless run must not scale the 3D render"
 	var keep_rows: int = int(Settings.values.get("drawn_rows", 450))
