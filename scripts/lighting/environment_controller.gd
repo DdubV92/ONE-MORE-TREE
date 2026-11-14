@@ -330,7 +330,11 @@ func _apply() -> void:
 	# Drawn world: shaped two-tone clouds and crisper cast shadows.
 	var drawn := AnimePass.enabled()
 	sky_mat.set_shader_parameter("drawn", 1.0 if drawn else 0.0)
-	sun.shadow_blur = 0.55 if drawn else 1.2
+	# The drawn pixel world wants hard-edged shadow shapes and no haze of
+	# bloom over the picture (sharp first).
+	var pixel_world := str(Settings.get_v("world_style")) == "drawn"
+	sun.shadow_blur = 0.35 if pixel_world else (0.55 if drawn else 1.2)
+	env.glow_bloom = 0.0 if pixel_world else 0.05
 	sky_mat.set_shader_parameter("sun_dir", sd)
 	sky_mat.set_shader_parameter("moon_dir", md)
 	sky_mat.set_shader_parameter("cloud_offset", _cloud_offset)
@@ -368,7 +372,7 @@ func _apply() -> void:
 		var lv: Array = [0.0, 0.6, 1.0, 0.8, 0.5] if px == 0 else [0.5, 0.9, 0.35, 0.0, 0.0]
 		for i in 5:
 			env.set_glow_level(i + 1, float(lv[i]))
-	env.glow_intensity = p.glow_intensity * (1.0 if Settings.get_v("bloom") else 0.0) * (0.55 if px > 0 else 1.0)
+	env.glow_intensity = p.glow_intensity * (1.0 if Settings.get_v("bloom") else 0.0) * (0.35 if pixel_world else (0.55 if px > 0 else 1.0))
 	env.glow_enabled = Settings.get_v("bloom")
 	var grade: float = Settings.get_v("color_grading")
 	# AgX keeps hues in bright light but reads flatter: compensate a little.

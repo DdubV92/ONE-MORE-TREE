@@ -45,7 +45,8 @@ func _ready() -> void:
 		note.text = "Review build: the drawn world with pixel-art characters is on for everyone. Press F8 in game to compare the plain 3D look."
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		v.add_child(note)
-	_choice(v, "World art style", "world_style", ["anime", "3d", "hd2d"])
+	_choice(v, "World art style", "world_style", ["drawn", "anime", "3d", "hd2d"])
+	_slider(v, "Drawn world pixel rows", "drawn_rows", 240, 540, 20)
 	_slider(v, "HD-2D pixel rows", "world_pixel_rows", 240, 480, 20)
 	_choice(v, "Character art style", "character_style", ["hd2d", "clean", "pixel"])
 	_slider(v, "Pixel style strength", "character_style_strength", 0.0, 1.0, 0.05)

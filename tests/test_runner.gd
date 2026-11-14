@@ -9395,12 +9395,28 @@ func _t_phase24_settings_migration() -> String:
 	Settings.values.character_style = keep
 	# The drawn world replaced "3d" as the stored default (version 25).
 	var keep_w: String = Settings.values.world_style
-	for c in [["3d", 24, "anime"], ["hd2d", 24, "hd2d"], ["3d", 25, "3d"], ["anime", 0, "anime"]]:
+	# The hand-drawn pixel world replaced the smooth painted one (version 26).
+	for c in [["3d", 24, "drawn"], ["hd2d", 24, "hd2d"], ["3d", 25, "3d"], ["anime", 0, "drawn"], ["anime", 25, "drawn"], ["anime", 26, "anime"], ["drawn", 0, "drawn"]]:
 		Settings.values.world_style = c[0]
 		Settings.apply_migrations(int(c[1]))
 		if err == "" and str(Settings.values.world_style) != str(c[2]):
 			err = "world %s from v%d gave %s, expected %s" % [c[0], c[1], Settings.values.world_style, c[2]]
 	Settings.values.world_style = keep_w
+	if err == "" and str(Settings.defaults.get("world_style", "")) != "drawn":
+		err = "the drawn pixel world is not the default"
+	# Sharp first: the drawn world keeps the smallest brush, no moving
+	# lines by default, and works on whole art pixels.
+	if err == "" and (int(AnimePass.DRAWN.brush_radius) != 1 or float(AnimePass.DRAWN.boil) != 0.0 or float(AnimePass.DRAWN.pixel_mode) != 1.0 or float(AnimePass.DRAWN.detail) < 0.4):
+		err = "the drawn world is not set up sharp (brush %s, boil %s)" % [str(AnimePass.DRAWN.brush_radius), str(AnimePass.DRAWN.boil)]
+	if err == "" and Settings.world_pixel_px() != 0:
+		err = "a headless run must not scale the 3D render"
+	var keep_rows: int = int(Settings.values.get("drawn_rows", 450))
+	Settings.values.drawn_rows = 9999
+	Settings.sanitize()
+	if err == "" and int(Settings.values.drawn_rows) > 540:
+		err = "drawn_rows is not clamped"
+	Settings.values.drawn_rows = keep_rows
+	Settings.sanitize()
 	return err
 
 
