@@ -281,6 +281,7 @@ func activity_words() -> String:
 		"yard_take", "yard_drop": return "yard work: moving paid logs"
 		"seated": return "riding in a truck"
 		"follow": return "following you"
+		"missing_wait": return "standing out past the fence, listening"
 		"home": return "heading home"
 		"sit": return "resting"
 		"break_sit": return "on the midday break"
@@ -523,7 +524,7 @@ func _physics_process(delta: float) -> void:
 	_time_check -= delta
 	if _time_check <= 0.0:
 		_time_check = 3.0
-		if activity in ["fell", "buck", "stump", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver", "deliver_mill", "hide_enter", "board"]):
+		if activity in ["fell", "buck", "stump", "pick", "follow", "retreat_wait"] or (activity == "move" and not _after_move in ["home_arrived", "depart_wait", "deliver", "deliver_mill", "hide_enter", "board", "missing_wait"]):
 			crew.check_time(self)
 	match activity:
 		"move":
@@ -556,6 +557,8 @@ func _physics_process(delta: float) -> void:
 			_do_team_follow(delta)
 		"sleep", "sit", "departed", "aboard", "seated", "hidden", "dead", "board", "break_sit":
 			pass
+		"missing_wait":
+			body_char.set_locomotion(0.0)
 		"hide_enter":
 			_enter_hide()
 		"depart_wait":

@@ -299,6 +299,23 @@ func _journal_help() -> Control:
 	return s[0]
 
 
+## Phase 27: the worker who did not come home. One thing to say.
+func _open_missing_talk(w: Worker) -> void:
+	_talk_worker = w
+	var f := _frame(w.emp.name, 600)
+	var p: PanelContainer = f[0]
+	p.process_mode = Node.PROCESS_MODE_ALWAYS
+	var v: VBoxContainer = f[1]
+	_text(v, "\"...Did you hear that? Somebody was calling. Somebody I know. They are not on this island.\"", 17)
+	_text(v, "%s is standing still, facing the trees." % w.emp.name, 14, UITheme.MUTED)
+	v.add_child(UITheme.button("Come back with me.", func() -> void:
+		Game.crew.missing.bring_home(w)
+		close_panel()
+		hud.show_message("%s is coming with you. Walk them back inside the fence." % w.emp.name, 6.0), 270))
+	v.add_child(UITheme.button("That's all.", close_panel, 270))
+	_open(p)
+
+
 ## Phase 26: what the boss has worked out about the nights.
 func _journal_field_notes() -> Control:
 	var s := _scroll("Field notes")
@@ -633,7 +650,10 @@ func _journal_crew() -> Control:
 		var owed := svc.payroll.owed_for(eid)
 		var lines := "%s  ·  %s\n%s · %s · bed %d · %s axe%s" % [e.name, WorkerMind.traits_text(e.traits), {"active": "working", "pending_arrival": "arriving on the next daylight boat", "departing": "leaving (%s)" % e.get("departure_reason", ""), "pending_integration": "arriving"}.get(st, st), (w.activity_words() if w else "-"), int(e.get("bed", 0)), str(axe.get("tier", "no")), ("  ·  owed $%s by day %d" % [Money.format_cents(owed), svc.payroll.due_day_for(eid)]) if owed > 0 else ""]
 		if m:
-			lines += "\nMood: %s  ·  %s" % [m.state_word(), m.belief_word()]
+			lines += "\nMood: %s  ·  %s  ·  %s" % [m.state_word(), m.belief_word(), m.trust_word()]
+			lines += "\nBelief: %s.  Trust: %s." % [m.belief_effect(), m.trust_effect()]
+			if crew.missing.id == eid and crew.missing.active():
+				lines += "\nNOT IN CAMP TONIGHT. Last seen working out past the forest entrance."
 		if st == Payroll.ACTIVE:
 			var rv := crew.review(eid, svc.clock.day)
 			lines += "\nLevel %d  ·  merit %d%s  ·  %s, %s; prefers %s" % [int(rv.level), int(round(float(rv.merit))), (" / %d for next" % int(rv.next)) if int(rv.next) > 0 else " (top level)", rv.ethic, rv.reliability, rv.prefers]
@@ -799,6 +819,10 @@ var _talk_worker: Worker
 ## Conversation with a worker. Live (the world keeps running, briefly); the
 ## worker stops to face you. Walking away or Esc ends it.
 func open_talk(w: Worker) -> void:
+	# Phase 27: found out past the fence at night.
+	if Game.crew and Game.crew.missing.is_missing(w):
+		_open_missing_talk(w)
+		return
 	_talk_worker = w
 	w.talking_until = Game.crew.now() + 30.0
 	var f := _frame(w.emp.name, 600)
@@ -867,6 +891,31 @@ func open_talk(w: Worker) -> void:
 			answer.call(w.say("report_skeptic_rumor"))
 		else:
 			answer.call(w.say("report_rumor")))
+	# Phase 27: evidence, not a rumour. Shown once per recording.
+	if not Game.crew.unseen_recording(w).is_empty():
+		add.call("Look at this recording.", func() -> void:
+			var clip := Game.crew.unseen_recording(w)
+			var r := Game.crew.show_recording(w)
+			var lines := {
+				"convinced": "...That's the %s camera. That's our yard. All right. I believe you." % str(clip.get("camera", "camp")),
+				"shaken": "Turn it off. I've seen enough. I don't want to be out here after dark.",
+				"seen": "Play it again. ...I don't know what that is. I know it's not one of us.",
+				"already": "You showed me that one.",
+				"none": "There's nothing new to look at.",
+			}
+			answer.call(str(lines.get(r, lines.seen)))
+			hud.show_message("%s watched the recording: now %s, and %s." % [w.emp.name, m.belief_word(), m.trust_word()], 6.0))
+	# Phase 27: in the hunt, someone who trusts you will come with you.
+	if Game.hunt and Game.hunt.hunt_active():
+		if bool(w.emp.get("hunt_follow", false)):
+			add.call("Go back to the cabin.", func() -> void:
+				w.emp.erase("hunt_follow")
+				answer.call("All right. Be careful."))
+		else:
+			add.call("Stay close to me.", func() -> void:
+				var yes: bool = Game.hunt.ask_to_follow(w)
+				var no_line := "No. I'm not going out there. Not with it walking around." if m.trust >= WorkerMind.TRUST_LOW else "With you? No."
+				answer.call("Right behind you. Don't lose me." if yes else no_line))
 	add.call("It's alright. We're safe here.", func() -> void:
 		var credible := Game.crew.nav.in_camp(w.global_position) or svc.clock.phase() == WorkdayClock.Phase.DAYLIGHT
 		var r := m.reassure(Game.crew.now(), credible)

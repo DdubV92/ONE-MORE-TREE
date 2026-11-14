@@ -20,6 +20,19 @@ const MEMORY_CAP := 12
 const REASSURE_COOLDOWN := 90.0
 const SAME_KIND_WINDOW := 600.0       # repeats within 10 min count less
 
+## Phase 27: belief and trust do something.
+const SCEPTIC_MARGIN := -15.0         # seconds: a sceptic stays out later
+const BELIEVER_MARGIN := 45.0         # a convinced worker heads in earlier
+const SCEPTIC_BELOW := 0.15
+const BELIEVER_FROM := 0.6
+const SCEPTIC_SHOCK := 1.4            # a sceptic who SEES something takes it harder
+const BELIEVER_STEADY := 0.85         # a believer half expected it
+const TRUST_HIGH := 0.75
+const TRUST_LOW := 0.3
+const TRUST_PAID_FAIR := 0.012        # per pay night at or above their fair wage, nothing owed
+const TRUST_UNDERPAID := 0.008
+const TRUST_CAP := 0.95
+
 const TRAITS := ["timid", "hard_working", "stronger", "level_headed", "sociable", "skeptical", "observant", "reliable_driver"]
 ## Phase 24: display names. "stronger" is shown as Strongman (+1 standard log
 ## of hand-carry capacity; the id stays so saves and dialogue keys keep working).
@@ -79,6 +92,9 @@ func return_margin() -> float:
 		m += 60.0
 	if state >= Fear.UNEASY:
 		m += 20.0 * float(state)
+	# Phase 27: belief sets the curfew. Someone convinced something is out
+	# there heads in early; a sceptic works later into the dusk.
+	m += lerpf(SCEPTIC_MARGIN, BELIEVER_MARGIN, clampf(belief, 0.0, 1.0))
 	return m
 
 
@@ -110,6 +126,13 @@ func perceive(stim: Dictionary, now: float, info: Dictionary) -> Dictionary:
 	var gain := sev * conf * sensitivity() * dim
 	if bool(info.get("asleep", false)):
 		gain *= 0.6
+	# Phase 27: seeing it with your own eyes breaks a sceptic harder than
+	# someone who already believed.
+	if str(stim.get("modality", "")) == "sight":
+		if belief < SCEPTIC_BELOW:
+			gain *= SCEPTIC_SHOCK
+		elif belief >= BELIEVER_FROM:
+			gain *= BELIEVER_STEADY
 	fear = clampf(fear + gain, 0.0, 1.0)
 	# Belief: firsthand sight moves it most; ambiguous sounds barely do.
 	var b_gain := 0.0
@@ -264,8 +287,76 @@ func severe_while_warning(sev: float) -> bool:
 	return false
 
 
+## Phase 27: trust moves the line. Someone who trusts the boss takes a
+## risky order one fear state later; someone who does not refuses sooner.
 func refuses_risk() -> bool:
+	if trust >= TRUST_HIGH:
+		return state >= Fear.DEPARTURE_WARNING
+	if trust < TRUST_LOW:
+		return state >= Fear.DISTRESSED
 	return state >= Fear.REFUSING_RISK
+
+
+## Phase 27: a worker who trusts the boss waits one more day for late wages.
+func waits_for_pay() -> bool:
+	return trust >= TRUST_HIGH
+
+
+## Phase 27: once per settled pay night. Fair pay with nothing owed builds
+## trust slowly; being paid under what they think is fair wears it down.
+func on_pay_night(fair: bool) -> void:
+	if fair:
+		trust = clampf(trust + TRUST_PAID_FAIR, 0.0, maxf(TRUST_CAP, trust))
+	else:
+		trust = clampf(trust - TRUST_UNDERPAID, 0.0, 1.0)
+
+
+## Phase 27: the boss shows a camera recording. Evidence, not a rumour:
+## belief moves a lot (more for someone who trusts the boss), it frightens a
+## little, and being shown rather than told builds trust. Once per clip.
+## Returns "already" / "convinced" / "shaken" / "seen".
+func see_evidence(now: float, clip_id: String) -> String:
+	var eid := "evidence:" + clip_id
+	for m in memories:
+		if str(m.id) == eid:
+			return "already"
+	var before := belief
+	var g := 0.25 * (0.5 + trust)
+	if has("skeptical"):
+		g *= 0.7
+	belief = clampf(belief + g, 0.0, 1.0)
+	fear = clampf(fear + 0.05 * sensitivity(), 0.0, 1.0)
+	trust = clampf(trust + 0.03, 0.0, maxf(TRUST_CAP, trust))
+	_remember({"id": eid, "kind": "recording", "modality": "shown", "pos": [], "time": now, "confidence": 0.8, "significance": 0.2, "firsthand": false, "status": "confirmed"})
+	_update_state(now)
+	if before < BELIEVER_FROM and belief >= BELIEVER_FROM:
+		return "convinced"
+	return "shaken" if state >= Fear.DISTRESSED else "seen"
+
+
+## Phase 27: what belief and trust mean for this worker, in plain words.
+func belief_effect() -> String:
+	if belief < SCEPTIC_BELOW:
+		return "works later into the dusk; would take a real sighting hard"
+	if belief >= BELIEVER_FROM:
+		return "heads in early before dark; steadier if something shows itself"
+	return "keeps the usual margin before dark"
+
+
+func trust_word() -> String:
+	if trust >= TRUST_HIGH:
+		return "trusts you"
+	if trust < TRUST_LOW:
+		return "does not trust you"
+	return "is making up their mind about you"
+
+
+func trust_effect() -> String:
+	if trust >= TRUST_HIGH:
+		return "takes a risky order when shaken; waits a day for late wages; will follow you in the worst of it"
+	if trust < TRUST_LOW:
+		return "refuses risky work sooner; will not follow you"
+	return "follows orders while calm"
 
 
 func state_word() -> String:

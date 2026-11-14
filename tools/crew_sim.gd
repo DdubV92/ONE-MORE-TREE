@@ -86,6 +86,30 @@ func _ready() -> void:
 		if cs.contract.lots:
 			day["lots_done"] = cs.contract.lots.done.size()
 			day["lot"] = cs.contract.lots.current_lot() + 1
+			var per := []
+			for lk in cs.contract.lots.lots.size():
+				var lc: Dictionary = cs.contract.lots.lot_counts(lk, world.trees, world.timber)
+				per.append([int(lc.standing), int(lc.stumps), int(lc.undelivered_mte)])
+			day["lots"] = per      # [standing, stumps, undelivered mte] per lot
+			# What is holding the current lot open (first few items).
+			var cur: int = cs.contract.lots.current_lot()
+			var held := []
+			if cur >= 0:
+				var o := World.camp_origin()
+				for tid in (cs.contract.lots.lots[cur].trees as PackedInt32Array):
+					var st := int(world.trees.records[tid].state) if world.trees.records.has(tid) else 0
+					if st < TreeService.State.FALLING:
+						continue
+					var segs := []
+					if world.timber.records.has(tid):
+						for sg in world.timber.records[tid].segments:
+							if int(sg.state) < TimberService.Seg.ACCEPTED_QUEUED:
+								segs.append("%s:%d:%s" % [str(sg.sid).get_slice("_", 1), int(sg.state), str(world.timber.claims.get(str(sg.sid), ""))])
+					if st < TreeService.State.DISPOSED or not segs.is_empty():
+						var ti: int = world.trees.index_of(tid)
+						held.append({"tree": tid, "state": st, "dist": int(Vector2(World.trees.x[ti] - o.x, World.trees.z[ti] - o.z).length()), "segs": segs})
+			day["held"] = held.slice(0, 8)
+			day["held_n"] = held.size()
 		var in_bed_n := 0
 		for w in crew.workers.values():
 			if (w as Worker).activity == "sleep":

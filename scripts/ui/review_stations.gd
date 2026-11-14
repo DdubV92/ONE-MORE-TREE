@@ -132,6 +132,11 @@ const STATIONS26 := [
 	["4 Work lamps at night", "p26_lamps"],
 	["5 The breaker goes", "p26_breaker"],
 ]
+## Phase 27: people who matter.
+const STATIONS27 := [
+	["1 A worker does not come home", "p27_missing"],
+	["2 Show a recording to a worker", "p27_evidence"],
+]
 static var _p26_level := -1
 static var _p26_family := 0
 static var _terrain_debug := 0
@@ -523,6 +528,8 @@ static func go(hud: Node, which: String) -> String:
 			return _p23(hud, w, which)
 		"p26_pressure", "p26_meet", "p26_notes", "p26_lamps", "p26_breaker":
 			return _p26(hud, w, which)
+		"p27_missing", "p27_evidence":
+			return _p27(w, which)
 		"p24_ref_match", "p24_ref_fp":
 			if w and w.has_method("teleport_to"):
 				w.call("teleport_to", "ref_match" if which == "p24_ref_match" else "ref_fp")
@@ -942,6 +949,38 @@ static func shared_tree_fixture(w: IslandWorld) -> String:
 	Game.trees.apply_contact(tid, st, req * 0.4, b.id)
 	Game.trees.apply_contact(tid, st, req, a.id)
 	return "%s cut 60%% of the notch and %s 40%%: felling merit %+.0f / %+.0f (300 per tree, split by accepted work). A third contact on the felled tree earned 0. The tree stood %.0f m from camp." % [a.emp.name, b.emp.name, crew.merit.total(a.id) - ma, crew.merit.total(b.id) - mb, bd]
+
+
+## Phase 27 review stations (preview only: nothing here is saved).
+static func _p27(w: IslandWorld, which: String) -> String:
+	var cs: CampaignService = Game.campaign
+	var crew: CrewService = Game.crew
+	if cs == null or crew == null:
+		return ""
+	if crew.workers.size() < 2:
+		cs.start_test_route(true, true)
+		return "Crew starting (test session). Press this station again in a few seconds."
+	match which:
+		"p27_missing":
+			for wk in crew.workers.values():
+				(wk as Worker).mind.belief = minf((wk as Worker).mind.belief, 0.1)
+			cs.clock.restore({"day": maxi(cs.clock.day, 3), "t": WorkdayClock.NIGHT_AT - 200.0, "running": true, "deadline_enabled": true})
+			crew.missing.decided_day = -1
+			crew.missing.id = ""
+			if not crew.missing.on_dusk(true):
+				return "Nobody could be sent out from here (no reachable spot). Try again from the yard."
+			var who: Worker = crew.workers.get(crew.missing.id)
+			w.teleport_to("camp")
+			return "Dusk. %s is not heading home with the others: they are walking out past the forest entrance and will stand there. Take a work lamp (Phase 26 station 4), find them and say \"Come back with me\", or sleep and see them walk in shaken at first light. Nobody is harmed. (Preview: never saved.)" % str(who.emp.name)
+		"p27_evidence":
+			var nr: NightRecorder = Game.night_recorder
+			if nr and nr.clips.is_empty():
+				nr.on_night(cs.clock.day, "")
+			if nr == null or nr.clips.is_empty():
+				return "No recording could be staged here. Use Phase 20 station 1 first, then come back."
+			w.teleport_to("camp")
+			return "A camera recording is in the archive. Talk to any worker and choose \"Look at this recording.\": belief moves (more if they trust you), and the Journal crew page shows what their belief and trust now mean. (Preview: never saved.)"
+	return ""
 
 
 ## Phase 26 review stations (preview only: nothing here is saved).

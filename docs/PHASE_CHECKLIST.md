@@ -2,6 +2,22 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Phase 27 (in progress): people who matter
+
+| Item | Status | Notes |
+|---|---|---|
+| Belief does something: a convinced worker heads in up to 45 s earlier, a sceptic works 15 s later into dusk; a sceptic who sees something takes it 1.4× as hard, a believer 0.85× | ✅ | `WorkerMind.return_margin`, `perceive` |
+| Trust does something: a trusting worker takes a risky order one fear state later and waits one more day for late wages; an untrusting one refuses a state sooner | ✅ | `refuses_risk`, `Payroll.patience_fn` |
+| Trust grows with fair pay (once per settled night, nothing owed) and wears when underpaid | ✅ | Capped at 0.95 |
+| Show a recording to a worker ("Look at this recording."): belief moves by trust, once per clip per worker, saved | ✅ | Text-only replies (not voiced) |
+| In the hunt, "Stay close to me": a trusting worker follows and hides when the boss hides; fear can end it; an untrusting one refuses | ✅ | |
+| Journal crew page says what each worker's belief and trust mean | ✅ | |
+| A worker missing overnight (owner decision 3): only on a stirred island, only a calm sceptic, one at a time, at most every four days, never in the last two days. They stand out past the fence. Brought in by the boss (trust and belief up), or back at first light shaken and sitting out the morning. Never harmed; saved | ✅ | `MissingNight`; the cabin rule is unchanged, they are simply not in it |
+| Review stations: a worker does not come home; show a recording | ✅ | Preview only |
+| Test harness: a test that aborts on a script error now fails (it used to read as a pass); the stale Phase 8 lightning test was rewritten for the Phase 23 strike records | ✅ | Script errors in game code during tests are counted and printed |
+| Arcs for the five named workers, evenings at the fire, hunt radio, lines that name who left, perks | ⬜ | Next |
+| Played by a person | ⛔ not run | |
+
 ## Phase 26 (in progress): nights that grow
 
 | Item | Status | Notes |

@@ -17,24 +17,30 @@ func _ready() -> void:
 		await _run_async("human walk keeps stance foot planted", _t_human_walk)
 		if not OS.has_environment("WALK_ONLY"):
 			await _run_async("phase 12", _t_phase12_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_LEGACY_PAY"):
 		await _run_async("contract: pay once on delivery, final-frame delivery wins, late cannot reopen, reload", _t_campaign_world)
 		await _run_async("phase 5: trucks, seats, cargo once, TV rotation/focus/pool, mics, arcade pause, dog door route, refuge, couch, saves", _t_phase5_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
+		get_tree().quit(1 if failures > 0 else 0)
+		return
+	if OS.has_environment("ONLY_P27"):
+		_run("phase 27 belief and trust units", _t_phase27_units)
+		await _run_async("phase 27 people world", _t_phase27_world)
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P26"):
 		_run("phase 26 night pressure and field notes units", _t_phase26_units)
 		await _run_async("phase 26 nights world", _t_phase26_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P25"):
 		await _run_async("phase 25 contract lots", _t_phase25_lots_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P24"):
@@ -44,95 +50,95 @@ func _ready() -> void:
 		_run("phase 24 settings migration", _t_phase24_settings_migration)
 		await _run_async("phase 24 woodcutting world", _t_phase24_wc_world)
 		await _run_async("phase 24 sawmill world", _t_phase24_mill_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P23"):
 		_run("phase 23 storm units", _t_phase23_units)
 		await _run_async("phase 23 storm world", _t_phase23_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P22"):
 		await _run_async("phase 22 CampOS", _t_phase22_os)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P21"):
 		_run("phase 21 pay units", _t_phase21_units)
 		await _run_async("phase 21 pay world", _t_phase21_world)
 		print("P21 REPORT ", JSON.stringify(p21_report))
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P20"):
 		_run("phase 20 units", _t_phase20_units)
 		await _run_async("phase 20 night world", _t_phase20_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P19"):
 		_run("phase 19 units", _t_phase19_units)
 		await _run_async("phase 19 offshore world", _t_phase19_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P18"):
 		_run("phase 18 units", _t_phase18_units)
 		await _run_async("phase 18 world", _t_phase18_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P17"):
 		_run("phase 17 units", _t_phase17_units)
 		await _run_async("phase 17 world", _t_phase17_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P16"):
 		_run("phase 16 units", _t_phase16_units)
 		await _run_async("phase 16 world", _t_phase16_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P15"):
 		_run("phase 15 units", _t_phase15_units)
 		await _run_async("phase 15 world", _t_phase15_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P14"):
 		_run("phase 14 units", _t_phase14_units)
 		await _run_async("phase 14 world", _t_phase14_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P13"):
 		_run("phase 13 units", _t_phase13_units)
 		await _run_async("phase 13 world", _t_phase13_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P11"):
 		await _run_async("phase 11", _t_phase11_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P10"):
 		_run("phase 10 units", _t_phase10_units)
 		await _run_async("phase 10 world", _t_phase10_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P9"):
 		_run("phase 9 units", _t_phase9_units)
 		await _run_async("phase 9 world", _t_phase9_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P8"):
 		await _run_async("phase 8 presentation", _t_phase8_presentation)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	if OS.has_environment("ONLY_P5"):
@@ -143,7 +149,7 @@ func _ready() -> void:
 		_run("phase 6 bank", _t_terror_bank)
 		await _run_async("phase 6 world", _t_phase6_world)
 		await _run_async("phase 7 world", _t_phase7_world)
-		print("\n==== %d passed, %d failed ====" % [passes, failures])
+		_summary()
 		get_tree().quit(1 if failures > 0 else 0)
 		return
 	_run("world data matches manifest", _t_manifest)
@@ -224,13 +230,15 @@ func _ready() -> void:
 	await _run_async("phase 24 woodcutting world: accepted axe/saw/buck/stump hits award once to the hitter, rejected hits award nothing, level-up refreshes the kit, crew save block", _t_phase24_wc_world)
 	_run("phase 24 mill ledger units: 30+45+70 -> 1 pallet + 45, +220 -> 2 more + 65, one log across recipe boundaries, prepaid share pays nothing, cent remainder carried, pay once, overflow at cap still pays, dusk finishes the cut, day rollover keeps work, save mid-job = same result", _t_phase24_mill_units)
 	await _run_async("phase 25 contract lots: three lots planned nearest-first outside the fence (30/35/40), advances paid as lots open, the contract counts lot trees only, the crew targets the lot being felled, milestones and on-time bonuses pay once, late lots pay no bonus, saved, all lots done fulfils the contract, older rulesets keep the whole island; loads go straight to the sawmill's feed rack while it has room, a full rack sends them to the cradle, yard hands move cradle wood to the mill", _t_phase25_lots_world)
+	_run("phase 27 units: belief sets the curfew margin and how hard a sighting hits; trust moves the risk line, waits a day for late wages and grows with fair pay; a shown recording convinces once per clip; arrears patience", _t_phase27_units)
+	await _run_async("phase 27 people world: fair pay nights build trust once, a recording can be shown to a worker once, a trusted worker follows in the hunt and an untrusting one refuses, a sceptic does not come home at dusk (one at a time, never the timid, never before the island stirs), brought home by the boss or back at first light shaken, saved", _t_phase27_world)
 	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded; night-shift rush rate is pro rata, in whole cents, saved mid-pallet", _t_phase26_units)
 	await _run_async("phase 26 nights world: a new campaign's nights are quiet (sound and atmosphere only, no sharp beats), pressure grows with the day and the cutting and is worst on cleared ground, each rule kind ends an encounter quietly, a right answer fills the notes and eases the exposure, the not-your-dog never calls beside the real dog, notes survive a save; work lamps: issued with the lots, carried and set down, a real safe pool at night only (SafetyService rule 4), battery drains and recharges, saved; the breaker: flicker warning, pole-lamp pools unsafe until reset, the camper unaffected, only on a disturbed island; the sawmill night shift runs only at night with the boss at the mill and ends at dawn", _t_phase26_world)
 	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
 	_run("phase 24 soundscape units: place beds + plant contact families resolve to files, every footstep surface has 5 variants, day/dusk/night motif cues", _t_phase24_sound_units)
 	await _run_async("phase 24 sawmill world: deferred delivery pay, deck -> rack -> saw -> pallet credited once, prepaid wood pays nothing, rack full refusal, save/reload mid-job, nightly lumber line, mill nav solid, CAM_12", _t_phase24_mill_world)
 	await _run_async("phase 6 + 25: exposure/catch arbitration, director pacing/cleanup, a failed contract strands the player (no ship), beacon repair calls one, hunt clock, Foreman rules, save", _t_phase6_world)
-	print("\n==== %d passed, %d failed ====" % [passes, failures])
+	_summary()
 	DirAccess.make_dir_recursive_absolute("user://test_reports")
 	var f := FileAccess.open("user://test_reports/last_run.txt", FileAccess.WRITE)
 	if f:
@@ -238,16 +246,64 @@ func _ready() -> void:
 	get_tree().quit(1 if failures > 0 else 0)
 
 
+## Counts script errors (Godot 4.5 Logger). A test function that hits one
+## aborts and, being typed "-> String", returns "" - which used to read as
+## a pass. Errors raised in this file now fail the test that raised them;
+## errors in game code are counted and printed at the end.
+class ErrCatch extends Logger:
+	var mutex := Mutex.new()
+	var in_tests := 0
+	var total := 0
+	var last := ""
+
+	func _log_error(function: String, file: String, line: int, _code: String, _rationale: String, _editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		if error_type != Logger.ERROR_TYPE_SCRIPT:
+			return
+		mutex.lock()
+		total += 1
+		if file.ends_with("tests/test_runner.gd"):
+			in_tests += 1
+			last = "%s (line %d)" % [function, line]
+		mutex.unlock()
+
+
+var _errs: ErrCatch
+
+
+func _err_count() -> int:
+	if _errs == null:
+		_errs = ErrCatch.new()
+		OS.add_logger(_errs)
+	return _errs.in_tests
+
+
+func _verdict(r: Variant, before: int) -> String:
+	if r == null:
+		return "aborted by a script error (see log)"
+	if _errs.in_tests > before:
+		return "aborted by a script error in the test: %s%s" % [_errs.last, ("  [it had returned: %s]" % str(r)) if str(r) != "" else ""]
+	return str(r)
+
+
 func _run(name: String, f: Callable) -> void:
+	var before := _err_count()
 	var r: Variant = f.call()
-	# A script error aborts the test function and yields null: that is a
-	# failure, never a silent pass.
-	_report(name, "aborted by a script error (see log)" if r == null else str(r))
+	# A script error aborts the test function: that is a failure, never a
+	# silent pass.
+	_report(name, _verdict(r, before))
 
 
 func _run_async(name: String, f: Callable) -> void:
+	var before := _err_count()
 	var r: Variant = await f.call()
-	_report(name, "aborted by a script error (see log)" if r == null else str(r))
+	var verdict := _verdict(r, before)
+	# A test must not leave the game paused or slowed for the next one.
+	if get_tree().paused or Engine.time_scale != 1.0:
+		if verdict == "":
+			verdict = "left the game %s for the next test" % ("paused" if get_tree().paused else "at time scale %.1f" % Engine.time_scale)
+		get_tree().paused = false
+		Engine.time_scale = 1.0
+	_report(name, verdict)
 	await get_tree().process_frame
 	var left := 0
 	for c in get_children():
@@ -258,6 +314,12 @@ func _run_async(name: String, f: Callable) -> void:
 		for c in get_children():
 			if c is IslandWorld:
 				print("  LEAKED ", c.name, " id=", c.get_instance_id(), " player=", (c as IslandWorld).build_player, " ui=", (c as IslandWorld).build_ui, " kids=", c.get_child_count(), " first=", c.get_children().slice(0, 6).map(func(x): return str(x.name)))
+
+
+func _summary() -> void:
+	if _errs != null:
+		print("Script errors during the run: %d in game code, %d in tests." % [_errs.total - _errs.in_tests, _errs.in_tests])
+	print("\n==== %d passed, %d failed ====" % [passes, failures])
 
 
 func _report(name: String, err: String) -> void:
@@ -2628,12 +2690,13 @@ func _t_phase8_presentation() -> String:
 	Settings.set_v("flash_reduction", "full", false)
 	w.set_override("storm", true)
 	var events_before := SoundEvents.recent.size()
-	w._next_flash = 0.0
-	for i in 90:
+	# Phase 23 replaced the old flash timer with strike records: fire one.
+	var flashes0: int = w.flashes
+	w.fire({"id": "TEST-P8-A", "visit": "test", "day": 1, "t": w.weather_t, "kind": "near", "off": [-90.0, -220.0], "dist": 236.0, "power": 1.0, "strokes": 3, "seed": 7})
+	for i in 6:
 		await get_tree().process_frame
-	w._thunder_due = 0.001
-	await get_tree().process_frame
-	await get_tree().process_frame
+	if err == "" and w.flashes != flashes0 + 1:
+		err = "a fired strike was not counted as a flash"
 	if err == "" and w.flashes < 1:
 		err = "storm produced no lightning"
 	if err == "" and SoundEvents.recent.size() != events_before:
@@ -2648,8 +2711,9 @@ func _t_phase8_presentation() -> String:
 		k += 1
 	# Flash reduction "off": no flash at all.
 	Settings.set_v("flash_reduction", "off", false)
-	w._flash_t = 0.0
-	await get_tree().process_frame
+	w.fire({"id": "TEST-P8-B", "visit": "test", "day": 1, "t": w.weather_t, "kind": "near", "off": [-90.0, -220.0], "dist": 236.0, "power": 1.0, "strokes": 3, "seed": 8})
+	for i in 4:
+		await get_tree().process_frame
 	if err == "" and w.flash > 0.0:
 		err = "flash shown with flash reduction off"
 	Settings.set_v("flash_reduction", "reduced", false)
@@ -7527,6 +7591,269 @@ func _p24_wc_checks(_world: IslandWorld) -> String:
 
 
 # ======================================================== Phase 24: sawmill
+
+func _t_phase27_units() -> String:
+	# Belief sets the curfew.
+	var sceptic := WorkerMind.with_traits([])
+	sceptic.belief = 0.05
+	var believer := WorkerMind.with_traits([])
+	believer.belief = 0.9
+	if believer.return_margin() - sceptic.return_margin() < 40.0:
+		return "a believer should head in well before a sceptic (%.0f vs %.0f s)" % [believer.return_margin(), sceptic.return_margin()]
+	# A sighting hits a sceptic harder than a believer.
+	var stim := {"id": "S1", "kind": "T05", "modality": "sight", "severity": 0.4, "pos": Vector3.ZERO, "ambiguous": false}
+	sceptic.perceive(stim, 10.0, {"confidence": 0.8})
+	believer.perceive(stim, 10.0, {"confidence": 0.8})
+	if sceptic.fear <= believer.fear * 1.3:
+		return "a sceptic who sees something should take it harder (%.3f vs %.3f)" % [sceptic.fear, believer.fear]
+	if sceptic.belief_effect() == believer.belief_effect():
+		return "belief has no words for what it does"
+	# Trust moves the risk line.
+	var m := WorkerMind.with_traits([])
+	m.state = WorkerMind.Fear.REFUSING_RISK
+	m.trust = 0.8
+	if m.refuses_risk():
+		return "a worker who trusts the boss should still take a risky order when shaken"
+	m.trust = 0.5
+	if not m.refuses_risk():
+		return "the ordinary risk line moved"
+	m.state = WorkerMind.Fear.DISTRESSED
+	if m.refuses_risk():
+		return "an ordinary worker refused too early"
+	m.trust = 0.2
+	if not m.refuses_risk():
+		return "a worker who does not trust the boss should refuse sooner"
+	m.state = WorkerMind.Fear.DEPARTURE_WARNING
+	m.trust = 0.9
+	if not m.refuses_risk():
+		return "even a trusting worker refuses at the departure warning"
+	# Fair pay builds trust slowly; underpay wears it; never past the cap.
+	m.trust = 0.6
+	m.on_pay_night(true)
+	if absf(m.trust - (0.6 + WorkerMind.TRUST_PAID_FAIR)) > 0.0001:
+		return "a fair pay night did not build trust"
+	m.on_pay_night(false)
+	m.on_pay_night(false)
+	if m.trust >= 0.6:
+		return "underpaid nights did not wear trust down"
+	m.trust = 0.949
+	for k in 10:
+		m.on_pay_night(true)
+	if m.trust > WorkerMind.TRUST_CAP + 0.0001:
+		return "trust went past its cap"
+	if not m.waits_for_pay():
+		return "a trusting worker should wait for late wages"
+	# A recording: evidence, once per clip; trust decides how far it moves.
+	var a := WorkerMind.with_traits([])
+	a.trust = 0.9
+	var b := WorkerMind.with_traits([])
+	b.trust = 0.1
+	var ra := a.see_evidence(5.0, "CLIP-1")
+	b.see_evidence(5.0, "CLIP-1")
+	if a.belief <= b.belief or a.belief < 0.5:
+		return "a recording should move a trusting worker further (%.2f vs %.2f)" % [a.belief, b.belief]
+	if ra == "already" or a.see_evidence(6.0, "CLIP-1") != "already":
+		return "the same recording counted twice"
+	var b0 := a.belief
+	a.see_evidence(7.0, "CLIP-1")
+	if a.belief != b0:
+		return "a recording shown again moved belief"
+	a.see_evidence(8.0, "CLIP-2")
+	if a.belief <= b0 and b0 < 1.0:
+		return "a second recording did nothing"
+	var a2 := WorkerMind.from_dict(JSON.parse_string(JSON.stringify(a.capture())))
+	if a2.see_evidence(9.0, "CLIP-2") != "already":
+		return "shown recordings were not saved with the mind"
+	# Late wages: a trusting worker waits one more day before asking to go.
+	var fx := _economy_fixture()
+	var pr: Payroll = fx[1]
+	pr.employees = Payroll.starting_crew()
+	var ids := [str(pr.employees[0].id), str(pr.employees[1].id)]
+	pr.employees[0].status = Payroll.ACTIVE
+	pr.employees[1].status = Payroll.ACTIVE
+	pr.patience_fn = func(eid: String) -> int: return 1 if eid == ids[0] else 0
+	var quit := []
+	var quit_day := {}
+	var today := [0]
+	pr.quit_due_to_arrears.connect(func(eid: String) -> void:
+		quit.append(eid)
+		quit_day[eid] = today[0])
+	for d in range(7, 12):
+		today[0] = d
+		pr.settle_day(d)           # no cash: every day's wage stays owed
+	_free_all(fx)
+	if quit.size() != 2 or quit[0] != ids[1] or quit[1] != ids[0]:
+		return "the impatient worker should ask to leave first (%s)" % str(quit)
+	if int(quit_day[ids[0]]) != int(quit_day[ids[1]]) + 1:
+		return "a trusting worker should wait exactly one more day (days %s)" % str(quit_day)
+	return ""
+
+
+func _t_phase27_world() -> String:
+	Game.mode = Game.Mode.PREVIEW
+	Game.pending_teleport = "camp"
+	Game.preview_variant = "island_r2"
+	for ch in get_children():
+		if ch is IslandWorld:
+			ch.queue_free()
+	await get_tree().physics_frame
+	var world: IslandWorld = load("res://scenes/world.tscn").instantiate()
+	world.build_ui = false
+	add_child(world)
+	var guard := 0
+	while (Game.crew == null or not world.systems_ready) and guard < 3000:
+		await get_tree().physics_frame
+		guard += 1
+	var keep := NightPressure.override_level
+	var err: String = await _p27_checks(world)
+	NightPressure.override_level = keep
+	world.queue_free()
+	await get_tree().process_frame
+	Game.preview_variant = ""
+	World.removed_trees.clear()
+	World.apply_variant("full")
+	return err
+
+
+func _p27_checks(world: IslandWorld) -> String:
+	var cs: CampaignService = Game.campaign
+	var crew: CrewService = Game.crew
+	cs.start_test_route(true, true)
+	var g := 0
+	while crew.workers.size() < 2 and g < 900:
+		await get_tree().physics_frame
+		g += 1
+	if crew.workers.size() < 2:
+		return "no crew for the people checks"
+	if cs.onboarding:
+		cs.onboarding.night_rules_ack = true
+	var ws: Array = crew.workers.values()
+	var a: Worker = ws[0]
+	var b: Worker = ws[1]
+	# Pay nights: fair pay builds trust once per night.
+	a.mind.trust = 0.6
+	b.mind.trust = 0.6
+	cs.pay.change_rate(a.id, 20)                # well above what they expect
+	crew.last_pay_night = 0
+	crew.on_pay_night(1)
+	crew.on_pay_night(1)
+	if absf(a.mind.trust - (0.6 + WorkerMind.TRUST_PAID_FAIR)) > 0.0001:
+		return "a fair pay night should build trust exactly once (%.4f)" % a.mind.trust
+	if cs.pay.rate(b.id) < cs.pay.expected(b.id) and b.mind.trust >= 0.6:
+		return "an underpaid worker's trust did not wear down"
+	# Showing a recording.
+	var nr: NightRecorder = Game.night_recorder
+	nr.clips.clear()
+	if not crew.unseen_recording(a).is_empty() or crew.show_recording(a) != "none":
+		return "a recording was offered with an empty archive"
+	nr.clips.append({"id": "TEST-CLIP-1", "title": "test", "camera": "CAM_01", "day": 1})
+	a.mind.belief = 0.1
+	var r := crew.show_recording(a)
+	if r == "none" or r == "already" or a.mind.belief <= 0.1:
+		return "showing a recording did nothing (%s)" % r
+	if not crew.unseen_recording(a).is_empty() or crew.unseen_recording(b).is_empty():
+		return "a shown recording is tracked per worker"
+	nr.clips.clear()
+	# A sceptic does not come home at dusk.
+	var ms: MissingNight = crew.missing
+	for w in ws:
+		(w as Worker).mind.belief = 0.9
+	NightPressure.override_level = 0.5
+	cs.clock.restore({"day": 5, "t": WorkdayClock.NIGHT_AT - 250.0, "running": true, "deadline_enabled": true})
+	ms.decided_day = -1
+	ms.last_day = -99
+	if ms.on_dusk(true):
+		return "a believer was sent out"
+	a.mind.belief = 0.05
+	a.mind.fear = 0.0
+	a.mind.state = WorkerMind.Fear.COMFORTABLE
+	a.mind.traits.erase("timid")
+	a.emp["job"] = "automatic"
+	NightPressure.override_level = 0.05
+	for k in 60:
+		ms.decided_day = -1
+		if ms.on_dusk():
+			return "someone went missing on a quiet island"
+	NightPressure.override_level = 0.5
+	ms.decided_day = -1
+	if not ms.on_dusk(true) or ms.id != a.id or not ms.is_missing(a):
+		return "the sceptic was not the one who stayed out (%s)" % ms.id
+	if CampLayout.inside_fence(ms.spot) or World.camp_origin().distance_to(ms.spot) < MissingNight.NEAR - 1.0:
+		return "the missing worker's spot is not out past the fence"
+	ms.decided_day = -1
+	if ms.on_dusk(true):
+		return "two workers went missing on the same evening"
+	crew.decide(a)
+	if a.activity != "move" or a._after_move != "missing_wait":
+		return "the missing worker did not walk out (%s / %s)" % [a.activity, a._after_move]
+	crew.check_time(a)
+	if a._after_move != "missing_wait":
+		return "the clock sent the missing worker home"
+	a.global_position = ms.spot
+	a.activity = "missing_wait"
+	a.path.clear()
+	var snap: Dictionary = JSON.parse_string(JSON.stringify(crew.capture()))
+	var ms2 := MissingNight.new()
+	ms2.restore(snap.missing)
+	if ms2.id != a.id or ms2.state != ms.state or ms2.spot.distance_to(ms.spot) > 0.05:
+		return "the missing night was not saved"
+	# Found by the boss: follows home, trusts more, believes now.
+	var t0 := a.mind.trust
+	if not ms.bring_home(a) or ms.state != "found" or a.mind.trust <= t0 or a.mind.belief < 0.3:
+		return "bringing them home did not work"
+	if ms.is_missing(a):
+		return "a found worker still counts as missing"
+	a.global_position = crew.bed_approach(a)
+	ms.tick()
+	if ms.id != "" or ms.active():
+		return "the walk home did not end inside the fence"
+	# Left out all night: back at first light, shaken, sits out the morning.
+	b.mind.belief = 0.05
+	b.mind.fear = 0.0
+	b.mind.state = WorkerMind.Fear.COMFORTABLE
+	b.mind.traits.erase("timid")
+	b.emp["job"] = "automatic"
+	a.mind.belief = 0.9
+	cs.clock.restore({"day": 12, "t": WorkdayClock.NIGHT_AT - 250.0, "running": true, "deadline_enabled": true})
+	ms.decided_day = -1
+	if not ms.on_dusk(true) or ms.id != b.id:
+		return "a second missing night could not start"
+	b.global_position = ms.spot
+	b.activity = "missing_wait"
+	var tb := b.mind.trust
+	cs.clock.restore({"day": 13, "t": 5.0, "running": true, "deadline_enabled": true})
+	ms.on_morning()
+	if ms.id != "" or b.mind.trust >= tb or b.mind.belief < 0.5 or b.mind.state >= WorkerMind.Fear.QUITTING:
+		return "a worker left out all night did not come back shaken (trust %.2f, belief %.2f)" % [b.mind.trust, b.mind.belief]
+	if b.global_position.distance_to(crew.bed_approach(b)) > 1.0 or not ms.late_start.has(b.id):
+		return "they did not walk back in at first light"
+	if not ms.step(b):
+		return "they should sit the morning out"
+	cs.clock.restore({"day": 13, "t": WorkdayClock.NIGHT_AT * 0.5, "running": true, "deadline_enabled": true})
+	if ms.step(b):
+		return "they should be back at work by midday"
+	# In the hunt, trust decides who comes along.
+	Game.hunt.begin_hunt(false)
+	if Game.end_screen and Game.end_screen.has_method("_resume"):
+		Game.end_screen._resume()          # the rules card pauses the game
+	get_tree().paused = false
+	a.mind.trust = 0.9
+	a.mind.state = WorkerMind.Fear.COMFORTABLE
+	b.mind.trust = 0.2
+	if not Game.hunt.ask_to_follow(a) or not bool(a.emp.get("hunt_follow", false)):
+		return "a trusting worker refused to follow in the hunt"
+	if Game.hunt.ask_to_follow(b) or bool(b.emp.get("hunt_follow", false)):
+		return "an untrusting worker agreed to follow in the hunt"
+	a.activity = "idle"
+	Game.hunt.worker_decide(a)
+	if a.activity != "follow":
+		return "the follower is not following (%s)" % a.activity
+	a.mind.state = WorkerMind.Fear.DEPARTURE_WARNING
+	Game.hunt.worker_decide(a)
+	if bool(a.emp.get("hunt_follow", false)):
+		return "a terrified follower kept following"
+	return ""
+
 
 func _t_phase26_units() -> String:
 	var keep := NightPressure.override_level

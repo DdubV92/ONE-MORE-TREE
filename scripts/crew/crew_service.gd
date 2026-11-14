@@ -52,6 +52,7 @@ var _pending: Array[Callable] = []
 
 ## Phase 14 coordination (felling lanes, claim reaper, team carry).
 var coord: CrewCoordinator
+var missing := MissingNight.new()   # Phase 27: a worker who does not come home one evening
 ## Phase 16: conserved merit ledger + persistent profiles/levels/skills.
 var merit := MeritLedger.new()
 var progression := CrewProgression.new(merit)
@@ -67,6 +68,9 @@ func setup(c: CampaignService) -> void:
 	if not woodcutting.leveled.is_connected(_on_wc_leveled):
 		woodcutting.leveled.connect(_on_wc_leveled)
 	payroll = c.payroll
+	# Phase 27: a worker who trusts the boss waits one more day for wages.
+	payroll.patience_fn = func(eid: String) -> int:
+		return 1 if minds.has(eid) and (minds[eid] as WorkerMind).waits_for_pay() else 0
 	timber = Game.timber
 	trees = Game.trees
 	work_config = load("res://config/tree_work.tres")
@@ -88,6 +92,10 @@ func setup(c: CampaignService) -> void:
 		progression.advanced.connect(c.pay.on_advanced)
 	c.clock.day_started.connect(_on_morning)
 	c.clock.night_started.connect(_on_night)
+	missing.crew = self
+	c.clock.phase_changed.connect(func(ph: int) -> void:
+		if ph == WorkdayClock.Phase.DUSK and enabled:
+			missing.on_dusk())
 	if timber:
 		timber.body_settled_hook = _on_log_settled
 		timber.delivery_accepted.connect(_merit_on_accepted)
@@ -525,6 +533,7 @@ func _physics_process(delta: float) -> void:
 	_update_skiff(delta)
 	_close_doors()
 	coord.tick(delta)
+	missing.tick()
 	var c := campaign.clock
 	# Wages accrue for each day a person is employed during daylight.
 	if c.phase() == WorkdayClock.Phase.DAYLIGHT and _last_day_marked != c.day:
@@ -630,6 +639,10 @@ func _decide_inner(w: Worker) -> void:
 	apply_pending_equip(w)
 	if Game.hunt and Game.hunt.hunt_active():
 		Game.hunt.worker_decide(w)
+		return
+	# Phase 27: the one who is not coming home tonight (or sits out the
+	# morning after).
+	if missing.step(w):
 		return
 	if Game.vehicles and str(e.status) == Payroll.ACTIVE and Game.vehicles.team_decide(w):
 		return
@@ -746,6 +759,8 @@ func _auto(w: Worker) -> void:
 func check_time(w: Worker) -> void:
 	if str(w.emp.status) != Payroll.ACTIVE or w.seated:
 		return
+	if missing.id == w.id:
+		return                      # Phase 27: tonight this one is not coming home by the clock
 	# Truck teams return together; the team checks its own (longer) margin.
 	if Game.vehicles and not Game.vehicles.team_of(w).is_empty():
 		return
@@ -1399,8 +1414,11 @@ func _on_night(_d: int) -> void:
 		if str(e.status) == Payroll.ACTIVE and payroll.owed_for(str(e.id)) > 0:
 			progression.add_context("owed_wages", str(e.id), "$%s" % Money.format_cents(payroll.owed_for(str(e.id))), [str(e.id)])
 	_note_waiting_frustration()
+	missing.on_night()
 	for w in workers.values():
 		var wk := w as Worker
+		if missing.id == wk.id:
+			continue                # Phase 27: out past the fence, or walking in with the boss
 		if wk.activity == "sit":
 			release_claims(wk)
 			var b := bed_node(int(wk.emp.get("bed", 0)))
@@ -1412,6 +1430,7 @@ func _on_night(_d: int) -> void:
 
 
 func _on_morning(_d: int) -> void:
+	missing.on_morning()
 	if routine:
 		routine.plan_day(campaign.clock.day)
 	for w in workers.values():
@@ -1570,6 +1589,47 @@ func emit_stimulus(stim: Dictionary) -> Array:
 
 
 ## The boss tells a worker something happened (rumor unless corroborated).
+## Phase 27: once per settled pay night. Paid what they think is fair,
+## with nothing owed: trust grows a little. Underpaid or owed: it wears.
+var last_pay_night := 0
+
+func on_pay_night(d: int) -> void:
+	if d <= last_pay_night or campaign == null or campaign.pay == null:
+		return
+	last_pay_night = d
+	for e in payroll.employees:
+		var eid := str(e.id)
+		if str(e.status) != Payroll.ACTIVE or not minds.has(eid):
+			continue
+		var fair: bool = campaign.pay.rate(eid) >= campaign.pay.expected(eid) and payroll.owed_for(eid) == 0
+		(minds[eid] as WorkerMind).on_pay_night(fair)
+
+
+## Phase 27: the newest camera recording this worker has not been shown.
+func unseen_recording(w: Worker) -> Dictionary:
+	var nr: NightRecorder = Game.night_recorder
+	if nr == null:
+		return {}
+	for i in range(nr.clips.size() - 1, -1, -1):
+		var clip: Dictionary = nr.clips[i]
+		var seen := false
+		for m in w.mind.memories:
+			if str(m.id) == "evidence:" + str(clip.id):
+				seen = true
+		if not seen:
+			return clip
+	return {}
+
+
+## Phase 27: the boss shows a recording to a worker. Returns the mind's
+## verdict ("convinced" / "shaken" / "seen" / "already" / "none").
+func show_recording(w: Worker) -> String:
+	var clip := unseen_recording(w)
+	if clip.is_empty():
+		return "none"
+	return w.mind.see_evidence(now(), str(clip.id))
+
+
 func boss_report(w: Worker) -> String:
 	var corroborated := false
 	for o in workers.values():
@@ -1587,7 +1647,7 @@ func capture() -> Dictionary:
 	var ms := {}
 	for id in minds:
 		ms[id] = (minds[id] as WorkerMind).capture()
-	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture(), "woodcutting": woodcutting.capture()}
+	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture(), "woodcutting": woodcutting.capture(), "last_pay_night": last_pay_night, "missing": missing.capture()}
 
 
 ## Restores the crew without duplicating anyone: one Worker per active or
@@ -1605,6 +1665,8 @@ func restore(d: Dictionary) -> void:
 		candidates.append(c)
 	_cand_counter = int(d.get("cand_counter", 0))
 	_emp_counter = int(d.get("emp_counter", 2))
+	last_pay_night = int(d.get("last_pay_night", 0))
+	missing.restore(d.get("missing", {}))
 	contributions.restore(d.get("contributions", {}))
 	# Phase 16: saved merit/progression restore exactly; a save without them
 	# starts every employee at level 1 with no merit (older work had no

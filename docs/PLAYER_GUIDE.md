@@ -30,6 +30,14 @@ A short guide in the top-right walks you through real work: walk, read the contr
 - Example: two workers on $100 cost $200 a day. About two average trees through the sawmill earn that back.
 - Axes: small ×1.00, medium ×1.40, large ×1.96 cutting rate. Hard-working: ×1.25. Stronger: carries more by hand. Timid: frightens sooner and heads home earlier.
 
+## Your crew: belief and trust
+
+- **Journal → Crew** says what each worker believes and how far they trust you, and what that means.
+- **Belief:** someone convinced something is out there heads in early and stays steadier when it shows itself. A sceptic works later into the dusk and takes a real sighting hard.
+- **Trust:** someone who trusts you takes a risky order even when shaken, waits a day for late wages and will come with you in the hunt ("Stay close to me"). Trust grows with fair pay and honest thanks; it wears when you underpay or wave away what they saw.
+- **Recordings:** when a camera caught something, talk to a worker and choose "Look at this recording." Seeing it moves them far more than being told.
+- **Someone may not come home.** Once the island has started to stir, a sceptic can stay out past the fence one evening, listening to something. Take a work lamp, find them and say "Come back with me", or sleep: they walk back in at first light, shaken, and sit the morning out. Nobody is harmed.
+
 ## Nights (during the contract)
 
 - A workday is 20 minutes of daylight and 5 minutes of dusk. Warnings come at the start of dusk, halfway and one minute before night.

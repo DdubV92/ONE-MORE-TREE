@@ -351,6 +351,9 @@ func sleep() -> Dictionary:
 	var settlement := payroll.settle_day(d)
 	# Phase 21: pay satisfaction moves once per settled day; quits decided.
 	var pay_night := pay.on_settled(d)
+	# Phase 27: fair pay builds trust, a little, once per settled night.
+	if crew and crew.has_method("on_pay_night"):
+		crew.on_pay_night(d)
 	# Phase 16: the night's recovery, once per day (same locked transition).
 	var rest_night: Dictionary = Game.rest.on_sleep(d) if Game.rest else {}
 	# Phase 17: what was left of today's feed publishes now (read tomorrow

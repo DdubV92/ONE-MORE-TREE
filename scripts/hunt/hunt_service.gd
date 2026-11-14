@@ -529,6 +529,19 @@ func on_kill(who: Node) -> void:
 ## Hunt behaviour for workers (replaces normal jobs while hunting): stay in
 ## the cabin; flee to a free hiding place when they see or hear it; come
 ## out after it has been quiet; regroup at the dock when the ship comes.
+## Phase 27: "Stay close to me." Only someone who trusts the boss, and is
+## not past what they can take, comes along.
+const FOLLOW_TRUST := 0.6
+
+func ask_to_follow(w: Worker) -> bool:
+	if w == null or w.mind == null or not worker_alive(w):
+		return false
+	if w.mind.trust < FOLLOW_TRUST or w.mind.refuses_risk():
+		return false
+	w.emp["hunt_follow"] = true
+	return true
+
+
 func worker_decide(w: Worker) -> void:
 	if not worker_alive(w):
 		return
@@ -538,6 +551,21 @@ func worker_decide(w: Worker) -> void:
 		return
 	if hidden.has(w):
 		return
+	# Phase 27: a worker who trusts the boss stays with them (and hides
+	# when they hide). Fear can still end it.
+	if bool(w.emp.get("hunt_follow", false)):
+		if w.mind and w.mind.refuses_risk():
+			w.emp.erase("hunt_follow")
+		else:
+			var p := Game.player
+			if p != null and p.get("hiding") != null:
+				var free := _nearest_free_spot(w.global_position)
+				if free:
+					w.go_hide(free)
+					return
+			if w.activity != "move":
+				w.activity = "follow"
+			return
 	if w.activity == "move":
 		return
 	var cabin := Game.crew.nav.surface_at(CampLayout.world(CampLayout.CABIN_POS))

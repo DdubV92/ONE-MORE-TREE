@@ -39,13 +39,20 @@
 
 - The camper interior is always safe, regardless of lighting.
 - Outdoors, safety exists inside the fence AND within a working designated camp lamp's radius, or (Phase 26) anywhere on land within the pool of a working battery work lamp the boss has set down. Flashlights, the fire, moonlight, distant glow and screen brightness never grant safety. The published rules equal the code: see `SafetyService` and ARCHITECTURE.md.
-- Workers stop before dusk and the dog goes inside.
+- Workers stop before dusk and the dog goes inside. Exception (Phase 27, owner decision): one sceptical worker may rarely stay out past the fence for a night; they are never harmed.
 - Staying awake escalates apparitions, sound and stalking impressions. A catch and jumpscare can only happen outside authoritative safety after sufficient escalation.
 - Night is a bounded state, and morning starts only after sleeping:
   - Sleep is always available at night and resets escalation.
   - A camper holdout can't be killed. It also can't advance to morning by waiting, changing the real clock, or leaving the program open.
   - The night clock may reach its terminal time while an independent awake timer keeps pacing.
   - Menus pause both.
+
+## People who matter (Phase 27)
+
+- **Belief** sets a worker's curfew and how a sighting lands: the convinced head in early and take it steadier; a sceptic works later and is hit harder when they finally see something.
+- **Trust** moves the line for risky orders, buys one more day on late wages, and decides who will follow the boss in the hunt. It grows slowly with fair pay and praise and wears with underpay and dismissal.
+- **Evidence:** a camera recording can be shown to a worker once. It moves belief much more than a report does, more still for someone who trusts the boss.
+- **A worker can fail to come home** one evening before the hunt (owner decision). Only a calm sceptic, only once the island has started to stir, one at a time and rarely. The boss can walk out and bring them in, or sleep and have them return shaken at first light. Nobody is harmed.
 
 ## Nights that grow (Phase 26)
 

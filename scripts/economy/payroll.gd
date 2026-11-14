@@ -17,6 +17,9 @@ extends Node
 ## Test only.
 
 signal quit_due_to_arrears(employee_id: String)
+
+## Phase 27: (employee id) -> extra days this person waits for late wages.
+var patience_fn := Callable()
 signal liabilities_changed()
 
 const ACTIVE := "active"
@@ -160,8 +163,10 @@ func settle_day(day: int) -> Dictionary:
 		var eid := str(e.id)
 		if quit_requests.has(eid):
 			continue
+		# Phase 27: someone who trusts the boss waits one more day.
+		var wait := int(patience_fn.call(eid)) if patience_fn.is_valid() else 0
 		for l in liabilities:
-			if str(l.emp) == eid and int(l.paid) < int(l.amount) and int(l.due_day) <= day:
+			if str(l.emp) == eid and int(l.paid) < int(l.amount) and int(l.due_day) + wait <= day:
 				quit_requests[eid] = day
 				if str(e.status) != "departed" and str(e.status) != "departing":
 					e.status = QUIT_REQUESTED
