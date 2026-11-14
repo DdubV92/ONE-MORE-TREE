@@ -43,6 +43,17 @@ func _build(title: String, body: String, tint: Color) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
+func _scroll_body(text: String, height: float) -> void:
+	var sc := ScrollContainer.new()
+	sc.custom_minimum_size = Vector2(600, height)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var body := UITheme.label(text, 16)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD
+	body.custom_minimum_size = Vector2(580, 0)
+	sc.add_child(body)
+	_box.add_child(sc)
+
+
 func _button(text: String, f: Callable) -> void:
 	_box.add_child(UITheme.button(text, f, 600))
 
@@ -85,9 +96,13 @@ func _offer_reload(kind: String, text: String) -> void:
 ## Information card that resumes play (e.g. the abandonment rules).
 func show_info(title: String, body: String, button := "Continue", on_ok := Callable()) -> void:
 	showing = "info"
-	_build(title, body, Color(0.0, 0.0, 0.0, 0.85))
+	# A long card scrolls inside the panel instead of running off the screen.
+	var long := body.length() > 900
+	_build(title, "" if long else body, Color(0.0, 0.0, 0.0, 0.85))
 	_panel.offset_top = -300
 	_panel.offset_bottom = 300
+	if long:
+		_scroll_body(body, 430)
 	_button(button, func() -> void:
 		_resume()
 		if on_ok.is_valid():
@@ -121,14 +136,7 @@ func show_outcome(title: String, lines: PackedStringArray) -> void:
 	_build(title, "", Color(0.02, 0.03, 0.05, 0.94))
 	_panel.offset_top = -330
 	_panel.offset_bottom = 330
-	var sc := ScrollContainer.new()
-	sc.custom_minimum_size = Vector2(600, 470)
-	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	var body := UITheme.label("\n".join(lines), 16)
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD
-	body.custom_minimum_size = Vector2(580, 0)
-	sc.add_child(body)
-	_box.add_child(sc)
+	_scroll_body("\n".join(lines), 470)
 	_button("Back to the title screen", func() -> void:
 		Game.block_saves = false
 		Game.return_to_menu())

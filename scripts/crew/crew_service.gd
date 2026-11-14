@@ -1635,6 +1635,58 @@ func on_pay_night(d: int) -> void:
 		(minds[eid] as WorkerMind).on_pay_night(fair)
 
 
+## Phase 27: an evening at the fire. Once a day, at dusk, with the fire
+## burning and at least one of the crew back inside the fence.
+const EVENING_TRUST := 0.02
+const EVENING_CALM := 0.06
+var evening_day := 0                # last day the boss sat with the crew
+
+func evening_company() -> Array:
+	var out := []
+	for w in workers.values():
+		var wk := w as Worker
+		if str(wk.emp.status) == Payroll.ACTIVE and not wk.seated and wk.activity != "sleep" and nav.in_camp(wk.global_position) and missing.id != wk.id:
+			out.append(wk)
+	return out
+
+
+## "" when the boss can sit down now, else why not (short, for the prompt).
+func evening_blocker() -> String:
+	if campaign == null or not campaign.active or campaign.contract.is_closed():
+		return "the crew gathers here at dusk"
+	if campaign.clock.phase() != WorkdayClock.Phase.DUSK:
+		return "the crew gathers here at dusk"
+	if timber != null and timber.fire_out:
+		return "the fire is out"
+	if evening_day == campaign.clock.day:
+		return "you have sat with them this evening"
+	if evening_company().is_empty():
+		return "nobody is back yet"
+	return ""
+
+
+func sit_evening() -> Dictionary:
+	var why := evening_blocker()
+	if why != "":
+		return {"ok": false, "reason": "Not now: %s." % why}
+	var company := evening_company()
+	evening_day = campaign.clock.day
+	var names := []
+	for w in company:
+		var wk := w as Worker
+		names.append(str(wk.emp.name))
+		wk.mind.trust = clampf(wk.mind.trust + EVENING_TRUST, 0.0, maxf(WorkerMind.TRUST_CAP, wk.mind.trust))
+		wk.mind.fear = clampf(wk.mind.fear - EVENING_CALM, 0.0, 1.0)
+		wk.mind._update_state(now())
+	var teller: Worker = company[campaign.clock.day % company.size()]
+	var other := ""
+	for w in company:
+		if w != teller:
+			other = str((w as Worker).emp.name)
+			break
+	return {"ok": true, "names": names, "teller": str(teller.emp.name), "story": EveningSeat.story_for(teller.mind.belief, campaign.clock.day, other)}
+
+
 ## Phase 27: the newest camera recording this worker has not been shown.
 func unseen_recording(w: Worker) -> Dictionary:
 	var nr: NightRecorder = Game.night_recorder
@@ -1677,7 +1729,7 @@ func capture() -> Dictionary:
 	var ms := {}
 	for id in minds:
 		ms[id] = (minds[id] as WorkerMind).capture()
-	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture(), "woodcutting": woodcutting.capture(), "last_pay_night": last_pay_night, "missing": missing.capture()}
+	return {"version": 1, "enabled": enabled, "workers": ws, "minds": ms, "candidates": candidates.duplicate(true), "cand_counter": _cand_counter, "emp_counter": _emp_counter, "skiff": {"state": skiff_state, "t": _skiff_t}, "stats": stats.duplicate(true), "stuck_log": stuck_log.slice(-20), "contributions": contributions.capture(), "merit": merit.capture(), "progression": progression.capture(), "talk": talk.capture(), "woodcutting": woodcutting.capture(), "last_pay_night": last_pay_night, "missing": missing.capture(), "evening_day": evening_day}
 
 
 ## Restores the crew without duplicating anyone: one Worker per active or
@@ -1697,6 +1749,7 @@ func restore(d: Dictionary) -> void:
 	_emp_counter = int(d.get("emp_counter", 2))
 	last_pay_night = int(d.get("last_pay_night", 0))
 	missing.restore(d.get("missing", {}))
+	evening_day = int(d.get("evening_day", 0))
 	contributions.restore(d.get("contributions", {}))
 	# Phase 16: saved merit/progression restore exactly; a save without them
 	# starts every employee at level 1 with no merit (older work had no

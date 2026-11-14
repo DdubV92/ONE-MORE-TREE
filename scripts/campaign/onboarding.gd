@@ -15,20 +15,22 @@ signal hint_changed(text: String)
 
 const STEPS := [
 	["move", "Look around with the mouse and walk ({move_forward}{move_left}{move_back}{move_right}). Pause any time with {pause}."],
-	["journal", "Open your Journal ({toggle_journal}): the contract is there. Felling pays nothing; logs delivered to camp pay $100 per tree in shares."],
+	["journal", "Open your Journal ({toggle_journal}): the contract is there. You signed for three painted lots of forest. Felling alone pays nothing; the wood pays at the sawmill and each finished lot pays a milestone."],
 	["meet", "Meet your crew (five employees in a standard campaign) and Biscuit the dog: walk up to one of them. Your camper is the boss's (and the dog's); the crew sleep in the cabin."],
-	["rack", "Find the delivery rack beside the burn pit in camp. Logs are paid there."],
-	["fell", "Pick a tree near camp. Chop it with {attack} (hold if 'Hold to keep chopping' is on). When it creaks, step back from the side it leans to."],
+	["rack", "Find the delivery rack beside the burn pit in camp. A log delivered here (or at the sawmill behind the camper) counts toward the contract."],
+	["fell", "Go out through the forest entrance and pick a tree with an orange paint band (lot 1). Chop it with {attack} (hold if 'Hold to keep chopping' is on). When it creaks, step back from the side it leans to."],
 	["section", "Cut the fallen trunk into logs: chop at the marked cut lines along it."],
 	["carry", "Pick up a log ({interact}). Your hands hold about a third of a tree; big pieces may need another cut, help or a truck."],
-	["deliver", "Carry it to the rack and deliver it ({interact}). The credit you see is the real payment."],
-	["review", "Check money and crew in the Journal ({toggle_journal}): today's wages, then on the camper computer set pay (Payroll, from $100 a day) and buy better tools (Supplier)."],
+	["deliver", "Carry it to the rack and deliver it ({interact}). It counts for the contract at once; the money comes when the sawmill finishes a pallet from it."],
+	["review", "Check money and crew in the Journal ({toggle_journal}): today's wages, then on the camper computer set pay (Payroll). $100 a day is the minimum; people paid less than they think is fair leave within days."],
 	["dusk", "When dusk comes you'll get the night rules. Head home before dark."],
 	["sleep", "Sleep in the camper bed to end the day. Night only ends when you sleep."],
 ]
 const OPTIONAL := [
 	"Give a worker a job: Journal → Crew.",
-	"Sit on the camper couch to watch the security cameras (live: time keeps running).",
+	"The security cameras are on the camper's desk computer (live: time keeps running).",
+	"Journal → Map fills in as you walk; Journal → Field notes fills in at night.",
+	"Work lamps wait in the yellow locker beside the parcel locker: set one down and its light is a safe place at night.",
 	"The arcade cabinets in the cabin pause the game while you play.",
 ]
 
@@ -138,7 +140,7 @@ func replay() -> void:
 
 
 func show_night_rules() -> void:
-	_card("Before your first night", HelpText.night(), "Got it", func() -> void:
+	_card("Before your first night", HelpText.night_first(), "Got it", func() -> void:
 		night_rules_ack = true
 		if not done.has("dusk"):
 			done.append("dusk")

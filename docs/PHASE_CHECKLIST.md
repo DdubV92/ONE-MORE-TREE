@@ -34,7 +34,9 @@
 | A worker missing overnight (owner decision 3): only on a stirred island, only a calm sceptic, one at a time, at most every four days, never in the last two days. They stand out past the fence. Brought in by the boss (trust and belief up), or back at first light shaken and sitting out the morning. Never harmed; saved | ✅ | `MissingNight`; the cabin rule is unchanged, they are simply not in it |
 | Review stations: a worker does not come home; show a recording | ✅ | Preview only |
 | Test harness: a test that aborts on a script error now fails (it used to read as a pass); the stale Phase 8 lightning test was rewritten for the Phase 23 strike records | ✅ | Script errors in game code during tests are counted and printed |
-| Arcs for the five named workers, evenings at the fire, hunt radio, lines that name who left, perks | ⬜ | Next |
+| Evenings at the fire (`EveningSeat`, a stump by the burn pit): at dusk, with the fire burning and someone back in camp, the boss sits with the crew once a day; a story chosen by the teller's belief, trust +0.02 and fear −0.06 for everyone there; saved | ✅ | Text only. Gives the fire a purpose again; a dead fire refuses |
+| First-day guide and the first-night card follow the current rules (painted lots, sawmill pay, fair wages, desk cameras, map, work lamps, field notes); the card is short and long cards scroll | ✅ | The guide said logs were "paid at the rack" and pointed at the couch for cameras |
+| Arcs for the five named workers, hunt radio, lines that name who left, perks | ⬜ | Next |
 | Played by a person | ⛔ not run | |
 
 ## Phase 26 (in progress): nights that grow

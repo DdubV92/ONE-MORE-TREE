@@ -35,6 +35,18 @@ static func contract() -> String:
 	])
 
 
+## The card shown before the first night: the essentials only (the full
+## text is in Journal -> Help).
+static func night_first() -> String:
+	return "\n\n".join([
+		"Dusk is your warning to head home. Your crew and the dog go in by themselves.",
+		"SAFE at night: the camper (always), the cabin while someone is in it, the pools of the working camp lamps, and the pool of a battery work lamp you have set down. NOT safe: moonlight, a flashlight, a screen's glow.",
+		"Outside a safe place the dark closes in: you get three warnings, then it takes you and you reload from the morning.%s" % ("" if Difficulty.catch_allowed() else " (Cozy: it cannot take you.)"),
+		"Night only ends when you sleep in your bed. Waiting does not bring morning.",
+		"The nights start quiet and grow with every day and every tree cut. Whatever you meet keeps to one rule: Journal -> Field notes writes down what you work out. The rest is in Journal -> Help.",
+	])
+
+
 static func night() -> String:
 	return "\n".join([
 		"Each workday is 20 minutes of daylight and 5 minutes of dusk. Dusk is your return warning: you get messages at the start of dusk, halfway, and one minute before night.",
@@ -80,6 +92,7 @@ static func growth_and_rest() -> String:
 		"One more tree: when the last lot is finished the company offers cash for the tallest tree past the forest entrance, felled by you alone before the offer lapses (white band; the top of the screen counts down). Taking it adds a day to the hunt. Refusing is allowed.",
 		"The map: Journal -> Map is your survey sheet. The coast is inked; the inside fills in as you walk. It marks your lot trees, your work lamps, the camp, sawmill and dock, and you, never what moves at night.",
 		"Belief and trust: Journal -> Crew says what each worker believes and how far they trust you. The convinced head in early and stay steadier; a sceptic works later and takes a real sighting hard. Someone who trusts you takes a risky order when shaken, waits a day for late wages and will follow you in the hunt. Fair pay and honest thanks build trust; underpay and waving away what they saw wear it down. A camera recording shown to a worker moves them far more than a report.",
+		"Evenings: at dusk, with the fire burning and someone back in camp, the stump by the burn pit lets you sit with the crew once a day. It calms them and builds a little trust.",
 		"Once the island has started to stir, a sceptic may not come home one evening. Take a work lamp, find them past the fence and bring them in, or sleep: they are back at first light, shaken, and sit the morning out. Nobody is harmed.",
 	])
 

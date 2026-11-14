@@ -18,6 +18,8 @@ Extract the zip to a new folder and run `OneMoreTree.exe`. `OneMoreTree.console.
 ## New: people who matter (Phase 27, first part)
 
 - **Belief and trust now change what your crew does**: when they head in, how they take a fright, whether they take a risky order, how long they wait for late wages, and who follows you in the hunt. Journal → Crew spells it out per worker.
+- **Evenings at the fire.** At dusk, with the fire burning, sit on the stump by the burn pit with whoever is back: a story, calmer nerves, a little more trust.
+- **The first-day guide was out of date** (it still said logs are paid at the rack). It now teaches the painted lots, the sawmill, fair pay, the map and the work lamps.
 - **Show them the recording.** If a camera caught something, talk to a worker and pick "Look at this recording."
 - **Someone may not come home one evening.** A sceptic stays out past the fence. Go and get them with a work lamp, or sleep and find them back at dawn, shaken. Nobody is harmed.
 - **To try it:** Preview → Tab → "Phase 27 people who matter".

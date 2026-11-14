@@ -243,7 +243,7 @@ func _ready() -> void:
 	await _run_async("phase 29 world: with the last lot done the company offers one more tree before the hunt; refusing starts the three-day hunt; accepting bands the tallest tree past the entrance, pays once when it falls and adds a day, or lapses when the time runs out; saved; the epilogue reads the real records (trees left, extra cut, crew, wages, notes, the offer); difficulty: Standard unchanged, Cozy cannot catch, Long Night stirs sooner and hunts a day longer, saved", _t_phase29_world)
 	await _run_async("phase 28 map world: only the camp's surroundings are known on day 1, walking reveals ground, saved and restored, the picture is cropped to the island with the unexplored coast inked, marks for camp, sawmill, dock, every lot tree (standing or felled), work lamps and the boss, nothing that hunts", _t_phase28_world)
 	_run("phase 27 units: belief sets the curfew margin and how hard a sighting hits; trust moves the risk line, waits a day for late wages and grows with fair pay; a shown recording convinces once per clip; arrears patience", _t_phase27_units)
-	await _run_async("phase 27 people world: fair pay nights build trust once, a recording can be shown to a worker once, a trusted worker follows in the hunt and an untrusting one refuses, a sceptic does not come home at dusk (one at a time, never the timid, never before the island stirs), brought home by the boss or back at first light shaken, saved", _t_phase27_world)
+	await _run_async("phase 27 people world: fair pay nights build trust once, a recording can be shown to a worker once, a trusted worker follows in the hunt and an untrusting one refuses, a sceptic does not come home at dusk (one at a time, never the timid, never before the island stirs), brought home by the boss or back at first light shaken, saved; an evening at the fire: dusk only, fire burning, once a day, builds trust and calm", _t_phase27_world)
 	_run("phase 26 units: night pressure tiers, sharpness, pacing and exposure rate; every Terror family has a tier, a rule and notes; field notes stages (met, hint, rule), saved; exposure relief is bounded; night-shift rush rate is pro rata, in whole cents, saved mid-pallet", _t_phase26_units)
 	await _run_async("phase 26 nights world: a new campaign's nights are quiet (sound and atmosphere only, no sharp beats), pressure grows with the day and the cutting and is worst on cleared ground, each rule kind ends an encounter quietly, a right answer fills the notes and eases the exposure, the not-your-dog never calls beside the real dog, notes survive a save; work lamps: issued with the lots, carried and set down, a real safe pool at night only (SafetyService rule 4), battery drains and recharges, saved; the breaker: flicker warning, pole-lamp pools unsafe until reset, the camper unaffected, only on a disturbed island; the sawmill night shift runs only at night with the boss at the mill and ends at dawn", _t_phase26_world)
 	_run("phase 24 settings migration: pre-24 files stored character_style=clean (the old default) and move to hd2d once; pixel and post-24 choices stay", _t_phase24_settings_migration)
@@ -8165,6 +8165,35 @@ func _p27_checks(world: IslandWorld) -> String:
 	cs.clock.restore({"day": 13, "t": WorkdayClock.NIGHT_AT * 0.5, "running": true, "deadline_enabled": true})
 	if ms.step(b):
 		return "they should be back at work by midday"
+	# An evening at the fire: dusk only, fire burning, once a day.
+	cs.clock.restore({"day": 14, "t": 300.0, "running": true, "deadline_enabled": true})
+	for w in ws:
+		(w as Worker).global_position = crew.bed_approach(w)
+		(w as Worker).activity = "sit"
+	if crew.evening_blocker() == "" or bool(crew.sit_evening().ok):
+		return "the boss could sit with the crew in the middle of the day"
+	cs.clock.restore({"day": 14, "t": WorkdayClock.NIGHT_AT - 120.0, "running": true, "deadline_enabled": true})
+	if cs.clock.phase() != WorkdayClock.Phase.DUSK:
+		return "the evening fixture is not dusk"
+	Game.timber.fire_out = true
+	if crew.evening_blocker() != "the fire is out":
+		return "an evening by a dead fire was allowed (%s)" % crew.evening_blocker()
+	Game.timber.fire_out = false
+	a.mind.trust = 0.5
+	a.mind.fear = 0.3
+	var ev := crew.sit_evening()
+	if not bool(ev.ok) or (ev.names as Array).size() < 2 or str(ev.story) == "" or str(ev.story).contains("{"):
+		return "sitting with the crew at dusk did not work (%s)" % str(ev)
+	if absf(a.mind.trust - (0.5 + CrewService.EVENING_TRUST)) > 0.0001 or absf(a.mind.fear - (0.3 - CrewService.EVENING_CALM)) > 0.0001:
+		return "the evening did not build trust and calm (trust %.3f, fear %.3f)" % [a.mind.trust, a.mind.fear]
+	if bool(crew.sit_evening().ok) or a.mind.trust > 0.5 + CrewService.EVENING_TRUST + 0.0001:
+		return "the boss could sit with the crew twice in one evening"
+	if int((JSON.parse_string(JSON.stringify(crew.capture())) as Dictionary).get("evening_day", 0)) != 14:
+		return "the evening was not saved"
+	for b0 in [0.1, 0.45, 0.8]:
+		for dd in range(1, 8):
+			if EveningSeat.story_for(b0, dd, "Joan") == "":
+				return "no story for belief %.1f on day %d" % [b0, dd]
 	# In the hunt, trust decides who comes along.
 	Game.hunt.begin_hunt(false)
 	if Game.end_screen and Game.end_screen.has_method("_resume"):

@@ -234,6 +234,11 @@ func _ready() -> void:
 		# Phase 26: the lamp locker and the camp breaker.
 		if night_kit:
 			night_kit.setup()
+		# Phase 27: a stump by the fire, to sit with the crew at dusk.
+		var stump := EveningSeat.new()
+		add_child(stump)
+		var sp := CampLayout.world(CampLayout.BURN_PIT_POS + Vector3(-2.2, 0.0, 1.6))
+		stump.setup(Vector3(sp.x, World.height_at(sp.x, sp.z), sp.z))
 		# Phase 24: the sawmill behind the camper (its camera joins the wall).
 		var mill := Sawmill.new()
 		add_child(mill)
