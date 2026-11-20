@@ -2,6 +2,17 @@
 
 > **Revised Phase 10** (stabilization and ruleset migration): see [PHASE10_STATUS.md](PHASE10_STATUS.md). New standard campaigns use the 10,000-tree / five-employee ruleset; older saves stay on the legacy 12,000-tree contract.
 
+## Animation pass (20 Nov 2026, in progress, paused)
+
+Owner request: every first-person and NPC animation should be accurate to the movement, look good and be clean, with no jank; then fill in the missing parts of the game.
+
+| Item | Status | Notes |
+|---|---|---|
+| Audit tools: `tools/anim_sheet` renders every clip of the crew, dog and Foreman as frame-by-frame contact sheets (side and three-quarter views, 3D rig shown); `tools/anim_probe` prints joint positions per clip (headless) | ✅ | `godot res://tools/anim_sheet.tscn -- human` needs a renderer; frames go to `captures/anim/` |
+| Crew clips reviewed so far: walk, run (motion capture) read correctly; axe swing reads correctly but is stiff (no weight shift, feet keyed sparsely) | ⬜ | Dog, Foreman, wildlife, first-person arms and the remaining crew clips are not reviewed yet |
+| **Found: the hand-built body clips lean the wrong way.** In `HumanCharacter._make_body_clip` a positive `spine`/`chest`/`head_p` leans the body backward, but the clips were written as if positive were forward. Measured on `pickup`: the head moves 0.28 m backward and the hands rise to 1.24 m while the worker squats, instead of reaching down to a log. Affects pickup, setdown, hide, fear, talk_shaken, grip | ⬜ not fixed yet | Also: feet sink up to 5 cm between keys (joint angles are interpolated between sparse keys instead of re-solving the legs) and the hips move forward in a squat instead of back |
+| Planned fix: rebuild these clips by posing the rig and baking densely (legs re-solved every frame so feet stay planted, hands placed by IK on the log, eased timing), then review every remaining clip, the dog, the Foreman and the first-person arms the same way | ⬜ | |
+
 ## Art direction update (14 Nov 2026): the hand-drawn pixel world
 
 | Item | Status | Notes |
